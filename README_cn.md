@@ -97,7 +97,7 @@ cd semiconductor
 git clone https://gitee.com/doctorwanghao/semiconductor.git
 ```
 
-想在课堂上整站使用，直接把目录挂到任意静态服务器（或 GitHub Pages）上，入口为 `index_cn.htm`（中文文件名）或 `index_pinyin.htm`（拼音文件名，用于不支持中文路径的服务器）。
+想在课堂上整站使用，直接把目录挂到任意静态服务器（或 GitHub Pages）上，入口为 `index_en.htm`（英文）或 `index_cn.htm`（中文文件名）；服务器不支持中文路径时改用 `index_pinyin.htm`（拼音文件名）。
 
 ## 字体说明
 

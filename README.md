@@ -94,7 +94,7 @@ Also with Gitee (the two sites are published and kept in sync):
 git clone https://gitee.com/doctorwanghao/semiconductor.git
 ```
 
-To use the whole set in class, serve the directory from any static host (or GitHub Pages); the entry page is `index_cn.htm` (Chinese file names) or `index_pinyin.htm` (pinyin file names, for servers that do not support non-ASCII paths).
+To use the whole set in class, serve the directory from any static host (or GitHub Pages); the entry page is `index_en.htm` (English) or `index_cn.htm` (Chinese file names); use `index_pinyin.htm` (pinyin file names) when the server does not support non-ASCII paths.
 
 ## Fonts
 
