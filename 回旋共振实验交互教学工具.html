@@ -1,0 +1,2332 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<!-- SPDX-License-Identifier: MIT -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>回旋共振实验交互教学工具</title>
+<style>
+
+  :root {
+    --bg: #f7f9fb;
+    --panel: #ffffff;
+    --border: #dde4ec;
+    --text: #2c3e50;
+    --text-sub: #6b7a8c;
+    --blue: #1976d2;
+    --blue-light: #e3f0fb;
+    --orange: #ef8c1a;
+    --red: #d94a3d;
+    --teal: #0f9b8e;
+    --green: #2e9e5b;
+    --purple: #7b3fa0;
+    --gray-ref: #9aa5b1;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Microsoft YaHei", "PingFang SC", "Segoe UI", sans-serif;
+    background: var(--bg); color: var(--text); padding: 14px;
+  }
+  header { position: relative; display: flex; align-items: baseline; justify-content: center; gap: 14px; flex-wrap: wrap; text-align: center; margin-bottom: 2px; }
+  .lang-btn { position: absolute; right: 0; top: 0; border: 1px solid var(--border); background: #fff;
+    color: var(--text-sub); padding: 3px 10px; border-radius: 7px; cursor: pointer; font-size: 12px; font-weight: 600; }
+  .lang-btn:hover { border-color: var(--blue); color: var(--blue); }
+  header h1 { font-size: 20px; }
+  header .formula { font-size: 14.5px; color: var(--text-sub); }
+  .sub-note { text-align: center; font-size: 12.5px; color: var(--text-sub); margin-bottom: 12px; line-height: 1.75; }
+  .sub-note b { color: var(--blue); }
+
+  .layout { display: flex; gap: 14px; align-items: flex-start; max-width: 1500px; margin: 0 auto; }
+  .viz { flex: 0 0 64%; min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+  .side { flex: 1; min-width: 310px; display: flex; flex-direction: column; gap: 12px; }
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; }
+  .sec-title { font-size: 13.5px; font-weight: 700; margin: 2px 0 6px; }
+  .sec-title .mtag {
+    display: inline-block; background: var(--blue); color: #fff;
+    font-size: 11px; font-weight: 700; padding: 1.5px 7px;
+    border-radius: 5px; margin-right: 6px; vertical-align: 1.5px; letter-spacing: .3px;
+  }
+  canvas { display: block; width: 100%; border-radius: 6px; touch-action: none; }
+  canvas:focus { outline: 2px solid rgba(25,118,210,.45); outline-offset: 1px; }
+  .chart-wrap { position: relative; }
+  /* ---- 并列双画面（左主图 + 右对照图） ---- */
+  .duo { display: grid; gap: 10px; align-items: start; }
+  .duo.d1 { grid-template-columns: 1.62fr 1fr; }   /* 轨迹 : 波形 */
+  .duo.d2 { grid-template-columns: 1.15fr 1fr; }   /* 等能面 : m*(θ) */
+  .duo > .pane { min-width: 0; }
+  .duo .pane-t { font-size: 12.5px; font-weight: 700; color: var(--text-sub);
+    margin: 0 0 4px 2px; }
+  .duo .pane-t b { color: var(--blue); }
+  .hint { font-size: 12px; color: var(--text-sub); margin-top: 6px; line-height: 1.6; }
+  .ctrl { margin-bottom: 10px; }
+  .ctrl:last-child { margin-bottom: 0; }
+  .ctrl-head { display: flex; justify-content: space-between; align-items: baseline; font-size: 13px; font-weight: 600; margin-bottom: 2px; gap: 8px; }
+  .ctrl-head .val { color: var(--blue); font-variant-numeric: tabular-nums; font-weight: 700; white-space: nowrap; }
+  .ctrl input[type=range] { width: 100%; accent-color: var(--blue); }
+  .ctrl .sub { font-size: 11.5px; color: var(--text-sub); margin-top: 1px; line-height: 1.5; }
+  .btn-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+  .btn-row button {
+    border: 1px solid var(--border); background: #fff; color: var(--text);
+    padding: 5px 11px; border-radius: 7px; cursor: pointer; font-size: 12.5px;
+  }
+  .btn-row button:hover { border-color: var(--blue); color: var(--blue); }
+  .btn-row.tight button { padding: 4px 9px; font-size: 12px; }
+  .btn-row button.sel { background: var(--blue); border-color: var(--blue); color: #fff; font-weight: 600; }
+  .mode-switch { display: flex; gap: 6px; }
+  .mode-switch button {
+    flex: 1; border: 1px solid var(--border); background: #fff; color: var(--text-sub);
+    padding: 6px 10px; border-radius: 8px; cursor: pointer; font-size: 12.5px; font-weight: 600;
+  }
+  .mode-switch button.active { background: var(--blue); border-color: var(--blue); color: #fff; }
+  .legend { display: flex; gap: 6px 14px; flex-wrap: wrap; align-items: center; font-size: 12px; color: var(--text-sub); margin-top: 6px; }
+  .swatch { display: inline-block; vertical-align: middle; width: 20px; height: 0; border-top: 3px solid currentColor; border-radius: 2px; margin-right: 6px; }
+  .swatch.dash { border-top-style: dashed; }
+  .swatch.sq { width: 11px; height: 11px; border: none; border-radius: 3px; }
+  /* ---- LaTeX 风格数学排版（纯 CSS，无外部库） ---- */
+  .m { font-family: "Cambria Math", "STIX Two Math", "Latin Modern Math", "Times New Roman", Times, serif;
+       font-size: 1.05em; font-style: normal; white-space: nowrap; letter-spacing: .01em; }
+  .m i, .m var { font-style: italic; }
+  .m .rm { font-style: normal; }
+  .m sub, .m sup { font-size: .70em; font-style: normal; line-height: 1; }
+  .m sub { vertical-align: -.28em; }
+  .m sup { vertical-align: .50em; }
+.m .m { font-size: 1em; }   /* 嵌套容器（TEXH 下标转换叠加）不再放大字号 */
+  .m sub i, .m sup i { font-style: italic; }
+  .m .op { font-style: normal; padding: 0 .24em; }
+  .m .sl { font-style: normal; padding: 0 .05em; }
+  .m .un { font-style: normal; padding-left: .16em; }
+  .m .fn { font-style: normal; padding: 0 .18em; }
+  /* √‾‾：根号符号 + 压住被开方式的横线 */
+  .sqrt { display: inline-block; white-space: nowrap; }
+  .sqrt > .rd { display: inline-block; padding-right: .02em; }
+  .sqrt > .rdc { display: inline-block; border-top: .055em solid currentColor; padding: .10em .12em 0 .10em; }
+  /* 分数 a/b */
+  .frac { display: inline-block; vertical-align: -0.52em; text-align: center; font-size: .78em; margin: 0 .12em; }
+  .frac > .num { display: block; padding: 0 .22em; border-bottom: .055em solid currentColor; }
+  .frac > .den { display: block; padding: 0 .22em; }
+  /* ---- 读数区 ---- */
+  .kv { display: grid; grid-template-columns: 1fr; gap: 2px; font-size: 12.5px; }
+  .kv .row { display: flex; justify-content: space-between; gap: 8px; border-bottom: 1px dotted #eef2f7; padding: 2px 0; }
+  .kv .k { color: var(--text-sub); white-space: nowrap; }
+  .kv .v { font-variant-numeric: tabular-nums; text-align: right; }
+  .kv .v b { color: var(--blue); }
+  .kv .hd { grid-column: 1 / -1; font-weight: 700; color: var(--text); font-size: 12px; margin: 6px 0 2px; }
+  .kv .hd:first-child { margin-top: 0; }
+  /* ---- 折叠区 ----
+     独立组件，类名一律 .fold：❌ 不许复用 .chal-head / .chev，
+     否则会被挑战区回归脚本按「挑战题」计数，也会污染挑战区视觉基线。 */
+  .fold { margin-top: 7px; border-top: 1px dotted var(--border); padding-top: 5px; }
+  .fold-head { display: flex; align-items: center; gap: 6px; cursor: pointer;
+    font-size: 12px; font-weight: 600; color: var(--text-sub); user-select: none; }
+  .fold-head:hover { color: var(--blue); }
+  .fold-head .chev { font-size: 11px; transition: transform .15s; display: inline-block; }
+  .fold.open .fold-head .chev { transform: rotate(90deg); }
+  .fold-body { display: none; margin-top: 4px; }
+  .fold.open .fold-body { display: block; }
+  /* ---- 引导探究 ---- */
+  .chal-wrap { max-width: 1500px; margin: 14px auto 0; }
+  .chal-bar { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+  .chal-bar b { font-size: 14.5px; }
+  .chal-bar span { font-size: 12px; color: var(--text-sub); }
+  .chal-grid { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+  .chal { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 8px 12px; }
+  .chal-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; cursor: pointer; }
+  .chal-head b { font-size: 13.5px; }
+  .chal-head .chev { color: var(--text-sub); font-size: 12px; transition: transform .15s; display: inline-block; }
+  .chal.open .chal-head .chev { transform: rotate(90deg); }
+  .chal.open { border-color: var(--blue); }
+  .chal-body { display: none; margin-top: 6px; font-size: 12.5px; color: var(--text-sub); line-height: 1.75; }
+  .chal.open .chal-body { display: block; }
+  .chal-body .ans { display: none; margin-top: 6px; padding: 7px 10px; background: var(--blue-light); border-radius: 6px; color: var(--text); }
+  .chal-body .ans.show { display: block; }
+  .chal-body .ans b { color: var(--blue); }
+  .chal-body .btn-row { margin-top: 8px; }
+  @media (max-width: 1100px) {
+    .layout { flex-direction: column; }
+    .viz { flex: 1 1 auto; width: 100%; }
+  }
+  @media (max-width: 820px) {
+    .duo.d1, .duo.d2 { grid-template-columns: 1fr; }
+  }
+  .site-foot { max-width: 1500px; margin: 18px auto 0; padding: 12px 16px 24px;
+    border-top: 1px solid var(--border); color: var(--text-sub);
+    font-size: 12.5px; line-height: 1.8; text-align: center; }
+  .site-foot a { color: var(--blue); text-decoration: none; }
+  .site-foot a:hover { text-decoration: underline; }
+  .cmp-note { font-size: 11.5px; color: var(--text-sub); margin-top: 4px; line-height: 1.55; }
+  .cdetail { margin-top: 8px; padding: 8px 11px; background: var(--blue-light);
+             border-radius: 7px; font-size: 12.5px; color: var(--text); line-height: 1.85; }
+  .cdetail .cm { display: block; margin-bottom: 5px; font-size: 14.5px;
+    font-family: "Cambria Math", "STIX Two Math", "Times New Roman", Times, serif; }
+  .cdetail .cm i, .cdetail .cm var { font-style: italic; }
+  .cdetail .cm sub, .cdetail .cm sup { font-size: .70em; font-style: normal; }
+  .cdetail .cm .rm { font-style: normal; }
+  .sqrt > .rdc, .sqrt .rdc { display: inline-block; position: static; font-size: 1em;
+             border-top: .055em solid currentColor; padding: .06em .12em 0 .10em; margin: 0; line-height: 1; }
+
+  /* 公式排版：分式 / 根式 —— 全站统一为「回旋共振 v06」写法（置于末尾，覆盖本文件早期变体） */
+  .frac { display: inline-block; vertical-align: -0.52em; text-align: center; font-size: .78em; margin: 0 .12em; }
+  .frac > .num, .frac .num { display: block; padding: 0 .22em; border-bottom: .055em solid currentColor; line-height: inherit; }
+  .frac > .den, .frac .den { display: block; padding: 0 .22em; line-height: inherit; }
+  .sqrt { display: inline-block; white-space: nowrap; vertical-align: baseline; margin: 0; font-size: 1em; }
+  .sqrt > .rd, .sqrt .rd { display: inline-block; position: static; font-size: 1em; line-height: inherit; padding: 0 .02em 0 0; margin: 0; }
+  .sqrt > .rdc, .sqrt .rdc { display: inline-block; position: static; font-size: 1em;
+             border-top: .055em solid currentColor; padding: .06em .12em 0 .10em; margin: 0; line-height: 1; }
+  .sqrt .rdc:has(sup) { padding-top: .18em; }
+</style>
+</head>
+<body>
+
+<header>
+  <button id="langBtn" class="lang-btn" data-noi18n title="中文 / English">EN</button>
+  <h1>回旋共振实验交互教学工具</h1>
+  <div class="formula"><span class="m"><i>ω</i><sub>c</sub><span class="op">=</span><span class="frac"><span class="num"><i>qB</i></span><span class="den"><i>m</i><sup>*</sup></span></span></span>　·　共振 <span class="m"><i>ω</i><span class="op">=</span><i>ω</i><sub>c</sub></span>　·　<span class="m"><i>m</i><sup>*</sup><span class="op">=</span><span class="frac"><span class="num"><i>qB</i><sub>res</sub></span><span class="den"><i>ω</i></span></span></span>　·　椭球 <span class="m"><i>m</i><sup>*</sup><span class="op">=</span><i>m</i><sub>t</sub><span class="sqrt"><span class="rd">√</span><span class="rdc"><span class="frac"><span class="num"><i>m</i><sub>l</sub></span><span class="den"><i>m</i><sub>t</sub>sin<sup>2</sup><i>θ</i><span class="op">+</span><i>m</i><sub>l</sub>cos<sup>2</sup><i>θ</i></span></span></span></span></div>
+</header>
+<div class="sub-note">
+  磁场里电子绕 <span class="m"><i>B</i></span> 转圈，频率 <b><span class="m"><i>ω</i><sub>c</sub><span class="op">=</span><i>qB</i><span class="sl">/</span><i>m</i><sup>*</sup></span> 只由有效质量定</b>；微波频率正好等于它时，电场每一圈都在给电子添能量 —— 这就是<b>回旋共振</b>。扫磁场、找吸收峰，峰位 <span class="m"><i>B</i><sub>res</sub></span> 直接称出 <span class="m"><i>m</i><sup>*</sup></span>。
+  等能面若是个<b>椭球</b>，转圈的"腰围"随方向变，<span class="m"><i>m</i><sup>*</sup></span> 也就跟着磁场方向变 —— 于是<b>转动样品、看峰怎么跑，就能反推出等能面的形状</b>。
+</div>
+
+<div class="layout">
+  <div class="viz">
+    <div class="card">
+      <div class="sec-title"><span class="mtag">模块一</span>回旋运动与共振判据：<span class="m"><i>v</i><sub>⊥</sub></span> 绕 <span class="m"><i>B</i></span> 转圈、<span class="m"><i>v</i><sub>∥</sub></span> 匀速前进 ⇒ 螺旋线</div>
+      <div class="duo d1">
+        <div class="pane">
+          <div class="pane-t"><b>左｜真实轨迹</b>　电子在均匀 <span class="m"><i>B</i></span> 中的螺旋路径（可拖动转视角）</div>
+          <div class="chart-wrap"><canvas id="orbit" data-h="404" tabindex="0"></canvas></div>
+          <div class="legend" id="legOrbit"></div>
+        </div>
+        <div class="pane">
+          <div class="pane-t"><b>右｜判据</b>　<span class="m"><i>E</i>(<i>t</i>)</span> 与 <span class="m"><i>v</i><sub>⊥</sub>(<i>t</i>)</span> 是否同频同相</div>
+          <div class="chart-wrap"><canvas id="wave" data-h="404" tabindex="0"></canvas></div>
+          <div class="legend" id="legWave"></div>
+        </div>
+      </div>
+      </div>
+
+    <div class="card">
+      <div class="sec-title"><span class="mtag">模块二</span>吸收谱：扫磁场 <span class="m"><i>B</i></span>，找共振峰</div>
+      <div class="chart-wrap"><canvas id="spec" data-h="300" tabindex="0"></canvas></div>
+      <div class="legend" id="legSpec"></div>
+      <div class="hint">实验做法是<b>固定微波频率、扫磁场</b>。实线＝当前 <span class="m"><i>θ</i></span> 下的谱；两条虚线是 <span class="m"><i>θ</i><span class="op">=</span>0°</span> 与 <span class="m"><i>θ</i><span class="op">=</span>90°</span> 的谱。</div>
+    </div>
+
+    <div class="card">
+      <div class="sec-title"><span class="mtag">模块三</span>等能面与 <span class="m"><i>m</i><sup>*</sup>(<i>θ</i>)</span>：转动样品，看<span class="m"><i>m</i><sup>*</sup></span> 怎么跑</div>
+      <div class="duo d2">
+        <div class="pane">
+          <div class="pane-t"><b>左｜几何</b>　电子在<b>垂直于 <span class="m"><i>B</i></span> 的平面</b>里转圈，那一刀切出的截面决定 <span class="m"><i>m</i><sup>*</sup></span></div>
+          <div class="chart-wrap"><canvas id="esurf" data-h="292" tabindex="0"></canvas></div>
+          <div class="legend" id="legSurf"></div>
+        </div>
+        <div class="pane">
+          <div class="pane-t"><b>右｜全貌</b>　把 <span class="m"><i>θ</i></span> 扫满 0°–90° 得到的整条曲线</div>
+          <div class="chart-wrap"><canvas id="mcurve" data-h="292" tabindex="0"></canvas></div>
+          <div class="legend" id="legCurve"></div>
+        </div>
+      </div>
+      </div>
+  </div>
+
+  <div class="side">
+    <div class="card">
+      <div class="sec-title">控制面板</div>
+
+      <div class="ctrl">
+        <div class="ctrl-head"><span>预设</span><span class="val" id="preVal">转动样品抓椭球</span></div>
+        <div class="btn-row tight" id="preBtns"></div>
+        <div class="sub" id="preSub"></div>
+      </div>
+
+      <div class="ctrl">
+        <div class="ctrl-head"><span>等能面形状</span><span class="val" id="shVal">旋转椭球</span></div>
+        <div class="mode-switch" id="shBtns">
+          <button data-m="ell">旋转椭球</button>
+          <button data-m="sph">球面</button>
+        </div>
+        <div class="sub" id="shSub"></div>
+      </div>
+
+      <div class="ctrl">
+        <div class="ctrl-head"><span>磁感应强度 <span class="m"><i>B</i></span></span><span class="val" id="bVal">0.266 T</span></div>
+        <input type="range" id="bSlider" min="2" max="600" step="1" value="266">
+        <div class="sub" id="bSub"></div>
+      </div>
+
+      <div class="ctrl">
+        <div class="ctrl-head"><span>磁场–长轴夹角 <span class="m"><i>θ</i></span></span><span class="val" id="thVal">30°</span></div>
+        <input type="range" id="thSlider" min="0" max="90" step="1" value="30">
+        <div class="sub" id="thSub"></div>
+      </div>
+
+      <div class="ctrl">
+        <div class="ctrl-head"><span>已锁定的样品条件</span></div>
+        <div class="sub" id="fixSub"></div>
+      </div>
+
+      <div class="ctrl">
+        <div class="ctrl-head"><span>动画</span></div>
+        <div class="btn-row tight">
+          <button id="btnPlay">⏸ 暂停</button>
+          <button id="btnReset">↺ 重置</button>
+        </div>
+      </div>
+
+      <div class="ctrl">
+        <div class="ctrl-head"><span>显示</span></div>
+        <div class="btn-row tight" id="ckRow"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="sec-title">读数面板</div>
+      <div class="kv" id="readout"></div>
+      <div class="fold">
+        <div class="fold-head"><span class="chev">▶</span><span>更多读数（旋钮位置与已锁定条件）</span></div>
+        <div class="fold-body"><div class="kv" id="readoutMore"></div></div>
+      </div>
+      </div>
+  </div>
+</div>
+
+<div class="chal-wrap">
+  <div class="card">
+    <div class="chal-bar">
+      <b>引导探究（点击展开，先自己试一试再看答案）</b>
+      <span>挑战任务</span>
+    </div>
+    <div class="chal-grid" id="chalGrid"></div>
+  </div>
+</div>
+
+<div class="site-foot">本工具是 EIT-SP（半导体物理交互式教学工具箱）的一部分（武汉大学物理学院《半导体物理》智慧课程），以 MIT 协议开源，可自由使用与二次开发；转载请保留出处。反馈意见 <a href="mailto:doctorwanghao@qq.com">doctorwanghao@qq.com</a></div>
+
+<script>
+/* ==================================================================
+   i18n（C1 单文件双语：物理代码仍然只有一份）
+   LANG 取值优先级：URL ?lang=en / ?lang=zh  >  localStorage('opl_lang')  >  默认中文。
+   不做 location 跳转——保住「单文件拷走也能用」。
+   三个注入点，**业务字符串一个都不改**：
+     ① partsOf()   画布 token：带 i/sub/sup/un 标记的是物理量、下标与单位，跳过
+     ② fillText/measureText 原型挂钩：兜住直接写进画布的中文串
+     ③ DOM 文本节点：静态 HTML 与 JS 写进来的 innerHTML，用 MutationObserver 兜住新增节点
+   T() 先查整句词典，未命中再按「最长优先」做短语替换，因此拼接串也能翻。
+   漏翻会被记进 window.__MISS，可导出核对。 */
+var LANG = (function () {
+  var m = /[?&]lang=([a-zA-Z]+)/.exec(location.search);
+  var q = m ? m[1].toLowerCase() : "";
+  if (q === "en" || q === "zh") return q;
+  var s = "";
+  try { s = localStorage.getItem("opl_lang") || ""; } catch (e) { }
+  return (s === "en" || s === "zh") ? s : "zh";
+})();
+var ORIG_TITLE = document.title;
+var __MISS = [];
+try { window.__MISS = __MISS; } catch (e) { }
+function noteMiss(s) { if (__MISS.indexOf(s) < 0) __MISS.push(s); }
+function TSoft(s) {
+  if (!T._K) T._K = Object.keys(I18N).sort(function (a, b) { return b.length - a.length; });
+  var out = s, i, k, orig = s;
+  /* 两遍：第一遍只吃长度 ≥ 2 的短语；第二遍的单字 key 只在「传进来的串
+     恰好就是这一个字」时才上场——画布逐字排版会拿单字去 measureText，那一
+     路必须翻。反过来，绝不让单字 key 去切更长的句子：否则「导」「子」「原」
+     会把「半导体」「电子数」「泡利原理」切成半 conduction 体、电 quantum 数、
+     泡利 origin 理这类中英混排。同一条理由也适用于「下」：整句不该被切碎。 */
+  for (var pass = 0; pass < 2; pass++) {
+    for (i = 0; i < T._K.length; i++) {
+      k = T._K[i];
+      if (k.length < 2 && (pass === 0 || orig !== k)) continue;
+      if (out.indexOf(k) >= 0) out = out.split(k).join(I18N[k]);
+    }
+  }
+  return out;
+}
+/* 同一句被 DOM 切成好几个文本节点时，首尾空格会随机落在 data 里；
+   所以除了「整句命中」，再试一次「去空格后命中」并原样补回首尾空白。 */
+function trimMap() {
+  if (T._TM) return T._TM;
+  var m = {};
+  for (var k in I18N) if (Object.prototype.hasOwnProperty.call(I18N, k)) {
+    var t = k.replace(/^\s+|\s+$/g, "");
+    if (t && m[t] === undefined) m[t] = I18N[k];
+  }
+  T._TM = m;
+  return m;
+}
+/* eslint-disable no-use-before-define */
+function T(s) {
+  if (LANG !== "en" || typeof s !== "string" || !s) return s;
+  if (!/[一-鿿]/.test(s)) return s;
+  if (Object.prototype.hasOwnProperty.call(I18N, s)) return I18N[s];
+  var tm = trimMap(), core = s.replace(/^\s+|\s+$/g, "");
+  if (core && tm[core] !== undefined) {
+    var lead = s.slice(0, s.length - s.replace(/^\s+/, "").length);
+    var tail = s.slice(s.replace(/\s+$/, "").length);
+    return lead + tm[core] + tail;
+  }
+  var v = TSoft(s);
+  /* 译完还剩汉字也算漏翻：只翻掉一半的「半吊子译文」曾经让 __MISS 恒为 0。 */
+  if (v === s || /[\u3400-\u9FFF]/.test(v)) noteMiss(s);
+  return v;
+}
+var I18N = {
+  /* ---- 词典：中文原文 → 英文。key 禁含运行时数字（换个参数就漏），数字前后要拆开 ---- */
+  /* ---- 标题与页脚 ---- */
+  "回旋共振实验交互教学工具": "Cyclotron Resonance Experiment — Interactive Toolkit",
+  "　·　共振 ": "　·　resonance ",
+  "　·　椭球 ": "　·　ellipsoid ",
+  "本工具是 EIT-SP（半导体物理交互式教学工具箱）的一部分（武汉大学物理学院《半导体物理》智慧课程），以 MIT 协议开源，可自由使用与二次开发；转载请保留出处。": "This tool is part of EIT-SP, the Educational Interactive Toolkit for Semiconductor Physics (School of Physics and Technology, Wuhan University). Released under the MIT licence: free to use, modify and redistribute, including commercially. Please keep this attribution.",
+  "反馈意见": " Feedback",
+  /* ---- 页首导语 ---- */
+  "\n  磁场里电子绕 ": "\n  In a magnetic field the electron circles around ",
+  " 转圈，频率 ": "; the frequency ",
+  " 只由有效质量定": " is set by the effective mass alone",
+  "；微波频率正好等于它时，电场每一圈都在给电子添能量 —— 这就是": "; when the microwave frequency matches it, the field adds energy on every turn — that is ",
+  "回旋共振": "cyclotron resonance",
+  "。扫磁场、找吸收峰，峰位 ": ". Sweep the field, find the absorption peak, and its position ",
+  " 直接称出 ": " weighs out ",
+  "。\n  等能面若是个": ".\n  If the constant-energy surface is an ",
+  "椭球": "ellipsoid",
+  "，转圈的\"腰围\"随方向变，": ", the \"waist\" of the orbit varies with direction and ",
+  " 也就跟着磁场方向变 —— 于是": " changes with the field direction — so ",
+  "转动样品、看峰怎么跑，就能反推出等能面的形状": "rotating the sample and watching the peak move tells you the shape of the constant-energy surface",
+  /* ---- 模块与图例 ---- */
+  "模块一": "Module 1",
+  "回旋运动与共振判据：": "Cyclotron motion and the resonance criterion: ",
+  " 绕 ": " circles around ",
+  " 转圈、": " and ",
+  " 匀速前进 ⇒ 螺旋线": " drifts at constant speed ⇒ a helix",
+  "左｜真实轨迹": "Left | the real trajectory",
+  "　电子在均匀 ": "　The helical path of the electron in a uniform ",
+  " 中的螺旋路径（可拖动转视角）": " (drag to rotate the view)",
+  "右｜判据": "Right | the criterion",
+  " 与 ": " versus ",
+  " 是否同频同相": ": same frequency and in phase?",
+  "模块二": "Module 2",
+  "吸收谱：扫磁场 ": "Absorption spectrum: sweep the field ",
+  "，找共振峰": " and find the resonance peak",
+  "实验做法是": "Experimentally one ",
+  "固定微波频率、扫磁场": "fixes the microwave frequency and sweeps the field",
+  "。实线＝当前 ": ". The solid line is the spectrum at the present ",
+  " 下的谱；两条虚线是 ": "; the two dashed lines are the spectra for ",
+  " 的谱。": ".",
+  "模块三": "Module 3",
+  "等能面与 ": "The constant-energy surface and ",
+  "：转动样品，看": ": rotate the sample and watch how ",
+  " 怎么跑": " moves",
+  "左｜几何": "Left | geometry",
+  "　电子在": "　The electron circles in a plane ",
+  "垂直于 ": "perpendicular to ",
+  " 的平面": " ",
+  "里转圈，那一刀切出的截面决定 ": "; the section that cut produces determines ",
+  "右｜全貌": "Right | the whole picture",
+  "　把 ": "　Sweeping ",
+  " 扫满 0°–90° 得到的整条曲线": " over 0°–90° gives the whole curve",
+  /* ---- 控制面板 ---- */
+  "控制面板": "Control Panel",
+  "预设": "Preset",
+  "转动样品抓椭球": "rotate the sample to catch the ellipsoid",
+  "等能面形状": "Shape of the constant-energy surface",
+  "旋转椭球": "Ellipsoid of revolution",
+  "球面": "Sphere",
+  "磁感应强度 ": "Magnetic flux density ",
+  "磁场–长轴夹角 ": "Field–long-axis angle ",
+  "已锁定的样品条件": "Locked sample conditions",
+  "动画": "Animation",
+  "⏸ 暂停": "⏸ Pause",
+  "↺ 重置": "↺ Reset",
+  "显示": "Display",
+  "读数面板": "Readout Panel",
+  "更多读数（旋钮位置与已锁定条件）": "More readouts (knob positions and locked conditions)",
+  "旋钮位置": "Knob positions",
+  /* ---- 画布与图例标注 ---- */
+  "螺旋运动　": "Helix　",
+  "共振吸收中：电场持续做功，轨道一圈圈涨大": "Resonant: the field does work, orbit grows",
+  " → 转圈；": " → circling; ",
+  " → 匀速 ⇒ 螺旋": " → drift ⇒ helix",
+  "转圈；": "circling; ",
+  "匀速": "uniform drift",
+  "螺旋": "helix",
+  "轨道半径逐圈变大 ⇒ 电场在持续注入能量": "Orbit grows ⇒ field injects energy",
+  "轨道半径逐圈变大": "orbit grows",
+  "电场在持续注入能量": "field injects energy",
+  "拖动可旋转视角": "drag to rotate",
+  "现在 →": "Now →",
+  "现在": "Now",
+  "两波同频同相 ⇒ p 恒 ≥ 0 ⇒ 净吸收 > 0": "ω = ω_c ⇒ p ≥ 0 ⇒ net absorption > 0",
+  "两波同频同相": "equal frequency, in phase",
+  "恒": "always",
+  "净吸收": "net absorption",
+  " 方向（长轴）": " (long axis)",
+  "方向（长轴）": "direction (long axis)",
+  " 横向": " transverse",
+  "横向": "transverse",
+  " 与长轴夹角）": " to axis)",
+  "与长轴夹角）": "to the long axis)",
+  "：各向异性，": ": anisotropic, so ",
+  " 随 ": " varies with ",
+  " 变化。": ".",
+  " = 4.2 K　样品纯度＝高纯　微波 ": " = 4.2 K　purity = high purity　microwave ",
+  " 就是交变电场角频率）": " is the angular frequency of the alternating field)",
+  "  s　（本工具中 ": "  s　(in this tool ",
+  " 与等能面形状。）": " and the shape of the constant-energy surface.)",
+  "扫场：共振峰位 ": "Field sweep: the resonance peak sits at ",
+  "默认：斜切 30° 共振": "Default: resonance on a 30° oblique cut",
+  " 正好停在峰顶：右侧两波同频同相，功率恒正 ⇒ 轨道一圈圈涨大。": " sits right on the peak: the two waves are of equal frequency and in phase, the power stays positive ⇒ the orbit grows turn by turn.",
+  "球面：峰钉死不动": "sphere: the peak stays pinned",
+  " 沿长轴 ": " along the long axis ",
+  " 垂直长轴 ": " perpendicular to the long axis ",
+  "失谐：偏离峰顶": "off resonance: away from the peak",
+  "螺旋轨迹": "helical trajectory",
+  "圆周投影": "circular projection",
+  "包络虚线": "envelope (dashed)",
+  "夹角标注": "angle marker",
+  " 磁场方向": " field direction",
+  "电子螺旋轨迹": "helical electron trajectory",
+  "当前电子": "the electron at present",
+  "横向圆周投影": "transverse circular projection",
+  " 微波电场": " microwave field",
+  " 横向速度": " transverse velocity",
+  " 瞬时功率": " instantaneous power",
+  "当前 ": "present ",
+  " 的吸收谱": " absorption spectrum",
+  "橙色带＝转动样品时峰位可移动的范围": "the orange band is the range the peak can travel over as the sample rotates",
+  "纵轴 ": "Vertical axis ",
+  " = 零场（": " = zero field (",
+  " = 0）吸收功率，即归一基准": " = 0) absorbed power, i.e. the normalisation baseline",
+  "等能面": "constant-energy surface",
+  " 方向": " direction",
+  "椭球长轴（": "Ellipsoid long axis (",
+  " 方向）": " direction)",
+  "夹角 ": "Angle ",
+  " 曲线": " curve",
+  /* ---- 读数面板键值 ---- */
+  "当前工作点": "Current working point",
+  "共振条件": "Resonance condition",
+  "回旋共振有效质量 ": "Cyclotron effective mass ",
+  "共振磁场 ": "Resonance field ",
+  "当前吸收 ": "Absorption at present ",
+  " = 0）吸收": " = 0) absorption",
+  "峰顶增强 ": "Peak-top enhancement ",
+  "共振吸收 / 零场吸收": "Resonant / zero-field absorption",
+  "（共振处 ": " (at resonance ",
+  "✓ > 1，本样品分得清峰": "✓ > 1, so the peak is resolved for this sample",
+  "磁场 ": "Field ",
+  "回旋频率 ": "Cyclotron frequency ",
+  "失谐 ": "Detuning ",
+  "回旋半径 ": "Cyclotron radius ",
+  " / 螺距 ": " / pitch ",
+  "等能面几何": "Constant-energy-surface geometry",
+  "纵向 ": "Longitudinal ",
+  " / 横向 ": " / transverse ",
+  "各向异性比 ": "Anisotropy ratio ",
+  "峰位行程 ": "Peak travel ",
+  "温度 ": "Temperature ",
+  " / 纯度": " / purity",
+  "4.2 K / 高纯（液氦温区）": "4.2 K / high purity (liquid-helium range)",
+  "方位角 ": "Azimuth ",
+  "0°（绕长轴旋转对称，不影响 m*）": "0° (rotationally symmetric about the long axis; does not affect m*)",
+  "弛豫时间 ": "Relaxation time ",
+  "热速度 ": "Thermal speed ",
+  /* ---- 引导探究与挑战 ---- */
+  "引导探究（点击展开，先自己试一试再看答案）": "Guided inquiry (click to expand — try it yourself before opening the answers)",
+  "挑战任务": "Challenges",
+  "显示参考答案": "Show reference answer",
+  /* ---- 挑战一 ---- */
+  "挑战一　拖 ": "Challenge 1　Drag the ",
+  " 滑块，看模块一左右两图：电子": " slider and watch the two panels of Module 1: how does the electron's ",
+  "转得快慢": "rate of rotation",
+  " 怎么变（回旋频率 ": " change (how does the cyclotron frequency ",
+  " 什么关系）？螺旋在什么条件下才一圈圈": " relate to it)? And under what condition does the spiral ",
+  "涨大": "grow turn by turn",
+  " 变大 ⇒ 转得更快。": " larger ⇒ faster rotation. ",
+  " 成正比：右图蓝波（": " — the blue wave on the right (",
+  "）的频率跟着升，左图电子绕一圈的时间 ": ") rises in frequency with it and the time for one turn on the left, ",
+  " 跟着缩短。当前 ": ", shortens accordingly. At present ",
+  " 但「转得快」不等于「会涨大」。": " But “turning fast” is not the same as “growing”.",
+  " 只有微波频率正好等于回旋频率（": " It only grows when the microwave frequency equals the cyclotron frequency (",
+  "，即 ": ", i.e. ",
+  "）时才涨大：此时右图两条波": "); then the two waves on the right are ",
+  "同频同相": "of equal frequency and in phase",
+  "，功率 ": ", so the power ",
+  " 恒 ≥ 0 ⇒ 电场每一圈都做正功。失谐时一推一拽，": " stays ≥ 0 and the field does positive work on every turn. Off resonance one push cancels one pull, ",
+  " 有正有负、平均为零 ⇒ 不吸收。当前 ": " alternates in sign and averages to zero ⇒ no absorption. At present ",
+  " ⇒ 正落在峰上": " ⇒ right on the peak",
+  "补充：真实的回旋半径 ": "Extra: the true cyclotron radius ",
+  " 与螺距 ": " and the pitch ",
+  " 同样 ∝ 1/B（本例 ": " both scale as 1/B (here ",
+  " nm / ": " nm / ",
+  " nm，读数面板随 B 实时更新）。左图为突出「共振涨大」，几何尺度未按 1/B 缩放。": " nm; both update with B in the readouts). To bring out the resonant growth, the left panel is not drawn to the 1/B scale.",
+  /* ---- 挑战二 ---- */
+  "挑战二　在「球形等能面」和「旋转椭球」之间来回切，同时拖动 ": "Challenge 2　Switch back and forth between “spherical” and “ellipsoid of revolution” while dragging ",
+  "。哪种模式的吸收峰会随磁场方向移动？为什么？": ". In which mode does the absorption peak move with the field direction, and why?",
+  "球形不动，椭球会动。": "A sphere does not move; an ellipsoid does.",
+  "电子是在": "The electron circles in a plane ",
+  "里转圈的，有效质量由那刀切出来的截面决定。球面各向同性 —— 怎么切截面都一样，所以 ": "; the effective mass is set by the section that cut produces. A sphere is isotropic — every cut is the same — so it does not depend on ",
+  " 无关，峰钉死不动；椭球横竖不等长 —— 切面方向变了，": " and the peak stays pinned. An ellipsoid is longer one way than the other, so when the cutting direction changes ",
+  " 就变了，于是峰在 ": " changes and the peak slides between ",
+  " 之间滑动（模块二里那条橙色带就是它的行程）。": " (the orange band in Module 2 is exactly that travel).",
+  " 当前各向异性比 ": " The present anisotropy ratio is ",
+  "。 偏离 1 越远，峰跑得越远。": ". The further it sits from 1, the further the peak travels.",
+  "（就是 ": " (namely ",
+  " T。整条曲线见模块三右图。": " T. The whole curve is in the right panel of Module 3.",
+  /* ---- 挑战三 ---- */
+  "挑战三　椭球模式下把 ": "Challenge 3　In ellipsoid mode, push ",
+  " 从 0° 推到 90°，读 ": " from 0° to 90° and read off ",
+  " 和 ": " and ",
+  "。两个端点各是多少？和公式 ": ". What are the two end values, and do they match the formula ",
+  " 对得上吗？": "?",
+  " 椭球时曲线两端之比不是一个独立的数。": " For the ellipsoid the ratio of the two ends is not an independent number: ",
+  "=0° 处是 ": "at θ = 0° it is ",
+  "=90° 处是 ": "at θ = 90° it is ",
+  "，二者之比正是 ": ", and their ratio is exactly ",
+  "  —— 所以": "  — so ",
+  " 越大，曲线越「弯」": ", the larger the ratio, the more strongly the curve bends",
+  "；一旦比值取 1（切到球面），比值也变成 1，曲线就平了。": "; once the ratio is set to 1 (switch to a sphere) the ratio of the two ends is 1 too and the curve goes flat.",
+  "，两端为 ": ", the two ends being ",
+  "，比值 ": ", a ratio of ",
+  /* ---- 挑战四 ---- */
+  "挑战四　盯着模块三": "Challenge 4　Watch the ",
+  "右边": "right panel of Module 3",
+  "那条 ": ", the ",
+  " 曲线，在「旋转椭球」与「球面」之间来回切。什么时候它被压成一条水平线？椭球时曲线两端之比是多少，这个值由什么决定？": " curve, switching between “ellipsoid of revolution” and “sphere”. When does it collapse into a horizontal line? For the ellipsoid, what is the ratio of the two ends and what decides it?",
+  /* ---- 挑战五 ---- */
+  "挑战五　把 ": "Challenge 5　Push ",
+  " 一路压到最小（0.002 T），盯模块二的谱：": " down to its minimum (0.002 T) and watch the spectrum in Module 2: ",
+  "峰还在吗？谱变了吗？": "is the peak still there, and has the spectrum changed?",
+  " 再看读数面板里的 ": " Then look at the ",
+  "  —— 它跟着变了吗？这说明「偏离共振」和「峰被抹平」": " in the readouts — does that change too? Does that mean “being off resonance” and “the peak being washed out” are ",
+  "是不是一回事": "one and the same",
+  "谱一个像素都不会动，峰也一直都在。": "The spectrum does not shift by a single pixel and the peak is there all along.",
+  " 峰位 ": " The peak position ",
+  " 只由 ": " is set only by ",
+  " 定，峰宽只由 ": " and its width only by ",
+  " 定 —— 两者都与「你站在谱上的哪一点」无关。拖 ": " — neither depends on where you happen to stand on the spectrum. Dragging ",
+  " 只是把工作点竖线挪到谱的远端，那是": " only moves the working-point line out to the far end of the spectrum, and that is ",
+  "失谐": "being off resonance",
+  "，不是把峰抹掉。": ", not the peak being washed out.",
+  " 读数里的 ": " In the readouts ",
+  " 也纹丝不动：判据必须取在": " does not budge either: the criterion has to be taken at ",
+  "共振处": "resonance",
+  "（那里 ": " (where ",
+  "，所以 ": ", so ",
+  "）。而「当前 ": "). Whereas the “",
+  " 处的 ": " at the present ",
+  "」随 ": "” varies with ",
+  " 变，量的是": " and measures ",
+  "离峰多远": "how far you are from the peak",
+  "，不能拿来判峰的存亡 —— 把 ": "; it cannot decide whether the peak survives — push ",
+  " 拉到最小它跌破 1，谱却一点没变，就是这个道理。": " to its minimum and it falls below 1, while the spectrum does not change at all — exactly the point.",
+  "真正能让峰消失的只有 ": "The only thing that can really make the peak disappear is ",
+  "。马蒂森定则 ": ". Matthiessen's rule ",
+  "　· 4.2 K + 高纯（本工具）：": "　· 4.2 K + high purity (this tool): ",
+  "  ⇒ 峰又高又尖": "  ⇒ the peak is tall and sharp",
+  "　· 300 K + 高纯：": "　· 300 K + high purity: ",
+  "峰被散射淹没": "the peak is drowned by scattering",
+  "　· 300 K + 重掺：": "　· 300 K + heavy doping: ",
+  "本工具把样品锁死在最好一边（": "This tool locks the sample to the best side (",
+  " s，上限）；": " s, the upper limit); ",
+  "低温压住声子散射、高纯压住杂质散射": "low temperature suppresses phonon scattering and high purity suppresses impurity scattering",
+  "，两条腿缺一条 ": "; miss either leg and ",
+  " 就上不去，": " cannot rise, so ",
+  " 立刻跌破 1 —— 所以真实实验必须低温高纯，还要靠": " falls below 1 at once — which is why a real experiment needs low temperature and high purity, plus ",
+  "高频微波 + 强磁场": "high-frequency microwaves and a strong field",
+  "把 ": " to push ",
+  " 顶上去。": " up.",
+  "：各向同性，": ": isotropic, ",
+  " 与磁场方向无关。": " is independent of the field direction.",
+  " ⇒ 各向同性：怎么转 ": " ⇒ isotropic: however you rotate ",
+  "，谱线一动不动，模块三右图被压成水平线。": ", the line never moves, and the right-hand plot of module 3 is squashed into a horizontal line.",
+  "球面：各向同性，": "Sphere: isotropic, ",
+  " 与方向无关": " independent of direction",
+  "与方向无关": "independent of direction",
+  "那一刀截到的全是横向 ⇒ ": "That slice cuts only transverse directions ⇒ ",
+  "，峰在 ": ", the peak lies at ",
+  "T（最左端）。": " T (far left end).",
+  "截面含长轴 ⇒ ": "The section contains the long axis ⇒ ",
+  "，峰右移到 ": ", so the peak shifts right to ",
+  "T（最右端）。": " T (far right end).",
+  "峰在 ": "The peak is at ",
+  " 拉到 ": " pulled to ",
+  "T：两波不同步，功率有正有负 ⇒ 净吸收 ≈ ": " T: the two waves are out of step, the power is positive and negative by turns ⇒ net absorption ≈ ",
+  "，轨道不涨。": ", and the orbit does not grow.",
+  "失谐：一推一拽相互抵消，轨道半径不变": "Off resonance: the push and the pull cancel, so the orbit radius does not change",
+  "：一推一拽相互抵消，轨道半径不变": ": the push and the pull cancel, so the orbit radius does not change",
+  "轨道半径一圈圈保持 ⇒ 没有净吸收": "The orbit radius is kept turn after turn ⇒ no net absorption",
+  "轨道半径一圈圈保持": "The orbit radius is kept turn after turn",
+  "没有": "no",
+  "两波不同步 ⇒ p 有正有负 ⇒ 净吸收 ≈ ": "The two waves are out of step ⇒ p is positive and negative by turns ⇒ net absorption ≈ ",
+  "两波不同步": "the two waves are out of step",
+  "有正有负": "positive and negative by turns",
+  "自定义": "custom",
+  "已手动改动参数。": "The parameters have been changed by hand.",
+  "▶ 播放": "▶ Play",
+  "⇒ 已偏离峰（半高宽外）": "⇒ off the peak (beyond the half-width)",
+  "。 已经≈1 ⇒ 这就是球面，峰当然不动。": ". It is already ≈ 1 ⇒ this is the sphere, so of course the peak does not move.",
+  "现在就是球面": "It is a sphere right now",
+  "）：各个方向等价，m*(": "): every direction is equivalent, m*(",
+  ") 恒等于 ": ") is identically equal to ",
+  "，曲线被压成水平线 —— 对应到模块二，就是两条虚线重合、峰钉死不动。": ", so the curve is squashed flat into a horizontal line — in Module 2 that is exactly the two dashed lines coinciding, with the peak pinned in place.",
+};
+
+/* 注入点②：画布直写字符串。老工具直接调 g.fillText()，这里在原型上兜住。
+   measureText 必须一起挂钩，否则「量的宽度」和「量的文字」用的不是同一个串。 */
+(function () {
+  if (typeof CanvasRenderingContext2D === "undefined") return;
+  var ft = CanvasRenderingContext2D.prototype.fillText;
+  CanvasRenderingContext2D.prototype.fillText = function (s, x, y) {
+    if (typeof s === "string") arguments[0] = T(s);
+    return ft.apply(this, arguments);
+  };
+  var mt = CanvasRenderingContext2D.prototype.measureText;
+  CanvasRenderingContext2D.prototype.measureText = function (s) {
+    return mt.call(this, typeof s === "string" ? T(s) : s);
+  };
+})();
+
+/* 注入点④：逐字绘制的画布串。drawMath 一类把中文按单字拆成 token 再逐个 fillText，
+   T() 每次只见到一个汉字 ⇒ 整句词条永远命中不了。这里在整串进入分词之前先整体翻译，
+   于是画布标注也走「整句优先」，与 DOM 同一个口径。没有这些函数的工具自动跳过。
+   ⚠️ 签名坑：drawMath / measureMath 的第一个参数是 canvas context（对象），文本在第
+   二位；早期版本照着 arguments[0] 翻，等于把 context 送去 T()，补丁全程空转。
+   这里改为「找到第一个含中文的字符串参数」再翻，既躲开 context，也不会误伤
+   align / weight 之类以英文字符串传的选项。 */
+(function () {
+  ["drawMath", "drawMathHalo", "measureMath"].forEach(function (n) {
+    var f = window[n];
+    if (typeof f !== "function") return;
+    window[n] = function () {
+      for (var i = 0; i < arguments.length; i++) {
+        if (typeof arguments[i] === "string" && /[\u3400-\u9FFF]/.test(arguments[i])) {
+          arguments[i] = T(arguments[i]);
+          break;
+        }
+      }
+      return f.apply(this, arguments);
+    };
+  });
+})();
+
+
+/* ---- DOM 文本节点 ---- */
+function i18nNode(n) {
+  var el = n.parentElement;
+  if (!el) return;
+  var tag = el.tagName;
+  if (tag === "SCRIPT" || tag === "STYLE") return;
+  if (el.closest && el.closest("[data-noi18n]")) return;
+  var cur = n.nodeValue;
+  if (n.__orig === undefined || (cur !== n.__last && cur !== n.__orig)) n.__orig = cur;
+  var want = LANG === "en" ? T(n.__orig) : n.__orig;
+  if (want !== cur) n.nodeValue = want;
+  n.__last = want;
+}
+/* 属性（title / placeholder / optgroup label …）不是文本节点，MutationObserver 覆盖不到，
+   必须单独过一遍：否则悬停提示、下拉分组名会残留中文。原文缓存在元素 expando 上，
+   切回中文时原样写回。改属性不会触发 childList/characterData 观察器，不会递归。 */
+var I18N_ATTRS = ["title", "placeholder", "aria-label", "alt", "label"];
+function i18nAttrs(root) {
+  var els = [root], i, j;
+  if (root.querySelectorAll) els = els.concat(Array.prototype.slice.call(root.querySelectorAll("*")));
+  for (i = 0; i < els.length; i++) {
+    var el = els[i];
+    if (!el.getAttribute) continue;
+    if (el.closest && el.closest("[data-noi18n]")) continue;
+    for (j = 0; j < I18N_ATTRS.length; j++) {
+      var a = I18N_ATTRS[j];
+      if (!el.hasAttribute(a)) continue;
+      var key = "__a_" + a;
+      if (el[key] === undefined) el[key] = el.getAttribute(a);
+      var want = LANG === "en" ? T(el[key]) : el[key];
+      if (want !== el.getAttribute(a)) el.setAttribute(a, want);
+    }
+  }
+}
+function i18nWalk(root) {
+  var w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null, false), n, c = 0;
+  while ((n = w.nextNode())) { i18nNode(n); c++; }
+  i18nAttrs(root);
+  return c;
+}
+var _i18nBusy = false;
+function i18nWatch() {
+  if (typeof MutationObserver === "undefined") return;
+  var mo = new MutationObserver(function (ms) {
+    if (_i18nBusy) return;
+    _i18nBusy = true;
+    try {
+      for (var i = 0; i < ms.length; i++) {
+        var m = ms[i];
+        if (m.type === "childList") {
+          for (var j = 0; j < m.addedNodes.length; j++) {
+            var nd = m.addedNodes[j];
+            if (nd.nodeType === 3) i18nNode(nd);
+            else if (nd.nodeType === 1) i18nWalk(nd);
+          }
+        } else if (m.type === "characterData") i18nNode(m.target);
+      }
+    } finally { _i18nBusy = false; }
+  });
+  mo.observe(document.body, { childList: true, subtree: true, characterData: true });
+}
+function setLang(l) {
+  LANG = l;
+  try { localStorage.setItem("opl_lang", l); } catch (e) { }
+  document.documentElement.lang = l === "en" ? "en" : "zh-CN";
+  var btn = document.getElementById("langBtn");
+  if (btn) btn.textContent = l === "en" ? "中文" : "EN";
+  document.title = l === "en" ? T(ORIG_TITLE) : ORIG_TITLE;
+  i18nWalk(document.body);
+  if (typeof syncInputs === "function") syncInputs();
+  if (typeof render === "function") render();
+}
+
+
+
+/* ---------------- 直接 fillText / strokeText 的自动排版钩子 ----------------
+   有些标注不走 txt() 而是直接 g.fillText()（状态徽标、能带边等），
+   这里在原型层统一处理：含数学记法的字符串先按 LaTeX 规则拆段再绘制，
+   measureText 同步返回拆段总宽，白底框长度自动跟着变。 */
+const NEED_MATH_HM = /[\u2070-\u209C\u00B2\u00B3\u00B9]|_\{?[A-Za-z0-9\u0370-\u03ff]|\^\{?[\d(\-]|\d(\.\d+)?[eE][+\-]\d|\u221A/;
+/* 原生 measureText：mathSegsHM 内部量宽必须走这一条，
+   否则 measureText 被钩子接管后会 self-recursion（RangeError）。 */
+var _mRawHM = null;
+function measureRawHM(g, s) { return (_mRawHM ? _mRawHM : g.measureText).call(g, s).width; }
+function mathSegsHM(g, s) {
+  const f = String(g.font || "");
+  const mm = /(\d+(?:\.\d+)?)px/.exec(f);
+  const size = mm ? parseFloat(mm[1]) : 12;
+  const family = f.replace(/^(?:\s*(?:italic|oblique|bold|[1-9]00)\s*)*\d+(?:\.\d+)?px\s*/, "");
+  const style = /italic|oblique/.test(f) ? "italic " : (/bold|[6-9]00/.test(f) ? "bold " : "");
+  const parts = AUTO(s), laid = [];
+  let w = 0;
+  for (const p of parts) {
+    const small = !!(p.sup || p.sub);
+    const fs = style + (small ? (size * 0.74).toFixed(2) : size.toFixed(2)) + "px " + family;
+    g.font = fs;
+    const tw = measureRawHM(g, p.s);
+    laid.push({ s: p.s, w: tw, fs: fs, dy: small ? (p.sup ? -size * 0.40 : size * 0.22) : 0 });
+    w += tw;
+  }
+  return { laid: laid, w: w, family: family, style: style, size: size };
+}
+(function hookMathHM() {
+  if (window.__MATH_HOOK) return; window.__MATH_HOOK = 1;
+  const P = CanvasRenderingContext2D.prototype;
+  const _fill = P.fillText, _stroke = P.strokeText, _measure = P.measureText;
+  function draw(drawRaw, g, s, x, y, rest) {
+    const info = mathSegsHM(g, s);
+    const al = g.textAlign, bl = g.textBaseline;
+    const cx = al === "right" ? x - info.w : (al === "center" ? x - info.w / 2 : x);
+    g.textAlign = "left";
+    let px = cx;
+    for (const L of info.laid) {
+      g.font = L.fs;
+      drawRaw.call(g, L.s, px, y + L.dy, ...rest);
+      px += L.w;
+    }
+    g.textAlign = al; g.textBaseline = bl;
+    g.font = info.style + info.size.toFixed(2) + "px " + info.family;
+    return info;
+  }
+  /* __HM_SQRT：根号例程 mDrawSqrt 正在画 √ 字形，它是根号的一部分
+     （紧接着会补一条压住被开方式的横线），不能再被自动排版钩子接管，
+     否则会被误判成「裸 √」。 */
+  P.fillText = function (s, x, y) {
+    if (window.__HM_SQRT || typeof s !== "string" || !NEED_MATH_HM.test(s)) return _fill.apply(this, arguments);
+    draw(_fill, this, s, x, y, Array.prototype.slice.call(arguments, 3));
+  };
+  P.strokeText = function (s, x, y) {
+    if (window.__HM_SQRT || typeof s !== "string" || !NEED_MATH_HM.test(s)) return _stroke.apply(this, arguments);
+    draw(_stroke, this, s, x, y, Array.prototype.slice.call(arguments, 3));
+  };
+  if (!_mRawHM) _mRawHM = _measure;
+  P.measureText = function (s) {
+    if (window.__HM_IN || typeof s !== "string" || !NEED_MATH_HM.test(s)) return _measure.call(this, s);
+    window.__HM_IN = 1;
+    const save = this.font;
+    let info;
+    try { info = mathSegsHM(this, s); } finally { window.__HM_IN = 0; }
+    this.font = save;
+    return { width: info.w, get actualBoundingBoxLeft() { return 0; }, get actualBoundingBoxRight() { return info.w; } };
+  };
+})();
+
+/* ---------------- HTML 侧自动 LaTeX 排版 ----------------
+   读数 / 说明 / 按钮名里由 JS 拼出来的 cm⁻³、E_c、2.5e+8，
+   在写进 innerHTML 之前转成真 <sup>/<sub>；标签与属性原样放过（title 不会被塞进尖括号）。
+   与画布侧 AUTO() 对偶，保证网页和画布按同一套规则排版。 */
+const AUTOH_SUP = { "⁰": "0", "¹": "1", "²": "2", "³": "3", "⁴": "4", "⁵": "5", "⁶": "6",
+  "⁷": "7", "⁸": "8", "⁹": "9", "⁺": "+", "⁻": "−", "⁼": "=", "⁽": "(", "⁾": ")", "ⁿ": "n", "ⁱ": "i" };
+const AUTOH_SUB = { "₀": "0", "₁": "1", "₂": "2", "₃": "3", "₄": "4", "₅": "5", "₆": "6",
+  "₇": "7", "₈": "8", "₉": "9", "₊": "+", "₋": "−", "₌": "=", "₍": "(", "₎": ")",
+  "ₐ": "a", "ₑ": "e", "ₒ": "o", "ₓ": "x", "ₔ": "ə", "ₕ": "h", "ₖ": "k", "ₗ": "l",
+  "ₘ": "m", "ₙ": "n", "ₚ": "p", "ₛ": "s", "ₜ": "t", "ᵣ": "r", "ᵤ": "u", "ᵥ": "v" };
+const TEXH_NEED = /[\u2070-\u209C\u00B2\u00B3\u00B9]|_\{?[A-Za-z0-9\u0370-\u03ff]|\^\{?[\d(\-]|\d(\.\d+)?[eE][+\-]\d|\u221A/;
+/* 从 i 处（必须是 '<'）扫出一个"完整元素"的结束下标（含嵌套），失败返回 -1 */
+function TEXH_elemEnd(h, i) {
+  if (h.charAt(i) !== "<") return -1;
+  let depth = 0, j = i, guard = 0;
+  while (j < h.length && guard++ < 4000) {
+    if (h.charAt(j) !== "<") { j++; continue; }
+    const e = TEXH_tagEnd(h, j);
+    if (e < 0) return -1;
+    const isClose = h.charAt(j + 1) === "/";
+    const selfClose = h.charAt(e - 2) === "/";
+    if (isClose) { depth--; j = e; if (depth <= 0) return j; }
+    else if (selfClose) { j = e; if (depth === 0) return j; }
+    else { depth++; j = e; }
+  }
+  return -1;
+}
+/* √ 后面直接跟一个元素：√<i>E</i> → √‾E（前两条规则只吃 √(A) 与 √字母串） */
+function TEXHsqrtElem(s) {
+  let out = "", i = 0, guard = 0;
+  while (guard++ < 400) {
+    const k = s.indexOf("\u221A", i);
+    if (k < 0) break;
+    out += s.slice(i, k);
+    /* 守卫：√ 后面已是闭标签 ⇒ 该 √ 已排版过（对整段 HTML 重复跑 TEXH 会把 </span> 当成被开方式，
+       层层包出空壳根号，视觉上变成 √−3 / √−E），原样输出不再包裹 */
+    if (s.charAt(k + 1) === "<" && s.charAt(k + 2) === "/") { out += "\u221A"; i = k + 1; continue; }
+    let rad = null, end = k + 1;
+    if (s.charAt(k + 1) === "(") {
+      /* √(…) ：被开方式里常有标签，括号本身不在同一个文本片段里，必须整串扫 */
+      let depth = 0, p = k + 1;
+      while (p < s.length) {
+        const c = s.charAt(p);
+        if (c === "(") depth++;
+        else if (c === ")") { depth--; if (depth === 0) { rad = s.slice(k + 2, p); end = p + 1; break; } }
+        p++;
+      }
+    } else {
+      const e = TEXH_elemEnd(s, k + 1);
+      if (e > 0 && e - k < 500) { rad = s.slice(k + 1, e); end = e; }
+    }
+    if (rad !== null && rad.length) {
+      out += "<span class=\"sqrt\"><span class=\"rd\">\u221A</span><span class=\"rdc\">" + rad + "</span></span>";
+      i = end;
+    } else { out += "\u221A"; i = k + 1; }
+  }
+  return out + s.slice(i);
+}
+function TEXHpart(t) {
+  let s = t;
+  /* 根号：√ 或 √(A) → <span class="sqrt">√<span class="rd"><span class="rdc">A</span></span></span>（A 内不含嵌套括号） */
+  s = s.replace(/<span class="(?:op|rm|fn|v|u)">\u221A<\/span>/g, "\u221A");
+  s = s.replace(/\u221A<span class="(?:op|rm)">\(<\/span>([^()]{1,120}?)<span class="(?:op|rm)">\)<\/span>/g, function (m, a) {
+    return "<span class=\"sqrt\"><span class=\"rd\">\u221A</span><span class=\"rdc\">" + a + "</span></span>";
+  });
+  s = s.replace(/\u221A\(([^()]{1,120})\)/g, function (m, a) {
+    return "<span class=\"sqrt\"><span class=\"rd\">\u221A</span><span class=\"rdc\">" + a + "</span></span>";
+  });
+  s = s.replace(/\u221A([A-Za-z0-9\u0370-\u03ff]{1,6})/g, function (m, a) {
+    return "<span class=\"sqrt\"><span class=\"rd\">\u221A</span><span class=\"rdc\">" + a + "</span></span>";
+  });
+  s = s.replace(/(\d(?:\.\d+)?)e([+-])(\d+)/g, function (m, a, sg, e) {
+    return a + "\u00d710<sup>" + (sg === "-" ? "\u2212" : "") + e + "</sup>";
+  });
+  s = s.replace(/([A-Za-z\u0370-\u03ff)\]])\^\{([^{}]{1,12})\}/g, "$1<sup>$2</sup>");
+  s = s.replace(/([A-Za-z\u0370-\u03ff)\]])\^(\d+(?:\.\d+)?)/g, "$1<sup>$2</sup>");
+  s = s.replace(/([A-Za-z\u0370-\u03ff])_\{([A-Za-z0-9\u0370-\u03ff+\-]{1,8})\}/g, "<span class='m'><i>$1</i><sub>$2</sub></span>");
+  s = s.replace(/([A-Za-z\u0370-\u03ff])_([A-Za-z0-9\u0370-\u03ff]{1,6})(?![A-Za-z0-9])/g, "<span class='m'><i>$1</i><sub>$2</sub></span>");
+  if (/[\u2070-\u209C\u00B2\u00B3\u00B9]/.test(s)) {
+    let out = "", i = 0;
+    while (i < s.length) {
+      const ch = s[i];
+      if (AUTOH_SUP[ch] !== undefined || AUTOH_SUB[ch] !== undefined) {
+        const isSup = AUTOH_SUP[ch] !== undefined, tab = isSup ? AUTOH_SUP : AUTOH_SUB;
+        let j = i, buf = "";
+        while (j < s.length && (isSup ? AUTOH_SUP[s[j]] !== undefined : AUTOH_SUB[s[j]] !== undefined)) {
+          buf += tab[s[j]]; j++;
+        }
+        out += "<" + (isSup ? "sup" : "sub") + ">" + buf + "</" + (isSup ? "sup" : "sub") + ">";
+        i = j;
+      } else { out += ch; i++; }
+    }
+    s = out;
+  }
+  return s.indexOf("\u221A") >= 0 ? TEXHsqrtElem(s) : s;
+}
+/* 只有真正的标签才整段跳过：正文里裸写的 '<'（如 "t₂ < 0"）必须当普通字符，
+   否则 indexOf('>') 会一路吞掉后面整段，E₂⁰ 这类记法就漏排了。 */
+function TEXH_tagEnd(h, i) {
+  if (h.charAt(i) !== "<") return -1;
+  const c = h.charAt(i + 1);
+  if (c === "!" || c === "/") { const j = h.indexOf(">", i); return (j >= 0 && j - i < 300) ? j + 1 : -1; }
+  if (!/[A-Za-z]/.test(c)) return -1;
+  let j = i + 1;
+  while (j < h.length && /[A-Za-z0-9]/.test(h.charAt(j))) j++;
+  if (j === i + 1) return -1;
+  if (h.charAt(j) === ">") return j + 1;
+  if (h.charAt(j) !== " " && h.charAt(j) !== "\n" && h.charAt(j) !== "\t") return -1;
+  const g = h.indexOf(">", j), nx = h.indexOf("<", j);
+  if (g < 0 || g - i > 300) return -1;
+  if (nx >= 0 && nx < g) return -1;
+  return g + 1;
+}
+function TEXH(h) {
+  if (typeof h !== "string" || !TEXH_NEED.test(h)) return h;
+  if (h.indexOf("\u221A") >= 0) h = h.replace(/<span class="(?:op|rm|fn|v|u)">\u221A<\/span>/g, "\u221A");
+  if (h.indexOf("<") < 0) return TEXHpart(h);
+  let out = "", i = 0, n = h.length, guard = 0;
+  while (i < n && guard++ < 40000) {
+    const e = TEXH_tagEnd(h, i);
+    if (e > 0) { out += h.slice(i, e); i = e; continue; }
+    let j = i;
+    while (j < n && TEXH_tagEnd(h, j) <= 0) j++;
+    out += TEXHpart(h.slice(i, j)); i = j;
+  }
+  const r = out + h.slice(i);
+  return r.indexOf("\u221A") >= 0 ? TEXHsqrtElem(r) : r;
+}
+(function hookHTML() {
+  if (window.__TEXH_HOOK) return; window.__TEXH_HOOK = 1;
+  const d = Object.getOwnPropertyDescriptor(Element.prototype, "innerHTML");
+  if (!d || !d.set) return;
+  Object.defineProperty(Element.prototype, "innerHTML", {
+    configurable: true, get: d.get,
+    set: function (v) { d.set.call(this, typeof v === "string" ? TEXH(v) : v); }
+  });
+  /* insertAdjacentHTML 也会被用到 */
+  const ia = Element.prototype.insertAdjacentHTML;
+  Element.prototype.insertAdjacentHTML = function (pos, v) {
+    return ia.call(this, pos, typeof v === "string" ? TEXH(v) : v);
+  };
+})();
+
+/* ---------------- 画布自动 LaTeX 排版 ----------------
+   老调用点 txt(g, "cm⁻³") / txt(g, "E_c") / txt(g, "2.5e+8") 一行都不用改，
+   只要在绘制前把字符串解析成分段零件即可。规则与网页侧一致：
+   物理量斜体、描述性下标与单位正体、幂次用真上标（不用 Unicode 伪字符）。 */
+const SUPMAP = { "⁰": "0", "¹": "1", "²": "2", "³": "3", "⁴": "4", "⁵": "5", "⁶": "6",
+  "⁷": "7", "⁸": "8", "⁹": "9", "⁺": "+", "⁻": "−", "⁼": "=", "⁽": "(", "⁾": ")", "ⁿ": "n", "ⁱ": "i" };
+const SUBMAP = { "₀": "0", "₁": "1", "₂": "2", "₃": "3", "₄": "4", "₅": "5", "₆": "6",
+  "₇": "7", "₈": "8", "₉": "9", "₊": "+", "₋": "−", "₌": "=", "₍": "(", "₎": ")",
+  "ₐ": "a", "ₑ": "e", "ₒ": "o", "ₓ": "x", "ₔ": "ə", "ₕ": "h", "ₖ": "k", "ₗ": "l",
+  "ₘ": "m", "ₙ": "n", "ₚ": "p", "ₛ": "s", "ₜ": "t", "ᵣ": "r", "ᵤ": "u", "ᵥ": "v" };
+const MATH_IDCH = /[A-Za-z\u0370-\u03ff]/;
+const NEED_MATH = /[\u2070-\u209C\u00B2\u00B3\u00B9]|_\{?[A-Za-z0-9\u0370-\u03ff]|\^\{?[\d(\-]|\d(\.\d+)?[eE][+\-]\d/;
+function AUTO(s) {
+  const out = [];
+  let buf = "", mode = 0;
+  const emit = (t, kind) => {
+    if (!t) return;
+    if (kind === 1) out.push({ s: t, sup: true });
+    else if (kind === -1) out.push({ s: t, sub: true });
+    else out.push({ s: t });
+  };
+  let i = 0, italicAll = false;
+  while (i < s.length) {
+    const ch = s[i];
+    if (SUPMAP[ch] !== undefined) { if (mode !== 1) { emit(buf, mode); buf = ""; mode = 1; } buf += SUPMAP[ch]; i++; continue; }
+    if (SUBMAP[ch] !== undefined) { if (mode !== -1) { emit(buf, mode); buf = ""; mode = -1; } buf += SUBMAP[ch]; i++; continue; }
+    if (mode) { emit(buf, mode); buf = ""; mode = 0; }
+    const rest = s.slice(i);
+    const sc = /^\d(\.\d+)?[eE][+\-]\d{1,3}/.exec(rest);       /* ASCII 伪科学计数 2.5e+8 */
+    if (sc) {
+      const parts = sc[0].split(/[eE]/);
+      emit(parts[0] + "\u00d710", 0); emit(String(+parts[1]).replace("-", "\u2212"), 1);
+      i += sc[0].length; continue;
+    }
+    if (MATH_IDCH.test(ch) && i + 1 < s.length && (s[i + 1] === "_" || s[i + 1] === "^")) {
+      const sup = s[i + 1] === "^";
+      let j = i + 2, grp = "";
+      if (s[j] === "{") { const e = s.indexOf("}", j); if (e > 0) { grp = s.slice(j + 1, e); j = e + 1; } }
+      else {
+        const RCJK = /[\u2E80-\u9FFF]/, RASC = /[A-Za-z0-9\u0370-\u03ff+\-]/;
+        if (RCJK.test(s[j])) { while (j < s.length && RCJK.test(s[j]) && j - i < 8) j++; }   /* 中文描述性下标：τ_直接、E_声子 */
+        else { while (j < s.length && RASC.test(s[j])) j++; }
+        grp = s.slice(i + 2, j);
+      }
+      if (grp) {
+        emit(ch, 0);
+        if (italicAll || /^[A-Za-z\u0370-\u03ff]$/.test(ch)) out[out.length - 1].i = true;
+        emit(sup ? grp.replace(/-/g, "\u2212") : grp, sup ? 1 : -1);
+        i = j; continue;
+      }
+    }
+    buf += ch; i++;
+  }
+  emit(buf, mode);
+  return out;
+}
+function fontInfo(font, dflt) {
+  const f = String(font || "");
+  const m = /(\d+(?:\.\d+)?)px/.exec(f);
+  return { fp: m ? parseFloat(m[1]) : (dflt || 12), bd: /bold|70\d|600/.test(f), it: /italic|oblique/.test(f) };
+}
+
+/* ---------------- HTML 字符串 → 画布零件（网页与画布共用同一份排版） ----------------
+   mtxt(g, TX(H_NA), x, y, col, fp) —— H_* 常量本来就在喂 innerHTML，
+   再喂给 TX() 就不会出现「网页斜体、画布正体」的两边不一致。
+   <i> 斜体、<sub> 下标、<sup> 上标；<span class="op|un|rm|sqrt|frac"> 只剥标签（保持正体）。 */
+const catA = (...a) => [].concat(...a);
+function TX(h) {
+  const t = String(h == null ? "" : h)
+    .replace(/<span\b[^>]*>/g, "").replace(/<\/span>/g, "")
+    .replace(/<i\b[^>]*>/g, "<i>").replace(/<b\b[^>]*>/g, "").replace(/<\/b>/g, "")
+    .replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&").replace(/&nbsp;/g, " ");
+  const out = [], re = /<i>([\s\S]*?)<\/i>|<sub>([\s\S]*?)<\/sub>|<sup>([\s\S]*?)<\/sup>|([^<]+)/g;
+  let m;
+  while ((m = re.exec(t))) {
+    const raw = s => s == null ? null : s.replace(/<[^>]*>/g, "");
+    if (m[1] != null) out.push({ s: raw(m[1]), i: true });
+    else if (m[2] != null) out.push({ s: raw(m[2]), sub: true });
+    else if (m[3] != null) out.push({ s: raw(m[3]), sup: true });
+    else if (m[4]) out.push({ s: m[4] });
+  }
+  return out;
+}
+function TXof(...a) { return catA(...a.map(TX)); }
+
+/* ---------------- 0. 小工具 ---------------- */
+const $ = id => document.getElementById(id);
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const fmt = (v, n) => (isFinite(v) ? v.toFixed(n === undefined ? 2 : n) : "—");
+const MM = h => '<span class="m">' + h + "</span>";
+function sciH(v, n) {
+  if (!isFinite(v) || v === 0) return "0";
+  const e = Math.floor(Math.log10(Math.abs(v)));
+  const m = (v / Math.pow(10, e)).toFixed(n === undefined ? 1 : n);
+  /* 1 ≦ |v| < 10 时直接写尾数，不再拖一个 ×10⁰ */
+  if (e === 0) return m;
+  /* 指数里的负号用 U+2212（LaTeX 减号），不用 ASCII 连字符 */
+  return m + "×10<sup>" + String(e).replace("-", "−") + "</sup>";
+}
+function stripTags(h) {
+  /* 原生 title tooltip 只吃纯文本，所以先把排版还原成可读的线性写法：
+     frac → A/B、sub → _x、sup → ^x，最后用临时 span 的 textContent 剥标签
+     （不能用正则剥：< 这类实体会原样留下）。 */
+  var s0 = String(h === undefined || h === null ? "" : h)
+    .replace(/<span class=[^>]*sqrt[^>]*>\s*<span class=[^>]*rd[^>]*>√<\/span><span class=[^>]*rdc[^>]*>([\s\S]*?)<\/span><\/span>/g, "√$1")
+    .replace(/<span class=[^>]*frac[^>]*>\s*<span class=[^>]*num[^>]*>([\s\S]*?)<\/span><span class=[^>]*den[^>]*>([\s\S]*?)<\/span><\/span>/g, "$1/$2")
+    .replace(/([\u2070\u00B9\u00B2\u00B3\u2074-\u2079\u207A\u207B\u207D\u207E\u2071\u207F]+)/g, function (m) { return "^" + m.replace(/[\u2070-\u209C\u00B2\u00B3\u00B9]/g, function (c) { return AUTOH_SUP[c] || c; }); })
+    .replace(/([\u2080-\u2089\u208A\u208B\u208C\u208D\u208E\u2090-\u209C]+)/g, function (m) { return "_" + m.replace(/[\u2070-\u209C]/g, function (c) { return AUTOH_SUB[c] || c; }); })
+    .replace(/<sub>([\s\S]*?)<\/sub>/g, "_$1")
+    .replace(/<sup>([\s\S]*?)<\/sup>/g, "^$1");
+  var t = document.createElement("span"); t.innerHTML = s0;
+  return t.textContent.replace(/\s+/g, " ").trim();
+}
+
+/* ---------------- 1. 画布与画布内排版 ---------------- */
+const CV = {};
+function fitCanvas(id) {
+  const el = $(id);
+  if (!el || !el.clientWidth) return null;
+  const w = el.clientWidth, h = +el.dataset.h;
+  const dpr = window.devicePixelRatio || 1;
+  el.width = Math.round(w * dpr); el.height = Math.round(h * dpr);
+  el.style.height = h + "px";
+  const g = el.getContext("2d");
+  g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  CV[id] = { g: g, W: w, H: h, el: el };
+  return CV[id];
+}
+
+const FONT = "\"Microsoft YaHei\",\"PingFang SC\",sans-serif";
+const FONTM = "\"Cambria Math\",\"Times New Roman\",Times,serif";
+const SUBR = 0.74, SUBDY = 0.22, SUPDY = 0.40;
+
+/* 颜色：正电荷红 / 负电荷蓝（与霍尔工具的积累符号一致）；
+   能带 E_c 红、E_v 蓝、E_i 灰虚、E_F 青实；E(x) 绿、V(x) 紫（对应参考图） */
+const C_POS = "#d94a3d", C_NEG = "#1976d2";
+const C_EC = "#c9483c", C_EV = "#1976d2", C_EI = "#8a97a5", C_EF = "#0f9b8e";
+const C_E = "#2e9e5b", C_V = "#7b3fa0";
+const C_SUB = "#6b7a8c", C_GRID = "#e7edf4", C_REF = "#9aa5b1", C_DASH = "#5a6b7d";
+
+function txt(g, s, x, y, col, font, align, base) {
+  g.fillStyle = col; g.font = font || "12px " + FONT;
+  g.textAlign = align || "left"; g.textBaseline = base || "middle";
+  if (typeof s === "string" && NEED_MATH.test(s)) {
+    const fi = fontInfo(font, 12);
+    mRun(g, AUTO(s), x, y, fi.fp, fi.bd, align || "left", false);
+    return;
+  }
+  g.fillText(s, x, y);
+}
+function isCJKch(ch) {
+  const c = ch.codePointAt(0);
+  return (c >= 0x2E80 && c <= 0x9FFF) || (c >= 0xF900 && c <= 0xFAFF) ||
+    (c >= 0xFF00 && c <= 0xFF60) || c === 0x2014 || c === 0x2015 || c === 0x2026;
+}
+function segRuns(s) {
+  const out = []; let cur = "", curC = null;
+  for (const ch of s) {
+    const c = isCJKch(ch);
+    if (curC === null) { cur = ch; curC = c; }
+    else if (c === curC) cur += ch;
+    else { out.push({ s: cur, cjk: curC }); cur = ch; curC = c; }
+  }
+  if (cur) out.push({ s: cur, cjk: curC });
+  return out;
+}
+function pFont(q, fp, bd, cjk) {
+  const sz = fp * ((q.sub || q.sup) ? SUBR : 1);
+  return (bd ? "bold " : "") + (!cjk && q.i ? "italic " : "") + sz.toFixed(2) + "px " + (cjk ? FONT : FONTM);
+}
+/* 允许整体传字符串（"0"、"拖动可旋转视角" 这类纯文本），不必到处写 [{s:…}] */
+/* i18n 注入点①：画布 token。带 i / sub / sup / un 标记的是物理量、下标与单位，一律不动；
+   没有这些标记的 token 才是自然语言，交给 T() —— 所以这里的判断只看标记，不看内容。 */
+const partsOf = p => (typeof p === "string" ? [{ s: p }] : p).map(q => {
+  const o = (typeof q === "string" ? { s: q } : q);
+  const natural = !(o.i || o.sub || o.sup || o.un);
+  if (LANG === "en" && natural && typeof o.s === "string" && /[\u4E00-\u9FFF]/.test(o.s)) {
+    const t = T(o.s);
+    return t === o.s ? o : Object.assign({}, o, { s: t });
+  }
+  return o;
+});
+/* √ 符号比正文略大（与网页端 .rd 的字号对齐） */
+function mSqrtW(g, fp) {
+  const sv = g.font;
+  g.font = (fp * 1.20).toFixed(2) + "px " + FONTM;
+  const w = g.measureText("\u221A").width;
+  g.font = sv;
+  return w;
+}
+function mMeasure(g, parts, fp, bd) {
+  let w = 0;
+  for (const q of partsOf(parts)) {
+    if (q.sqrt) { w += mSqrtW(g, fp) + 2 + mMeasure(g, q.sqrt, fp, bd) + 2; continue; }
+    for (const sg of segRuns(q.s)) { g.font = pFont(q, fp, bd, sg.cjk); w += g.measureText(sg.s).width; }
+  }
+  return w;
+}
+/* 画布版 \sqrt{}：√ 字形 + 压住被开方式的一条横线 */
+function mDrawSqrt(g, sub, cx, y, fp, bd, stroke) {
+  const sv = g.font, col = stroke ? g.strokeStyle : g.fillStyle;
+  const sq = "\u221A";
+  g.font = (fp * 1.20).toFixed(2) + "px " + FONTM;
+  /* √ 是根号的一部分（下面马上补横线），不让自动排版钩子插手 */
+  window.__HM_SQRT = 1;
+  try { if (stroke) g.strokeText(sq, cx, y + fp * 0.04); else g.fillText(sq, cx, y + fp * 0.04); }
+  finally { window.__HM_SQRT = 0; }
+  cx += g.measureText(sq).width + 1;
+  const sw = mMeasure(g, sub, fp, bd);
+  mRun(g, sub, cx, y, fp, bd, "left", stroke);
+  line(g, cx - 1, y - fp * 0.46, cx + sw + 1, y - fp * 0.46, col, 1);
+  g.font = sv;
+  return cx + sw + 2;
+}
+function mRun(g, parts, x, y, fp, bd, align, stroke) {
+  const ps = partsOf(parts), w = mMeasure(g, ps, fp, bd);
+  let cx = align === "right" ? x - w : (align === "center" ? x - w / 2 : x);
+  g.textAlign = "left"; g.textBaseline = "middle"; g.lineJoin = "round";
+  for (const q of ps) {
+    if (q.sqrt) { cx = mDrawSqrt(g, q.sqrt, cx, y, fp, bd, stroke); continue; }
+    const dy = q.sub ? fp * SUBDY : (q.sup ? -fp * SUPDY : 0);
+    for (const sg of segRuns(q.s)) {
+      g.font = pFont(q, fp, bd, sg.cjk);
+      if (stroke) { g.lineWidth = (q.sub || q.sup) ? 2.4 : 3.2; g.strokeText(sg.s, cx, y + dy); }
+      else g.fillText(sg.s, cx, y + dy);
+      cx += g.measureText(sg.s).width;
+    }
+  }
+}
+function mtxt(g, parts, x, y, col, fp, align, bd) {
+  g.fillStyle = col; mRun(g, parts, x, y, fp, bd || false, align, false);
+}
+function mtxtHalo(g, parts, x, y, col, fp, align, bd) {
+  g.strokeStyle = "rgba(255,255,255,0.94)";
+  mRun(g, parts, x, y, fp, bd || false, align, true);
+  mtxt(g, parts, x, y, col, fp, align, bd);
+}
+function line(g, x1, y1, x2, y2, col, lw, dash) {
+  g.save();
+  g.strokeStyle = col; g.lineWidth = lw || 1;
+  if (dash) g.setLineDash(dash);
+  g.beginPath(); g.moveTo(x1, y1); g.lineTo(x2, y2); g.stroke();
+  g.restore();
+}
+function arrowHead(g, x, y, ang, sz, col) {
+  g.save(); g.translate(x, y); g.rotate(ang);
+  g.beginPath(); g.moveTo(0, 0); g.lineTo(-sz, sz * 0.42); g.lineTo(-sz, -sz * 0.42);
+  g.closePath(); g.fillStyle = col; g.fill(); g.restore();
+}
+function arrow(g, x1, y1, x2, y2, col, lw, sz) {
+  const dx = x2 - x1, dy = y2 - y1, L = Math.hypot(dx, dy);
+  if (L < 0.5) return;
+  line(g, x1, y1, x2, y2, col, lw || 1.4);
+  arrowHead(g, x2, y2, Math.atan2(dy, dx), sz || 6, col);
+}
+function arrow2(g, x1, y1, x2, y2, col, lw, sz) {   // 双向箭头
+  arrow(g, x1, y1, x2, y2, col, lw, sz);
+  arrow(g, x2, y2, x1, y1, col, lw, sz);
+}
+function chipM(g, parts, x, y, col, fp, align, W) {
+  const ps = partsOf(parts);
+  g.font = fp.toFixed(2) + "px " + FONTM;
+  const w = mMeasure(g, ps, fp, false), al = align || "left";
+  let bx = al === "right" ? x - w : (al === "center" ? x - w / 2 : x);
+  if (W) bx = clamp(bx, 4, W - w - 4);
+  const rx = bx - 5, ry = y - fp * 0.72, rw = w + 10, rh = fp * 1.44;
+  g.fillStyle = "rgba(255,255,255,0.95)"; g.strokeStyle = "#dfe6ee"; g.lineWidth = 1;
+  g.beginPath();
+  if (g.roundRect) { g.roundRect(rx, ry, rw, rh, 4); g.fill(); g.stroke(); }
+  else { g.fillRect(rx, ry, rw, rh); g.strokeRect(rx, ry, rw, rh); }
+  mtxt(g, ps, bx, y, col, fp, "left", false);
+}
+
+/* ---------------- 2. 公式零件 ---------------- */
+const cat = (...a) => [].concat(...a);
+const PSym = (s, sub) => [{ s: s, i: true }, { s: sub, sub: true }];
+function PSci(v, n) {
+  if (!isFinite(v) || v === 0) return [{ s: "0" }];
+  const e = Math.floor(Math.log10(Math.abs(v)));
+  const m = (v / Math.pow(10, e)).toFixed(n === undefined ? 1 : n);
+  /* 1 ≦ |v| < 10 时直接写尾数，不再拖一个 ×10⁰（与 sciH 一致） */
+  if (e === 0) return [{ s: m }];
+  /* 指数负号用 U+2212 */
+  return [{ s: m + "×10" },
+          { s: String(e).replace("-", "−"), sup: true }];
+}
+/* 单位零件：一律正体，幂次用真上标 */
+const U_V    = [{ s: " V", un: true }];
+const U_MV   = [{ s: " mV", un: true }];
+const U_K    = [{ s: " K", un: true }];
+const U_CM3  = [{ s: " cm", un: true }, { s: "−3", sup: true, un: true }];
+const U_VCM  = [{ s: " V/cm", un: true }];
+const U_CCM3 = [{ s: " C/cm", un: true }, { s: "3", sup: true, un: true }];
+const U_CCM2 = [{ s: " C/cm", un: true }, { s: "2", sup: true, un: true }];
+const U_UM   = [{ s: " μm", un: true }];
+
+/* ================= 物理量 ================= */
+const Q = 1.602176634e-19;      /* 元电荷 C */
+const M0 = 9.1093837015e-31;    /* 自由电子质量 kg */
+const KB = 1.380649e-23;        /* 玻尔兹曼常数 J/K */
+
+/* 时间放大镜：真实回旋频率 ~10^11 rad/s，肉眼无从观察。
+   这里把所有频率同除一个固定常数 K，比值 ω/ω_c 不变 ⇒
+   共振判据与线型完全不受影响，只是把过程放慢到秒级。 */
+const KMAG = 4.0e10;
+
+/* 杂质散射极限：高纯 / 轻掺 / 重掺 */
+const TAU_IMP = [5.0e-11, 2.0e-12, 8.0e-13];
+const PUR_NAME = ["高纯（液氦温区）", "轻掺", "重掺（室温可见）"];
+
+/* 本例取硅导带的经典值：旋转椭球 m_l = 0.98 m₀、m_t = 0.19 m₀（长轴沿 Δ 方向）。
+   0.98 / 0.19 与本站「半导体能带」页的 Si 取值同源（刘恩科《半导体物理学》硅导带
+   有效质量表：m_l = 0.98 m₀、m_t = 0.19 m₀；Ge 为 1.64 / 0.082）——跨页必须一致，
+   文献另有一组 0.9163（≈0.92）的低温测量值，本站统一不采用。
+   为聚焦核心，m_l、m_t、方位角 φ、温度 T、样品纯度与微波频率 f 这六项被<b>锁定</b>、不设控件，
+   留给学生的自由度只有 B、θ 与等能面形状。
+   但它们并没有被硬编码抹掉来源：仍以常量参与计算 —— τ 照旧由马蒂森定则并联得出。 */
+const OPT = {
+  shape: "ell",   /* ell = 旋转椭球；sph = 球面 */
+  ml: 0.98,       /* 纵向有效质量 / m0 —— 锁定（与「半导体能带」页同源，见上行注释） */
+  mt: 0.19,       /* 横向有效质量 / m0 —— 锁定 */
+  B: 0.266,       /* 磁感应强度 T —— 初值即 θ=30° 的共振场 B_res=0.2659 T，与「默认」预设一致 */
+  th: 30,         /* B 与椭球长轴夹角 ° */
+  ph: 0,          /* 方位角 °（绕长轴转样品）—— 锁定 0：绕长轴是旋转对称的 */
+  f: 35.0,        /* 微波频率 GHz —— 锁定（ω = 2πf 即交变电场角频率） */
+  T: 4.2,         /* 温度 K —— 锁定液氦温区 */
+  pur: 0,         /* 纯度档 —— 锁定高纯 */
+  preset: 0,
+  play: true
+};
+/* 球面模式下 m_l 被视作与 m_t 相同（否则谈不上各向同性）：读数统一走这里 */
+function mlShown() { return OPT.shape === "sph" ? OPT.mt : OPT.ml; }
+
+/* 回旋共振有效质量：m* = m_t · √( m_l / (m_t sin²θ + m_l cos²θ) ) */
+function mst(thDeg) {
+  if (OPT.shape === "sph") return OPT.mt;
+  const t = thDeg * Math.PI / 180;
+  const s2 = Math.sin(t) * Math.sin(t), c2 = Math.cos(t) * Math.cos(t);
+  return OPT.mt * Math.sqrt(OPT.ml / (OPT.mt * s2 + OPT.ml * c2));
+}
+/* 马蒂森定则：声子散射 τ_ph ∝ T^(−3/2)，与杂质散射并联 */
+function tauNow() {
+  const tph = 2.0e-12 * Math.pow(300 / OPT.T, 1.5);
+  return 1 / (1 / TAU_IMP[OPT.pur] + 1 / tph);
+}
+const omega = () => 2 * Math.PI * OPT.f * 1e9;               /* rad/s */
+const omegaC = (B, m) => Q * B / (m * M0);                    /* rad/s */
+const BresOf = m => m * M0 * omega() / Q;                      /* T */
+/* 圆偏振微波与回旋运动同向分量的洛伦兹线型吸收（对零场吸收归一化） */
+function absorb(B, m, tau) {
+  const w = omega(), wc = omegaC(B, m), d = (wc - w) * tau;
+  return (1 + w * w * tau * tau) / (1 + d * d);
+}
+
+function state() {
+  const m = mst(OPT.th), tau = tauNow();
+  const wc = omegaC(OPT.B, m), w = omega();
+  const Bres = BresOf(m);
+  /* 共振度：失谐 Δω·τ 的洛伦兹权重，1 = 完全共振 */
+  const g = 1 / (1 + Math.pow((wc - w) * tau, 2));
+  const ml = mlShown();
+  const m90 = Math.sqrt(ml * OPT.mt);
+  const vth = Math.sqrt(3 * KB * OPT.T / (m * M0));   /* m/s */
+  const vperp = Math.sqrt(KB * OPT.T / (m * M0));     /* m/s：单分量 rms 速度（v_th/√3） */
+  return {
+    m: m, tau: tau, wc: wc, w: w, Bres: Bres, g: g,
+    m0v: OPT.mt, m90: m90, ratio: ml / OPT.mt,
+    Bres0: BresOf(OPT.mt), Bres90: BresOf(m90),
+    /* wct：工作点处的 ω_cτ（只衡量「离峰多远」，不是峰存亡判据）
+       omTau：共振处的判据 ωτ（共振时 ω_c = ω）—— 峰能否被分辨只由它决定
+       detTau：失谐的无量纲形式 Δω·τ，1 = 半高宽处 */
+    wct: wc * tau, omTau: w * tau, detTau: Math.abs(wc - w) * tau,
+    vth: vth, vperp: vperp,
+    rCyc: vperp / wc, hCyc: vperp * 2 * Math.PI / wc,   /* 真实回旋半径 / 螺距，m */
+    P: absorb(OPT.B, m, tau), Pmax: 1 + w * w * tau * tau
+  };
+}
+
+/* ================= 3D：手写旋转 + 透视投影 ================= */
+function rot3(p, az, el) {
+  const ca = Math.cos(az), sa = Math.sin(az);
+  const x1 = p.x * ca - p.z * sa, z1 = p.x * sa + p.z * ca;
+  const ce = Math.cos(el), se = Math.sin(el);
+  return { x: x1, y: p.y * ce - z1 * se, z: p.y * se + z1 * ce };
+}
+function prj(p, cam) {
+  const s = cam.f / (cam.f + p.z);
+  return { x: cam.cx + p.x * s, y: cam.cy - p.y * s, s: s };
+}
+const VIEWS = { orbit: { az: -0.62, el: 0.26 }, esurf: { az: -0.62, el: 0.26 } };
+
+function poly3(g, pts, cam, fill, stroke, lw) {
+  if (pts.length < 2) return;
+  g.beginPath();
+  for (let i = 0; i < pts.length; i++) {
+    const q = prj(rot3(pts[i], cam.az, cam.el), cam);
+    if (i === 0) g.moveTo(q.x, q.y); else g.lineTo(q.x, q.y);
+  }
+  g.closePath();
+  if (fill) { g.fillStyle = fill; g.fill(); }
+  if (stroke) { g.strokeStyle = stroke; g.lineWidth = lw || 1; g.stroke(); }
+}
+/* 3D 箭头（含锥头），p0→p1 */
+function arrow3(g, p0, p1, cam, col, lw) {
+  const a = rot3(p0, cam.az, cam.el), b = rot3(p1, cam.az, cam.el);
+  const A = prj(a, cam), B = prj(b, cam);
+  line(g, A.x, A.y, B.x, B.y, col, lw || 1.8);
+  /* 锥头：在 B 附近画一个小三角，朝向 AB 方向 */
+  const ang = Math.atan2(B.y - A.y, B.x - A.x), sz = 8 * B.s;
+  g.save(); g.translate(B.x, B.y); g.rotate(ang);
+  g.beginPath(); g.moveTo(0, 0); g.lineTo(-sz, sz * 0.45); g.lineTo(-sz, -sz * 0.45);
+  g.closePath(); g.fillStyle = col; g.fill(); g.restore();
+}
+function txt3(g, s, p, cam, col, fp, align, bd) {
+  const q = prj(rot3(p, cam.az, cam.el), cam);
+  mtxt(g, s, q.x, q.y, col, fp, align || "center", bd || false);
+}
+
+/* ================= 模块一：回旋运动与共振吸收 ================= */
+let ANIM = 0;                     /* 动画时间 s */
+const NTURN = 3.2;                /* 画面里显示的圈数 */
+function drawOrbit() {
+  const C = fitCanvas("orbit"); if (!C) return;
+  const g = C.g, W = C.W, H = C.H, s = state();
+  g.clearRect(0, 0, W, H);
+  g.fillStyle = "#fbfdff"; g.fillRect(0, 0, W, H);
+
+  const wv = VIEWS.orbit;
+  const L = 14, R = W - 14, T = 30, B = H - 34;
+  const cam = { cx: (L + R) / 2, cy: (T + B) / 2 + 6, f: 620, az: wv.az, el: wv.el };
+
+  /* --- 标题与状态 --- */
+  const onRes = s.g > 0.5;          /* 判据只取共振度 g = 1/(1+(Δω·τ)²)，与 τ 门槛无关 */
+  mtxt(g, catA("螺旋运动　", P_OMC, " = ", PSci(s.wc, 2), " rad/s"),
+    L, 14, C_SUB, 11.5, "left");
+  const stCol = onRes ? C_RED : C_SUB;
+  mtxt(g, onRes ? catA("共振吸收中：电场持续做功，轨道一圈圈涨大")
+    : catA("失谐：一推一拽相互抵消，轨道半径不变"),
+    R, 14, stCol, 11.5, "right", true);
+
+  /* --- 螺旋轴 = 世界 y 轴；B 箭头沿 +y --- */
+  const axisLen = Math.min((B - T) / 2 - 26, 140);
+  arrow3(g, { x: 0, y: -axisLen - 26, z: 0 }, { x: 0, y: axisLen, z: 0 }, cam, C_NEG, 2.2);
+  txt3(g, TX(MM("<i>B</i>")), { x: 0, y: axisLen + 14, z: 0 }, cam, C_NEG, 13, "center", true);
+
+  /* --- 螺旋：绕 y 轴，半径沿 u 增长（共振 ⇒ 吸收能量） --- */
+  const r0 = 40, pitch = Math.min((axisLen * 2) / NTURN, 62);
+  const radAt = u => r0 * (1 + 0.95 * s.g * (1 - Math.exp(-u / 1.1)));
+  const posAt = u => ({ x: radAt(u) * Math.cos(2 * Math.PI * u), y: -axisLen + u * pitch, z: radAt(u) * Math.sin(2 * Math.PI * u) });
+
+  /* 尾迹：把 [0, NTURN] 分成小段，按深度排序后逐段画 */
+  const segs = [], NS = 132;
+  for (let i = 0; i < NS; i++) {
+    const u0 = i / NS * NTURN, u1 = (i + 1) / NS * NTURN, um = (u0 + u1) / 2;
+    const p = rot3(posAt(um), cam.az, cam.el);
+    segs.push({ u0: u0, u1: u1, z: p.z, um: um });
+  }
+  segs.sort((a, b) => b.z - a.z);          /* 远的先画（画家算法） */
+  if (CK.trail) for (const sg of segs) {
+    const STEPS = 3, pts = [];
+    for (let k = 0; k <= STEPS; k++) pts.push(posAt(sg.u0 + (sg.u1 - sg.u0) * k / STEPS));
+    const a = 0.20 + 0.72 * (sg.um / NTURN);          /* 越新越亮 */
+    const warm = s.g * (sg.um / NTURN);                 /* 共振 ⇒ 转暖 */
+    const col = warm > 0.45 ? "rgba(217,74,61," + a.toFixed(3) + ")"
+      : (warm > 0.18 ? "rgba(239,140,26," + a.toFixed(3) + ")"
+        : "rgba(25,118,210," + a.toFixed(3) + ")");
+    g.beginPath();
+    for (let k = 0; k < pts.length; k++) {
+      const q = prj(rot3(pts[k], cam.az, cam.el), cam);
+      if (k === 0) g.moveTo(q.x, q.y); else g.lineTo(q.x, q.y);
+  }
+    g.strokeStyle = col; g.lineWidth = 2.6; g.lineCap = "round"; g.stroke();
+  }
+
+  /* --- 电子当前位置 --- */
+  const uNow = (ANIM * omegaC(OPT.B, s.m) / KMAG / (2 * Math.PI)) % NTURN;
+  const pe = posAt(uNow), pe3 = rot3(pe, cam.az, cam.el), peS = prj(pe3, cam);
+  /* 尾迹尾端的亮点 */
+  const glow = g.createRadialGradient(peS.x, peS.y, 0, peS.x, peS.y, 15 * peS.s);
+  glow.addColorStop(0, "rgba(255,214,64,0.95)");
+  glow.addColorStop(1, "rgba(255,214,64,0)");
+  g.fillStyle = glow;
+  g.beginPath(); g.arc(peS.x, peS.y, 15 * peS.s, 0, Math.PI * 2); g.fill();
+  g.fillStyle = onRes ? C_RED : C_BLUE;
+  g.beginPath(); g.arc(peS.x, peS.y, 6.2 * peS.s, 0, Math.PI * 2); g.fill();
+  g.strokeStyle = "#fff"; g.lineWidth = 1.6; g.stroke();
+  mtxtHalo(g, TX(MM("<span class='rm'>e</span>")), peS.x + 13 * peS.s, peS.y - 13 * peS.s,
+    onRes ? C_RED : C_BLUE, 11.5, "left", true);
+
+  /* --- 圆周投影：垂直于 B 的平面（xz），半径 = radAt(uNow) --- */
+  if (CK.proj) {
+    const rr = radAt(uNow), NC = 72, ring = [];
+    for (let i = 0; i <= NC; i++) {
+      const a2 = 2 * Math.PI * i / NC;
+      ring.push({ x: rr * Math.cos(a2), y: pe.y, z: rr * Math.sin(a2) });
+    }
+    g.save(); g.setLineDash([4, 3]);
+    for (let i = 0; i < NC; i++) {
+      const A = prj(rot3(ring[i], cam.az, cam.el), cam);
+      const B2 = prj(rot3(ring[i + 1], cam.az, cam.el), cam);
+      line(g, A.x, A.y, B2.x, B2.y, "rgba(15,155,142,0.85)", 1.4);
+    }
+    g.restore();
+    /* 圆心到电子的半径线 */
+    const O = prj(rot3({ x: 0, y: pe.y, z: 0 }, cam.az, cam.el), cam);
+    line(g, O.x, O.y, peS.x, peS.y, "rgba(15,155,142,0.55)", 1.2);
+    mtxtHalo(g, catA(P_VPERP, " → 转圈；", P_VPAR, " → 匀速 ⇒ 螺旋"),
+      L, B + 10, C_TEAL, 11, "left");
+  }
+
+  /* 状态提示留在本图底部（右侧波形图另有判据行） */
+  mtxt(g, onRes ? catA("轨道半径逐圈变大 ⇒ 电场在持续注入能量")
+                : catA("轨道半径一圈圈保持 ⇒ 没有净吸收"),
+       (L + R) / 2, B + 26, onRes ? C_RED : C_SUB, 11.5, "center", true);   /* 与右下角提示同行（x 分离）；公式行已上移到 B+10，两行不再相贴 */
+  /* B + 32 会让提示底部越过画布下边界约 3px，上移 6px */
+  mtxt(g, "拖动可旋转视角", R, B + 26, C_SUB, 10.5, "right");
+}
+
+/* ================= 模块一右：E(t) / v⊥(t) / p(t) 三行 ================= */
+function drawWave() {
+  const C = fitCanvas("wave"); if (!C) return;
+  const g = C.g, W = C.W, H = C.H, s = state();
+  g.clearRect(0, 0, W, H);
+  g.fillStyle = "#fbfdff"; g.fillRect(0, 0, W, H);
+
+  const L = 58, R = W - 12, T = 26, B = H - 22;   /* L=58：给第三行行标 p=E·v⊥（宽约 47px）留足位置 */
+  const sync = s.g > 0.5;
+
+  /* 视觉频率：真实 ω ~10^11，除以 KMAG 后仍是同一比值 ⇒ 同步判据不变 */
+  const wVis = omega() / KMAG;
+  const cVis = omegaC(OPT.B, s.m) / KMAG;
+  const tSpan = 2.6;                 /* 横轴时间跨度 s */
+  const NPT = 180;
+  const rowH = (B - T) / 3;
+  const yE = T + rowH * 0.52, yV = T + rowH * 1.42, yP = T + rowH * 2.42;
+  const amp = Math.min(rowH * 0.34, 26);
+
+  [[yE, -1], [yV, -1]].forEach(([yy]) => {
+    g.save(); g.setLineDash([2, 3]);
+    line(g, L, yy - amp, R, yy - amp, "rgba(154,165,177,0.45)", 1);
+    line(g, L, yy + amp, R, yy + amp, "rgba(154,165,177,0.45)", 1);
+    g.restore();
+  });
+
+  /* 行标 + 零线 */
+  const rowLab = (yy, parts, col) => {
+    line(g, L, yy + amp + 4, L, yy - amp - 4, "rgba(199,210,220,0.9)", 1);
+    mtxt(g, parts, L - 5, yy, col, 11, "right", true);
+  };
+  rowLab(yE, catA(P_E_SYM, "(", P_T_SYM, ")"), C_RED);
+  rowLab(yV, catA(P_VPERP, "(", P_T_SYM, ")"), C_BLUE);
+  rowLab(yP, catA(P_PRD, " = ", P_E_SYM, "·", P_VPERP), C_ORANGE);
+  line(g, L, yE, R, yE, "rgba(154,165,177,0.55)", 1, [3, 3]);
+  line(g, L, yV, R, yV, "rgba(154,165,177,0.55)", 1, [3, 3]);
+  line(g, L, yP, R, yP, "rgba(154,165,177,0.7)", 1, [3, 3]);
+
+  const wav = (y0, freq, col, lw) => {
+    g.beginPath();
+    for (let i = 0; i <= NPT; i++) {
+      const tt = i / NPT * tSpan;
+      const xx = L + (tt / tSpan) * (R - L);
+      const yy = y0 - amp * Math.sin(freq * (ANIM + tt));
+      if (i === 0) g.moveTo(xx, yy); else g.lineTo(xx, yy);
+    }
+    g.strokeStyle = col; g.lineWidth = lw; g.lineJoin = "round"; g.stroke();
+  };
+  wav(yE, wVis, C_RED, 2.2);
+  wav(yV, cVis, C_BLUE, 2.2);
+
+  /* "现在"：波形左端即 t = ANIM */
+  line(g, L + 0.5, T + 2, L + 0.5, B - 2, "rgba(90,107,125,0.55)", 1, [3, 3]);
+  mtxt(g, "现在 →", L + 4, T + 10, C_SUB, 10, "left");
+
+  /* 功率 p = sin(ωt)·sin(ω_c t)：共振 ⇒ sin² ≥ 0（恒吸收） */
+  const pAmp = amp * 0.92;
+  g.beginPath();
+  for (let i = 0; i <= NPT; i++) {
+    const tt = i / NPT * tSpan;
+    const xx = L + (tt / tSpan) * (R - L);
+    const p = Math.sin(wVis * (ANIM + tt)) * Math.sin(cVis * (ANIM + tt));
+    const yy = yP - pAmp * p;
+    if (i === 0) g.moveTo(xx, yy); else g.lineTo(xx, yy);
+  }
+  g.strokeStyle = C_ORANGE; g.lineWidth = 2.0; g.stroke();
+  /* 共振时 p ≥ 0，把零线以上填一层浅色，一眼看出"净吸收 > 0" */
+  if (sync) {
+    g.beginPath();
+    g.moveTo(L, yP);
+    for (let i = 0; i <= NPT; i++) {
+      const tt = i / NPT * tSpan;
+      const xx = L + (tt / tSpan) * (R - L);
+      const p = Math.sin(wVis * (ANIM + tt)) * Math.sin(cVis * (ANIM + tt));
+      g.lineTo(xx, yP - pAmp * p);
+    }
+    g.lineTo(R, yP); g.closePath();
+    g.fillStyle = "rgba(239,140,26,0.16)"; g.fill();
+  }
+  mtxt(g, "0", L - 5, yP + 11, C_SUB, 9.5, "right");
+
+  /* 顶部：失谐量；底部：判据 */
+  const det = Math.abs(s.wc - s.w);
+  mtxt(g, catA("|", P_OM, " ", [{ s: "\u2212", sup: true }], " ", P_OMC, "| = ",
+               PSci(det, 2), " rad/s"),
+       L, 12, C_SUB, 10.5, "left");
+  /* 右上角只报"当前站在峰的哪一处"：Δω·τ = 1 即半高宽处。
+     峰本身存不存在由 τ 决定（见读数面板的 ωτ），与本工作点无关。 */
+  mtxt(g, catA(P_DOM, P_TAU, " = ", fmt(s.detTau, 2)), R, 12,
+       s.detTau < 1 ? C_TEAL : C_RED, 10.5, "right", true);
+  mtxt(g, sync ? "两波同频同相 ⇒ p 恒 ≥ 0 ⇒ 净吸收 > 0"
+               : "两波不同步 ⇒ p 有正有负 ⇒ 净吸收 ≈ 0",
+       (L + R) / 2, B + 10, sync ? C_RED : C_SUB, 12, "center", true);
+}
+
+/* ================= 模块二：吸收谱 ================= */
+function drawSpec() {
+  const C = fitCanvas("spec"); if (!C) return;
+  const g = C.g, W = C.W, H = C.H, s = state();
+  g.clearRect(0, 0, W, H);
+  g.fillStyle = "#fbfdff"; g.fillRect(0, 0, W, H);
+
+  const Bmax = Math.max(0.4, 1.55 * s.Bres90);
+  const L = 52, R = W - 14, T = 22, B = H - 30;
+  const yLo = 1, yHi = Math.max(10, s.Pmax * 1.25);
+  const ly = v => B - (Math.log10(Math.max(v, yLo)) - Math.log10(yLo)) /
+    (Math.log10(yHi) - Math.log10(yLo)) * (B - T);
+  const lx = b => L + b / Bmax * (R - L);
+
+  /* 网格 */
+  g.strokeStyle = C_GRID; g.lineWidth = 1;
+  for (let e = 0; e <= Math.ceil(Math.log10(yHi)); e++) {
+    const v = Math.pow(10, e); if (v > yHi) break;
+    const yy = Math.round(ly(v)) + 0.5;
+    line(g, L, yy, R, yy, C_GRID, 1);
+    mtxt(g, cat([{ s: "10" }, { s: String(e).replace("-", "−"), sup: true }]), L - 5, yy, C_SUB, 10.5, "right");
+  }
+  const NB = 5;
+  for (let i = 0; i <= NB; i++) {
+    const b = i / NB * Bmax, xx = Math.round(lx(b)) + 0.5;
+    line(g, xx, T, xx, B, C_GRID, 1);
+    mtxt(g, [{ s: fmt(b, 2) }], xx, B + 13, C_SUB, 10.5, "center");
+  }
+  g.strokeStyle = "#c8d3de"; g.lineWidth = 1.2;
+  g.strokeRect(L + 0.5, T + 0.5, R - L, B - T);
+  mtxt(g, catA(P_B, "（T）"), (L + R) / 2, H - 6, C_SUB, 11, "center");
+  mtxt(g, catA(P_PRD, "/", P_P0), 12, (T + B) / 2, C_SUB, 11, "center");
+
+  /* θ = 0° / 90° 的包络（虚线） */
+  if (CK.env) {
+    const drawEnv = (mm, col, dash, lab) => {
+      g.save(); g.setLineDash(dash);
+      g.beginPath();
+      for (let i = 0; i <= 240; i++) {
+        const b = i / 240 * Bmax;
+        const xx = lx(b), yy = ly(absorb(b, mm, s.tau));
+        if (i === 0) g.moveTo(xx, yy); else g.lineTo(xx, yy);
+      }
+      g.strokeStyle = col; g.lineWidth = 1.5; g.stroke();
+      g.restore();
+      const bx = lx(BresOf(mm)), by = ly(absorb(BresOf(mm), mm, s.tau));
+      mtxtHalo(g, TX(lab), bx, by - 15, col, 11, "center", true);
+    };
+    if (OPT.shape === "ell") {
+      drawEnv(OPT.mt, "rgba(15,155,142,0.9)", [6, 4], MM("<i>θ</i><span class='op'>=</span>0°"));
+      drawEnv(s.m90, "rgba(123,63,160,0.9)", [2, 3], MM("<i>θ</i><span class='op'>=</span>90°"));
+      /* 峰可移动的范围带 */
+      const x0 = lx(s.Bres0), x1 = lx(s.Bres90);
+      g.fillStyle = "rgba(239,140,26,0.12)";
+      g.fillRect(x0, T, x1 - x0, B - T);
+    }
+  }
+
+  /* 当前 θ 的谱 */
+  g.beginPath();
+  for (let i = 0; i <= 300; i++) {
+    const b = i / 300 * Bmax;
+    const xx = lx(b), yy = ly(absorb(b, s.m, s.tau));
+    if (i === 0) g.moveTo(xx, yy); else g.lineTo(xx, yy);
+  }
+  g.strokeStyle = "#2c3e50"; g.lineWidth = 2.6; g.lineJoin = "round"; g.stroke();
+
+  /* 峰位竖线 + 标注 */
+  const px = lx(s.Bres);
+  if (px <= R + 2) {
+    line(g, px, T, px, B, C_RED, 1.3, [5, 4]);
+    mtxtHalo(g, catA(P_BRES, " = ", fmt(s.Bres, 3), " T"), px + 6, T + 12, C_RED, 11.5, "left", true);
+  }
+  /* 工作点竖线 */
+  const cx = lx(OPT.B);
+  line(g, cx, T, cx, B, C_DASH, 1.6);
+  mtxtHalo(g, catA(P_B, " = ", fmt(OPT.B, 3), " T"), cx + 5, B - 10, C_DASH, 11.5, "left", true);
+
+  /* 当前吸收点 */
+  const py = ly(s.P);
+  g.fillStyle = C_RED;
+  g.beginPath(); g.arc(cx, py, 4.6, 0, Math.PI * 2); g.fill();
+  g.strokeStyle = "#fff"; g.lineWidth = 1.5; g.stroke();
+
+  /* 悬停：读出该处 B 与 P/P₀ */
+  if (HOVS.on && HOVS.id === "spec" && HOVS.x >= L && HOVS.x <= R && HOVS.y >= T && HOVS.y <= B) {
+    const hb = (HOVS.x - L) / (R - L) * Bmax, hp = absorb(hb, s.m, s.tau);
+    line(g, HOVS.x, T, HOVS.x, B, "rgba(90,107,125,0.55)", 1, [3, 3]);
+    g.fillStyle = "rgba(154,165,177,0.9)";
+    g.beginPath(); g.arc(HOVS.x, ly(hp), 3.4, 0, Math.PI * 2); g.fill();
+    chipM(g, catA(P_B, " = ", fmt(hb, 3), " T　", P_PRD, "/", P_P0, " = ",
+      hp >= 100 ? fmt(hp, 0) : fmt(hp, 2)),
+      HOVS.x, ly(hp) - 16, C_DASH, 11.5, "center", W);
+  }
+}
+
+/* ================= 模块三：等能面与磁场方向 ================= */
+/* 等能面：E = (ℏ²/2)[(k₁²+k₂²)/m_t + k₃²/m_l]
+   固定 E 时，横向半轴 ∝ √m_t、纵向半轴 ∝ √m_l */
+function drawEsurf() {
+  const C = fitCanvas("esurf"); if (!C) return;
+  const g = C.g, W = C.W, H = C.H, s = state();
+  g.clearRect(0, 0, W, H);
+  g.fillStyle = "#fbfdff"; g.fillRect(0, 0, W, H);
+
+  const wv = VIEWS.esurf;
+  const cam = { cx: W * 0.5, cy: H * 0.52, f: 620, az: wv.az, el: wv.el };
+
+  const ar = Math.sqrt(OPT.mt), cr = Math.sqrt(mlShown());      /* 原始半轴 */
+  const k = 84 / Math.max(ar, cr);
+  const a = ar * k, c = cr * k;
+
+  const P = (u, v) => ({ x: a * Math.sin(v) * Math.cos(u), y: a * Math.sin(v) * Math.sin(u), z: c * Math.cos(v) });
+
+  /* --- 面片（画家算法：远→近） --- */
+  const NU = 20, NV = 13, quads = [];
+  for (let i = 0; i < NU; i++) {
+    for (let j = 0; j < NV; j++) {
+      const u0 = 2 * Math.PI * i / NU, u1 = 2 * Math.PI * (i + 1) / NU;
+      const v0 = Math.PI * j / NV, v1 = Math.PI * (j + 1) / NV;
+      const q = [P(u0, v0), P(u1, v0), P(u1, v1), P(u0, v1)];
+      let zc = 0; for (const p of q) zc += rot3(p, cam.az, cam.el).z;
+      quads.push({ q: q, z: zc / 4 });
+    }
+  }
+  quads.sort((a, b) => b.z - a.z);
+  for (const k of quads) {
+    poly3(g, k.q, cam, "rgba(25,118,210,0.085)", "rgba(25,118,210,0.26)", 1);
+  }
+  /* 轮廓（赤道 + 子午） */
+  const eq = [], me = [];
+  for (let i = 0; i <= 84; i++) {
+    const u = 2 * Math.PI * i / 84;
+    eq.push(P(u, Math.PI / 2));
+    me.push(P(0, Math.PI * i / 84));
+  }
+  const strokeRing = pts => {
+    g.beginPath();
+    for (let i = 0; i < pts.length; i++) {
+      const q = prj(rot3(pts[i], cam.az, cam.el), cam);
+      if (i === 0) g.moveTo(q.x, q.y); else g.lineTo(q.x, q.y);
+    }
+    g.strokeStyle = "rgba(25,118,210,0.55)"; g.lineWidth = 1.6; g.stroke();
+  };
+  strokeRing(eq); strokeRing(me);
+
+  /* --- 长轴虚线（±z） --- */
+  const axTop = { x: 0, y: 0, z: c * 1.28 }, axBot = { x: 0, y: 0, z: -c * 1.28 };
+  {
+    const A = prj(rot3(axBot, cam.az, cam.el), cam), B2 = prj(rot3(axTop, cam.az, cam.el), cam);
+    g.save(); g.setLineDash([5, 4]);
+    line(g, A.x, A.y, B2.x, B2.y, "rgba(90,107,125,0.8)", 1.4);
+    g.restore();
+  }
+  txt3(g, catA(P_ML, " 方向（长轴）"), { x: 0, y: 0, z: c * 1.28 + 13 }, cam, C_DASH, 11, "center");
+
+  /* --- 坐标轴提示 --- */
+  txt3(g, catA(P_MT, " 横向"), { x: a * 1.34, y: 0, z: 0 }, cam, C_SUB, 10.5, "center");
+
+  /* --- B 箭头：与长轴夹 θ，方位 φ --- */
+  const th = OPT.th * Math.PI / 180, ph = OPT.ph * Math.PI / 180;
+  const bdir = { x: Math.sin(th) * Math.cos(ph), y: Math.sin(th) * Math.sin(ph), z: Math.cos(th) };
+  const blen = Math.max(a, c) * 1.34;
+  const bp = { x: bdir.x * blen, y: bdir.y * blen, z: bdir.z * blen };
+  arrow3(g, { x: 0, y: 0, z: 0 }, bp, cam, C_NEG, 2.4);
+  txt3(g, TX(MM("<i>B</i>")), { x: bp.x * 1.12, y: bp.y * 1.12, z: bp.z * 1.12 }, cam, C_NEG, 13, "center", true);
+
+  /* --- 夹角弧：长轴(+z) → B --- */
+  if (CK.ang) {
+    const ar2 = Math.max(a, c) * 0.52, pts = [];
+    const NA = 26;
+    for (let i = 0; i <= NA; i++) {
+      const t = th * i / NA;
+      /* 在 z 轴与 bdir 张成的平面内插值（球面线性） */
+      const sx = Math.sin(t) * Math.cos(ph), sy = Math.sin(t) * Math.sin(ph), sz = Math.cos(t);
+      pts.push({ x: ar2 * sx, y: ar2 * sy, z: ar2 * sz });
+    }
+    g.save(); g.setLineDash([3, 2]);
+    for (let i = 0; i < NA; i++) {
+      const A = prj(rot3(pts[i], cam.az, cam.el), cam);
+      const B2 = prj(rot3(pts[i + 1], cam.az, cam.el), cam);
+      line(g, A.x, A.y, B2.x, B2.y, "rgba(217,74,61,0.9)", 1.5);
+    }
+    g.restore();
+    /* 弧中点标注 */
+    const tm = th * 0.5;
+    const mp = { x: ar2 * Math.sin(tm) * Math.cos(ph) * 1.22, y: ar2 * Math.sin(tm) * Math.sin(ph) * 1.22, z: ar2 * Math.cos(tm) * 1.22 };
+    txt3(g, catA(P_TH, " = ", fmt(OPT.th, 0), "°"), mp, cam, C_RED, 12, "center", true);
+  }
+
+  /* --- 悬停椵球：显示纵向 / 横向有效质量 --- */
+  if (CK.ang && HOVS.on && HOVS.id === "esurf") {
+    chipM(g, catA("纵向 ", P_ML, " = ", fmt(mlShown(), 2), " ", P_M0U,
+      "　横向 ", P_MT, " = ", fmt(OPT.mt, 3), " ", P_M0U),
+      HOVS.x, HOVS.y - 14, C_BLUE, 11.5, "center", W);
+  }
+
+  /* --- 左下角图例式读数 --- */
+  mtxtHalo(g,
+    OPT.shape === "sph"
+      ? catA("球面：各向同性，", P_MS, " = ", P_MT, " 与方向无关")
+      : catA(P_MS, " = ", fmt(s.m, 3), " ", P_M0U, "　cos", P_TH, " = ", fmt(Math.cos(th), 3)),
+    12, H - 10, OPT.shape === "sph" ? C_TEAL : C_BLUE, 11.5, "left");
+  mtxt(g, "拖动可旋转视角", W - 12, H - 10, C_SUB, 11, "right");
+}
+
+/* ================= 模块四：m*(θ) 曲线 ================= */
+function drawMCurve() {
+  const C = fitCanvas("mcurve"); if (!C) return;
+  const g = C.g, W = C.W, H = C.H, s = state();
+  g.clearRect(0, 0, W, H);
+  g.fillStyle = "#fbfdff"; g.fillRect(0, 0, W, H);
+
+  /* L 由 44 增大到 56：纵轴标题（有效质量与 m0 之比）居中于 x=16、宽约 30px，
+     原纵轴刻度右对齐到 L−4=40 会与它压字约 5px；把绘图区整体右移，标题独占左侧一列。 */
+  const L = 56, R = W - 10, T = 16, B = H - 22;
+  const mTop = Math.max(1e-3, s.m90 * 1.16);
+  const X = d => L + d / 90 * (R - L);
+  const Y = m => B - clamp(m / mTop, 0, 1.02) * (B - T);
+
+  /* 网格 */
+  for (let d = 0; d <= 90; d += 15) {
+    const xx = Math.round(X(d)) + 0.5;
+    line(g, xx, T, xx, B, C_GRID, 1);
+    mtxt(g, [{ s: String(d) + "°" }], xx, B + 6, C_SUB, 10, "center");
+  }
+  for (let k = 1; k <= 4; k++) {
+    const v = mTop * k / 4, yy = Math.round(Y(v)) + 0.5;
+    line(g, L, yy, R, yy, C_GRID, 1);
+    mtxt(g, [{ s: fmt(v, 2) }], L - 4, yy, C_SUB, 10, "right");
+  }
+  g.strokeStyle = "#c8d3de"; g.lineWidth = 1.2; g.strokeRect(L + 0.5, T + 0.5, R - L, B - T);
+  mtxt(g, catA(P_TH, "（", P_B, " 与长轴夹角）"), (L + R) / 2, H - 5, C_SUB, 10.5, "center");
+  /* 纵轴标题居中于 x=10 时左半边会越出画布约 5px，右移到 16 */
+  mtxt(g, catA(P_MS, "/", P_M0U), 16, (T + B) / 2, C_SUB, 10.5, "center");
+
+  /* 两条参考水平线 */
+  /* 参考线标签。根号写成零件 {sqrt:[…]}：网页端是 .sqrt 结构，
+     画布端是 √ 字形 + 一条横线，两边共用同一份定义。 */
+  const refs = OPT.shape === "sph"
+    ? [{ m: OPT.mt, c: "rgba(15,155,142,0.85)", t: P_MT }]
+    : [{ m: OPT.mt, c: "rgba(15,155,142,0.85)", t: P_MT },
+       { m: s.m90, c: "rgba(123,63,160,0.85)", t: [{ sqrt: catA(P_ML, P_MT) }] }];
+  for (const r of refs) {
+    const yy = Y(r.m);
+    if (yy < T || yy > B) continue;
+    line(g, L, yy, R, yy, r.c, 1.2, [4, 3]);
+    mtxtHalo(g, r.t, R - 3, yy - 9, r.c, 10.5, "right");
+  }
+
+  /* 曲线 */
+  g.beginPath();
+  const NC = 120;
+  for (let i = 0; i <= NC; i++) {
+    const d = i / NC * 90;
+    const xx = X(d), yy = Y(mst(d));
+    if (i === 0) g.moveTo(xx, yy); else g.lineTo(xx, yy);
+  }
+  g.strokeStyle = C_RED; g.lineWidth = 2.6; g.lineJoin = "round"; g.stroke();
+
+  /* 端点圆点 */
+  [[0, s.mt], [90, s.m90]].forEach(([d, mm]) => {
+    const xx = X(d), yy = Y(mm);
+    g.fillStyle = "#fff"; g.beginPath(); g.arc(xx, yy, 4, 0, Math.PI * 2); g.fill();
+    g.strokeStyle = C_RED; g.lineWidth = 2; g.stroke();
+  });
+
+  /* 当前工作点 */
+  const cx = X(OPT.th), cy = Y(s.m);
+  line(g, cx, T, cx, B, C_DASH, 1.4, [4, 3]);
+  g.fillStyle = C_DASH;
+  g.beginPath(); g.arc(cx, cy, 5, 0, Math.PI * 2); g.fill();
+  g.strokeStyle = "#fff"; g.lineWidth = 1.6; g.stroke();
+  mtxtHalo(g, catA(P_MS, " = ", fmt(s.m, 3)), cx + 8, cy - 12, C_DASH, 11, "left", true);
+}
+
+/* ================= 读数 ================= */
+const H_ML = MM("<i>m</i><sub>l</sub>"), H_MT = MM("<i>m</i><sub>t</sub>");
+const H_MS = MM("<i>m</i><sup>*</sup>"), H_M0U = MM("<i>m</i><sub>0</sub>");
+const H_OMC = MM("<i>ω</i><sub>c</sub>"), H_OM = MM("<i>ω</i>");
+const H_BRES = MM("<i>B</i><sub>res</sub>"), H_TAU = MM("<i>τ</i>");
+const H_THH = MM("<i>θ</i>"), H_PHH = MM("<i>φ</i>"), H_BB = MM("<i>B</i>");
+const H_TT = MM("<i>T</i>"), H_FF = MM("<i>f</i>"), H_VT = MM("<i>v</i><sub>th</sub>");
+
+function kvRow(k, v) {
+  return '<div class="row"><span class="k">' + k + '</span><span class="v">' + v + "</span></div>";
+}
+/* 长度自动换单位：< 1 µm 用 nm，否则用 µm（回旋半径跨越 30 nm ~ 10 µm） */
+const fmtLen = v => (v < 1e-6 ? fmt(v * 1e9, 1) + " nm" : fmt(v * 1e6, 2) + " µm");
+function drawReadout() {
+  const s = state();
+  let h = "";
+  h += '<div class="hd">共振条件</div>';
+  h += kvRow("回旋共振有效质量 " + H_MS,
+    "<b>" + fmt(s.m, 3) + "</b> " + H_M0U);
+  h += kvRow("共振磁场 " + H_BRES + " = " + H_MS + H_OM + "<span class='op'>/</span>" + "<span class='m'><i>q</i></span>",
+    "<b>" + fmt(s.Bres, 3) + "</b> T");
+  h += kvRow("当前吸收 " + MM("<i>P</i><span class='op'>/</span><i>P</i><sub>0</sub></span>"),
+    "<b>" + (s.P >= 100 ? fmt(s.P, 0) : fmt(s.P, 2)) + "</b>　<i style=\"color:#8b97a6;font-style:normal\">" +
+    MM("<i>P</i><sub>0</sub>") + " = 零场（<span class='m'><i>B</i></span> = 0）吸收</i>");
+  h += kvRow("峰顶增强 1" + MM("<span class='op'>+</span><i>ω</i><sup>2</sup><i>τ</i><sup>2</sup>"),
+    "<b>" + fmt(s.Pmax, 0) + "×</b>　<i style=\"color:#8b97a6;font-style:normal\">共振吸收 / 零场吸收</i>");
+  /* 判据只取共振处：共振时 ω_c = ω ⇒ ω_cτ = ωτ。它是样品性质（τ），与工作点 B 无关。 */
+  h += kvRow(MM("<i>ω</i><i>τ</i>") + "（共振处 " + MM("<i>ω</i><sub>c</sub><span class='op'>=</span><i>ω</i>") + "）",
+    "<b>" + fmt(s.omTau, 2) + "</b>　" +
+    (s.omTau > 1 ? "<span style='color:#2e9e5b'>✓ &gt; 1，本样品分得清峰</span>"
+                 : "<span style='color:#d94a3d'>✗ ≤ 1，峰被散射抹平</span>"));
+
+  /* 读数两区化（2026-10-23）：核心 13 行，折 4 行。三条硬约束 ——
+     ① 挑战三答案点名读 ωτ ⇒ ωτ 行**必须在核心**；
+     ② ωτ（样品性质，判峰存亡）与 Δω·τ（当前工作点）是两回事，**永不分行不得合并**，
+        现在一个在「共振条件」组、一个藏在「失谐」行的斜体后半句里，维持原样；
+     ③ 折下去的四行（B、θ、T/纯度、φ）都是旋钮位置或已在控制面板 #fixSub 里披露过的固定值，
+        没有独占信息。 */
+  h += '<div class="hd">当前工作点</div>';
+  h += kvRow("回旋频率 " + H_OMC, sciH(s.wc, 2) + " rad/s");
+  h += kvRow("失谐 " + MM("|<i>ω</i><span class='op'>−</span><i>ω</i><sub>c</sub>|"),
+    sciH(Math.abs(s.wc - s.w), 2) + " rad/s　<i style=\"color:#8b97a6;font-style:normal\">" +
+    MM("Δ<i>ω</i><i>τ</i>") + " = " + fmt(s.detTau, 2) + "</i>");
+  h += kvRow("回旋半径 " + MM("<i>r</i>") + " / 螺距 " + MM("<i>h</i>"),
+    "<b>" + fmtLen(s.rCyc) + " / " + fmtLen(s.hCyc) + "</b>　<i style=\"color:#8b97a6;font-style:normal\">" +
+    MM("<span class='op'>∝</span>1<span class='sl'>/</span><i>B</i>") + "</i>");
+
+  h += '<div class="hd">等能面几何</div>';
+  h += kvRow("纵向 " + H_ML + " / 横向 " + H_MT,
+    fmt(mlShown(), 2) + " / " + fmt(OPT.mt, 3) + " " + H_M0U);
+  h += kvRow("各向异性比 " + H_ML + "<span class='op'>/</span>" + H_MT,
+    "<b>" + fmt(s.ratio, 2) + "</b>" +
+    (OPT.shape === "sph" ? "　（球面 ≡ 1）" : ""));
+  h += kvRow("峰位行程 " + H_BRES + "(" + H_THH + ")",
+    fmt(s.Bres0, 3) + " → " + fmt(s.Bres90, 3) + " T");
+
+  h += '<div class="hd">已锁定的样品条件</div>';
+  h += kvRow("弛豫时间 " + H_TAU, sciH(s.tau, 2) + " s");
+  h += kvRow("热速度 " + H_VT + " = √(3" + MM("<i>kT</i><span class='op'>/</span><i>m</i><sup>*</sup>") + ")",
+    sciH(s.vth, 2) + " m/s");
+  $("readout").innerHTML = h;
+
+  /* 折叠区：旋钮当前位置（磁场、夹角）+ 控制面板 #fixSub 已披露过的固定条件。 */
+  let h2 = "";
+  h2 += '<div class="hd">旋钮位置</div>';
+  h2 += kvRow("磁场 " + H_BB, fmt(OPT.B, 3) + " T");
+  h2 += kvRow("夹角 " + H_THH,
+    fmt(OPT.th, 0) + "°　cos" + H_THH + " = " + fmt(Math.cos(OPT.th * Math.PI / 180), 3));
+  h2 += '<div class="hd">已锁定的样品条件</div>';
+  h2 += kvRow("温度 " + H_TT + " / 纯度", fmt(OPT.T, 1) + " K / " + PUR_NAME[OPT.pur]);
+  h2 += kvRow("方位角 " + H_PHH, fmt(OPT.ph, 0) + "°（绕长轴旋转对称，不影响 m*）");
+  $("readoutMore").innerHTML = h2;
+}
+
+/* ================= 图例 ================= */
+function drawLegends() {
+  const sw = (c, d) => '<span class="swatch' + (d ? " dash" : "") + '" style="color:' + c + '"></span>';
+  $("legOrbit").innerHTML =
+    '<span>' + sw(C_NEG) + MM("<i>B</i>") + ' 磁场方向</span>' +
+    '<span>' + sw(C_BLUE) + '电子螺旋轨迹</span>' +
+    '<span>' + sw("#ffd640") + '当前电子</span>' +
+    '<span>' + sw("rgba(15,155,142,0.9)", 1) + '横向圆周投影</span>';
+
+  $("legWave").innerHTML =
+    '<span>' + sw(C_RED) + MM("<i>E</i>(<i>t</i>)") + ' 微波电场</span>' +
+    '<span>' + sw(C_BLUE) + MM("<i>v</i><sub>⊥</sub>(<i>t</i>)") + ' 横向速度</span>' +
+    '<span>' + sw(C_ORANGE) + MM("<i>p</i><span class='op'>=</span><i>E</i><span class='op'>·</span><i>v</i><sub>⊥</sub>") + ' 瞬时功率</span>';
+
+  $("legSpec").innerHTML =
+    '<span>' + sw("#2c3e50") + '当前 ' + H_THH + ' 的吸收谱</span>' +
+    '<span>' + sw("rgba(15,155,142,0.9)", 1) + H_THH + ' = 0°（' + MM("<i>m</i><sub>t</sub>") + '）</span>' +
+    '<span>' + sw("rgba(123,63,160,0.9)", 1) + H_THH + ' = 90°（' + MM("√(<i>m</i><sub>l</sub><i>m</i><sub>t</sub>)") + '）</span>' +
+    '<span style="color:var(--text-sub)">橙色带＝转动样品时峰位可移动的范围</span>' +
+    '<span style="color:var(--text-sub)">纵轴 ' + MM("<i>P</i><span class='op'>/</span><i>P</i><sub>0</sub>") +
+    '：<i style="font-style:normal">P</i><sub>0</sub> = 零场（<i style="font-style:normal">B</i> = 0）吸收功率，即归一基准</span>';
+
+  $("legSurf").innerHTML =
+    '<span>' + sw(C_BLUE) + '等能面</span>' +
+    '<span>' + sw(C_NEG) + MM("<i>B</i>") + ' 方向</span>' +
+    '<span>' + sw(C_DASH, 1) + '椭球长轴（' + H_ML + ' 方向）</span>' +
+    '<span>' + sw(C_RED, 1) + '夹角 ' + H_THH + '</span>';
+
+  $("legCurve").innerHTML =
+    '<span>' + sw(C_RED) + MM("<i>m</i><sup>*</sup>(<i>θ</i>)") + ' 曲线</span>' +
+    '<span>' + sw("rgba(15,155,142,0.85)", 1) + MM("<i>m</i><sub>t</sub>") + '</span>' +
+    '<span>' + sw("rgba(123,63,160,0.85)", 1) + MM("√(<i>m</i><sub>l</sub><i>m</i><sub>t</sub>)") + '</span>' +
+    '<span>' + sw(C_DASH) + '当前工作点</span>';
+}
+
+/* ================= 符号零件与配色 ================= */
+const C_RED = C_POS, C_BLUE = C_NEG, C_TEAL = "#0f9b8e";
+const C_ORANGE = "#ef8c1a", C_PURPLE = "#7b3fa0";
+
+const P_ML = PSym("m", "l"), P_MT = PSym("m", "t");
+const P_MS = [{ s: "m", i: true }, { s: "*", sup: true }];
+const P_M0U = [{ s: "m", i: true }, { s: "0", sub: true, un: true }];
+const P_OMC = PSym("ω", "c"), P_OM = [{ s: "ω", i: true }];
+const P_DOM = [{ s: "Δ" }, { s: "ω", i: true }];      /* 失谐 Δω（Δ 正体、ω 斜体） */
+const P_B = [{ s: "B", i: true }], P_TH = [{ s: "θ", i: true }], P_PH = [{ s: "φ", i: true }];
+const P_BRES = [{ s: "B", i: true }, { s: "res", sub: true }];
+const P_TAU = [{ s: "τ", i: true }];
+const P_VPERP = PSym("v", "⊥"), P_VPAR = PSym("v", "∥");
+const P_E_SYM = [{ s: "E", i: true }], P_T_SYM = [{ s: "t", i: true }];
+const P_PRD = [{ s: "p", i: true }], P_P0 = PSym("P", "0");
+
+/* 显示开关（波形对比已固定常显，不再设开关） */
+const CK = { trail: true, proj: true, env: true, ang: true };
+
+/* ================= 预设 =================
+   m_l、m_t、方位角 φ、温度 T、样品纯度五项本工具已锁定，
+   预设只在「等能面形状 / B / θ / f」这四个核心自由度上切换。 */
+const PRES = [
+  { n: "默认：斜切 30° 共振", sh: "ell", B: 266, th: 30,
+    s: MM("<i>m</i><sup>*</sup>") + " = 0.213 " + MM("<i>m</i><sub>0</sub>") + "，" + MM("<i>B</i>") + " 正好停在峰顶：右侧两波同频同相，功率恒正 ⇒ 轨道一圈圈涨大。" },
+  { n: "球面：峰钉死不动", sh: "sph", B: 238, th: 30,
+    s: MM("<i>m</i><sub>l</sub><span class='op'>=</span><i>m</i><sub>t</sub>") + " ⇒ 各向同性：怎么转 " + MM("<i>θ</i>") + "，谱线一动不动，模块三右图被压成水平线。" },
+  { n: "<span class='m'><i>B</i></span> 沿长轴 <span class='m'><i>θ</i></span>=0°", sh: "ell", B: 238, th: 0,
+    s: "那一刀截到的全是横向 ⇒ " + MM("<i>m</i><sup>*</sup><span class='op'>=</span><i>m</i><sub>t</sub><span class='op'>=</span>0.19<i>m</i><sub>0</sub>") + "，峰在 0.238 T（最左端）。" },
+  { n: "<span class='m'><i>B</i></span> 垂直长轴 <span class='m'><i>θ</i></span>=90°", sh: "ell", B: 539, th: 90,
+    s: "截面含长轴 ⇒ " + MM("<i>m</i><sup>*</sup><span class='op'>=</span>√(<i>m</i><sub>l</sub><i>m</i><sub>t</sub>)<span class='op'>=</span>0.432<i>m</i><sub>0</sub>") + "，峰右移到 0.539 T（最右端）。" },
+  { n: "失谐：偏离峰顶", sh: "ell", B: 420, th: 30,
+    s: "峰在 0.266 T、" + MM("<i>B</i>") + " 拉到 0.42 T：两波不同步，功率有正有负 ⇒ 净吸收 ≈ 0，轨道不涨。" }
+];
+
+/* ================= 挑战 ================= */
+const CHAL = [
+  {
+    q: "拖 " + MM("<i>B</i>") + " 滑块，看模块一左右两图：电子<b>转得快慢</b>怎么变（回旋频率 " +
+       MM("<i>ω</i><sub>c</sub>") + " 与 " + MM("<i>B</i>") +
+       " 什么关系）？螺旋在什么条件下才一圈圈<b>涨大</b>？",
+    a: () => {
+      const s = state();
+      const onPeak = s.detTau < 1;
+      return "<b><span class='m'><i>B</i></span> 变大 ⇒ 转得更快。</b>" +
+        MM("<i>ω</i><sub>c</sub><span class='op'>=</span><i>qB</i><span class='sl'>/</span><i>m</i><sup>*</sup>") +
+        " 与 <span class='m'><i>B</i></span> 成正比：右图蓝波（" + MM("<i>v</i><sub>⊥</sub>") + "）的频率跟着升，左图电子绕一圈的时间 " +
+        MM("2π<span class='sl'>/</span><i>ω</i><sub>c</sub>") + " 跟着缩短。当前 " +
+        MM("<i>ω</i><sub>c</sub>") + " = " + sciH(s.wc, 2) + " rad/s。" +
+        "<br><b>但「转得快」不等于「会涨大」。</b>只有微波频率正好等于回旋频率（" +
+        MM("<i>ω</i><span class='op'>=</span><i>ω</i><sub>c</sub>") + "，即 " +
+        MM("<i>B</i><span class='op'>=</span><i>B</i><sub>res</sub><span class='op'>=</span><i>m</i><sup>*</sup><i>ω</i><span class='sl'>/</span><i>q</i> = " +
+        fmt(s.Bres, 3) + " T") + "）时才涨大：此时右图两条波<b>同频同相</b>，功率 " +
+        MM("<i>p</i>") + " 恒 ≥ 0 ⇒ 电场每一圈都做正功。失谐时一推一拽，" + MM("<i>p</i>") +
+        " 有正有负、平均为零 ⇒ 不吸收。当前 " + MM("<i>B</i>") + " = " + fmt(OPT.B, 3) + " T，" +
+        MM("Δ<i>ω</i><i>τ</i>") + " = " + fmt(s.detTau, 2) +
+        (onPeak ? " <span style='color:#2e9e5b'>⇒ 正落在峰上</span>"
+                : " <span style='color:#d94a3d'>⇒ 已偏离峰（半高宽外）</span>") + "。" +
+        "<br><i style=\"color:#8b97a6\">补充：真实的回旋半径 " +
+        MM("<i>r</i><span class='op'>=</span><i>v</i><sub>⊥</sub><span class='sl'>/</span><i>ω</i><sub>c</sub>") +
+        " 与螺距 " + MM("<i>h</i><span class='op'>=</span>2π<i>v</i><sub>∥</sub><span class='sl'>/</span><i>ω</i><sub>c</sub>") +
+        " 同样 ∝ 1/B（本例 " + fmtLen(s.rCyc) + " / " + fmtLen(s.hCyc) +
+        "，读数面板随 B 实时更新）。左图为突出「共振涨大」，几何尺度未按 1/B 缩放。</i>";
+    }
+  },
+  {
+    q: "在「球形等能面」和「旋转椭球」之间来回切，同时拖动 " + MM("<i>θ</i>") +
+       "。哪种模式的吸收峰会随磁场方向移动？为什么？",
+    a: () => {
+      const r = state().ratio;
+      return "<b>球形不动，椭球会动。</b>" +
+        "电子是在<b>垂直于 <span class='m'><i>B</i></span> 的平面</b>里转圈的，有效质量由那刀切出来的截面决定。" +
+        "球面各向同性 —— 怎么切截面都一样，所以 " + MM("<i>m</i><sup>*</sup>") +
+        " 与 <span class='m'><i>θ</i></span> 无关，峰钉死不动；" +
+        "椭球横竖不等长 —— 切面方向变了，" + MM("<i>m</i><sup>*</sup>") +
+        " 就变了，于是峰在 " + MM("<i>m</i><sub>t</sub>") + " 与 " +
+        MM("√(<i>m</i><sub>l</sub><i>m</i><sub>t</sub>)") +
+        " 之间滑动（模块二里那条橙色带就是它的行程）。" +
+        "<br>当前各向异性比 m_l/m_t = <b>" + fmt(r, 2) + "</b>。" +
+        (Math.abs(r - 1) < 0.02 ? " 已经≈1 ⇒ 这就是球面，峰当然不动。"
+                                : " 偏离 1 越远，峰跑得越远。");
+    }
+  },
+  {
+    q: "椭球模式下把 " + MM("<i>θ</i>") + " 从 0° 推到 90°，读 " +
+       MM("<i>m</i><sup>*</sup>") + " 和 " + MM("<i>B</i><sub>res</sub>") +
+       "。两个端点各是多少？和公式 " +
+       MM("<i>m</i><sup>*</sup><span class='op'>=</span><i>m</i><sub>t</sub>√(<i>m</i><sub>l</sub><span class='sl'>/</span>(<i>m</i><sub>t</sub>sin<sup>2</sup><i>θ</i><span class='op'>+</span><i>m</i><sub>l</sub>cos<sup>2</sup><i>θ</i>))") +
+       " 对得上吗？",
+    a: () => {
+      const s = state();
+      return "<b><span class='m'><i>θ</i></span>=0°：</b>" + MM("<i>m</i><sup>*</sup>") + " = " +
+        fmt(OPT.mt, 3) + " m₀（就是 " + MM("<i>m</i><sub>t</sub>") + "），" +
+        MM("<i>B</i><sub>res</sub>") + " = " + fmt(s.Bres0, 3) + " T。" +
+        "<br><b><span class='m'><i>θ</i></span>=90°：</b>" + MM("<i>m</i><sup>*</sup>") + " = " + MM("<span class='sqrt'><span class='rd'>√</span><span class='rdc'><i>m</i><sub>l</sub><i>m</i><sub>t</sub></span></span>") + " = " +
+        fmt(s.m90, 3) + " m₀，" + MM("<i>B</i><sub>res</sub>") + " = " +
+        fmt(s.Bres90, 3) + " T。" +
+        "<br>当前 <span class='m'><i>θ</i></span> = " + fmt(OPT.th, 0) + "° ⇒ m* = " + fmt(s.m, 3) +
+        " m₀，B_res = " + fmt(s.Bres, 3) + " T。整条曲线见模块三右图。";
+    }
+  },
+  {
+    q: "盯着模块三<b>右边</b>那条 " + MM("<i>m</i><sup>*</sup>(<i>θ</i>)") +
+       " 曲线，在「旋转椭球」与「球面」之间来回切。什么时候它被压成一条水平线？" +
+       "椭球时曲线两端之比是多少，这个值由什么决定？",
+    a: () => {
+      const s = state();
+      return OPT.shape === "sph"
+        ? "<b>现在就是球面</b>（m_l = m_t）：各个方向等价，m*(<span class='m'><i>θ</i></span>) 恒等于 m_t，曲线被压成水平线 —— " +
+          "对应到模块二，就是两条虚线重合、峰钉死不动。"
+        : "<b>椭球时曲线两端之比不是一个独立的数。</b><span class='m'><i>θ</i></span>=0° 处是 " +
+          MM("<i>m</i><sub>t</sub>") + "，<span class='m'><i>θ</i></span>=90° 处是 " + MM("√(<i>m</i><sub>l</sub><i>m</i><sub>t</sub>)") +
+          "，二者之比正是 " + MM("√(<i>m</i><sub>l</sub><span class='sl'>/</span><i>m</i><sub>t</sub>)") +
+          " —— 所以<b>各向异性比 m_l/m_t 越大，曲线越「弯」</b>；一旦比值取 1（切到球面），比值也变成 1，曲线就平了。" +
+          "<br>当前 m_l/m_t = <b>" + fmt(s.ratio, 2) + "</b>，两端为 " +
+          fmt(OPT.mt, 3) + " → " + fmt(s.m90, 3) + " m₀，比值 " + fmt(s.m90 / OPT.mt, 3) + "。";
+    }
+  },
+  {
+    q: "把 " + MM("<i>B</i>") + " 一路压到最小（0.002 T），盯模块二的谱：<b>峰还在吗？谱变了吗？</b>" +
+       "再看读数面板里的 " + MM("<i>ω</i><i>τ</i>") + " —— 它跟着变了吗？" +
+       "这说明「偏离共振」和「峰被抹平」<b>是不是一回事</b>？",
+    a: () => {
+      const s = state();
+      /* 马蒂森定则的三种工况（τ_ph = 2.0e-12·(300/T)^1.5；τ_imp = 5e-11 / 8e-13） */
+      const cases = [
+        ["4.2 K + 高纯（本工具）", 1 / (1 / 5.0e-11 + 1 / (2.0e-12 * Math.pow(300 / 4.2, 1.5)))],
+        ["300 K + 高纯", 1 / (1 / 5.0e-11 + 1 / (2.0e-12 * Math.pow(300 / 300, 1.5)))],
+        ["300 K + 重掺", 1 / (1 / 8.0e-13 + 1 / (2.0e-12 * Math.pow(300 / 300, 1.5)))]
+      ];
+      const rows = cases.map(c =>
+        "<br>　· " + c[0] + "：<span class='m'><i>τ</i></span> = " + sciH(c[1], 2) + " s，<span class='m'><i>ωτ</i></span> = <b>" + fmt(s.w * c[1], 2) + "</b>" +
+        (s.w * c[1] > 1 ? " ⇒ 峰又高又尖" : " ⇒ <span style='color:#d94a3d'>峰被散射淹没</span>")).join("");
+      return "<b>谱一个像素都不会动，峰也一直都在。</b>峰位 " +
+        MM("<i>B</i><sub>res</sub><span class='op'>=</span><i>m</i><sup>*</sup><i>ω</i><span class='sl'>/</span><i>q</i>") +
+        " 只由 " + MM("<i>m</i><sup>*</sup>") + " 定，峰宽只由 " + MM("<i>τ</i>") +
+        " 定 —— 两者都与「你站在谱上的哪一点」无关。拖 <span class='m'><i>B</i></span> 只是把工作点竖线挪到谱的远端，那是<b>失谐</b>，" +
+        "不是把峰抹掉。" +
+        "<br>读数里的 " + MM("<i>ω</i><i>τ</i>") + " = <b>" + fmt(s.omTau, 2) +
+        "</b> 也纹丝不动：判据必须取在<b>共振处</b>（那里 " +
+        MM("<i>ω</i><sub>c</sub><span class='op'>=</span><i>ω</i>") + "，所以 " +
+        MM("<i>ω</i><sub>c</sub><i>τ</i><span class='op'>=</span><i>ω</i><i>τ</i>") +
+        "）。而「当前 <span class='m'><i>B</i></span> 处的 <span class='m'><i>ω</i><sub>c</sub></span><span class='m'><i>τ</i></span>」随 <span class='m'><i>B</i></span> 变，量的是<b>离峰多远</b>，不能拿来判峰的存亡 —— " +
+        "把 <span class='m'><i>B</i></span> 拉到最小它跌破 1，谱却一点没变，就是这个道理。" +
+        "<br>真正能让峰消失的只有 " + MM("<i>τ</i>") + "。马蒂森定则 " +
+        MM("1<span class='op'>/</span><i>τ</i><span class='op'>=</span>1<span class='op'>/</span><i>τ</i><sub>imp</sub><span class='op'>+</span>1<span class='op'>/</span><i>τ</i><sub>ph</sub>") +
+        "，" + MM("<i>τ</i><sub>ph</sub><span class='op'>∝</span><i>T</i><sup>−3/2</sup>") + "：" + rows +
+        "<br>本工具把样品锁死在最好一边（<span class='m'><i>τ</i></span> = " + sciH(s.tau, 2) +
+        " s，上限）；<b>低温压住声子散射、高纯压住杂质散射</b>，两条腿缺一条 <span class='m'><i>τ</i></span> 就上不去，" +
+        "<span class='m'><i>ω</i></span><span class='m'><i>τ</i></span> 立刻跌破 1 —— 所以真实实验必须低温高纯，还要靠<b>高频微波 + 强磁场</b>把 <span class='m'><i>ω</i></span> 顶上去。";
+    }
+  }
+];
+function buildChals() {
+  const box = $("chalGrid");
+  box.innerHTML = "";
+  CHAL.forEach((c, i) => {
+    const d = document.createElement("div");
+    d.className = "chal";
+    d.innerHTML =
+      '<div class="chal-head"><b>挑战' + "一二三四五六七八九"[i] + "　" + c.q + "</b>" +
+      '<span class="chev">▶</span></div>' +
+      '<div class="chal-body"><div class="btn-row"><button class="ansBtn">显示参考答案</button></div><div class="ans"></div></div>';
+    const head = d.querySelector(".chal-head");
+    head.onclick = () => d.classList.toggle("open");
+    const ab = d.querySelector(".ansBtn");
+    ab.onclick = e => {
+      e.stopPropagation();
+      const a = d.querySelector(".ans");
+      a.innerHTML = c.a();
+      a.classList.add("show");
+    };
+    box.appendChild(d);
+  });
+}
+
+/* ================= 交互 ================= */
+function syncInputs() {
+  $("bSlider").value = Math.round(OPT.B * 1000);
+  $("thSlider").value = OPT.th;
+  syncTexts();
+  buildBtns();
+}
+function syncTexts() {
+  const s = state();
+  $("bVal").innerHTML = fmt(OPT.B, 3) + " T";
+  $("thVal").innerHTML = fmt(OPT.th, 0) + "°";
+  /* 说明行 */
+  $("shVal").innerHTML = OPT.shape === "sph" ? "球面" : "旋转椭球";
+  $("shSub").innerHTML = OPT.shape === "sph"
+    ? MM("<i>m</i><sub>l</sub><span class='op'>=</span><i>m</i><sub>t</sub>") +
+      "：各向同性，" + MM("<i>m</i><sup>*</sup>") + " 与磁场方向无关。"
+    : MM("<i>m</i><sub>l</sub><span class='op'>≠</span><i>m</i><sub>t</sub>") +
+      "：各向异性，" + MM("<i>m</i><sup>*</sup>") + " 随 " + MM("<i>θ</i>") + " 变化。";
+  $("fixSub").innerHTML =
+    MM("<i>m</i><sub>l</sub>") + " = <b>" + fmt(mlShown(), 2) + "</b> " + H_M0U +
+    "　" + MM("<i>m</i><sub>t</sub>") + " = <b>" + fmt(OPT.mt, 3) + "</b> " + H_M0U +
+    "　" + MM("<i>φ</i>") + " = 0°" +
+    "　" + MM("<i>T</i>") + " = 4.2 K　样品纯度＝高纯" +
+    "　微波 " + MM("<i>f</i>") + " = <b>" + fmt(OPT.f, 1) + "</b> GHz（" +
+    MM("<i>ω</i><span class='op'>=</span>2π<i>f</i>") + " 就是交变电场角频率）" +
+    " s";
+  $("bSub").innerHTML = "扫场：共振峰位 " + MM("<i>B</i><sub>res</sub><span class='op'>=</span><i>m</i><sup>*</sup><i>ω</i><span class='sl'>/</span><i>q</i> = ") +
+    fmt(s.Bres, 3) + " T。";
+  $("thSub").innerHTML = MM("<i>θ</i><span class='op'>=</span>0°") + " ⇒ " + MM("<i>m</i><sup>*</sup><span class='op'>=</span><i>m</i><sub>t</sub>") +
+    "；" + MM("<i>θ</i><span class='op'>=</span>90°") + " ⇒ " + MM("<i>m</i><sup>*</sup><span class='op'>=</span><span class='sqrt'><span class='rd'>√</span><span class='rdc'><i>m</i><sub>l</sub><i>m</i><sub>t</sub></span></span>") + "。";
+  $("preVal").innerHTML = OPT.preset >= 0 ? PRES[OPT.preset].n : "自定义";
+  $("preSub").innerHTML = OPT.preset >= 0 ? PRES[OPT.preset].s : "已手动改动参数。";
+}
+function buildBtns() {
+  const pb = $("preBtns"); pb.innerHTML = "";
+  PRES.forEach((p, i) => {
+    const b = document.createElement("button");
+    b.innerHTML = p.n;
+    if (OPT.preset === i) b.className = "sel";
+    b.onclick = () => {
+      OPT.preset = i; OPT.shape = p.sh;
+      OPT.B = p.B / 1000; OPT.th = p.th;
+      syncInputs();
+    };
+    pb.appendChild(b);
+  });
+
+  const sb = $("shBtns").querySelectorAll("button");
+  sb.forEach(b => {
+    b.classList.toggle("active", b.dataset.m === OPT.shape);
+    b.onclick = () => { OPT.shape = b.dataset.m; OPT.preset = -1; syncInputs(); };
+  });
+
+  const cr = $("ckRow"); cr.innerHTML = "";
+  [["trail", "螺旋轨迹"], ["proj", "圆周投影"], ["env", "包络虚线"], ["ang", "夹角标注"]].forEach(([k, n]) => {
+    const b = document.createElement("button");
+    b.innerHTML = n;
+    if (CK[k]) b.className = "sel";
+    b.onclick = () => { CK[k] = !CK[k]; buildBtns(); };
+    cr.appendChild(b);
+  });
+}
+
+function fitAll() { ["orbit", "wave", "spec", "esurf", "mcurve"].forEach(fitCanvas); }
+function render() {
+  drawLegends();
+  drawOrbit(); drawWave(); drawSpec(); drawEsurf(); drawMCurve(); drawReadout();
+}
+
+/* 拖拽旋转 */
+function bindDrag(id, key) {
+  const el = $(id);
+  let drag = false, px = 0, py = 0;
+  el.addEventListener("pointerdown", e => {
+    drag = true; px = e.clientX; py = e.clientY;
+    el.setPointerCapture(e.pointerId);
+  });
+  el.addEventListener("pointermove", e => {
+    if (!drag) return;
+    const dx = e.clientX - px, dy = e.clientY - py;
+    px = e.clientX; py = e.clientY;
+    VIEWS[key].az += dx * 0.008;
+    VIEWS[key].el = clamp(VIEWS[key].el + dy * 0.006, -1.15, 1.15);
+  });
+  el.addEventListener("pointerup", () => { drag = false; });
+  el.addEventListener("pointercancel", () => { drag = false; });
+}
+
+/* hover 读数：spec 与 esurf 共用一套坐标记录 */
+const HOVS = { on: false, x: 0, y: 0, id: "" };
+function bindHover() {
+  ["spec", "esurf"].forEach(id => {
+    const el = $(id);
+    el.addEventListener("pointermove", e => {
+      const r = el.getBoundingClientRect();
+      HOVS.on = true; HOVS.id = id;
+    HOVS.x = e.clientX - r.left; HOVS.y = e.clientY - r.top;
+    });
+    el.addEventListener("pointerleave", () => { HOVS.on = false; HOVS.id = ""; });
+  });
+}
+
+/* ================= 初始化 ================= */
+function init() {
+  fitAll();
+  buildBtns();
+  buildChals();
+
+  const bind = (sid, fn) => {
+    $(sid).addEventListener("input", e => { fn(+e.target.value); OPT.preset = -1; syncTexts(); });
+  };
+  bind("bSlider", v => { OPT.B = v / 1000; });
+  bind("thSlider", v => { OPT.th = v; });
+
+  bindDrag("orbit", "orbit");
+  bindDrag("esurf", "esurf");
+  bindHover();
+
+  $("btnPlay").onclick = () => { OPT.play = !OPT.play; $("btnPlay").innerHTML = OPT.play ? "⏸ 暂停" : "▶ 播放"; };
+  $("btnReset").onclick = () => {
+    OPT.preset = 0; const p = PRES[0];
+    OPT.shape = p.sh; OPT.B = p.B / 1000; OPT.th = p.th;
+    ANIM = 0; syncInputs();
+  };
+
+  window.addEventListener("resize", () => { fitAll(); render(); });
+  /* 折叠区（.fold）：事件委托，新增折叠块不用再逐个绑定。
+     与挑战区的 .chal 完全独立，两者互不影响。 */
+  document.addEventListener("click", e => {
+    const fh = e.target.closest ? e.target.closest(".fold-head") : null;
+    if (!fh) return;
+    const f = fh.parentNode;
+    if (f && f.classList && f.classList.contains("fold")) f.classList.toggle("open");
+  });
+
+  syncInputs();
+  let last = performance.now();
+  (function loop(now) {
+    const dt = Math.min((now - last) / 1000, 0.05); last = now;
+    if (OPT.play) ANIM += dt;
+    render();
+    requestAnimationFrame(loop);
+  })(last);
+}
+document.addEventListener("DOMContentLoaded", init);
+
+/* i18n 启动必须在 init() 之后：setLang() 会重跑 syncInputs()/render()，
+   放到 init() 之前会在 fitAll() 之前触发绘制，一旦抛异常整个 init() 就跑不到（挑战与画布会空）。 */
+(function () {
+  try {
+    i18nWatch();
+    ORIG_TITLE = ORIG_TITLE || document.title;
+    var btn = document.getElementById("langBtn");
+    if (btn) btn.onclick = function () { setLang(LANG === "en" ? "zh" : "en"); };
+    if (LANG === "en") setLang("en"); else { document.title = ORIG_TITLE; i18nWalk(document.body); }
+  } catch (e) { }
+})();
+</script>
+</body>
+</html>

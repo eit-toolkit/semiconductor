@@ -1,0 +1,42 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "EIT-SP: Educational Interactive Toolkit for Semiconductor Physics"
+abbreviation: "EIT-SP"
+abstract: >-
+  A growing series of single-file, zero-dependency interactive HTML tools for teaching and
+  learning semiconductor physics. Tools are added as they mature; those not yet ready are
+  not published, so the collection expands over time. It is organised according to the
+  chapter sequence of a standard
+  Chinese semiconductor-physics textbook: crystal structure and energy bands,
+  impurities and defects, carrier statistics, electrical conductivity,
+  non-equilibrium carriers, pn junctions, semiconductor surfaces and MIS
+  structures, and optical, thermoelectric and magnetic effects.
+  Each tool is a self-contained HTML file with no build step, no external
+  libraries and no network requests, so it runs offline and remains usable
+  without maintenance.
+version: 1.0.0
+date-released: "2026-10-18"
+license: MIT
+type: software
+repository-code: "https://github.com/eit-toolkit/semiconductor"
+url: "https://wlsyzx.whu.edu.cn/semiconductor/index_pinyin.htm"
+keywords:
+  - semiconductor physics
+  - physics education
+  - interactive simulation
+  - single-file HTML
+  - zero dependency
+  - undergraduate physics
+authors:
+  - family-names: "Wang"
+    given-names: "Hao"
+    affiliation: "School of Physics and Technology, Wuhan University"
+    email: "doctorwanghao@qq.com"
+preferred-citation:
+  type: software
+  title: "EIT-SP: Educational Interactive Toolkit for Semiconductor Physics"
+  year: 2026
+  authors:
+    - family-names: "Wang"
+      given-names: "Hao"
+      affiliation: "School of Physics and Technology, Wuhan University"

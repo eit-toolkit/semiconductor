@@ -1,0 +1,2153 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<!-- SPDX-License-Identifier: MIT -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>半导体中的声子交互教学工具</title>
+<style>
+  :root {
+    --bg: #f7f9fb;
+    --panel: #ffffff;
+    --border: #dde4ec;
+    --text: #2c3e50;
+    --text-sub: #6b7a8c;
+    --blue: #1976d2;
+    --blue-light: #e3f0fb;
+    --orange: #ef8c1a;
+    --red: #d94a3d;
+    --teal: #0f9b8e;
+    --green: #2e9e5b;
+    --purple: #7b3fa0;
+    --gray-ref: #9aa5b1;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Microsoft YaHei", "PingFang SC", "Segoe UI", sans-serif;
+    background: var(--bg); color: var(--text); padding: 14px;
+  }
+  header { position: relative; display: flex; align-items: baseline; justify-content: center; gap: 14px; flex-wrap: wrap; text-align: center; margin-bottom: 2px; }
+  .lang-btn { position: absolute; right: 0; top: 0; border: 1px solid var(--border); background: #fff;
+    color: var(--text-sub); padding: 3px 10px; border-radius: 7px; cursor: pointer; font-size: 12px; font-weight: 600; }
+  .lang-btn:hover { border-color: var(--blue); color: var(--blue); }
+  header h1 { font-size: 20px; }
+  header .formula { font-size: 14.5px; color: var(--text-sub); }
+  .sub-note { text-align: center; font-size: 12.5px; color: var(--text-sub); margin-bottom: 12px; line-height: 1.75; }
+  .sub-note b { color: var(--blue); }
+
+  .layout { display: flex; gap: 14px; align-items: flex-start; max-width: 1500px; margin: 0 auto; }
+  .viz { flex: 0 0 64%; min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+  .side { flex: 1; min-width: 310px; display: flex; flex-direction: column; gap: 12px; }
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; }
+  .sec-title { font-size: 13.5px; font-weight: 700; margin: 2px 0 6px; }
+  /* 模块编号徽标：只有教学内容模块才带编号；控制面板等辅助面板不是模块，不加 */
+  .sec-title .mtag {
+    display: inline-block; background: var(--blue); color: #fff;
+    font-size: 11px; font-weight: 700; padding: 1.5px 7px;
+    border-radius: 5px; margin-right: 6px; vertical-align: 1.5px; letter-spacing: .3px;
+  }
+  canvas { display: block; width: 100%; border-radius: 6px; touch-action: none; }
+  canvas:focus { outline: 2px solid rgba(25,118,210,.45); outline-offset: 1px; }
+  .chart-wrap { position: relative; }
+  .hint { font-size: 12px; color: var(--text-sub); margin-top: 6px; line-height: 1.6; }
+  .ctrl { margin-bottom: 10px; }
+  .ctrl:last-child { margin-bottom: 0; }
+  .ctrl-head { display: flex; justify-content: space-between; align-items: baseline; font-size: 13px; font-weight: 600; margin-bottom: 2px; gap: 8px; }
+  .ctrl-head .val { color: var(--blue); font-variant-numeric: tabular-nums; font-weight: 700; white-space: nowrap; }
+  .ctrl input[type=range] { width: 100%; accent-color: var(--blue); }
+  .ctrl .sub { font-size: 11.5px; color: var(--text-sub); margin-top: 1px; line-height: 1.5; }
+  .btn-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+  .btn-row button {
+    border: 1px solid var(--border); background: #fff; color: var(--text);
+    padding: 5px 11px; border-radius: 7px; cursor: pointer; font-size: 12.5px;
+  }
+  .btn-row button:hover { border-color: var(--blue); color: var(--blue); }
+  .btn-row.tight button { padding: 4px 9px; font-size: 12px; }
+  .btn-row button.sel { background: var(--blue); border-color: var(--blue); color: #fff; font-weight: 600; }
+  .btn-row button.primary { background: var(--blue-light); border-color: var(--blue); color: var(--blue); font-weight: 600; }
+  .mode-switch { display: flex; gap: 6px; }
+  .mode-switch button {
+    flex: 1; border: 1px solid var(--border); background: #fff; color: var(--text-sub);
+    padding: 6px 10px; border-radius: 8px; cursor: pointer; font-size: 12.5px; font-weight: 600;
+  }
+  .mode-switch button.active { background: var(--blue); border-color: var(--blue); color: #fff; }
+  .chk-row { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12.5px; color: var(--text-sub); margin-top: 4px; }
+  .chk-row label { display: inline-flex; align-items: center; gap: 5px; cursor: pointer; }
+  .chk-row input[type=checkbox] { accent-color: var(--blue); }
+  .legend { display: flex; gap: 6px 14px; flex-wrap: wrap; align-items: center; font-size: 12px; color: var(--text-sub); margin-top: 6px; }
+  .swatch { display: inline-block; vertical-align: middle; width: 20px; height: 0; border-top: 3px solid currentColor; border-radius: 2px; margin-right: 6px; }
+  .swatch.dash { border-top-style: dashed; }
+  .swatch.dot { width: 11px; height: 11px; border: none; border-radius: 50%; }
+  .swatch.sq { width: 11px; height: 11px; border: none; border-radius: 3px; }
+  /* ---- LaTeX 风格数学排版（纯 CSS，无外部库） ---- */
+  .m { font-family: "Cambria Math", "STIX Two Math", "Latin Modern Math", "Times New Roman", Times, serif;
+       font-size: 1.05em; font-style: normal; white-space: nowrap; letter-spacing: .01em; }
+  .m i, .m var { font-style: italic; }
+  .m .rm { font-style: normal; }
+  .m sub, .m sup { font-size: .70em; font-style: normal; line-height: 1; }
+  .m sub { vertical-align: -.28em; }
+  .m sup { vertical-align: .50em; }
+.m .m { font-size: 1em; }   /* 嵌套容器（TEXH 下标转换叠加）不再放大字号 */
+  .m sub i, .m sup i { font-style: italic; }
+  .m .op { font-style: normal; padding: 0 .24em; }
+  .m .sl { font-style: normal; padding: 0 .05em; }
+  .m .un { font-style: normal; padding-left: .16em; }
+  .frac { display: inline-block; vertical-align: -0.52em; text-align: center; margin: 0 .16em; font-size: .86em; line-height: 1.18; }
+  .frac > .num { display: block; padding: 0 .34em; border-bottom: 1px solid currentColor; }
+  .frac > .den { display: block; padding: 0 .34em; }
+  /* ---- 读数区 ---- */
+  .kv { display: grid; grid-template-columns: 1fr; gap: 2px 22px; font-size: 12.5px; }
+  .kv .row { display: flex; justify-content: space-between; gap: 8px; border-bottom: 1px dotted #eef2f7; padding: 2px 0; }
+  .kv .k { color: var(--text-sub); white-space: nowrap; }
+  .kv .v { font-variant-numeric: tabular-nums; text-align: right; }
+  .kv .v b { color: var(--blue); }
+  .kv .hd { grid-column: 1 / -1; font-weight: 700; color: var(--text); font-size: 12px; margin: 6px 0 2px; }
+  .kv .hd:first-child { margin-top: 0; }
+  .unit-note { font-size: 11.5px; color: var(--text-sub); line-height: 1.55; margin-top: 6px; }
+  /* ---- 引导探究 ---- */
+  .chal-wrap { max-width: 1500px; margin: 14px auto 0; }
+  .chal-bar { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+  .chal-bar b { font-size: 14.5px; }
+  .chal-bar span { font-size: 12px; color: var(--text-sub); }
+  .chal-grid { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+  .chal { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 8px 12px; }
+  .chal-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; cursor: pointer; }
+  .chal-head b { font-size: 13.5px; }
+  .chal-head .chev { color: var(--text-sub); font-size: 12px; transition: transform .15s; display: inline-block; }
+  .chal.open .chal-head .chev { transform: rotate(90deg); }
+  .chal.open { border-color: var(--blue); }
+  .chal-body { display: none; margin-top: 6px; font-size: 12.5px; color: var(--text-sub); line-height: 1.75; }
+  .chal.open .chal-body { display: block; }
+  .chal-body .ans { display: none; margin-top: 6px; padding: 7px 10px; background: var(--blue-light); border-radius: 6px; color: var(--text); }
+  .chal-body .ans.show { display: block; }
+  .chal-body .ans b { color: var(--blue); }
+  .chal-body .btn-row { margin-top: 8px; }
+  @media (max-width: 1100px) {
+    .layout { flex-direction: column; }
+    .viz { flex: 1 1 auto; width: 100%; }
+  }
+  /* ---- 课程页脚 ---- */
+  .site-foot { max-width: 1500px; margin: 18px auto 0; padding: 12px 16px 24px;
+    border-top: 1px solid var(--border); color: var(--text-sub);
+    font-size: 12.5px; line-height: 1.8; text-align: center; }
+  .site-foot a { color: var(--blue, #1976d2); text-decoration: none; }
+  .site-foot a:hover { text-decoration: underline; }
+  .sqrt > .rdc, .sqrt .rdc { display: inline-block; position: static; font-size: 1em;
+             border-top: .055em solid currentColor; padding: .06em .12em 0 .10em; margin: 0; line-height: 1; }
+
+  /* 公式排版：分式 / 根式 —— 全站统一为「回旋共振 v06」写法（置于末尾，覆盖本文件早期变体） */
+  .frac { display: inline-block; vertical-align: -0.52em; text-align: center; font-size: .78em; margin: 0 .12em; }
+  .frac > .num, .frac .num { display: block; padding: 0 .22em; border-bottom: .055em solid currentColor; line-height: inherit; }
+  .frac > .den, .frac .den { display: block; padding: 0 .22em; line-height: inherit; }
+  .sqrt { display: inline-block; white-space: nowrap; vertical-align: baseline; margin: 0; font-size: 1em; }
+  .sqrt > .rd, .sqrt .rd { display: inline-block; position: static; font-size: 1em; line-height: inherit; padding: 0 .02em 0 0; margin: 0; }
+  .sqrt > .rdc, .sqrt .rdc { display: inline-block; position: static; font-size: 1em;
+             border-top: .055em solid currentColor; padding: .06em .12em 0 .10em; margin: 0; line-height: 1; }
+  .sqrt .rdc:has(sup) { padding-top: .18em; }
+</style>
+</head>
+<body>
+
+<header>
+  <button id="langBtn" class="lang-btn" data-noi18n title="中文 / English">EN</button>
+  <h1>半导体中的声子交互教学工具</h1>
+  <div class="formula"><span class="m"><i>ω</i><sup>2</sup><span class="op">=</span><i>K</i><span class="op">(</span><span class="frac"><span class="num">1</span><span class="den"><i>m</i><sub>1</sub></span></span><span class="op">+</span><span class="frac"><span class="num">1</span><span class="den"><i>m</i><sub>2</sub></span></span><span class="op">)</span><span class="op">±</span><i>K</i><span class='sqrt'><span class='rd'>√</span><span class='rdc'><span class="op">[</span><span class="op">(</span><span class="frac"><span class="num">1</span><span class="den"><i>m</i><sub>1</sub></span></span><span class="op">+</span><span class="frac"><span class="num">1</span><span class="den"><i>m</i><sub>2</sub></span></span><span class="op">)</span><sup>2</sup><span class="op">−</span><span class="frac"><span class="num">4<span class="rm">sin</span><sup>2</sup><span class="op">(</span><span class="frac"><span class="num"><i>q</i><i>a</i></span><span class="den">2</span></span><span class="op">)</span></span><span class="den"><i>m</i><sub>1</sub><i>m</i><sub>2</sub></span></span><span class="op">]</span></span></span></span></div>
+</header>
+<div class="sub-note">
+  一维双原子链：<b><span class="m"><i>m</i><sub>1</sub></span>（重）</b>与 <b><span class="m"><i>m</i><sub>2</sub></span>（轻）</b>交替排列。<b>声学支</b>原胞内两个原子同向运动，<b>光学支</b>反向运动；
+  布里渊区边界处两支之间出现<b>禁带</b>：其<b>相对</b>宽度 <span class="m">Δ<i>ω</i><span class="op">/</span><i>ω</i><sub>0</sub></span> 只由<b>质量比</b>决定（绝对宽度 <span class="m">Δ<i>ω</i></span> 还随 <span class="m"><span class='sqrt'><span class='rd'>√</span><span class='rdc'><i>K</i></span></span></span> 整体缩放，所以拖 <span class="m"><i>K</i></span> 滑条会看到灰带变宽变窄）。
+  所有数值均为<b>示意单位</b>（取 <span class="m"><i>m</i><sub>2</sub><span class="op">=</span>1</span>、力常数 <span class="m"><i>K</i></span>、晶格常数 <span class="m"><i>a</i></span> 为基准），因此 <span class="m"><i>ω</i></span> 以 <span class="m"><span class='sqrt'><span class='rd'>√</span><span class='rdc'><span class="frac"><span class="num"><i>K</i></span><span class="den"><i>m</i><sub>2</sub></span></span></span></span></span> 为单位、波长以 <span class="m"><i>a</i></span> 为单位——重点看图像，不在数字量级。
+</div>
+
+<div class="layout">
+  <!-- ============ 左列：可视化 ============ -->
+  <div class="viz">
+    <div class="card">
+      <div class="sec-title"><span class="mtag">模块一</span>原子链振动模式（<span class="m">LA / TA / LO / TO</span>）</div>
+      <div class="chart-wrap"><canvas id="chain" data-h="440" tabindex="0"></canvas></div>
+      <div class="legend" id="legChain"></div>
+      <div class="hint">上图：灰色点是平衡位置，圆球是当前位置，橙色箭头给出位移方向与大小——<b>纵波</b>沿链方向（压缩 / 膨胀），<b>横波</b>垂直链方向（剪切）。下图：两个子格的位移曲线 <span class="m"><i>u</i>(<i>x</i>)</span>，可直接读出两个原子的振幅比与相位差：<b>声学支</b>两条曲线同向、<span class="m"><i>q</i></span> 较小时几乎重合（<span class="m"><i>q</i><span class="op">→</span>π</span> 时轻原子逐渐冻结，只剩重原子在动，两条曲线就分开了），<b>光学支</b>两条曲线反号（反向、轻原子振幅大）。悬停任一原子可读取它的位移与相位；方向键 ←→ 可微调 <span class="m"><i>q</i></span>。</div>
+    </div>
+
+    <div class="card">
+      <div class="sec-title"><span class="mtag">模块二</span>声子色散关系 <span class="m"><i>ω</i>(<i>q</i>)</span></div>
+      <div class="chart-wrap"><canvas id="disp" data-h="380" tabindex="0"></canvas></div>
+      <div class="legend" id="legDisp"></div>
+      <div class="hint">蓝色 = 声学支（<span class="m"><i>q</i><span class="op">→</span>0</span> 时 <span class="m"><i>ω</i><span class="op">→</span>0</span>），红色 = 光学支（<span class="m"><i>q</i><span class="op">→</span>0</span> 时 <span class="m"><i>ω</i><span class="op">→</span><i>ω</i><sub>0</sub></span>）。灰色横带是两支之间的<b>禁带</b>：该频率区间不存在任何振动模式，其相对宽度只随质量比增大（绝对宽度还随 <span class="m"><span class='sqrt'><span class='rd'>√</span><span class='rdc'><i>K</i></span></span></span> 缩放）。在图上点击可切换分支并把 <span class="m"><i>q</i></span> 移到该处；悬停可读取该点的 <span class="m"><i>q</i></span> 与两支频率。</div>
+    </div>
+
+    <div class="card">
+      <div class="sec-title"><span class="mtag">模块三</span>长波极限 <span class="m"><i>q</i><span class="op">→</span>0</span>：斜线 vs 水平线</div>
+      <div class="chart-wrap"><canvas id="zoom" data-h="210" tabindex="0"></canvas></div>
+      <div class="hint">把 <span class="m"><i>q</i><span class="op">→</span>0</span> 附近放大：<b>声学支</b>是一条过原点的直线 <span class="m"><i>ω</i><span class="op">=</span><i>v</i><sub>s</sub><i>q</i></span>（虚线），波长极长的整体晃动 = 宏观声波；<b>光学支</b>是一条水平渐近线 <span class="m"><i>ω</i><span class="op">→</span><i>ω</i><sub>0</sub></span>（虚线），原胞内两个原子相对振动、质心几乎不动。</div>
+    </div>
+  </div>
+
+  <!-- ============ 右列：控制与读数 ============ -->
+  <div class="side">
+    <div class="card">
+      <div class="sec-title">控制面板</div>
+
+      <div class="ctrl">
+        <div class="ctrl-head"><span>质量比 <span class="m"><i>m</i><sub>1</sub><span class="op">/</span><i>m</i><sub>2</sub></span> · 预设</span><span class="val" id="rVal">—</span></div>
+        <div class="btn-row tight" id="presetBtns" style="margin-top:0;"></div>
+        <div class="sub" id="matNote"></div>
+        <input type="range" id="rSlider" min="10" max="1000" step="1" value="107">
+        <div class="sub">固定 <span class="m"><i>m</i><sub>2</sub><span class="op">=</span>1</span>，改变 <span class="m"><i>m</i><sub>1</sub></span>。<span class="m"><i>m</i><sub>1</sub><span class="op">=</span><i>m</i><sub>2</sub></span> 时两支在区边界简并、<b>禁带消失</b>；比值越大，禁带越宽。预设按钮只重置 <span class="m"><i>m</i><sub>1</sub></span> 与 <span class="m"><i>K</i></span>，拖动本滑块后括号内变为自定义。</div>
+      </div>
+
+      <div class="ctrl">
+        <div class="ctrl-head"><span>力常数 <span class="m"><i>K</i></span></span><span class="val" id="kVal">—</span></div>
+        <input type="range" id="kSlider" min="40" max="250" step="1" value="100">
+        <div class="sub"><span class="m"><i>ω</i><span class="op">∝</span><span class='sqrt'><span class='rd'>√</span><span class='rdc'><i>K</i></span></span></span>：整体缩放频率刻度，<b>不改变曲线形状</b>，也不改变振幅比与禁带的相对宽度。</div>
+      </div>
+
+      <div class="ctrl">
+        <div class="ctrl-head"><span>分支</span><span class="val" id="brVal">—</span></div>
+        <div class="mode-switch" id="brBtns">
+          <button data-b="ac">声学支</button>
+          <button data-b="op">光学支</button>
+        </div>
+      </div>
+
+      <div class="ctrl">
+        <div class="ctrl-head"><span>偏振</span><span class="val" id="polVal">—</span></div>
+        <div class="mode-switch" id="polBtns">
+          <button data-p="L">纵波 LA / LO</button>
+          <button data-p="T">横波 TA / TO</button>
+        </div>
+        <div class="sub">教学近似取 <span class="m"><i>K</i><sub>T</sub><span class="op">=</span>0.55<i>K</i><sub>L</sub></span>（横向耦合更软），所以 TA / TO 整体低于 LA / LO。代价要说明：本模型里 <span class="m"><i>ω</i><sub>T</sub><span class="op">/</span><i>ω</i><sub>L</sub><span class="op">≡</span><span class='sqrt'><span class='rd'>√</span><span class='rdc'>0.55</span></span><span class="op">=</span>0.742</span> 与 <span class="m"><i>q</i></span> 无关 ⇒ TA / TO 只是 LA / LO 的等比缩小，<b>形状完全一样</b>；真实晶体的 TA 支在区边界明显压平，形状与 LA 不同。</div>
+      </div>
+
+      <div class="ctrl">
+        <div class="ctrl-head"><span>波矢 <span class="m"><i>q</i></span></span><span class="val" id="qVal">—</span></div>
+        <input type="range" id="qSlider" min="0" max="1000" step="1" value="450">
+        <div class="sub" id="qSub"></div>
+      </div>
+
+      <div class="ctrl">
+        <div class="ctrl-head"><span>动画</span><span class="val" id="spVal">—</span></div>
+        <div class="btn-row" style="margin-top:0;"><button id="btnPlay" class="primary">⏸ 暂停</button><button id="btnResetT">相位归零</button></div>
+        <input type="range" id="spSlider" min="10" max="250" step="1" value="100">
+        <div class="sub">动画速度按<b>真实频率比</b>缩放：光学支转得快，长波声学支慢得多——这正是两支频率的物理差别。</div>
+      </div>
+
+      <div class="ctrl">
+        <div class="ctrl-head"><span>显示项目</span></div>
+        <div class="chk-row">
+          <label><input type="checkbox" id="ckArrow" checked> 位移箭头</label>
+          <label><input type="checkbox" id="ckEq" checked> 平衡位置</label>
+          <label><input type="checkbox" id="ckEnv" checked> 位移曲线</label>
+          <label><input type="checkbox" id="ckGap" checked> 禁带</label>
+          <label><input type="checkbox" id="ckAsm" checked> 长波参考（虚线 + 波长）</label>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="sec-title">读数面板</div>
+      <div class="kv" id="readout"></div>
+      <div class="unit-note">单位约定：质量以 <span class="m"><i>m</i><sub>2</sub><span class="op">=</span>1</span> 计；频率以 <span class="m"><span class='sqrt'><span class='rd'>√</span><span class='rdc'><span class="frac"><span class="num"><i>K</i></span><span class="den"><i>m</i><sub>2</sub></span></span></span></span></span> 计；波矢 <span class="m"><i>q</i></span> 以 <span class="m">π<span class="sl">/</span><i>a</i></span> 计、波长 <span class="m"><i>λ</i></span> 以 <span class="m"><i>a</i></span> 计；速度 <span class="m"><i>v</i></span> 以 <span class="m"><i>a</i><span class='sqrt'><span class='rd'>√</span><span class='rdc'><span class="frac"><span class="num"><i>K</i></span><span class="den"><i>m</i><sub>2</sub></span></span></span></span></span> 计；位移振幅取同一约定下的相对值。</div>
+      <div class="unit-note">从<b>模式</b>到<b>声子</b>：本页画的是<b>经典</b>简正模式（实数 <span class="m"><i>ω</i></span>、确定相位）。把每个模式<b>量子化</b>即得声子 —— 能量量子 <span class="m"><i>ħω</i></span>，平均占有数 <span class="m"><i>n&#772;</i><span class="op">=</span>1<span class="sl">/</span><span class="op">(</span><span class="rm">exp</span><span class="op">(</span><i>ħω</i><span class="sl">/</span><i>kT</i><span class="op">)</span><span class="op">−</span>1<span class="op">)</span></span>（玻色分布）。本工具频率取示意单位，不直接给出 <span class="m"><i>ħω</i></span>；以 Si 作锚点：Γ 点光学声子 ≈ 520 cm<sup>−1</sup>（15.6 THz、64 meV），德拜温度 <span class="m"><i>θ</i><sub>D</sub> ≈ 645 K</span>。
+      <!-- 2026-10-18 简化：删掉原尾句（把两类声子分别接到另两个散射工具、并点出极性材料
+           那一类散射的整句）。前两项在第 6 道挑战的答案里已带着机制讲过一遍。 -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 底部：引导探究 ============ -->
+<div class="chal-wrap">
+  <div class="card">
+    <div class="chal-bar">
+      <b>引导探究（点击展开，先自己试一试再看答案）</b>
+      <span>挑战任务</span>
+    </div>
+    <div class="chal-grid" id="chalGrid"></div>
+  </div>
+</div>
+
+<div class="site-foot">本工具是 EIT-SP（半导体物理交互式教学工具箱）的一部分（武汉大学物理学院《半导体物理》智慧课程），以 MIT 协议开源，可自由使用与二次开发；转载请保留出处。反馈意见 <a href="mailto:doctorwanghao@qq.com">doctorwanghao@qq.com</a></div>
+
+<script>
+/* ==================================================================
+   i18n（C1 单文件双语：物理代码仍然只有一份）
+   LANG 取值优先级：URL ?lang=en / ?lang=zh  >  localStorage('opl_lang')  >  默认中文。
+   不做 location 跳转——保住「单文件拷走也能用」。
+   三个注入点，**业务字符串一个都不改**：
+     ① partsOf()   画布 token：带 i/sub/sup/un 标记的是物理量、下标与单位，跳过
+     ② fillText/measureText 原型挂钩：兜住直接写进画布的中文串
+     ③ DOM 文本节点：静态 HTML 与 JS 写进来的 innerHTML，用 MutationObserver 兜住新增节点
+   T() 先查整句词典，未命中再按「最长优先」做短语替换，因此拼接串也能翻。
+   漏翻会被记进 window.__MISS，可导出核对。 */
+var LANG = (function () {
+  var m = /[?&]lang=([a-zA-Z]+)/.exec(location.search);
+  var q = m ? m[1].toLowerCase() : "";
+  if (q === "en" || q === "zh") return q;
+  var s = "";
+  try { s = localStorage.getItem("opl_lang") || ""; } catch (e) { }
+  return (s === "en" || s === "zh") ? s : "zh";
+})();
+var ORIG_TITLE = document.title;
+var __MISS = [];
+try { window.__MISS = __MISS; } catch (e) { }
+function noteMiss(s) { if (__MISS.indexOf(s) < 0) __MISS.push(s); }
+function TSoft(s) {
+  if (!T._K) T._K = Object.keys(I18N).sort(function (a, b) { return b.length - a.length; });
+  var out = s, i, k, orig = s;
+  /* 两遍：第一遍只吃长度 ≥ 2 的短语；第二遍的单字 key 只在「传进来的串
+     恰好就是这一个字」时才上场——画布逐字排版会拿单字去 measureText，那一
+     路必须翻。反过来，绝不让单字 key 去切更长的句子：否则「导」「子」「原」
+     会把「半导体」「电子数」「泡利原理」切成半 conduction 体、电 quantum 数、
+     泡利 origin 理这类中英混排。同一条理由也适用于「下」：整句不该被切碎。 */
+  for (var pass = 0; pass < 2; pass++) {
+    for (i = 0; i < T._K.length; i++) {
+      k = T._K[i];
+      if (k.length < 2 && (pass === 0 || orig !== k)) continue;
+      if (out.indexOf(k) < 0) continue;
+      /* 中文片段之间没有空格：前一片段已翻成英文时，本片段英文直连进去会粘连
+         （「更深」「或」「更浅」逐段替换成 deeper、or、shallower 会拼出 deeperor），
+         所以替换时看上下文：key 以中文开头、前一字符已是英文 ⇒ 前面补一个空格。 */
+      out = out.replace(new RegExp(k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "g"), function (m, off, str) {
+        var v = I18N[k];
+        var pre = off > 0 ? str.charAt(off - 1) : "";
+        if (/[A-Za-z0-9]/.test(pre) && /^[A-Za-z0-9(]/.test(v) && /[\u3400-\u9FFF]/.test(k.charAt(0))) v = " " + v;
+        return v;
+      });
+    }
+  }
+  return out;
+}
+/* 同一句被 DOM 切成好几个文本节点时，首尾空格会随机落在 data 里；
+   所以除了「整句命中」，再试一次「去空格后命中」并原样补回首尾空白。 */
+function trimMap() {
+  if (T._TM) return T._TM;
+  var m = {};
+  for (var k in I18N) if (Object.prototype.hasOwnProperty.call(I18N, k)) {
+    var t = k.replace(/^\s+|\s+$/g, "");
+    if (t && m[t] === undefined) m[t] = I18N[k];
+  }
+  T._TM = m;
+  return m;
+}
+/* eslint-disable no-use-before-define */
+function T(s) {
+  if (LANG !== "en" || typeof s !== "string" || !s) return s;
+  if (!/[一-鿿]/.test(s)) return s;
+  if (Object.prototype.hasOwnProperty.call(I18N, s)) return I18N[s];
+  var tm = trimMap(), core = s.replace(/^\s+|\s+$/g, "");
+  if (core && tm[core] !== undefined) {
+    var lead = s.slice(0, s.length - s.replace(/^\s+/, "").length);
+    var tail = s.slice(s.replace(/\s+$/, "").length);
+    return lead + tm[core] + tail;
+  }
+  var v = TSoft(s);
+  /* 译完还剩汉字也算漏翻：只翻掉一半的「半吊子译文」曾经让 __MISS 恒为 0。 */
+  if (v === s || /[\u3400-\u9FFF]/.test(v)) noteMiss(s);
+  return v;
+}
+var I18N = {
+  /* ---- 词典：中文原文 → 英文。key 禁含运行时数字（换个参数就漏），数字前后要拆开 ---- */
+  "模块一": "Module 1",
+  "模块二": "Module 2",
+  "控制面板": "Control Panel",
+  "模块三": "Module 3",
+  "引导探究（点击展开，先自己试一试再看答案）": "Guided inquiry (click to expand — try it yourself before opening the answers)",
+  "挑战任务": "Challenges",
+  "？": "?",
+  "，": ", ",
+  "、": ", ",
+  "：": ": ",
+  "；": "; ",
+  "（": " (",
+  "）": ")",
+  "本工具是 EIT-SP（半导体物理交互式教学工具箱）的一部分（武汉大学物理学院《半导体物理》智慧课程），以 MIT 协议开源，可自由使用与二次开发；转载请保留出处。": "This tool is part of EIT-SP, the Educational Interactive Toolkit for Semiconductor Physics (School of Physics and Technology, Wuhan University). Released under the MIT licence: free to use, modify and redistribute, including commercially. Please keep this attribution.",
+  "反馈意见": " Feedback",
+  "材料": "Material",
+  "读数面板": "Readout Panel",
+  "晶格常数 ": "Lattice constant ",
+  "%）": "%)",
+  "共 ": "In total ",
+  "能量": "energy",
+  "波矢 ": "Wave vector ",
+  "波矢": "wave vector",
+  "看答案": "Show answer",
+  " 个原子": " atoms inside the circle",
+  "从 ": " from ",
+  "），": "), and ",
+  "固定 ": "Fix ",
+  "）；": "); ",
+  "金刚石": "diamond",
+  "闪锌矿": "zinc blende",
+  "纤锌矿": "wurtzite",
+  "原子": "atom",
+  "两个": "Two grains of ",
+  "动画": "Animation",
+  "示意": "schematic",
+  "）：": "): ",
+  "看看答案": "Show answer",
+  "。把": ". Turning on the ",
+  "垂直": "perpendicular",
+  "。当前 ": ". At present ",
+  " ⇒ ": " ⇒ ",
+  "同向": "in the same direction",
+  "冻结": "frozen",
+  "⏸ 暂停": "⏸ Pause",
+  "几乎": "almost ",
+  " 的 ": " ",
+  "原子 ": "atom ",
+  "预设": "Preset",
+  "显示": "Display",
+  "横向": "transverse",
+  " 方向": " direction",
+  " 曲线": " curve",
+  "温度 ": "Temperature ",
+  "，所以 ": ", so ",
+  "传播方向": "Propagation direction",
+  " / ": " / ",
+  "杂质": "impurity",
+  " 只是": " given by this tool is only",
+  " 个": " ",
+  "有 ": " ",
+  "声子": "phonon",
+  "禁带": "Forbidden gap",
+  "直接": "direct",
+  "吸收": "Absorption",
+  "声子：": "Phonon:",
+  "当前是 ": "It is currently ",
+  " 的": " ",
+  "注意 ": "Note that ",
+  "变窄": "narrows",
+  "反号": "flips sign",
+  " 与": " and ",
+  "（取 ": "(with ",
+  "长 ": "length ",
+  "怎么变？": " of the charge piled up on the walls change?",
+  "宽度": "width",
+  "消失": "disappears",
+  "。注意": ". Note that the ",
+  "本工具是 EIT-SP（半导体物理交互式教学工具箱）的一部分（武汉大学物理学院《半导体物理》智慧课程），以 MIT 协议开源，可自由使用与二次开发；转载请保留出处。反馈意见": "This tool is part of EIT-SP, the Educational Interactive Toolkit for Semiconductor Physics (School of Physics and Technology, Wuhan University). Released under the MIT licence: free to use, modify and redistribute, including commercially. Please keep this attribution. Feedback",
+  "本工具是": "This tool is part of",
+  "（半导体物理交互式教学工具箱）的一部分（武汉大学物理学院《半导体物理》智慧课程），以": ", the Educational Interactive Toolkit for Semiconductor Physics (School of Physics and Technology, Wuhan University). Released under the",
+  "协议开源，可自由使用与二次开发；转载请保留出处。反馈意见": "licence: free to use, modify and redistribute, including commercially. Please keep this attribution. Feedback",
+  "协议开源，可自由使用与二次开发；转载请保留出处。": "licence: free to use, modify and redistribute, including commercially. Please keep this attribution.",
+  "（形变势散射，见「形变势与压电势散射」工具；它再与电离杂质散射按马西森规则并联，见「电离杂质散射对载流子影响」工具）。": " (deformation-potential scattering, see the “Deformation-potential and piezoelectric scattering” tool; it is then combined in parallel with ionised impurity scattering through Matthiessen’s rule, see the “Ionised impurity scattering” tool).",
+  "）：原胞内两个原子反向振动、质心不动 ⇒ 可被电磁波直接激发的局域相对振动（极性材料中就是红外吸收的那支）。": "): the two atoms in the cell vibrate against each other while the centre of mass stays put ⇒ a localised relative vibration that an electromagnetic wave can excite directly (in polar materials this is the branch responsible for infrared absorption).",
+  "）：原胞内两个原子反向振动、质心不动": "): the two atoms in the cell vibrate against each other while the centre of mass stays put",
+  "可被电磁波直接激发的局域相对振动（极性材料中就是红外吸收的那支）。": "a localised relative vibration that an electromagnetic wave can excite directly (in polar materials this is the branch responsible for infrared absorption).",
+  "（横向更软），所以 TA / TO 的频率整体低于 LA / LO —— 但要注意：本模型里": " (softer in shear), so the TA / TO frequencies lie overall below LA / LO — but note: in this model",
+  "（横向更软），所以": "(softer in shear), so the",
+  "的频率整体低于": "frequencies lie overall below",
+  "但要注意：本模型里": "but note: in this model",
+  "两条曲线反号（反向、轻原子振幅大）。悬停任一原子可读取它的位移与相位；方向键 ←→ 可微调": "the two curves have opposite signs (opposite directions, the light atom has the larger amplitude). Hover over any atom to read its displacement and phase; the ← → arrow keys fine-tune",
+  "（横向耦合更软），所以 TA / TO 整体低于 LA / LO。代价要说明：本模型里": " (the transverse coupling is softer), so TA / TO lie below LA / LO overall. The price must be stated: in this model",
+  "（横向耦合更软），所以": "(the transverse coupling is softer), so",
+  "整体低于": "lie below",
+  "。代价要说明：本模型里": "overall. The price must be stated: in this model",
+  "拖动「质量比」从 1 拉到 10，看模块二的灰色禁带带。禁带宽度怎么变？质量比恰好": "Drag “Mass ratio” from 1 to 10 and watch the grey forbidden band in module 2. How does the gap width change? When the mass ratio is exactly",
+  "拖动「质量比」从": "Drag “Mass ratio” from",
+  "拉到": "to",
+  "，看模块二的灰色禁带带。禁带宽度怎么变？质量比恰好": "and watch the grey forbidden band in module 2. How does the gap width change? When the mass ratio is exactly",
+  "示意极端情形：重原子几乎不动，轻原子独自振动，两支几乎合并成一条平带。": "An extreme case: the heavy atom almost stands still while the light atom vibrates on its own, and the two branches almost merge into a single flat band.",
+  "上图：灰色点是平衡位置，圆球是当前位置，橙色箭头给出位移方向与大小——": "Top: the grey dots are the equilibrium positions, the spheres are the current positions, and the orange arrows give the direction and size of the displacement —",
+  "：该频率区间不存在任何振动模式，其相对宽度只随质量比增大（绝对宽度还随": ": no vibrational mode exists in that frequency interval, and its relative width grows only with the mass ratio (the absolute width also grows with",
+  "），质心基本不动。这就是「声学 / 光学」这两个名字的唯一本质区别。": "), and the centre of mass barely moves. That is the only essential difference behind the names “acoustic” and “optical”.",
+  "拖到接近 0，比较两支的频率读数。哪一支趋于 0？哪一支停在有限值": "towards 0 and compare the frequency readouts of the two branches. Which one tends to 0? Which one stops at a finite value",
+  "拖到接近": "towards",
+  "，比较两支的频率读数。哪一支趋于": "and compare the frequency readouts of the two branches. Which one tends to",
+  "？哪一支停在有限值": "? Which one stops at a finite value",
+  "缩放：光学支转得快，长波声学支慢得多——这正是两支频率的物理差别。": " scaling: the optical branch turns fast, the long-wavelength acoustic branch much more slowly — that is exactly the physical difference in frequency between the two branches.",
+  "无关 ⇒ TA / TO 只是 LA / LO 的等比缩小，": "independent ⇒ TA / TO are just LA / LO scaled down uniformly,",
+  "无关": "independent",
+  "只是": "are just",
+  "的等比缩小，": "scaled down uniformly,",
+  "；真实晶体的 TA 支在区边界明显压平，形状与 LA 不同。": "; in a real crystal the TA branch flattens markedly at the zone boundary and its shape differs from that of LA.",
+  "；真实晶体的": "; in a real crystal the",
+  "支在区边界明显压平，形状与": "branch flattens markedly at the zone boundary and its shape differs from that of",
+  "提示：留意动画速度——光学支始终快得多，因为它的频率高。": "Tip: watch the animation speed — the optical branch is always much faster, because its frequency is higher.",
+  "每个原子有 3 个自由度；原胞里两个原子 ⇒ 3 支声学": "Each atom has 3 degrees of freedom; two atoms per cell ⇒ 3 acoustic branches",
+  "每个原子有": "Each atom has",
+  "个自由度；原胞里两个原子": "degrees of freedom; two atoms per cell",
+  "支声学": "acoustic branches",
+  "时轻原子逐渐冻结，只剩重原子在动，两条曲线就分开了），": " the light atom gradually freezes and only the heavy atom keeps moving, so the two curves separate),",
+  "；以 Si 作锚点：Γ 点光学声子 ≈ 520 cm": "; anchored on Si: the Γ-point optical phonon ≈ 520 cm",
+  "；以": "; anchored on",
+  "作锚点：": ": the",
+  "点光学声子": "-point optical phonon",
+  "② 位移 u(x)：两个子格的振幅与相位一目了然": "② Displacement u(x): the amplitude and phase of the two sublattices at a glance",
+  "位移": "Displacement",
+  "：两个子格的振幅与相位一目了然": ": the amplitude and phase of the two sublattices at a glance",
+  "（虚线），原胞内两个原子相对振动、质心几乎不动。": " (dashed), the two atoms in the cell vibrate against each other and the centre of mass barely moves.",
+  "：声子数正比于温度，散射率随之上升，热平均给出": ": the phonon number is proportional to the temperature, the scattering rate rises with it, and the thermal average gives",
+  "（玻色分布）。本工具频率取示意单位，不直接给出": " (Bose distribution). This tool uses indicative units for the frequency and does not give",
+  "垂直链方向（剪切）。下图：两个子格的位移曲线": "perpendicular to the chain (shear). Bottom: the displacement curves of the two sublattices",
+  "（虚线），波长极长的整体晃动 = 宏观声波；": " (dashed); a very long wavelength overall sway = a macroscopic sound wave;",
+  "（虚线），波长极长的整体晃动": "(dashed); a very long wavelength overall sway",
+  "宏观声波；": "a macroscopic sound wave;",
+  "（15.6 THz、64 meV），德拜温度": " (15.6 THz, 64 meV), Debye temperature",
+  "），德拜温度": "), Debye temperature",
+  "① 原子链：灰色为平衡位置，圆球为当前位置": "① Atomic chain: grey = equilibrium position, sphere = current position",
+  "原子链：灰色为平衡位置，圆球为当前位置": "Atomic chain: grey = equilibrium position, sphere = current position",
+  "在 Γ 点还会因长程库仑作用而进一步劈裂。": "are split further at the Γ point by the long-range Coulomb interaction.",
+  "点还会因长程库仑作用而进一步劈裂。": "point by the long-range Coulomb interaction.",
+  "滑条会看到灰带变宽变窄）。 所有数值均为": " slider you will see the grey band widen and narrow). All numbers are",
+  "所有数值均为": "slider you will see the grey band widen and narrow). All numbers are",
+  "反向运动； 布里渊区边界处两支之间出现": " move in opposite directions; at the Brillouin-zone boundary",
+  "布里渊区边界处两支之间出现": "move in opposite directions; at the Brillouin-zone boundary",
+  "，可直接读出两个原子的振幅比与相位差：": ", from which the amplitude ratio and the phase difference of the two atoms can be read directly:",
+  "为单位——重点看图像，不在数字量级。": " as the unit — the point is to look at the picture, not at the magnitude of the numbers.",
+  "，也不改变振幅比与禁带的相对宽度。": ", nor does it change the amplitude ratio or the relative width of the gap.",
+  "计；位移振幅取同一约定下的相对值。": "; the displacement amplitudes are relative values under the same convention.",
+  "？这两种极限各对应什么物理图像？": "? What physical picture does each of these two limits correspond to?",
+  "—— 室温下它确实几乎不被激发。": " — at room temperature it is indeed hardly excited at all.",
+  "室温下它确实几乎不被激发。": "— at room temperature it is indeed hardly excited at all.",
+  "缩放）。在图上点击可切换分支并把": " scaling). Click on the figure to switch branch and move",
+  "沿链方向（压缩 / 膨胀），": "along the chain (compression / expansion),",
+  "沿链方向（压缩": "along the chain (compression",
+  "膨胀），": "expansion),",
+  "半导体中的声子交互教学工具": "Phonons in Semiconductors — Interactive Toolkit",
+  "移到该处；悬停可读取该点的": "to that point; hovering reads the",
+  "原胞内两个原子同向运动，": "the two atoms in the cell move in the same direction,",
+  "）。灰色横带是两支之间的": "). The grey horizontal band is the",
+  "、确定相位）。把每个模式": ", fixing the phase). Take each mode",
+  "即得声子 —— 能量量子": "and you have a phonon — a quantum of energy",
+  "即得声子": "and",
+  "——": "you",
+  "能量量子": "have a phonon — a quantum of energy",
+  "—（区边界，一支静止）": "— (zone boundary, one branch at rest)",
+  "GaAs 等极性材料中": "In polar materials such as GaAs",
+  "），红色 = 光学支（": "), red = optical branch (",
+  "），红色": "), red",
+  "光学支（": "optical branch (",
+  "；比值越大，禁带越宽。": "; the larger the ratio, the wider the gap.",
+  "纵波（位移 ∥ q）": "Longitudinal (displacement ∥ q)",
+  "纵波（位移": "Longitudinal (displacement",
+  "横波（位移 ⊥ q）": "Transverse (displacement ⊥ q)",
+  "横波（位移": "Transverse (displacement",
+  "曲线同号、几乎重合（": "the curves have the same sign and almost coincide (",
+  "：斜线 vs 水平线": ": a sloping line vs a horizontal line",
+  "：斜线": ": a sloping line",
+  "水平线": "a horizontal line",
+  "时两支在区边界简并、": " the two branches are degenerate at the zone boundary,",
+  "：整体缩放频率刻度，": ": rescales the frequency axis as a whole,",
+  "纵波 LA / LO": "Longitudinal LA / LO",
+  "纵波": "Longitudinal",
+  "横波 TA / TO": "Transverse TA / TO",
+  "横波": "Transverse",
+  "→ 原胞内相对振动": "→ relative vibration inside the cell",
+  "原胞内相对振动": "relative vibration inside the cell",
+  "其中 3 支声学、": "of which 3 are acoustic and",
+  "其中": "of which",
+  "支声学、": "are acoustic and",
+  "方向有 3N 支。": "there are 3N branches in each direction.",
+  "方向有": "there are",
+  "支。": "branches in each direction.",
+  "蓝色 = 声学支（": "Blue = acoustic branch (",
+  "蓝色": "Blue",
+  "声学支（": "acoustic branch (",
+  "是一条过原点的直线": "is a straight line through the origin",
+  "的振幅更大（当前": "has the larger amplitude (currently",
+  "时还存在禁带吗？": "does the gap still exist when",
+  "真实晶体沿同一个": "A real crystal along the same",
+  "是有限值，低温下": "is a finite value, and at low temperature",
+  "整体缩放，所以拖": "scaled as a whole, so dragging",
+  "原子链振动模式（": "Atomic-chain vibration mode (",
+  "较小时几乎重合（": "is small, they almost coincide (",
+  "是一条水平渐近线": "is a horizontal asymptote",
+  "单位约定：质量以": "Unit convention: masses in",
+  "GaAs 参考": "GaAs reference",
+  "参考": "reference",
+  "极端 10:1": "Extreme 10:1",
+  "极端": "Extreme",
+  "偏振 / 分支": "Polarisation / branch",
+  "偏振": "Polarisation",
+  "分支": "branch",
+  "（玻色分布）。": " (Bose distribution).",
+  "，长波声子满足": ", long-wavelength phonons satisfy",
+  "一维双原子链：": "One-dimensional diatomic chain:",
+  "决定（绝对宽度": "set by (the absolute width",
+  "为基准），因此": " as reference), therefore",
+  "为单位、波长以": "as the unit and the wavelength in",
+  "两条曲线同向、": "the two curves point the same way,",
+  "不改变曲线形状": "does not change the shape of the curves",
+  "简正模式（实数": "Normal mode (real",
+  "SiC 参考": "SiC reference",
+  "GaN 参考": "GaN reference",
+  "（示意单位）": " (indicative units)",
+  "（当前偏振）": " (current polarisation)",
+  "原胞内两原子": "Two atoms in the cell",
+  "有什么差别？": "what is the difference?",
+  "，绝对宽度随": ", the absolute width grows with",
+  "，平均占有数": ", the mean occupation number",
+  "⇒ 占有数按": "⇒ the occupation number goes as",
+  "占有数按": "the occupation number goes as",
+  "声子色散关系": "Phonon dispersion relation",
+  "与两支频率。": "and the frequencies of the two branches.",
+  "形状完全一样": "the shape is exactly the same",
+  "长波参考（虚线 + 波长）": "long-wavelength guide (dashed line + λ)",
+  "：本页画的是": ": what is drawn on this page is",
+  "只有重原子": "Only the heavy atom",
+  "只有轻原子": "Only the light atom",
+  "（归一化）": " (normalised)",
+  "区边界 π": "Zone boundary π",
+  "区边界": "Zone boundary",
+  "（相对宽度": " (relative width",
+  "%）。注意": "%). Note",
+  "）。注意": "). Note",
+  "（以原胞长": " (in units of the cell length",
+  "交替排列。": "alternate.",
+  "、晶格常数": ", lattice constant",
+  "附近放大：": "enlarged near:",
+  "教学近似取": "The teaching approximation takes",
+  "动画速度按": "The animation speed is scaled by",
+  "真实频率比": "Real frequency ratio",
+  "计；频率以": "; the frequency in",
+  "晶格常数": "Lattice constant",
+  "暂停": "Pause",
+  "同种原子": "identical atoms",
+  "＞ 视窗": "> the window",
+  "视窗": "the window",
+  "一个原胞": "one unit cell",
+  "（区边界": " (zone boundary",
+  "的极限）": " limit)",
+  "禁带 Δ": "Gap Δ",
+  "∞（只有": "∞ (only",
+  "（只有": "(only",
+  "0（只有": "0 (only",
+  "当前模式": "Current mode",
+  "组合给出": "combination gives",
+  "（横）。": " (transverse).",
+  "▶ 播放": "▶ Play",
+  "播放": "Play",
+  "示意单位": "indicative units",
+  "、力常数": ", force constant",
+  "长波极限": "Long-wavelength limit",
+  "禁带消失": "Gap disappears",
+  "相位归零": "Phase reset to zero",
+  "显示项目": "Display items",
+  "位移箭头": "Displacement arrows",
+  "平衡位置": "Equilibrium position",
+  "位移曲线": "Displacement curve",
+  "计；波矢": "; the wave vector",
+  "计、波长": ", the wavelength",
+  "计；速度": "; the velocity",
+  "个原子": " atoms",
+  "。当前": ". Current",
+  "，所以": ", so",
+  "当前是": "Currently",
+  "声学支": "Acoustic branch",
+  "光学支": "Optical branch",
+  "重原子": "Heavy atom",
+  "轻原子": "Light atom",
+  "振动）": "vibration)",
+  "自定义": "Custom",
+  "质量比": "Mass ratio",
+  " · 预设": " · preset",
+  "预设按钮只重置": "The preset buttons only reset",
+  "，拖动本滑块后括号内变为自定义": ", and drag this slider to turn the bracket into custom",
+  "力常数": "Force constant",
+  "相速度": "Phase velocity",
+  "群速度": "Group velocity",
+  "振幅比": "Amplitude ratio",
+  "（纵）": " (longitudinal)",
+  "（重）": " (heavy)",
+  "（轻）": " (light)",
+  "，改变": ", changing",
+  "量子化": "quantisation",
+  "固定": "fixed",
+  "方向": "direction",
+  "曲线": "curve",
+  "温度": "temperature",
+  "注意": "note",
+  "（取": " (taking",
+  "振动": "vibration",
+  "相位": "phase",
+  "声学": "acoustic",
+  "光学": "optical",
+  "反向": "opposite direction",
+  "参数": "parameters",
+  "波长": "wavelength",
+  "频率": "frequency",
+  "：其": ": its",
+  "相对": "relative",
+  "只由": "only by",
+  "还随": "also with",
+  "模式": "mode",
+  "经典": "classical",
+  "。": ". ",
+  "！": "!",
+  "＋": " + ",
+  "×": " × ",
+  "反向运动；\n  布里渊区边界处两支之间出现": "move in opposite directions;\n  at the Brillouin-zone boundary a",
+  " 滑条会看到灰带变宽变窄）。\n  所有数值均为": " slider you will see the grey band widen and narrow).\n  All numbers are",
+  " 以 ": " in ",
+  "（大球）": " (large sphere)",
+  "（小球）": " (small sphere)",
+  "当前位移（箭头）": "Current displacement (arrow)",
+  "一个波长 ": "One wavelength ",
+  "禁带（无振动模式）": "Forbidden band (no vibrational mode)",
+  " 时 ": " at ",
+  "把 ": "Set ",
+  "两种原子质量很接近（GaAs 的真实质量比 ≈ 1.07）：已经分裂，但本模型算出的相对宽度 ": "The two atomic masses are very close (the real mass ratio of GaAs is ≈ 1.07): the branches have split, but the relative width given by this model is ",
+  " 只有约 2%（真实 GaAs 参考：": " only about 2% (the real GaAs reference: ",
+  "）。真实 GaAs 是极性晶体，Γ 点的 LO–TO 劈裂主要来自": "). Real GaAs is a polar crystal, and the LO–TO splitting at Γ comes mainly from the",
+  "长程库仑作用": "long-range Coulomb interaction",
+  "，本模型只含质量效应。": "; this model contains only the mass effect.",
+  " 为单位）；当前模式 ": " as the unit); the current mode is ",
+  "到": "to",
+  "1. 在「分支」里来回切换": "1. Switch back and forth in “Branch”",
+  "，盯着模块一的原子链：原胞内那两个原子是": ", keeping your eye on the atomic chain in module 1: are the two atoms in the cell",
+  "还是": "or",
+  "运动？两条位移曲线 ": "? The two displacement curves ",
+  "——两条 ": "— the two ",
+  " 时完全重合），整个原胞作为一个整体在晃；": " coincide exactly at ), the whole cell sways as one;",
+  "——两条曲线反号，且轻原子 ": "— the two curves have opposite signs, and the light atom ",
+  "2. 把 ": "2. Drag ",
+  "（当前 ": " (currently ",
+  " 0.680）：波长趋于无穷、原子整体缓慢平移 ⇒ 宏观弹性波 / 声波；": " 0.680): the wavelength tends to infinity and the atoms translate slowly as a whole ⇒ a macroscopic elastic wave / sound wave;",
+  "（当前 1.846）：原胞内两个原子反向振动、质心不动 ⇒ 可被电磁波直接激发的局域相对振动（极性材料中就是红外吸收的那支）。": " (currently 1.846): the two atoms in the cell vibrate against each other with the centre of mass at rest ⇒ a localised relative vibration that an electromagnetic wave can excite directly (in polar materials, the branch responsible for infrared absorption).",
+  " 缩放，但": " scaled, but",
+  " 只由质量比决定": " is set only by the mass ratio",
+  "（两支在区边界简并，等价于折叠的单原子链）；": " (the two branches are degenerate at the zone boundary, equivalent to a folded monatomic chain);",
+  " 只整体缩放频率（拖它会看到灰带变宽变窄），": " only rescales the frequency as a whole (drag it and the grey band widens and narrows),",
+  "不改变": "without changing",
+  "禁带的相对宽度。": "the relative width of the gap.",
+  "4. 切换": "4. Switch",
+  "：原子的振动方向怎么变？它们与「声学 / 光学」这两支是什么关系？": ": how does the vibration direction of the atoms change? What is their relation to the “acoustic / optical” pair?",
+  "纵波把回复方向取在链方向上（压缩—膨胀），横波取在垂直方向上（剪切），所以": "A longitudinal wave takes its restoring direction along the chain (compression–expansion), a transverse wave perpendicular to it (shear), so",
+  "偏振与分支是两个独立的标签": "polarisation and branch are two independent labels",
+  " 四种模式。当前是 ": " four modes. Currently ",
+  "5. 本工具只有一维链，给出": "5. This tool has only a one-dimensional chain and gives",
+  "两支": "two branches",
+  "色散。推广到三维晶体：一共几支声学、几支光学？偏振分别是什么？": " dispersion. Generalise to a three-dimensional crystal: how many acoustic and how many optical branches are there, and what are their polarisations?",
+  " 3 支光学：": " 3 optical branches: ",
+  "（横，简并），": " (transverse, degenerate), ",
+  "（横）。原胞里有 ": " (transverse). The cell contains ",
+  " 个原子的": " atoms in a ",
+  "结构（Si、GaAs）⇒ 共 ": " structure (Si, GaAs) ⇒ ",
+  "6 支": "6 branches",
+  "；而": "; whereas ",
+  "原胞有 ": " cells contain ",
+  " 个原子（本工具的 GaN 预设正是纤锌矿 GaN）⇒ 共 ": " atoms (the GaN preset of this tool is exactly wurtzite GaN) ⇒ ",
+  "12 支 = 3 声学 + 9 光学": "12 branches = 3 acoustic + 9 optical",
+  "。支数通式就一句：": ". The general rule for the number of branches is one line: ",
+  "3 ×（原胞原子数 N）": "3 × (number of atoms per cell N)",
+  " 支光学。": " optical branches.",
+  "本页只画了同一偏振下的 2 支（1 声学 + 1 光学）；真实晶体沿同一个 ": "This page draws only the 2 branches of one polarisation (1 acoustic + 1 optical); a real crystal along the same ",
+  "6. 本页画的是": "6. What is drawn on this page is",
+  "（实数频率、确定相位）。把它接到半导体的散射上：为什么升温时": " (real frequency, definite phase). Connect it now to scattering in semiconductors: why does",
+  "散射越来越强（": " scattering grow stronger and stronger as the temperature rises (",
+  "），而": "), while ",
+  "在低温下几乎不参与散射？": " hardly takes part in scattering at low temperature?",
+  "把模式": "Quantise each mode",
+  "指数冻结": "the occupation freezes out exponentially",
+  "，激发不出光学声子，散射被「冻死」。以 Si 的 Γ 点光学声子 520 cm": ", no optical phonon can be excited and the scattering is “frozen out”. Taking the Si Γ-point optical phonon at 520 cm",
+  "（≈ 64 meV）为例：要 ": " (≈ 64 meV) as an example: ",
+  " 需 ": " needs ",
+  " =  q → 宏观声波": " =  q → a macroscopic sound wave",
+  "ω = vₛq → 宏观声波": "ω = vₛq → a macroscopic sound wave",
+  "宏观声波": "a macroscopic sound wave",
+  "两个原子完全相同：在": "The two atoms are identical: in the ",
+  "本一维最近邻链模型": "present one-dimensional nearest-neighbour chain model",
+  "中两支在区边界简并、禁带消失，等价于折叠后的单原子链。": " the two branches are degenerate at the zone boundary and the gap closes, exactly as in a folded monatomic chain.",
+  "注意这是均匀链折叠带来的一维模型结论，不能外推到真实 Si": "Note that this is a one-dimensional result of folding a uniform chain; it must not be extrapolated to real Si",
+  " —— Si 是金刚石结构的三维晶体，声学支与光学支在区边界并不简并（真实 Si 参考：Γ 点光学声子 ≈ ": " — Si is a three-dimensional crystal with the diamond structure, and its acoustic and optical branches are not degenerate at the zone boundary (reference values for real Si: optical phonon at Γ ≈ ",
+  "THz，德拜温度 ": " THz, Debye temperature ",
+  "，都远高于声学支）。": ", both far above the acoustic branch).",
+  "）：波长趋于无穷、原子整体缓慢平移 ⇒ 宏观弹性波 / 声波；": "): the wavelength tends to infinity and all the atoms drift together ⇒ a macroscopic elastic / acoustic wave;",
+  "质量差约 ": "The masses differ by about ",
+  "倍（SiC 的真实质量比 ≈ ": "-fold (the real mass ratio of SiC ≈ ",
+  "）：出现明显禁带（本模型相对宽度约 ": "): a clear gap appears (relative width in this model ≈ ",
+  "）。SiC 同样是极性晶体，Γ 点 LO–TO 劈裂由": "). SiC is likewise a polar crystal, and the LO–TO splitting at Γ is governed by ",
+  "主导，本模型只含质量效应。": "; this model includes the mass effect only.",
+  "倍（GaN 的真实质量比 ≈ ": "-fold (the real mass ratio of GaN ≈ ",
+  "）：禁带很宽（本模型相对宽度约 ": "): the gap is wide (relative width in this model ≈ ",
+  "）。真实 GaN 是极性纤锌矿结构，Γ 点 LO–TO 劈裂同样主要来自": "). Real GaN has the polar wurtzite structure, and its LO–TO splitting at Γ again comes mainly from ",
+};
+
+/* 注入点②：画布直写字符串。老工具直接调 g.fillText()，这里在原型上兜住。
+   measureText 必须一起挂钩，否则「量的宽度」和「量的文字」用的不是同一个串。
+   ⚠️ 必须在 init() 之后才调用 i18nHookCanvas()：自带画布排版层的工具会在脚本里
+     替换 prototype.fillText，挂钩要装在它**外面**，拿到的是整串而不是被切开的单字。 */
+function i18nHookCanvas() {
+  if (typeof CanvasRenderingContext2D === "undefined") return;
+  var ft = CanvasRenderingContext2D.prototype.fillText;
+  CanvasRenderingContext2D.prototype.fillText = function (s, x, y) {
+    if (typeof s === "string") arguments[0] = T(s);
+    return ft.apply(this, arguments);
+  };
+  /* 描边文字（白边包字）走 strokeText，同样要过 T()，否则画布标签漏翻 */
+  var stx = CanvasRenderingContext2D.prototype.strokeText;
+  CanvasRenderingContext2D.prototype.strokeText = function (s, x, y) {
+    if (typeof s === "string") arguments[0] = T(s);
+    return stx.apply(this, arguments);
+  };
+  var mt = CanvasRenderingContext2D.prototype.measureText;
+  CanvasRenderingContext2D.prototype.measureText = function (s) {
+    return mt.call(this, typeof s === "string" ? T(s) : s);
+  };
+}
+
+/* 注入点④：逐字绘制的画布串。drawMath 一类把中文按单字拆成 token 再逐个 fillText，
+   T() 每次只见到一个汉字 ⇒ 整句词条永远命中不了。这里在整串进入分词之前先整体翻译，
+   于是画布标注也走「整句优先」，与 DOM 同一个口径。没有这些函数的工具自动跳过。
+   ⚠️ 签名坑：drawMath / measureMath 的第一个参数是 canvas context（对象），文本在第
+   二位；早期版本照着 arguments[0] 翻，等于把 context 送去 T()，补丁全程空转。
+   这里改为「找到第一个含中文的字符串参数」再翻，既躲开 context，也不会误伤
+   align / weight 之类以英文字符串传的选项。 */
+(function () {
+  ["drawMath", "drawMathHalo", "measureMath"].forEach(function (n) {
+    var f = window[n];
+    if (typeof f !== "function") return;
+    window[n] = function () {
+      for (var i = 0; i < arguments.length; i++) {
+        if (typeof arguments[i] === "string" && /[\u3400-\u9FFF]/.test(arguments[i])) {
+          arguments[i] = T(arguments[i]);
+          break;
+        }
+      }
+      return f.apply(this, arguments);
+    };
+  });
+})();
+
+
+/* ---- DOM 文本节点 ---- */
+function i18nNode(n) {
+  var el = n.parentElement;
+  if (!el) return;
+  var tag = el.tagName;
+  if (tag === "SCRIPT" || tag === "STYLE") return;
+  if (el.closest && el.closest("[data-noi18n]")) return;
+  var cur = n.nodeValue;
+  if (n.__orig === undefined || (cur !== n.__last && cur !== n.__orig)) n.__orig = cur;
+  var want = LANG === "en" ? T(n.__orig) : n.__orig;
+  if (want !== cur) n.nodeValue = want;
+  n.__last = want;
+}
+/* 属性（title / placeholder / optgroup label …）不是文本节点，MutationObserver 覆盖不到，
+   必须单独过一遍：否则悬停提示、下拉分组名会残留中文。原文缓存在元素 expando 上，
+   切回中文时原样写回。改属性不会触发 childList/characterData 观察器，不会递归。 */
+var I18N_ATTRS = ["title", "placeholder", "aria-label", "alt", "label"];
+function i18nAttrs(root) {
+  var els = [root], i, j;
+  if (root.querySelectorAll) els = els.concat(Array.prototype.slice.call(root.querySelectorAll("*")));
+  for (i = 0; i < els.length; i++) {
+    var el = els[i];
+    if (!el.getAttribute) continue;
+    if (el.closest && el.closest("[data-noi18n]")) continue;
+    for (j = 0; j < I18N_ATTRS.length; j++) {
+      var a = I18N_ATTRS[j];
+      if (!el.hasAttribute(a)) continue;
+      var key = "__a_" + a;
+      if (el[key] === undefined) el[key] = el.getAttribute(a);
+      var want = LANG === "en" ? T(el[key]) : el[key];
+      if (want !== el.getAttribute(a)) el.setAttribute(a, want);
+    }
+  }
+}
+/* 英文补空格（跨节点）：中文片段被行内标签切开时，各自翻成英文后直连会粘连。
+   判定用 DOM 结构而不是渲染矩形——折叠区（挑战答案）矩形为零，矩形法会漏。
+   两文本节点在文档序里紧邻（中间没有任何文本节点，包括空格节点）、
+   前段末尾与后段开头都是字母、双方词条都没自带空格、且不在上下标里 ⇒ 插一个空格。
+   空格节点记录在案，切回中文时移除。只动 i18n 注入层，不改业务文本。 */
+function fixGlue(root) {
+  var all = [];
+  var w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null, false), n;
+  while ((n = w.nextNode())) all.push(n);
+  function subbed(el) {
+    while (el) { var t = el.tagName; if (t === "SUB" || t === "SUP") return true; el = el.parentElement; }
+    return false;
+  }
+  for (var i = 0; i + 1 < all.length; i++) {
+    var a = all[i], b = all[i + 1];
+    if (!a.nodeValue || !b.nodeValue) continue;
+    if (/\s$/.test(a.nodeValue) || /^\s/.test(b.nodeValue)) continue;
+    if (!/[A-Za-z0-9]$/.test(a.nodeValue) || !/^[A-Za-z]/.test(b.nodeValue)) continue;
+    var pa = a.parentElement, pb = b.parentElement;
+    if (!pa || !pb || subbed(pa) || subbed(pb)) continue;
+    var sp = document.createTextNode(" ");
+    sp.__glue = 1;
+    (fixGlue._n = fixGlue._n || []).push(sp);
+    b.parentNode.insertBefore(sp, b);
+  }
+}
+function removeGlue() {
+  if (!fixGlue._n) return;
+  for (var i = 0; i < fixGlue._n.length; i++) { var g = fixGlue._n[i]; if (g.parentNode) g.parentNode.removeChild(g); }
+  fixGlue._n = [];
+}
+/* 全局防抖补空格：挑战答案这类「点击时才重建」的区域，observer 回调里对子树跑
+   fixGlue 的时机不全（答案重写、延迟渲染都会错过）。任何 DOM 变更后 60ms
+   对整页补一次；空格本身不触发新插入，收敛。 */
+var _glueTimer = null;
+function _glueKick() {
+  if (LANG !== "en") return;
+  if (_glueTimer) clearTimeout(_glueTimer);
+  _glueTimer = setTimeout(function () {
+    _glueTimer = null;
+    if (LANG === "en") fixGlue(document.body);
+  }, 60);
+}
+function i18nWalk(root) {
+  var w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null, false), n, c = 0;
+  while ((n = w.nextNode())) { i18nNode(n); c++; }
+  i18nAttrs(root);
+  if (LANG === "en") fixGlue(root === document ? document.body : root);
+  return c;
+}
+var _i18nBusy = false;
+function i18nWatch() {
+  if (typeof MutationObserver === "undefined") return;
+  var mo = new MutationObserver(function (ms) {
+    if (_i18nBusy) return;
+    _i18nBusy = true;
+    try {
+      for (var i = 0; i < ms.length; i++) {
+        var m = ms[i];
+        if (m.type === "childList") {
+          for (var j = 0; j < m.addedNodes.length; j++) {
+            var nd = m.addedNodes[j];
+            if (nd.nodeType === 3) i18nNode(nd);
+            else if (nd.nodeType === 1) i18nWalk(nd);
+          }
+        } else if (m.type === "characterData") i18nNode(m.target);
+      }
+    } finally { _i18nBusy = false; }
+    _glueKick();
+  });
+  mo.observe(document.body, { childList: true, subtree: true, characterData: true });
+}
+function setLang(l) {
+  LANG = l;
+  try { localStorage.setItem("opl_lang", l); } catch (e) { }
+  document.documentElement.lang = l === "en" ? "en" : "zh-CN";
+  var btn = document.getElementById("langBtn");
+  if (btn) btn.textContent = l === "en" ? "中文" : "EN";
+  document.title = l === "en" ? T(ORIG_TITLE) : ORIG_TITLE;
+  if (l !== "en") removeGlue();
+  i18nWalk(document.body);
+  _glueKick();
+  if (typeof syncInputs === "function") syncInputs();
+  if (typeof render === "function") render();
+}
+"use strict";
+
+
+
+
+i18nHookCanvas();
+/* ---------------- 直接 fillText / strokeText 的自动排版钩子 ----------------
+   有些标注不走 txt() 而是直接 g.fillText()（状态徽标、能带边等），
+   这里在原型层统一处理：含数学记法的字符串先按 LaTeX 规则拆段再绘制，
+   measureText 同步返回拆段总宽，白底框长度自动跟着变。 */
+const NEED_MATH_HM = /[\u2070-\u209C\u00B2\u00B3\u00B9]|_\{?[A-Za-z0-9\u0370-\u03ff]|\^\{?[\d(\-]|\d(\.\d+)?[eE][+\-]\d|\u221A/;
+/* 原生 measureText：mathSegsHM 内部量宽必须走这一条，
+   否则 measureText 被钩子接管后会 self-recursion（RangeError）。 */
+var _mRawHM = null;
+function measureRawHM(g, s) { return (_mRawHM ? _mRawHM : g.measureText).call(g, s).width; }
+function mathSegsHM(g, s) {
+  const f = String(g.font || "");
+  const mm = /(\d+(?:\.\d+)?)px/.exec(f);
+  const size = mm ? parseFloat(mm[1]) : 12;
+  const family = f.replace(/^(?:\s*(?:italic|oblique|bold|[1-9]00)\s*)*\d+(?:\.\d+)?px\s*/, "");
+  const style = /italic|oblique/.test(f) ? "italic " : (/bold|[6-9]00/.test(f) ? "bold " : "");
+  const parts = AUTO(s), laid = [];
+  let w = 0;
+  for (const p of parts) {
+    const small = !!(p.sup || p.sub);
+    const fs = style + (small ? (size * 0.74).toFixed(2) : size.toFixed(2)) + "px " + family;
+    g.font = fs;
+    const tw = measureRawHM(g, p.s);
+    laid.push({ s: p.s, w: tw, fs: fs, dy: small ? (p.sup ? -size * 0.40 : size * 0.22) : 0 });
+    w += tw;
+  }
+  return { laid: laid, w: w, family: family, style: style, size: size };
+}
+(function hookMathHM() {
+  if (window.__MATH_HOOK) return; window.__MATH_HOOK = 1;
+  const P = CanvasRenderingContext2D.prototype;
+  const _fill = P.fillText, _stroke = P.strokeText, _measure = P.measureText;
+  function draw(drawRaw, g, s, x, y, rest) {
+    const info = mathSegsHM(g, s);
+    const al = g.textAlign, bl = g.textBaseline;
+    const cx = al === "right" ? x - info.w : (al === "center" ? x - info.w / 2 : x);
+    g.textAlign = "left";
+    let px = cx;
+    for (const L of info.laid) {
+      g.font = L.fs;
+      drawRaw.call(g, L.s, px, y + L.dy, ...rest);
+      px += L.w;
+    }
+    g.textAlign = al; g.textBaseline = bl;
+    g.font = info.style + info.size.toFixed(2) + "px " + info.family;
+    return info;
+  }
+  P.fillText = function (s, x, y) {
+    if (typeof s !== "string" || !NEED_MATH_HM.test(s)) return _fill.apply(this, arguments);
+    draw(_fill, this, s, x, y, Array.prototype.slice.call(arguments, 3));
+  };
+  P.strokeText = function (s, x, y) {
+    if (typeof s !== "string" || !NEED_MATH_HM.test(s)) return _stroke.apply(this, arguments);
+    draw(_stroke, this, s, x, y, Array.prototype.slice.call(arguments, 3));
+  };
+  if (!_mRawHM) _mRawHM = _measure;
+  P.measureText = function (s) {
+    if (window.__HM_IN || typeof s !== "string" || !NEED_MATH_HM.test(s)) return _measure.call(this, s);
+    window.__HM_IN = 1;
+    const save = this.font;
+    let info;
+    try { info = mathSegsHM(this, s); } finally { window.__HM_IN = 0; }
+    this.font = save;
+    return { width: info.w, get actualBoundingBoxLeft() { return 0; }, get actualBoundingBoxRight() { return info.w; } };
+  };
+})();
+
+/* ---------------- HTML 侧自动 LaTeX 排版 ----------------
+   读数 / 说明 / 按钮名里由 JS 拼出来的 cm⁻³、E_c、2.5e+8，
+   在写进 innerHTML 之前转成真 <sup>/<sub>；标签与属性原样放过（title 不会被塞进尖括号）。
+   与画布侧 AUTO() 对偶，保证网页和画布按同一套规则排版。 */
+const AUTOH_SUP = { "⁰": "0", "¹": "1", "²": "2", "³": "3", "⁴": "4", "⁵": "5", "⁶": "6",
+  "⁷": "7", "⁸": "8", "⁹": "9", "⁺": "+", "⁻": "−", "⁼": "=", "⁽": "(", "⁾": ")", "ⁿ": "n", "ⁱ": "i" };
+const AUTOH_SUB = { "₀": "0", "₁": "1", "₂": "2", "₃": "3", "₄": "4", "₅": "5", "₆": "6",
+  "₇": "7", "₈": "8", "₉": "9", "₊": "+", "₋": "−", "₌": "=", "₍": "(", "₎": ")",
+  "ₐ": "a", "ₑ": "e", "ₒ": "o", "ₓ": "x", "ₔ": "ə", "ₕ": "h", "ₖ": "k", "ₗ": "l",
+  "ₘ": "m", "ₙ": "n", "ₚ": "p", "ₛ": "s", "ₜ": "t", "ᵣ": "r", "ᵤ": "u", "ᵥ": "v" };
+const TEXH_NEED = /[\u2070-\u209C\u00B2\u00B3\u00B9]|_\{?[A-Za-z0-9\u0370-\u03ff]|\^\{?[\d(\-]|\d(\.\d+)?[eE][+\-]\d|\u221A/;
+/* 从 i 处（必须是 '<'）扫出一个"完整元素"的结束下标（含嵌套），失败返回 -1 */
+function TEXH_elemEnd(h, i) {
+  if (h.charAt(i) !== "<") return -1;
+  let depth = 0, j = i, guard = 0;
+  while (j < h.length && guard++ < 4000) {
+    if (h.charAt(j) !== "<") { j++; continue; }
+    const e = TEXH_tagEnd(h, j);
+    if (e < 0) return -1;
+    const isClose = h.charAt(j + 1) === "/";
+    const selfClose = h.charAt(e - 2) === "/";
+    if (isClose) { depth--; j = e; if (depth <= 0) return j; }
+    else if (selfClose) { j = e; if (depth === 0) return j; }
+    else { depth++; j = e; }
+  }
+  return -1;
+}
+/* √ 后面直接跟一个元素：√<i>E</i> → √‾E（前两条规则只吃 √(A) 与 √字母串） */
+function TEXHsqrtElem(s) {
+  let out = "", i = 0, guard = 0;
+  while (guard++ < 400) {
+    const k = s.indexOf("\u221A", i);
+    if (k < 0) break;
+    out += s.slice(i, k);
+    /* 守卫：√ 后面已是闭标签 ⇒ 该 √ 已排版过（对整段 HTML 重复跑 TEXH 会把 </span> 当成被开方式，
+       层层包出空壳根号，视觉上变成 √−3 / √−E），原样输出不再包裹 */
+    if (s.charAt(k + 1) === "<" && s.charAt(k + 2) === "/") { out += "\u221A"; i = k + 1; continue; }
+    let rad = null, end = k + 1;
+    if (s.charAt(k + 1) === "(") {
+      /* √(…) ：被开方式里常有标签，括号本身不在同一个文本片段里，必须整串扫 */
+      let depth = 0, p = k + 1;
+      while (p < s.length) {
+        const c = s.charAt(p);
+        if (c === "(") depth++;
+        else if (c === ")") { depth--; if (depth === 0) { rad = s.slice(k + 2, p); end = p + 1; break; } }
+        p++;
+      }
+    } else {
+      const e = TEXH_elemEnd(s, k + 1);
+      if (e > 0 && e - k < 500) { rad = s.slice(k + 1, e); end = e; }
+    }
+    if (rad !== null && rad.length) {
+      out += "<span class=\"sqrt\"><span class=\"rd\">\u221A</span><span class=\"rdc\">" + rad + "</span></span>";
+      i = end;
+    } else { out += "\u221A"; i = k + 1; }
+  }
+  return out + s.slice(i);
+}
+function TEXHpart(t) {
+  let s = t;
+  /* 根号：√ 或 √(A) → <span class="sqrt">√<span class="rd"><span class="rdc">A</span></span></span>（A 内不含嵌套括号） */
+  s = s.replace(/<span class="(?:op|rm|fn|v|u)">\u221A<\/span>/g, "\u221A");
+  s = s.replace(/\u221A<span class="(?:op|rm)">\(<\/span>([^()]{1,120}?)<span class="(?:op|rm)">\)<\/span>/g, function (m, a) {
+    return "<span class=\"sqrt\"><span class=\"rd\">\u221A</span><span class=\"rdc\">" + a + "</span></span>";
+  });
+  s = s.replace(/\u221A\(([^()]{1,120})\)/g, function (m, a) {
+    return "<span class=\"sqrt\"><span class=\"rd\">\u221A</span><span class=\"rdc\">" + a + "</span></span>";
+  });
+  s = s.replace(/\u221A([A-Za-z0-9\u0370-\u03ff]{1,6})/g, function (m, a) {
+    return "<span class=\"sqrt\"><span class=\"rd\">\u221A</span><span class=\"rdc\">" + a + "</span></span>";
+  });
+  s = s.replace(/(\d(?:\.\d+)?)e([+-])(\d+)/g, function (m, a, sg, e) {
+    return a + "\u00d710<sup>" + (sg === "-" ? "\u2212" : "") + e + "</sup>";
+  });
+  s = s.replace(/([A-Za-z\u0370-\u03ff)\]])\^\{([^{}]{1,12})\}/g, "$1<sup>$2</sup>");
+  s = s.replace(/([A-Za-z\u0370-\u03ff)\]])\^(\d+(?:\.\d+)?)/g, "$1<sup>$2</sup>");
+  s = s.replace(/([A-Za-z\u0370-\u03ff])_\{([A-Za-z0-9\u0370-\u03ff+\-]{1,8})\}/g, "<span class='m'><i>$1</i><sub>$2</sub></span>");
+  s = s.replace(/([A-Za-z\u0370-\u03ff])_([A-Za-z0-9\u0370-\u03ff]{1,6})(?![A-Za-z0-9])/g, "<span class='m'><i>$1</i><sub>$2</sub></span>");
+  if (/[\u2070-\u209C\u00B2\u00B3\u00B9]/.test(s)) {
+    let out = "", i = 0;
+    while (i < s.length) {
+      const ch = s[i];
+      if (AUTOH_SUP[ch] !== undefined || AUTOH_SUB[ch] !== undefined) {
+        const isSup = AUTOH_SUP[ch] !== undefined, tab = isSup ? AUTOH_SUP : AUTOH_SUB;
+        let j = i, buf = "";
+        while (j < s.length && (isSup ? AUTOH_SUP[s[j]] !== undefined : AUTOH_SUB[s[j]] !== undefined)) {
+          buf += tab[s[j]]; j++;
+        }
+        out += "<" + (isSup ? "sup" : "sub") + ">" + buf + "</" + (isSup ? "sup" : "sub") + ">";
+        i = j;
+      } else { out += ch; i++; }
+    }
+    s = out;
+  }
+  return s.indexOf("\u221A") >= 0 ? TEXHsqrtElem(s) : s;
+}
+/* 只有真正的标签才整段跳过：正文里裸写的 '<'（如 "t₂ < 0"）必须当普通字符，
+   否则 indexOf('>') 会一路吞掉后面整段，E₂⁰ 这类记法就漏排了。 */
+function TEXH_tagEnd(h, i) {
+  if (h.charAt(i) !== "<") return -1;
+  const c = h.charAt(i + 1);
+  if (c === "!" || c === "/") { const j = h.indexOf(">", i); return (j >= 0 && j - i < 300) ? j + 1 : -1; }
+  if (!/[A-Za-z]/.test(c)) return -1;
+  let j = i + 1;
+  while (j < h.length && /[A-Za-z0-9]/.test(h.charAt(j))) j++;
+  if (j === i + 1) return -1;
+  if (h.charAt(j) === ">") return j + 1;
+  if (h.charAt(j) !== " " && h.charAt(j) !== "\n" && h.charAt(j) !== "\t") return -1;
+  const g = h.indexOf(">", j), nx = h.indexOf("<", j);
+  if (g < 0 || g - i > 300) return -1;
+  if (nx >= 0 && nx < g) return -1;
+  return g + 1;
+}
+function TEXH(h) {
+  if (typeof h !== "string" || !TEXH_NEED.test(h)) return h;
+  if (h.indexOf("\u221A") >= 0) h = h.replace(/<span class="(?:op|rm|fn|v|u)">\u221A<\/span>/g, "\u221A");
+  if (h.indexOf("<") < 0) return TEXHpart(h);
+  let out = "", i = 0, n = h.length, guard = 0;
+  while (i < n && guard++ < 40000) {
+    const e = TEXH_tagEnd(h, i);
+    if (e > 0) { out += h.slice(i, e); i = e; continue; }
+    let j = i;
+    while (j < n && TEXH_tagEnd(h, j) <= 0) j++;
+    out += TEXHpart(h.slice(i, j)); i = j;
+  }
+  const r = out + h.slice(i);
+  return r.indexOf("\u221A") >= 0 ? TEXHsqrtElem(r) : r;
+}
+(function hookHTML() {
+  if (window.__TEXH_HOOK) return; window.__TEXH_HOOK = 1;
+  const d = Object.getOwnPropertyDescriptor(Element.prototype, "innerHTML");
+  if (!d || !d.set) return;
+  Object.defineProperty(Element.prototype, "innerHTML", {
+    configurable: true, get: d.get,
+    set: function (v) { d.set.call(this, typeof v === "string" ? TEXH(v) : v); }
+  });
+  /* insertAdjacentHTML 也会被用到 */
+  const ia = Element.prototype.insertAdjacentHTML;
+  Element.prototype.insertAdjacentHTML = function (pos, v) {
+    return ia.call(this, pos, typeof v === "string" ? TEXH(v) : v);
+  };
+})();
+
+/* ---------------- 画布自动 LaTeX 排版 ----------------
+   老调用点 txt(g, "cm⁻³") / txt(g, "E_c") / txt(g, "2.5e+8") 一行都不用改，
+   只要在绘制前把字符串解析成分段零件即可。规则与网页侧一致：
+   物理量斜体、描述性下标与单位正体、幂次用真上标（不用 Unicode 伪字符）。 */
+const SUPMAP = { "⁰": "0", "¹": "1", "²": "2", "³": "3", "⁴": "4", "⁵": "5", "⁶": "6",
+  "⁷": "7", "⁸": "8", "⁹": "9", "⁺": "+", "⁻": "−", "⁼": "=", "⁽": "(", "⁾": ")", "ⁿ": "n", "ⁱ": "i" };
+const SUBMAP = { "₀": "0", "₁": "1", "₂": "2", "₃": "3", "₄": "4", "₅": "5", "₆": "6",
+  "₇": "7", "₈": "8", "₉": "9", "₊": "+", "₋": "−", "₌": "=", "₍": "(", "₎": ")",
+  "ₐ": "a", "ₑ": "e", "ₒ": "o", "ₓ": "x", "ₔ": "ə", "ₕ": "h", "ₖ": "k", "ₗ": "l",
+  "ₘ": "m", "ₙ": "n", "ₚ": "p", "ₛ": "s", "ₜ": "t", "ᵣ": "r", "ᵤ": "u", "ᵥ": "v" };
+const MATH_IDCH = /[A-Za-z\u0370-\u03ff]/;
+const NEED_MATH = /[\u2070-\u209C\u00B2\u00B3\u00B9]|_\{?[A-Za-z0-9\u0370-\u03ff]|\^\{?[\d(\-]|\d(\.\d+)?[eE][+\-]\d/;
+function AUTO(s) {
+  const out = [];
+  let buf = "", mode = 0;
+  const emit = (t, kind) => {
+    if (!t) return;
+    if (kind === 1) out.push({ s: t, sup: true });
+    else if (kind === -1) out.push({ s: t, sub: true });
+    else out.push({ s: t });
+  };
+  let i = 0, italicAll = false;
+  while (i < s.length) {
+    const ch = s[i];
+    if (SUPMAP[ch] !== undefined) { if (mode !== 1) { emit(buf, mode); buf = ""; mode = 1; } buf += SUPMAP[ch]; i++; continue; }
+    if (SUBMAP[ch] !== undefined) { if (mode !== -1) { emit(buf, mode); buf = ""; mode = -1; } buf += SUBMAP[ch]; i++; continue; }
+    if (mode) { emit(buf, mode); buf = ""; mode = 0; }
+    const rest = s.slice(i);
+    const sc = /^\d(\.\d+)?[eE][+\-]\d{1,3}/.exec(rest);       /* ASCII 伪科学计数 2.5e+8 */
+    if (sc) {
+      const parts = sc[0].split(/[eE]/);
+      emit(parts[0] + "\u00d710", 0); emit(String(+parts[1]).replace("-", "\u2212"), 1);
+      i += sc[0].length; continue;
+    }
+    if (MATH_IDCH.test(ch) && i + 1 < s.length && (s[i + 1] === "_" || s[i + 1] === "^")) {
+      const sup = s[i + 1] === "^";
+      let j = i + 2, grp = "";
+      if (s[j] === "{") { const e = s.indexOf("}", j); if (e > 0) { grp = s.slice(j + 1, e); j = e + 1; } }
+      else {
+        const RCJK = /[\u2E80-\u9FFF]/, RASC = /[A-Za-z0-9\u0370-\u03ff+\-]/;
+        if (RCJK.test(s[j])) { while (j < s.length && RCJK.test(s[j]) && j - i < 8) j++; }   /* 中文描述性下标：τ_直接、E_声子 */
+        else { while (j < s.length && RASC.test(s[j])) j++; }
+        grp = s.slice(i + 2, j);
+      }
+      if (grp) {
+        emit(ch, 0);
+        if (italicAll || /^[A-Za-z\u0370-\u03ff]$/.test(ch)) out[out.length - 1].i = true;
+        emit(sup ? grp.replace(/-/g, "\u2212") : grp, sup ? 1 : -1);
+        i = j; continue;
+      }
+    }
+    buf += ch; i++;
+  }
+  emit(buf, mode);
+  return out;
+}
+function fontInfo(font, dflt) {
+  const f = String(font || "");
+  const m = /(\d+(?:\.\d+)?)px/.exec(f);
+  return { fp: m ? parseFloat(m[1]) : (dflt || 12), bd: /bold|70\d|600/.test(f), it: /italic|oblique/.test(f) };
+}
+
+/* ---------------- HTML 字符串 → 画布零件（网页与画布共用同一份排版） ----------------
+   mtxt(g, TX(H_NA), x, y, col, fp) —— H_* 常量本来就在喂 innerHTML，
+   再喂给 TX() 就不会出现「网页斜体、画布正体」的两边不一致。
+   <i> 斜体、<sub> 下标、<sup> 上标；<span class="op|un|rm|sqrt|frac"> 只剥标签（保持正体）。 */
+const catA = (...a) => [].concat(...a);
+function TX(h) {
+  const t = String(h == null ? "" : h)
+    .replace(/<span\b[^>]*>/g, "").replace(/<\/span>/g, "")
+    .replace(/<i\b[^>]*>/g, "<i>").replace(/<b\b[^>]*>/g, "").replace(/<\/b>/g, "")
+    .replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&").replace(/&nbsp;/g, " ");
+  const out = [], re = /<i>([\s\S]*?)<\/i>|<sub>([\s\S]*?)<\/sub>|<sup>([\s\S]*?)<\/sup>|([^<]+)/g;
+  let m;
+  while ((m = re.exec(t))) {
+    const raw = s => s == null ? null : s.replace(/<[^>]*>/g, "");
+    if (m[1] != null) out.push({ s: raw(m[1]), i: true });
+    else if (m[2] != null) out.push({ s: raw(m[2]), sub: true });
+    else if (m[3] != null) out.push({ s: raw(m[3]), sup: true });
+    else if (m[4]) out.push({ s: m[4] });
+  }
+  return out;
+}
+function TXof(...a) { return catA(...a.map(TX)); }
+
+
+function PSci(v, n) {
+  if (!isFinite(v) || v === 0) return [{ s: "0" }];
+  const e = Math.floor(Math.log10(Math.abs(v)));
+  const m = (v / Math.pow(10, e)).toFixed(n === undefined ? 1 : n);
+  /* 1 ≦ |v| < 10 时直接写尾数，不再拖一个 ×10⁰（与 sciH 一致） */
+  if (e === 0) return [{ s: m }];
+  /* 指数负号用 U+2212 */
+  return [{ s: m + "×10" },
+          { s: String(e).replace("-", "−"), sup: true }];
+}
+
+/* ==================================================================
+   半导体中的声子交互教学工具
+   一维双原子链：两种原子 m₁(重) / m₂(轻) 交替排列，原胞长 a，最近邻弹性耦合 K。
+   运动方程
+       m₁ ü_n = K(v_n + v_{n−1} − 2u_n)
+       m₂ v̈_n = K(u_{n+1} + u_n − 2v_n)
+   取布洛赫解后得色散（本工具用示意单位：m₂ = 1、a = 1）
+       ω² = K(1/m₁ + 1/m₂) ± K√[(1/m₁ + 1/m₂)² − 4sin²(q/2)/(m₁ m₂)]
+       “−” = 声学支（同向），“+” = 光学支（反向）
+   位移比（以“原子自身位置”定相位，故为实数，带符号）
+       u(m₁)/u(m₂) = 2K·cos(q/2) / (2K − m₁ω²)
+       q→0 声学支 → +1（同向同幅）；q→0 光学支 → −m₂/m₁（反向，轻原子振幅大）
+   ================================================================== */
+
+/* ---------------- 0. 小工具 ---------------- */
+const $ = id => document.getElementById(id);
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const fmt = (v, n) => (isFinite(v) ? v.toFixed(n === undefined ? 2 : n) : "—");
+const MM = h => '<span class="m">' + h + "</span>";
+/* ---- LaTeX 风格内联数学助手 ---- */
+const VI = s => "<i>" + s + "</i>";                        // 斜体变量
+const WSUB = (v, s) => VI(v) + "<sub>" + s + "</sub>";     // 下标（描述符/数字，正体）
+const WSUBI = (v, s) => VI(v) + "<sub>" + VI(s) + "</sub>"; // 下标为变量（斜体）
+const OPR = s => '<span class="op">' + s + "</span>";      // 运算符（带间距、正体）
+const SL = () => '<span class="sl">/</span>';              // 斜杠
+const WU = h => "<sup>" + h + "</sup>";                    // 上标（真 <sup>，不用 Unicode 上标）
+const RM = s => '<span class="rm">' + s + "</span>";       // 多字母缩写（正体，如 LA / TO）
+const FRAC = (n, d) => '<span class="frac"><span class="num">' + n + '</span><span class="den">' + d + "</span></span>";
+/* 本工具高频符号 */
+const M_M1 = MM(WSUB("m", "1")), M_M2 = MM(WSUB("m", "2"));
+const M_K = MM(VI("K")), M_KL = MM(WSUB("K", "L")), M_KT = MM(WSUB("K", "T"));
+const M_OM = MM(VI("ω")), M_OM0 = MM(WSUB("ω", "0"));
+const M_Q = MM(VI("q")), M_LAM = MM(VI("λ")), M_A = MM(VI("a"));
+const M_PIA = MM("π" + SL() + VI("a"));                    // π/a（π 正体）
+const M_VP = MM(WSUB("v", "p") + OPR("=") + FRAC(VI("ω"), VI("q")));   // v_p = ω/q
+const M_VG = MM(WSUB("v", "g") + OPR("=") + "d" + VI("ω") + SL() + "d" + VI("q"));   // v_g = dω/dq
+const M_SQRT_KM2 = MM(OPR("√") + FRAC(VI("K"), WSUB("m", "2")));
+
+/* ---------------- 1. 常数与状态 ---------------- */
+const KT_RATIO = 0.55;               // 横向力常数 / 纵向力常数（教学近似）
+const NATOM = 22;                    // 显示的原子数（= 11 个原胞、10 个完整周期区）
+const BASE_RATE = 1.9;               // 动画基准角频率（rad/s，ω = √(2K) 时）
+const AMP_FRAC = 0.30;               // 纵波位移振幅 / 原子间距：保证相邻原子不会压到一起
+
+const PRESETS = [
+  { name: "同种原子", r: 1.00, K: 1.00, note: "两个原子完全相同：在<b>本一维最近邻链模型</b>中两支在区边界简并、禁带消失，等价于折叠后的单原子链。<b>注意这是均匀链折叠带来的一维模型结论，不能外推到真实 Si</b> —— Si 是金刚石结构的三维晶体，声学支与光学支在区边界并不简并（真实 Si 参考：Γ 点光学声子 ≈ 520 cm<sup>−1</sup> ≈ 15.6 THz，德拜温度 <span class=\"m\"><i>θ</i><sub>D</sub> ≈ 645 K</span>，都远高于声学支）。" },
+  { name: "GaAs 参考", r: 1.07, K: 1.00, note: "两种原子质量很接近（GaAs 的真实质量比 ≈ 1.07）：已经分裂，但本模型算出的相对宽度 <span class=\"m\">Δ<i>ω</i><span class=\"op\">/</span><i>ω</i><sub>0</sub></span> 只有约 2%（真实 GaAs 参考：<span class=\"m\"><i>θ</i><sub>D</sub> ≈ 360 K</span>）。真实 GaAs 是极性晶体，Γ 点的 LO–TO 劈裂主要来自<b>长程库仑作用</b>，本模型只含质量效应。" },
+  { name: "SiC 参考", r: 2.34, K: 1.00, note: "质量差约 2.3 倍（SiC 的真实质量比 ≈ 2.34）：出现明显禁带（本模型相对宽度约 29%）。SiC 同样是极性晶体，Γ 点 LO–TO 劈裂由<b>长程库仑作用</b>主导，本模型只含质量效应。" },
+  { name: "GaN 参考", r: 4.98, K: 1.00, note: "质量差约 5 倍（GaN 的真实质量比 ≈ 4.98）：禁带很宽（本模型相对宽度约 50%）。真实 GaN 是极性纤锌矿结构，Γ 点 LO–TO 劈裂同样主要来自<b>长程库仑作用</b>。" },
+  { name: "极端 10:1", r: 10.0, K: 1.00, note: "示意极端情形：重原子几乎不动，轻原子独自振动，两支几乎合并成一条平带。" }
+];
+
+const OPT = {
+  preset: 1,
+  r: 1.07,          // m₁/m₂ ≥ 1（m₁ 为重原子）
+  K: 1.00,          // 纵向力常数（示意单位）
+  branch: "op",     // "ac" 声学支 | "op" 光学支
+  pol: "L",         // "L" 纵波 | "T" 横波
+  qf: 0.45,         // q / (π/a)
+  playing: true,
+  speed: 1.00,
+  ckArrow: true, ckEq: true, ckEnv: true, ckGap: true, ckAsm: true
+};
+
+let PHASE = 0;      // 动画相位 ωt
+
+/* ---------------- 2. 物理内核 ---------------- */
+const Kr = () => OPT.K * (OPT.pol === "L" ? 1 : KT_RATIO);   // 当前偏振下的力常数
+const mass = () => ({ m1: OPT.r, m2: 1 });                   // m₁ 重、m₂ 轻
+
+/* 两支频率 ω（示意单位）；q 以 π/a 为单位时先乘 π */
+function omAt(q) {
+  const K = Kr(), { m1, m2 } = mass();
+  const S = 1 / m1 + 1 / m2;
+  const s = Math.sin(q / 2);
+  const disc = Math.max(0, S * S - 4 * s * s / (m1 * m2));
+  const rt = Math.sqrt(disc);
+  return [Math.sqrt(Math.max(0, K * (S - rt))), Math.sqrt(K * (S + rt))];   // [声学, 光学]
+}
+const omAc = q => omAt(q)[0];
+const omOp = q => omAt(q)[1];
+
+/* 当前状态的完整派生量 */
+let SST = null, SKEY = "";
+function state() {
+  const key = [OPT.r, OPT.K, OPT.pol, OPT.branch, OPT.qf].join("|");
+  if (SKEY === key && SST) return SST;
+  const K = Kr(), { m1, m2 } = mass();
+  const q = clamp(OPT.qf, 0, 1) * Math.PI;          // a = 1 → q ∈ [0, π]
+  const w0 = Math.sqrt(2 * K * (1 / m1 + 1 / m2));  // 光学支 Γ 点频率 ω₀
+  const waB = Math.sqrt(2 * K / m1);                // 声学支区边界（重原子振动）
+  const woB = Math.sqrt(2 * K / m2);                // 光学支区边界（轻原子振动）
+  const gapW = woB - waB;                           // 禁带宽度
+  const vs = Math.sqrt(K / (2 * (m1 + m2)));        // 长波声速 v_s = dω/dq|_{q→0}
+
+  const wa = omAc(q), wo = omOp(q);
+  const omega = OPT.branch === "ac" ? wa : wo;
+
+  /* 位移比：u(m₁)/u(m₂)，实数带符号 */
+  const w2 = omega * omega;
+  const den = 2 * K - m1 * w2;
+  const cq = Math.cos(q / 2);
+  let ratio;
+  if (Math.abs(cq) < 1e-12 || Math.abs(den) < 1e-10) {
+    ratio = OPT.branch === "ac" ? 1e6 : 0;           // 区边界：一支完全冻结
+  } else {
+    ratio = 2 * K * cq / den;
+  }
+  const ar = Math.abs(ratio);
+  /* 冻结提示：画布用，故存 token 数组（画布排版器不解析 HTML） */
+  let Ah, Al, note = null;
+  if (!isFinite(ar) || ar > 300) {
+    Ah = 1; Al = 0;
+    note = ["只有重原子 ", { s: "m", i: 1 }, { s: "1", sub: 1 }, " 振动"];
+  } else if (ar < 1 / 300) {
+    Ah = 0; Al = 1;
+    note = ["只有轻原子 ", { s: "m", i: 1 }, { s: "2", sub: 1 }, " 振动"];
+  }
+  else if (ar >= 1) { Ah = Math.sign(ratio); Al = 1 / ar; }
+  else { Ah = ratio; Al = 1; }
+
+  /* 相位、波长、速度 */
+  const lambda = q > 1e-9 ? 2 * Math.PI / q : Infinity;           // 以 a 为单位
+  const vp = q > 1e-9 ? omega / q : (OPT.branch === "ac" ? vs : Infinity);
+  const h = 1e-3;
+  const q1 = Math.min(Math.PI, q + h), q0 = Math.max(0, q - h);
+  const vg = ((OPT.branch === "ac" ? omAc(q1) : omOp(q1)) - (OPT.branch === "ac" ? omAc(q0) : omOp(q0))) / (q1 - q0);
+
+  const modeName = (OPT.pol === "L" ? "L" : "T") + (OPT.branch === "ac" ? "A" : "O");
+  SST = {
+    K: K, m1: m1, m2: m2, q: q, w0: w0, waB: waB, woB: woB, gapW: gapW, vs: vs,
+    wa: wa, wo: wo, omega: omega, ratio: ratio, Ah: Ah, Al: Al, freeze: note,
+    lambda: lambda, vp: vp, vg: vg, modeName: modeName,
+    qa2: q / 2, phaseState: key
+  };
+  SKEY = key;
+  return SST;
+}
+
+/* ---------------- 3. 画布与画布内排版 ---------------- */
+const CV = {};
+function fitCanvas(id) {
+  const el = $(id);
+  if (!el || !el.clientWidth) return null;
+  const w = el.clientWidth, h = +el.dataset.h;
+  const dpr = window.devicePixelRatio || 1;
+  el.width = Math.round(w * dpr); el.height = Math.round(h * dpr);
+  el.style.height = h + "px";
+  const g = el.getContext("2d");
+  g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  CV[id] = { g: g, W: w, H: h, el: el };
+  return CV[id];
+}
+function fitAll() { ["chain", "disp", "zoom"].forEach(fitCanvas); }
+
+const FONT = "\"Microsoft YaHei\",\"PingFang SC\",sans-serif";
+const FONTM = "\"Cambria Math\",\"Times New Roman\",Times,serif";
+const SUBR = 0.74, SUBDY = 0.22, SUPDY = 0.40;
+const C_AC = "#1976d2", C_OP = "#d94a3d";
+const C_HEAVY = "#2f4a6b", C_LIGHT = "#7fb2e3";
+const C_ARROW = "#ef8c1a", C_SUB = "#6b7a8c", C_GRID = "#e7edf4", C_REF = "#9aa5b1";
+
+function txt(g, s, x, y, col, font, align, base) {
+  g.fillStyle = col; g.font = font || "12px " + FONT;
+  g.textAlign = align || "left"; g.textBaseline = base || "middle";
+  if (typeof s === "string" && NEED_MATH.test(s)) {
+    const fi = fontInfo(font, 12);
+    mRun(g, AUTO(s), x, y, fi.fp, fi.bd, align || "left", false);
+    return;
+  }
+  g.fillText(s, x, y);
+}
+function txtHalo(g, s, x, y, col, font, align, base) {
+  g.font = font || "12px " + FONT;  g.textAlign = align || "left"; g.textBaseline = base || "middle";
+  g.lineJoin = "round"; g.strokeStyle = "rgba(255,255,255,0.94)"; g.lineWidth = 3.2;
+  if (typeof s === "string" && NEED_MATH.test(s)) {
+    const fi = fontInfo(font, 12), parts = AUTO(s);
+    g.lineJoin = "round";
+    mRun(g, parts, x, y, fi.fp, fi.bd, align || "left", true);
+    g.fillStyle = col;
+    mRun(g, parts, x, y, fi.fp, fi.bd, align || "left", false);
+    return;
+  }
+  g.strokeText(s, x, y); g.fillStyle = col; g.fillText(s, x, y);
+}
+function isCJKch(ch) {
+  const c = ch.codePointAt(0);
+  return (c >= 0x2E80 && c <= 0x9FFF) || (c >= 0xF900 && c <= 0xFAFF) ||
+    (c >= 0xFF00 && c <= 0xFF60) || c === 0x2014 || c === 0x2015 || c === 0x2026;
+}
+function segRuns(s) {
+  const out = []; let cur = "", curC = null;
+  for (const ch of s) {
+    const c = isCJKch(ch);
+    if (curC === null) { cur = ch; curC = c; }
+    else if (c === curC) cur += ch;
+    else { out.push({ s: cur, cjk: curC }); cur = ch; curC = c; }
+  }
+  if (cur) out.push({ s: cur, cjk: curC });
+  return out;
+}
+function pFont(q, fp, bd, cjk) {
+  const sz = fp * ((q.sub || q.sup) ? SUBR : 1);
+  return (bd ? "bold " : "") + (!cjk && q.i ? "italic " : "") + sz.toFixed(2) + "px " + (cjk ? FONT : FONTM);
+}
+/* i18n 注入点①：画布 token。带 i / sub / sup / un 标记的是物理量、下标与单位，一律不动；
+   没有这些标记的 token 才是自然语言，交给 T() —— 所以这里的判断只看标记，不看内容。 */
+const partsOf = p => p.map(q => {
+  const o = (typeof q === "string" ? { s: q } : q);
+  const natural = !(o.i || o.sub || o.sup || o.un);
+  if (LANG === "en" && natural && typeof o.s === "string" && /[\u4E00-\u9FFF]/.test(o.s)) {
+    const t = T(o.s);
+    return t === o.s ? o : Object.assign({}, o, { s: t });
+  }
+  return o;
+});
+function mMeasure(g, parts, fp, bd) {
+  let w = 0;
+  for (const q of partsOf(parts))
+    for (const sg of segRuns(q.s)) { g.font = pFont(q, fp, bd, sg.cjk); w += g.measureText(sg.s).width; }
+  return w;
+}
+function mRun(g, parts, x, y, fp, bd, align, stroke) {
+  const ps = partsOf(parts), w = mMeasure(g, ps, fp, bd);
+  let cx = align === "right" ? x - w : (align === "center" ? x - w / 2 : x);
+  g.textAlign = "left"; g.textBaseline = "middle"; g.lineJoin = "round";
+  for (const q of ps) {
+    const dy = q.sub ? fp * SUBDY : (q.sup ? -fp * SUPDY : 0);
+    for (const sg of segRuns(q.s)) {
+      g.font = pFont(q, fp, bd, sg.cjk);
+      if (stroke) { g.lineWidth = (q.sub || q.sup) ? 2.4 : 3.2; g.strokeText(sg.s, cx, y + dy); }
+      else g.fillText(sg.s, cx, y + dy);
+      cx += g.measureText(sg.s).width;
+    }
+  }
+}
+function mtxt(g, parts, x, y, col, fp, align, bd) {
+  g.fillStyle = col; mRun(g, parts, x, y, fp, bd || false, align, false);
+}
+function mtxtHalo(g, parts, x, y, col, fp, align, bd) {
+  g.strokeStyle = "rgba(255,255,255,0.94)";
+  mRun(g, parts, x, y, fp, bd || false, align, true);
+  mtxt(g, parts, x, y, col, fp, align, bd);
+}
+function line(g, x1, y1, x2, y2, col, lw, dash) {
+  g.save();
+  g.strokeStyle = col; g.lineWidth = lw || 1;
+  if (dash) g.setLineDash(dash);
+  g.beginPath(); g.moveTo(x1, y1); g.lineTo(x2, y2); g.stroke();
+  g.restore();
+}
+function arrowHead(g, x, y, ang, sz, col) {
+  g.save(); g.translate(x, y); g.rotate(ang);
+  g.beginPath(); g.moveTo(0, 0); g.lineTo(-sz, sz * 0.42); g.lineTo(-sz, -sz * 0.42);
+  g.closePath(); g.fillStyle = col; g.fill(); g.restore();
+}
+function arrow(g, x1, y1, x2, y2, col, lw, sz) {
+  const dx = x2 - x1, dy = y2 - y1, L = Math.hypot(dx, dy);
+  if (L < 0.5) return;
+  line(g, x1, y1, x2, y2, col, lw || 1.4);
+  arrowHead(g, x2, y2, Math.atan2(dy, dx), sz || 6, col);
+}
+/* chip 的数学排版版：parts 为 token 数组（见 mtxt），fp 为字号数值 */
+function chipM(g, parts, x, y, col, fp, align, bd) {
+  fp = fp || 11;
+  const ps = partsOf(parts), w = mMeasure(g, ps, fp, !!bd);
+  const al = align || "left";
+  const bx = al === "right" ? x - w : (al === "center" ? x - w / 2 : x);
+  g.fillStyle = "rgba(255,255,255,0.92)";
+  g.fillRect(bx - 4, y - 8, w + 8, 16);
+  mtxt(g, ps, bx, y, col, fp, "left", bd);
+}
+/* token 数组宽度（用于多行提示框取最大宽） */
+const mw = (g, parts, fp) => mMeasure(g, partsOf(parts), fp || 11, false);
+function chip(g, s, x, y, col, font, align) {
+  g.font = font || "11px " + FONT;
+  const w = g.measureText(s).width, al = align || "left";
+  const bx = al === "right" ? x - w : (al === "center" ? x - w / 2 : x);
+  g.fillStyle = "rgba(255,255,255,0.92)";
+  g.fillRect(bx - 4, y - 8, w + 8, 16);
+  txt(g, s, bx, y, col, font, "left", "middle");
+}
+
+/* ---------------- 4. 模块一：原子链振动模式 ---------------- */
+const HOV = { chain: null, disp: null };
+
+function chainGeom(W, H) {
+  const L = 48, Rp = W - 20, T = 40, B = H - 36, gap = 22;
+  const tot = B - T - gap;
+  const hA = Math.round(tot * 0.50), hB = tot - hA;
+  return { L: L, Rp: Rp, rowA: { y: T, h: hA }, rowB: { y: T + hA + gap, h: hB } };
+}
+
+function drawChain() {
+  const c = CV.chain || fitCanvas("chain"); if (!c) return;
+  const g = c.g, W = c.W, H = c.H, st = state();
+  g.clearRect(0, 0, W, H);
+  g.fillStyle = "#fff"; g.fillRect(0, 0, W, H);
+
+  const G = chainGeom(W, H), L = G.L, Rp = G.Rp;
+  const yA = G.rowA.y + G.rowA.h / 2, yB = G.rowB.y + G.rowB.h / 2;
+  const dpx = (Rp - L) / (NATOM - 1);
+  const longi = OPT.pol === "L";
+  const ampPx = longi ? Math.min(dpx * AMP_FRAC, 26) : Math.min(G.rowA.h / 2 - 24, 42);
+  const simAmp = Math.min(G.rowB.h / 2 - 14, 40);
+  const xEq = i => L + i * dpx;
+
+  /* --- 行标题 --- */
+  txt(g, "① 原子链：灰色为平衡位置，圆球为当前位置", L, G.rowA.y - 14, C_SUB, "11.5px " + FONT);
+  txt(g, "② 位移 u(x)：两个子格的振幅与相位一目了然", L, G.rowB.y - 14, C_SUB, "11.5px " + FONT);
+
+  /* --- 模式标签（右上） --- */
+  const mLab = st.modeName + " · " + (OPT.branch === "ac" ? "声学支" : "光学支") + " · " +
+    (longi ? "纵波（位移 ∥ q）" : "横波（位移 ⊥ q）");
+  g.font = "bold 12px " + FONT;
+  const lw = g.measureText(mLab).width;
+  g.fillStyle = OPT.branch === "ac" ? "rgba(25,118,210,.10)" : "rgba(217,74,61,.10)";
+  if (g.roundRect) { g.beginPath(); g.roundRect(Rp - lw - 14, G.rowA.y - 26, lw + 14, 19, 5); g.fill(); }
+  else g.fillRect(Rp - lw - 14, G.rowA.y - 26, lw + 14, 19);
+  txt(g, mLab, Rp - 7, G.rowA.y - 16.5, OPT.branch === "ac" ? C_AC : C_OP, "bold 12px " + FONT, "right");
+
+  /* --- 传播方向 --- */
+  const ay = G.rowA.y + 10;
+  arrow(g, Rp - 96, ay, Rp - 26, ay, "#8394a6", 1.2, 5);
+  chipM(g, ["传播方向 ", { s: "q", i: 1 }], Rp - 104, ay, "#8394a6", 11, "right");
+
+  /* --- 平衡位置：轴线 + 刻度 --- */
+  line(g, L - 10, yA, Rp + 10, yA, "#d3dce6", 1, [4, 3]);
+  if (OPT.ckEq) {
+    for (let i = 0; i < NATOM; i++) line(g, xEq(i), yA - 5, xEq(i), yA + 5, "#c3cedb", 1);
+  }
+
+  /* --- 波长 λ --- */
+  const lamText = isFinite(st.lambda)
+    ? [{ s: "λ", i: 1 }, { s: " = " }, { s: fmt(st.lambda, 2) }, { s: " " }, { s: "a", i: 1 }]
+    : [{ s: "λ", i: 1 }, { s: " → ∞" }];
+  if (OPT.ckAsm && isFinite(st.lambda)) {
+    const lamPx = st.lambda / 0.5 * dpx;          // λ 以 a 为单位，一个原子间距 = 0.5a
+    const xEnd = Math.min(Rp, L + lamPx);
+    const wy = G.rowA.y + G.rowA.h - 4;
+    if (lamPx <= Rp - L) {
+      line(g, L, wy, xEnd, wy, "#8a97a6", 1.2);
+      line(g, L, wy - 4, L, wy + 4, "#8a97a6", 1.2);
+      line(g, xEnd, wy - 4, xEnd, wy + 4, "#8a97a6", 1.2);
+      arrow(g, L + 18, wy, L + 2, wy, "#8a97a6", 1.2, 4.5);
+      arrow(g, xEnd - 18, wy, xEnd - 2, wy, "#8a97a6", 1.2, 4.5);
+      chipM(g, lamText, (L + xEnd) / 2, wy - 11, "#6b7a8c", 11, "center");
+    } else {
+      line(g, L, wy, Rp, wy, "#8a97a6", 1.2, [6, 4]);
+      chipM(g, lamText.concat([{ s: " ＞ 视窗" }]), (L + Rp) / 2, wy - 11, "#6b7a8c", 11, "center");
+    }
+  }
+
+  /* --- 原胞标注 a --- */
+  const brY = G.rowA.y + G.rowA.h - 22;
+  line(g, xEq(0), brY, xEq(2), brY, "#98a5b4", 1.1);
+  line(g, xEq(0), brY - 4, xEq(0), brY + 4, "#98a5b4", 1.1);
+  line(g, xEq(2), brY - 4, xEq(2), brY + 4, "#98a5b4", 1.1);
+  chipM(g, ["一个原胞 ", { s: "a", i: 1 }], (xEq(0) + xEq(2)) / 2, brY - 10, "#6b7a8c", 10.5, "center");
+
+  /* --- 原子与箭头 --- */
+  const atoms = [];
+  for (let i = 0; i < NATOM; i++) {
+    const heavy = i % 2 === 0;
+    const amp = heavy ? st.Ah : st.Al;
+    const u = amp * Math.cos(st.qa2 * i - PHASE);
+    const x0 = xEq(i);
+    const x = longi ? x0 + u * ampPx : x0;
+    const y = longi ? yA : yA - u * ampPx;
+    atoms.push({ i: i, heavy: heavy, x: x, y: y, x0: x0, u: u });
+  }
+  for (const at of atoms) {
+    if (OPT.ckArrow && Math.abs(at.u) * ampPx > 2) {
+      longi ? arrow(g, at.x0, yA, at.x, yA, C_ARROW, 1.5, 5.5)
+        : arrow(g, at.x0, yA, at.x0, at.y, C_ARROW, 1.5, 5.5);
+    }
+  }
+  for (const at of atoms) {
+    const rr = at.heavy ? 11.5 : 8.5;
+    g.beginPath(); g.arc(at.x, at.y, rr, 0, 6.2832);
+    g.fillStyle = at.heavy ? C_HEAVY : C_LIGHT; g.fill();
+    g.lineWidth = 1.2; g.strokeStyle = at.heavy ? "#24384f" : "#5b8dc2"; g.stroke();
+    mtxt(g, at.heavy ? [{ s: "m", i: 1 }, { s: "1", sub: 1 }] : [{ s: "m", i: 1 }, { s: "2", sub: 1 }],
+      at.x, at.y + 0.5, "#fff", at.heavy ? 9.5 : 8.5, "center", true);
+  }
+
+  /* --- 子格 u(x) 曲线 --- */
+  line(g, L - 10, yB, Rp + 10, yB, "#d3dce6", 1, [4, 3]);
+  if (OPT.ckEnv) {
+    const curve = (ampv, col, lw) => {
+      g.beginPath();
+      for (let px = 0; px <= Rp - L; px++) {
+        const i = px / dpx;
+        const u = ampv * Math.cos(st.qa2 * i - PHASE);
+        const X = L + px, Y = yB - u * simAmp;
+        px === 0 ? g.moveTo(X, Y) : g.lineTo(X, Y);
+      }
+      g.strokeStyle = col; g.lineWidth = lw; g.stroke();
+    };
+    if (Math.abs(st.Ah) > 1e-4) curve(st.Ah, C_HEAVY, 2.2);
+    if (Math.abs(st.Al) > 1e-4) curve(st.Al, C_LIGHT, 2.2);
+    for (const at of atoms) {
+      const rr = at.heavy ? 3.4 : 2.8;
+      g.beginPath(); g.arc(at.x0, yB - at.u * simAmp, rr, 0, 6.2832);
+      g.fillStyle = at.heavy ? C_HEAVY : C_LIGHT; g.fill();
+    }
+  }
+  txt(g, "+u", L - 14, yB - simAmp, C_SUB, "10.5px " + FONT, "right");
+  txt(g, "0", L - 14, yB, C_SUB, "10.5px " + FONT, "right");
+  txt(g, "−u", L - 14, yB + simAmp, C_SUB, "10.5px " + FONT, "right");
+
+  /* --- 悬停读数 --- */
+  if (HOV.chain) {
+    let best = null, bd = 1e9;
+    for (const at of atoms) {
+      const d = Math.hypot(at.x - HOV.chain.x, at.y - HOV.chain.y);
+      if (d < bd) { bd = d; best = at; }
+    }
+    if (best && bd < 22) {
+      const deg = ((best.i * st.qa2 - PHASE) * 180 / Math.PI % 360 + 360) % 360;
+      const p1 = (best.heavy
+        ? ["重原子 ", { s: "m", i: 1 }, { s: "1", sub: 1 }]
+        : ["轻原子 ", { s: "m", i: 1 }, { s: "2", sub: 1 }])
+        .concat([{ s: " = " }, { s: fmt(best.heavy ? st.m1 : st.m2, 2) }]);
+      const p2 = ["位移 ", { s: "u", i: 1 }, { s: " = " + (best.u >= 0 ? "+" : "−") + fmt(Math.abs(best.u), 2) + "（归一化）" }];
+      const p3 = ["相位 ", { s: "q", i: 1 }, { s: "x", i: 1 }, { s: " − " }, { s: "ω", i: 1 }, { s: "t", i: 1 },
+        { s: " = " + fmt(deg, 0) + "°" }];
+      const wid = Math.max(mw(g, p1, 11), mw(g, p2, 11), mw(g, p3, 11)) + 16;
+      let bx = clamp(best.x + 16, L, Rp - wid), by = clamp(best.y - 34, G.rowA.y, H - 70);
+      g.fillStyle = "rgba(255,255,255,0.96)"; g.strokeStyle = "#c9d4e0"; g.lineWidth = 1;
+      g.beginPath(); g.rect(bx, by, wid, 52); g.fill(); g.stroke();
+      mtxt(g, p1, bx + 8, by + 13, "#2c3e50", 11);
+      mtxt(g, p2, bx + 8, by + 28, C_ARROW, 11);
+      mtxt(g, p3, bx + 8, by + 43, C_SUB, 11);
+    }
+  }
+
+  /* --- 冻结提示（区边界） --- */
+  if (st.freeze) {
+    chipM(g, st.freeze.concat(["（区边界 ", { s: "q", i: 1 }, { s: " = π" }, { s: "/" }, { s: "a", i: 1 }, " 的极限）"]),
+      (L + Rp) / 2, G.rowB.y + G.rowB.h - 6, "#b07a12", 11, "center");
+  }
+}
+
+/* ---------------- 5. 模块二：色散关系 ω(q) ---------------- */
+function polyBranch(g, X, Y, q0, q1, idx, col, lw, N) {
+  N = N || 240;
+  g.beginPath();
+  for (let i = 0; i <= N; i++) {
+    const q = q0 + (q1 - q0) * i / N;
+    const xx = X(q), yy = Y(omAt(q)[idx]);
+    i === 0 ? g.moveTo(xx, yy) : g.lineTo(xx, yy);
+  }
+  g.strokeStyle = col; g.lineWidth = lw; g.stroke();
+}
+
+function dispFrame() {
+  const c = CV.disp; if (!c) return null;
+  const W = c.W, H = c.H, st = state();
+  const L = 60, R = W - 20, T = 24, B = H - 44;
+  const ymax = st.w0 * 1.14;
+  const X = q => L + (q / Math.PI) * (R - L);
+  const Y = w => B - clamp(w / ymax, 0, 1.1) * (B - T);
+  return { g: c.g, W: W, H: H, L: L, R: R, T: T, B: B, X: X, Y: Y, ymax: ymax, st: st };
+}
+
+function drawDisp() {
+  const F = dispFrame(); if (!F) return;
+  const g = F.g, L = F.L, R = F.R, T = F.T, B = F.B, X = F.X, Y = F.Y, st = F.st;
+  g.clearRect(0, 0, F.W, F.H);
+  g.fillStyle = "#fff"; g.fillRect(0, 0, F.W, F.H);
+
+  /* 网格与边框 */
+  for (let i = 0; i <= 5; i++) {
+    const yy = T + (B - T) * i / 5;
+    line(g, L, yy, R, yy, C_GRID, 1);
+    txt(g, fmt(F.ymax * (1 - i / 5), 2), L - 8, yy, C_SUB, "10.5px " + FONT, "right");
+  }
+  const xt = [0, 0.25, 0.5, 0.75, 1];
+  xt.forEach(v => {
+    const xx = X(v * Math.PI);
+    line(g, xx, T, xx, B, C_GRID, 1);
+    txt(g, fmt(v, 2), xx, B + 14, C_SUB, "10.5px " + FONT, "center");
+  });
+  line(g, L, B, R, B, "#b9c5d2", 1.2);
+  line(g, L, T, L, B, "#b9c5d2", 1.2);
+  mtxt(g, [{ s: "ω", i: 1 }, "（示意单位）"], L - 8, T - 12, C_SUB, 11, "left");
+  mtxt(g, [{ s: "q", i: 1 }, { s: " / (π" }, { s: "/" }, { s: "a", i: 1 }, { s: ")" }], (L + R) / 2, B + 30, C_SUB, 11.5, "center");
+  line(g, R, T, R, B, "#e0e7ef", 1);
+
+  /* 禁带 */
+  if (OPT.ckGap && st.gapW > 1e-6) {
+    const yTop = Y(st.woB), yBot = Y(st.waB);
+    g.fillStyle = "rgba(150,160,175,0.16)";
+    g.fillRect(L, yTop, R - L, Math.max(1.5, yBot - yTop));
+    const lab = ["禁带 Δ", { s: "ω", i: 1 }, { s: " = " + fmt(st.gapW, 3) }];
+    const lw = mw(g, lab, 11);
+    chipM(g, lab, Math.min(R - 8, X(Math.PI * 0.72) + lw / 2), (yTop + yBot) / 2, "#5b6b7c", 11, "center");
+  }
+
+  /* 长波极限虚线 */
+  if (OPT.ckAsm) {
+    const qStop = Math.min(Math.PI, F.ymax / st.vs);
+    g.save(); g.beginPath(); g.rect(L, T, R - L, B - T); g.clip();
+    line(g, X(0), Y(0), X(qStop), Y(st.vs * qStop), "#9aa5b1", 1.3, [5, 4]);
+    line(g, L, Y(st.w0), R, Y(st.w0), "#c98b83", 1.3, [5, 4]);
+    g.restore();
+    if (qStop < Math.PI * 0.94) {
+      chipM(g, [{ s: "ω", i: 1 }, { s: " = " }, { s: "v", i: 1 }, { s: "s", sub: 1 }, { s: "q", i: 1 }],
+        X(qStop * 0.62), Y(st.vs * qStop * 0.62) - 10, "#6b7a8c", 10.5, "center");
+    }
+    chipM(g, [{ s: "ω", i: 1 }, { s: "0", sub: 1 }], R - 6, Y(st.w0) - 10, "#a8554a", 10.5, "right");
+  }
+
+  /* 两支曲线 */
+  polyBranch(g, X, Y, 0, Math.PI, 0, C_AC, 2.6);
+  polyBranch(g, X, Y, 0, Math.PI, 1, C_OP, 2.6);
+
+  /* 支标签 */
+  const mAc = OPT.pol === "L" ? "LA" : "TA", mOp = OPT.pol === "L" ? "LO" : "TO";
+  chipM(g, ["声学支 ", { s: "ω", i: 1 }, { s: " → 0（" + mAc + "）" }],
+    X(Math.PI * 0.52), Y(st.waB * 0.42) + 12, C_AC, 11.5, "center");
+  chipM(g, ["光学支 ", { s: "ω", i: 1 }, { s: " → " }, { s: "ω", i: 1 }, { s: "0", sub: 1 }, { s: "（" + mOp + "）" }],
+    X(Math.PI * 0.30), Y(st.woB + (F.ymax - st.woB) * 0.55), C_OP, 11.5, "center");
+
+  /* 当前 q 与当前 ω */
+  const xq = X(st.q), cur = st.omega;
+  line(g, xq, T, xq, B, OPT.branch === "ac" ? "rgba(25,118,210,.55)" : "rgba(217,74,61,.55)", 1.4, [4, 3]);
+  line(g, L, Y(cur), xq, Y(cur), "rgba(107,122,140,.75)", 1.2, [4, 3]);
+  for (const [w, col, idx] of [[st.wa, C_AC, 0], [st.wo, C_OP, 1]]) {
+    const on = (OPT.branch === "ac" && idx === 0) || (OPT.branch === "op" && idx === 1);
+    g.beginPath(); g.arc(xq, Y(w), on ? 6 : 3.6, 0, 6.2832);
+    g.fillStyle = col; g.fill();
+    g.lineWidth = 1.4; g.strokeStyle = "#fff"; g.stroke();
+  }
+  chipM(g, [{ s: "ω", i: 1 }, { s: " = " + fmt(cur, 3) }], L + 6, Y(cur) - 11, OPT.branch === "ac" ? C_AC : C_OP, 11, "left");
+  chipM(g, [{ s: "q", i: 1 }, { s: " = " + fmt(OPT.qf, 2) + " π" }, { s: "/" }, { s: "a", i: 1 }], xq, B + 14, C_SUB, 10.5, "center");
+
+  /* 悬停探针 */
+  if (HOV.disp) {
+    const hx = clamp(HOV.disp.x, L, R);
+    const qh = (hx - L) / (R - L) * Math.PI;
+    if (HOV.disp.y > T - 8 && HOV.disp.y < B + 8) {
+      line(g, hx, T, hx, B, "rgba(107,122,140,.45)", 1, [3, 3]);
+      const [wa, wo] = omAt(clamp(qh, 0, Math.PI));
+      g.beginPath(); g.arc(hx, Y(wa), 3.2, 0, 6.2832); g.fillStyle = C_AC; g.fill();
+      g.beginPath(); g.arc(hx, Y(wo), 3.2, 0, 6.2832); g.fillStyle = C_OP; g.fill();
+      const p1 = [{ s: "q", i: 1 }, { s: " = " + fmt(qh / Math.PI, 2) + " π" }, { s: "/" }, { s: "a", i: 1 }];
+      const p2 = ["声学 " + fmt(wa, 3)];
+      const p3 = ["光学 " + fmt(wo, 3)];
+      const wid = Math.max(mw(g, p1, 11), mw(g, p2, 11), mw(g, p3, 11)) + 14;
+      const left = hx + 12 + wid < R;
+      const bx = left ? hx + 12 : hx - 12 - wid, by = clamp(HOV.disp.y - 30, T, B - 54);
+      g.fillStyle = "rgba(255,255,255,0.96)"; g.strokeStyle = "#c9d4e0"; g.lineWidth = 1;
+      g.beginPath(); g.rect(bx, by, wid, 50); g.fill(); g.stroke();
+      mtxt(g, p1, bx + 7, by + 12, "#2c3e50", 11);
+      mtxt(g, p2, bx + 7, by + 27, C_AC, 11);
+      mtxt(g, p3, bx + 7, by + 42, C_OP, 11);
+    }
+  }
+
+  /* 区边界标注 */
+  line(g, R, T, R, B, "#cfd8e3", 1.2);
+  chipM(g, ["区边界 π", { s: "/" }, { s: "a", i: 1 }], R - 4, T + 10, "#8a97a6", 10.5, "right");
+}
+
+/* ---------------- 6. 模块三：长波极限 ---------------- */
+function drawZoom() {
+  const c = CV.zoom || fitCanvas("zoom"); if (!c) return;
+  const g = c.g, W = c.W, H = c.H, st = state();
+  g.clearRect(0, 0, W, H);
+  g.fillStyle = "#fff"; g.fillRect(0, 0, W, H);
+
+  const L = 62, R = W - 22, T = 26, B = H - 34;
+  const qmax = 0.42 * Math.PI;                 // 只看 q → 0
+  const ymax = st.w0 * 1.16;
+  const X = q => L + clamp(q / qmax, 0, 1) * (R - L);
+  const Y = w => B - clamp(w / ymax, 0, 1.05) * (B - T);
+
+  /* 网格 */
+  for (let i = 0; i <= 4; i++) {
+    const yy = T + (B - T) * i / 4;
+    line(g, L, yy, R, yy, C_GRID, 1);
+    txt(g, fmt(ymax * (1 - i / 4), 2), L - 8, yy, C_SUB, "10.5px " + FONT, "right");
+  }
+  [0, 0.1, 0.2, 0.3, 0.4].forEach(v => {
+    const xx = X(v * Math.PI);
+    line(g, xx, T, xx, B, C_GRID, 1);
+    txt(g, fmt(v, 2), xx, B + 13, C_SUB, "10.5px " + FONT, "center");
+  });
+  line(g, L, B, R, B, "#b9c5d2", 1.2);
+  line(g, L, T, L, B, "#b9c5d2", 1.2);
+  mtxt(g, [{ s: "ω", i: 1 }, "（示意单位）"], L - 8, T - 10, C_SUB, 11, "left");
+  mtxt(g, [{ s: "q", i: 1 }, { s: " / (π" }, { s: "/" }, { s: "a", i: 1 }, { s: ")" }], (L + R) / 2, B + 28, C_SUB, 11.5, "center");
+
+  /* 两条曲线 */
+  polyBranch(g, X, Y, 0, qmax, 0, C_AC, 2.6, 160);
+  polyBranch(g, X, Y, 0, qmax, 1, C_OP, 2.6, 160);
+
+  /* 长波近似：过原点直线 / 水平线 */
+  g.save(); g.beginPath(); g.rect(L, T, R - L, B - T); g.clip();
+  line(g, X(0), Y(0), R, Y(st.vs * qmax), "#6b7a8c", 1.4, [6, 4]);
+  line(g, L, Y(st.w0), R, Y(st.w0), "#a8554a", 1.4, [6, 4]);
+  g.restore();
+
+  /* 标注（⚠ 画布不解析 HTML：下标用 Unicode 字符 vₛ/ω₀ 直写，不许传 <span> 字面） */
+  const yLin = clamp(Y(st.vs * qmax * 0.5), T + 12, B - 12);
+  chip(g, "ω = vₛq → 宏观声波", X(qmax * 0.52), yLin + 14, C_AC, "11px " + FONT, "center");
+  chip(g, "ω → ω₀ = " + fmt(st.w0, 3) + " → 原胞内相对振动", R - 6, clamp(Y(st.w0) - 14, T + 10, B - 10), C_OP, "11px " + FONT, "right");
+
+  /* 当前 q 竖线 */
+  const xq = X(Math.min(st.q, qmax));
+  if (st.q <= qmax) line(g, xq, T, xq, B, OPT.branch === "ac" ? "rgba(25,118,210,.55)" : "rgba(217,74,61,.55)", 1.4, [4, 3]);
+}
+
+/* ---------------- 7. 读数面板 ---------------- */
+function ampRatioText() {
+  const st = state();
+  if (Math.abs(st.Al) < 1e-9) return "∞（只有 " + M_M1 + " 振动）";
+  if (Math.abs(st.Ah) < 1e-9) return "0（只有 " + M_M2 + " 振动）";
+  return fmt(Math.abs(st.Ah) / Math.abs(st.Al), 2);
+}
+function phaseText() {
+  const st = state();
+  if (Math.abs(st.Ah) < 1e-9 || Math.abs(st.Al) < 1e-9) return "—（区边界，一支静止）";
+  return st.Ah * st.Al > 0 ? "同向" : "反向";
+}
+function gapFor(r) {
+  const K = Kr();
+  return Math.sqrt(2 * K) - Math.sqrt(2 * K / Math.max(r, 1e-9));
+}
+
+function kvHd(s) { return '<div class="hd">' + s + "</div>"; }
+function kvRow(k, v) { return '<div class="row"><span class="k">' + k + '</span><span class="v">' + v + "</span></div>"; }
+
+function updateReadout() {
+  const st = state(), p = PRESETS[OPT.preset];
+  const medianStep = Math.abs(st.vp) < 1e4;
+  let html = "";
+  html += kvHd("参数");
+  html += kvRow("质量比 " + M_M1 + " / " + M_M2,
+    "<b>" + fmt(OPT.r, 2) + "</b>（" + M_M1 + " = " + fmt(st.m1, 2) + "，" + M_M2 + " = 1）");
+  html += kvRow("力常数 " + M_K + "（当前偏振）",
+    fmt(st.K, 2) + (OPT.pol === "T" ? "（= 0.55 " + M_KL + "）" : "（" + M_KL + "）"));
+  html += kvRow("偏振 / 分支", (OPT.pol === "L" ? "纵波" : "横波") + " / " + (OPT.branch === "ac" ? "声学支" : "光学支"));
+
+  html += kvHd("当前模式 " + MM(RM(st.modeName)));
+  html += kvRow("波矢 " + M_Q, "<b>" + fmt(OPT.qf, 2) + " " + M_PIA + "</b>");
+  html += kvRow("波长 " + MM(VI("λ") + OPR("=") + FRAC("2π", VI("q"))),
+    isFinite(st.lambda) ? fmt(st.lambda, 2) + " " + M_A : "∞");
+  html += kvRow("频率 " + M_OM, "<b>" + fmt(st.omega, 3) + "</b>");
+  html += kvRow("相速度 " + M_VP, medianStep ? fmt(st.vp, 3) : "→ ∞");
+  html += kvRow("群速度 " + M_VG, fmt(st.vg, 3));
+  html += kvRow("振幅比 " + MM("|" + WSUB("u", "1") + "|" + OPR("/") + "|" + WSUB("u", "2") + "|"), "<b>" + ampRatioText() + "</b>");
+  html += kvRow("原胞内两原子", "<b>" + phaseText() + "</b>");
+  $("readout").innerHTML = html;
+}
+
+/* ---------------- 8. 图例 ---------------- */
+function buildLegends() {
+  $("legChain").innerHTML = [
+    '<span><span class="swatch sq" style="background:' + C_HEAVY + '"></span>重原子 ' + M_M1 + '（大球）</span>',
+    '<span><span class="swatch sq" style="background:' + C_LIGHT + '"></span>轻原子 ' + M_M2 + '（小球）</span>',
+    '<span><span class="swatch" style="border-color:' + C_ARROW + '"></span>当前位移（箭头）</span>',
+    '<span><span class="swatch dash" style="border-color:#c3cedb"></span>平衡位置</span>',
+    '<span><span class="swatch" style="border-color:#8a97a6"></span>一个波长 ' + M_LAM + '</span>'
+  ].join("");
+  $("legDisp").innerHTML = [
+    '<span><span class="swatch" style="border-color:' + C_AC + '"></span>声学支 ' + MM(VI("ω") + OPR("(") + VI("q") + OPR(")")) + '</span>',
+    '<span><span class="swatch" style="border-color:' + C_OP + '"></span>光学支 ' + MM(VI("ω") + OPR("(") + VI("q") + OPR(")")) + '</span>',
+    '<span><span class="swatch sq" style="background:rgba(150,160,175,.35)"></span>禁带（无振动模式）</span>',
+    '<span><span class="swatch dash" style="border-color:#9aa5b1"></span>长波极限 ' + MM(VI("ω") + OPR("=") + WSUB("v", "s") + VI("q")) + '</span>',
+    '<span><span class="swatch dash" style="border-color:#a8554a"></span>' + M_OM0 + '（光学支长波极限）</span>',
+    '<span><span class="swatch dot" style="background:' + C_AC + '"></span>当前模式</span>'
+  ].join("");
+}
+
+/* ---------------- 9. 引导探究 ---------------- */
+const CHAL = [
+  {
+    q: "在「分支」里来回切换<b>声学支 / 光学支</b>，盯着模块一的原子链：原胞内那两个原子是<b>同向</b>还是<b>反向</b>运动？两条位移曲线 " + MM(VI("u") + OPR("(") + VI("x") + OPR(")")) + " 有什么差别？",
+    a: () => "<b>声学支：同向</b>——两条 " + MM(VI("u") + OPR("(") + VI("x") + OPR(")")) + " 曲线同号、几乎重合（" + MM(VI("q") + OPR("→") + "0") + " 时完全重合），整个原胞作为一个整体在晃；<b>光学支：反向</b>——两条曲线反号，且轻原子 " + M_M2 + " 的振幅更大（当前 " +
+      MM("|" + WSUB("u", "1") + "|" + SL() + "|" + WSUB("u", "2") + "|") + " = " +
+      ampRatioText() + "，" + phaseText() + "），质心基本不动。这就是「声学 / 光学」这两个名字的唯一本质区别。"
+  },
+  {
+    q: "把 " + M_Q + " 拖到接近 0，比较两支的频率读数。哪一支趋于 0？哪一支停在有限值 " + M_OM0 + "？这两种极限各对应什么物理图像？",
+    a: () => "<b>声学支 " + MM(VI("ω") + OPR("→") + "0") + "</b>（当前 " + MM(VI("ω") + OPR("=")) + " " + fmt(state().wa, 3) + "）：波长趋于无穷、原子整体缓慢平移 ⇒ 宏观弹性波 / 声波；<b>光学支 " + MM(VI("ω") + OPR("→") + WSUB("ω", "0") + OPR("=")) + " " +
+      fmt(state().w0, 3) + "</b>（当前 " + fmt(state().wo, 3) + "）：原胞内两个原子反向振动、质心不动 ⇒ 可被电磁波直接激发的局域相对振动（极性材料中就是红外吸收的那支）。",
+    h: "提示：留意动画速度——光学支始终快得多，因为它的频率高。"
+  },
+  {
+    q: "拖动「质量比」从 1 拉到 10，看模块二的灰色禁带带。禁带宽度怎么变？质量比恰好 " + MM(OPR("=") + "1") + " 时还存在禁带吗？",
+    a: () => MM("Δ" + VI("ω") + OPR("=") + OPR("√") + FRAC("2" + VI("K"), WSUB("m", "2")) + OPR("−") + OPR("√") + FRAC("2" + VI("K"), WSUB("m", "1"))) +
+      "，绝对宽度随 " + MM(OPR("√") + VI("K")) + " 缩放，但<b>相对宽度 " + MM("Δ" + VI("ω") + SL() + WSUB("ω", "0")) + " 只由质量比决定</b>：" + M_M1 + " = " + M_M2 + " 时 " + MM("Δ" + VI("ω") + OPR("=")) + " <b>0</b>（两支在区边界简并，等价于折叠的单原子链）；" +
+      MM(WSUB("m", "1") + SL() + WSUB("m", "2") + OPR("=") + "10") + " 时 " + MM("Δ" + VI("ω") + OPR("≈")) + " " +
+      fmt(gapFor(10), 3) + "。当前 " + MM(WSUB("m", "1") + SL() + WSUB("m", "2") + OPR("=")) + " " + fmt(OPT.r, 2) +
+      " → " + MM("Δ" + VI("ω") + OPR("=")) + " " + fmt(state().gapW, 3) + "（相对宽度 " + MM("Δ" + VI("ω") + SL() + WSUB("ω", "0")) +
+      " = " + fmt(state().gapW / Math.max(state().w0, 1e-9) * 100, 1) + "%）。注意 " + M_K + " 只整体缩放频率（拖它会看到灰带变宽变窄），<b>不改变</b>禁带的相对宽度。"
+  },
+  {
+    q: "切换<b>纵波 / 横波</b>：原子的振动方向怎么变？它们与「声学 / 光学」这两支是什么关系？",
+    a: () => "纵波把回复方向取在链方向上（压缩—膨胀），横波取在垂直方向上（剪切），所以<b>偏振与分支是两个独立的标签</b>：" +
+      MM("2" + OPR("×") + "2") + " 组合给出 " +
+      MM(RM("LA")) + "、" + MM(RM("TA")) + "、" + MM(RM("LO")) + "、" + MM(RM("TO")) + " 四种模式。当前是 <b>" + MM(RM(state().modeName)) +
+      "</b>。教学近似取 " + MM(WSUB("K", "T") + OPR("=") + "0.55" + WSUB("K", "L")) + "（横向更软），所以 TA / TO 的频率整体低于 LA / LO —— 但要注意：本模型里 " +
+      MM(WSUB("ω", "T") + SL() + WSUB("ω", "L") + OPR("≡") + OPR("√") + "0.55") + " 与 " + M_Q + " 无关，TA / TO 只是 LA / LO 的等比缩小，<b>形状完全一样</b>；真实晶体的 TA 支在区边界明显压平，形状与 LA 不同。"
+  },
+  {
+    q: "本工具只有一维链，给出<b>两支</b>色散。推广到三维晶体：一共几支声学、几支光学？偏振分别是什么？",
+    a: () => "每个原子有 3 个自由度；原胞里两个原子 ⇒ 3 支声学 " + MM(OPR("+")) + " 3 支光学：<b>声学</b> " + MM(OPR("=")) + " " +
+      MM("1" + OPR("×") + RM("LA")) + "（纵）" + MM(OPR("+")) + " " + MM("2" + OPR("×") + RM("TA")) + "（横，简并），<b>光学</b> " + MM(OPR("=")) + " " +
+      MM("1" + OPR("×") + RM("LO")) + "（纵）" + MM(OPR("+")) + " " + MM("2" + OPR("×") + RM("TO")) + "（横）。" +
+      "原胞里有 <b>2</b> 个原子的<b>金刚石 / 闪锌矿</b>结构（Si、GaAs）⇒ 共 <b>6 支</b>；而<b>纤锌矿</b>原胞有 <b>4</b> 个原子" +
+      "（本工具的 GaN 预设正是纤锌矿 GaN）⇒ 共 <b>12 支 = 3 声学 + 9 光学</b>。支数通式就一句：<b>3 ×（原胞原子数 N）</b>，" +
+      "其中 3 支声学、" + MM("3(" + VI("N") + OPR("−") + "1)") + " 支光学。<br>本页只画了同一偏振下的 2 支（1 声学 + 1 光学）；" +
+      "真实晶体沿同一个 " + M_Q + " 方向有 3N 支。" +
+      "GaAs 等极性材料中 " + MM(RM("LO")) + " 与 " + MM(RM("TO")) +
+      " 在 Γ 点还会因长程库仑作用而进一步劈裂。"
+  },
+  {
+    q: "本页画的是<b>经典</b>的 <span class=\"m\"><i>ω</i>(<i>q</i>)</span>（实数频率、确定相位）。把它接到半导体的散射上：为什么升温时<b>声学声子</b>散射越来越强（<span class=\"m\"><i>μ</i><sub>ph</sub> ∝ <i>T</i><sup>−3/2</sup></span>），而<b>光学声子</b>在低温下几乎不参与散射？",
+    a: () => "把模式<b>量子化</b>即得声子：能量量子 " + MM(VI("ħ") + VI("ω")) + "，平均占有数 " +
+      MM(VI("n\u0304") + OPR("=") + "1" + SL() + OPR("(") + "<span class=\"rm\">exp</span>" + OPR("(") + VI("ħω") + SL() + VI("kT") + OPR(")") + OPR("−") + "1" + OPR(")")) + "（玻色分布）。" +
+      "<b>声学支</b> " + MM(VI("ω") + OPR("∝") + VI("q")) + "，长波声子满足 " + MM(VI("ħω") + OPR("≪") + VI("kT")) + " ⇒ " +
+      MM(VI("n\u0304") + OPR("≈") + VI("kT") + SL() + VI("ħω") + OPR("∝") + VI("T")) + "：声子数正比于温度，散射率随之上升，热平均给出 " +
+      MM(WSUB("μ", "ph") + OPR("∝") + VI("T") + WU(OPR("−") + "3/2")) + "（形变势散射，见「形变势与压电势散射」工具；它再与电离杂质散射按马西森规则并联，见「电离杂质散射对载流子影响」工具）。" +
+      "<b>光学支</b> " + MM(VI("ω") + OPR("≈") + WSUB("ω", "0")) + " 是有限值，低温下 " + MM(VI("ħ") + WSUB("ω", "0") + OPR("≫") + VI("kT")) +
+      " ⇒ 占有数按 " + MM(RM("e") + WU(OPR("−") + VI("ħ") + WSUB("ω", "0") + SL() + VI("kT"))) + " <b>指数冻结</b>，激发不出光学声子，散射被「冻死」。" +
+      "以 Si 的 Γ 点光学声子 520 cm<sup>−1</sup>（≈ 64 meV）为例：要 " + MM(VI("kT") + OPR("=") + "64 meV") + " 需 " +
+      MM(VI("T") + OPR("≈") + "740 K") + " —— 室温下它确实几乎不被激发。"
+  }
+];
+
+let ANS_EL = [];
+function buildChal() {
+  const grid = $("chalGrid");
+  grid.innerHTML = "";
+  ANS_EL = [];
+  CHAL.forEach((c, i) => {
+    const d = document.createElement("div");
+    d.className = "chal";
+    d.innerHTML = '<div class="chal-head"><b>' + (i + 1) + ". " + c.q + '</b><span class="chev">▶</span></div>' +
+      '<div class="chal-body">' + (c.h ? '<div style="font-size:12px;">' + c.h + "</div>" : "") +
+      '<div class="ans"></div><div class="btn-row"><button>看看答案</button></div></div>';
+    grid.appendChild(d);
+    d.querySelector(".chal-head").onclick = () => d.classList.toggle("open");
+    const ans = d.querySelector(".ans");
+    ANS_EL.push(ans);
+    d.querySelector(".btn-row button").onclick = e => { e.stopPropagation(); ans.classList.toggle("show"); };
+  });
+}
+function refreshAnswers() { ANS_EL.forEach((el, i) => { el.innerHTML = CHAL[i].a(); }); }
+
+/* ---------------- 10. 交互绑定 ---------------- */
+function buildPresets() {
+  const box = $("presetBtns");
+  box.innerHTML = "";
+  PRESETS.forEach((p, i) => {
+    const b = document.createElement("button");
+    b.textContent = p.name;
+    b.dataset.idx = i;
+    b.onclick = () => { OPT.preset = i; OPT.r = p.r; OPT.K = p.K; syncInputs(); render(); };
+    box.appendChild(b);
+  });
+}
+function markActive() {
+  Array.prototype.forEach.call($("presetBtns").children, (b) => {
+    b.classList.toggle("sel", +b.dataset.idx === OPT.preset);
+  });
+  Array.prototype.forEach.call($("brBtns").children, b => b.classList.toggle("active", b.dataset.b === OPT.branch));
+  Array.prototype.forEach.call($("polBtns").children, b => b.classList.toggle("active", b.dataset.p === OPT.pol));
+}
+function syncInputs() {
+  $("rSlider").value = Math.round(OPT.r * 100);
+  $("kSlider").value = Math.round(OPT.K * 100);
+  $("qSlider").value = Math.round(OPT.qf * 1000);
+  $("spSlider").value = Math.round(OPT.speed * 100);
+  $("ckArrow").checked = OPT.ckArrow; $("ckEq").checked = OPT.ckEq;
+  $("ckEnv").checked = OPT.ckEnv; $("ckGap").checked = OPT.ckGap;
+  $("ckAsm").checked = OPT.ckAsm;
+  const p = PRESETS[OPT.preset];
+  $("matNote").innerHTML = p ? p.note : "";
+  $("rVal").innerHTML = fmt(OPT.r, 2) +
+    "（" + (p && Math.abs(p.r - OPT.r) < 1e-6 && Math.abs(p.K - OPT.K) < 1e-6 ? p.name : "自定义") + "）";
+  $("kVal").textContent = fmt(OPT.K, 2);
+  $("qVal").innerHTML = fmt(OPT.qf, 2) + " " + M_PIA;
+  $("brVal").textContent = OPT.branch === "ac" ? "声学支" : "光学支";
+  $("polVal").textContent = OPT.pol === "L" ? "纵波" : "横波";
+  $("spVal").textContent = fmt(OPT.speed, 2) + "×";
+  $("btnPlay").textContent = OPT.playing ? "⏸ 暂停" : "▶ 播放";
+  const st = state();
+  $("qSub").innerHTML = "波长 " + MM(VI("λ") + OPR("=")) + " " + (isFinite(st.lambda) ? fmt(st.lambda, 2) + " " + M_A : "∞") +
+    "（以原胞长 " + M_A + " 为单位）；当前模式 <b>" + MM(RM(st.modeName)) + "</b>，" + MM(VI("ω") + OPR("=")) + " " + fmt(st.omega, 3) + "。";
+  markActive();
+}
+
+function render() { drawChain(); drawDisp(); drawZoom(); updateReadout(); refreshAnswers(); }
+
+function bindHover(id, key) {
+  const el = $(id);
+  el.addEventListener("mousemove", e => {
+    const r = el.getBoundingClientRect();
+    HOV[key] = { x: e.clientX - r.left, y: e.clientY - r.top };
+    key === "chain" ? drawChain() : drawDisp();
+  });
+  el.addEventListener("mouseleave", () => {
+    HOV[key] = null;
+    key === "chain" ? drawChain() : drawDisp();
+  });
+}
+
+function init() {
+  buildLegends();
+  buildPresets();
+  buildChal();
+
+  $("rSlider").min = 100;
+  $("rSlider").oninput = e => {
+    OPT.r = +e.target.value / 100;
+    OPT.preset = PRESETS.findIndex(p => Math.abs(p.r - OPT.r) < 1e-9 && Math.abs(p.K - OPT.K) < 1e-9);
+    if (OPT.preset < 0) OPT.preset = -1;
+    syncInputs(); render();
+  };
+  $("kSlider").oninput = e => { OPT.K = +e.target.value / 100; syncInputs(); render(); };
+  $("qSlider").oninput = e => { OPT.qf = +e.target.value / 1000; syncInputs(); render(); };
+  $("spSlider").oninput = e => { OPT.speed = +e.target.value / 100; syncInputs(); };
+
+  Array.prototype.forEach.call($("brBtns").children, b => {
+    b.onclick = () => { OPT.branch = b.dataset.b; syncInputs(); render(); };
+  });
+  Array.prototype.forEach.call($("polBtns").children, b => {
+    b.onclick = () => { OPT.pol = b.dataset.p; syncInputs(); render(); };
+  });
+
+  [["ckArrow", "ckArrow"], ["ckEq", "ckEq"], ["ckEnv", "ckEnv"], ["ckGap", "ckGap"], ["ckAsm", "ckAsm"]]
+    .forEach(([id, key]) => {
+      $(id).addEventListener("change", e => { OPT[key] = e.target.checked; render(); });
+    });
+
+  $("btnPlay").onclick = () => { OPT.playing = !OPT.playing; syncInputs(); };
+  $("btnResetT").onclick = () => { PHASE = 0; drawChain(); };
+
+  bindHover("chain", "chain");
+  bindHover("disp", "disp");
+
+  /* 在色散图上点击：移动 q 并切到最近的那一支 */
+  $("disp").addEventListener("click", e => {
+    const F = dispFrame(); if (!F) return;
+    const r = $("disp").getBoundingClientRect();
+    const x = e.clientX - r.left, y = e.clientY - r.top;
+    if (x < F.L - 6 || x > F.R + 6) return;
+    const q = clamp((x - F.L) / (F.R - F.L), 0, 1) * Math.PI;
+    const [wa, wo] = omAt(q);
+    OPT.qf = q / Math.PI;
+    OPT.branch = Math.abs(F.Y(wa) - y) <= Math.abs(F.Y(wo) - y) ? "ac" : "op";
+    syncInputs(); render();
+  });
+
+  /* 键盘：←→ 微调 q */
+  ["chain", "disp"].forEach(id => {
+    $(id).addEventListener("keydown", e => {
+      if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+      e.preventDefault();
+      OPT.qf = clamp(OPT.qf + (e.key === "ArrowRight" ? 0.02 : -0.02), 0, 1);
+      syncInputs(); render();
+    });
+  });
+
+  window.addEventListener("resize", () => { fitAll(); render(); });
+
+  syncInputs();
+  fitAll();
+  render();
+  requestAnimationFrame(loop);
+}
+
+/* ---------------- 11. 动画循环 ---------------- */
+let lastT = 0;
+function loop(ts) {
+  if (!lastT) lastT = ts;
+  const dt = Math.min(0.06, (ts - lastT) / 1000);
+  lastT = ts;
+  const st = state();
+  const wref = Math.sqrt(2 * st.K);              // 频率参考 √(2K)（轻原子单独振动的尺度）
+  if (OPT.playing) {
+    PHASE += dt * BASE_RATE * OPT.speed * (st.omega / Math.max(wref, 1e-9));
+    if (PHASE > 1e6) PHASE = PHASE % (2 * Math.PI);
+  }
+  drawChain();
+  requestAnimationFrame(loop);
+}
+
+init();
+/* i18n 启动必须在 init() 之后：setLang() 会重跑 syncInputs()/render()，
+   放到 init() 之前会在 fitAll() 之前触发绘制，一旦抛异常整个 init() 就跑不到（挑战与画布会空）。 */
+(function () {
+  try {
+    i18nWatch();
+    ORIG_TITLE = ORIG_TITLE || document.title;
+    var btn = document.getElementById("langBtn");
+    if (btn) btn.onclick = function () { setLang(LANG === "en" ? "zh" : "en"); };
+    if (LANG === "en") setLang("en"); else { document.title = ORIG_TITLE; i18nWalk(document.body); }
+  } catch (e) { }
+})();
+</script>
+</body>
+</html>

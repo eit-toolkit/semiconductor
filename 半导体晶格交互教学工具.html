@@ -1,0 +1,2341 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<!-- SPDX-License-Identifier: MIT -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>半导体晶格交互教学工具（金刚石 / 闪锌矿 / 纤锌矿 / NaCl）</title>
+<style>
+  :root {
+    --bg: #f7f9fb;
+    --panel: #ffffff;
+    --border: #dde4ec;
+    --text: #2c3e50;
+    --text-sub: #6b7a8c;
+    --blue: #1976d2;
+    --blue-light: #e3f0fb;
+    --orange: #ef8c1a;
+    --red: #d94a3d;
+    --teal: #0f9b8e;
+    --green: #2e9e5b;
+    --purple: #8e5bd0;
+    --gray-ref: #9aa5b1;
+    --probe: #f5c518;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Microsoft YaHei", "PingFang SC", "Segoe UI", sans-serif;
+    background: var(--bg); color: var(--text); padding: 14px;
+  }
+  header { position: relative;
+    display: flex; align-items: baseline; justify-content: center;
+    gap: 14px; flex-wrap: wrap; text-align: center; margin-bottom: 12px;
+  }
+  .lang-btn { position: absolute; right: 0; top: 0; border: 1px solid var(--border); background: #fff;
+    color: var(--text-sub); padding: 3px 10px; border-radius: 7px; cursor: pointer; font-size: 12px; font-weight: 600; }
+  .lang-btn:hover { border-color: var(--blue); color: var(--blue); }
+  header h1 { font-size: 20px; }
+  .layout { display: flex; gap: 14px; align-items: flex-start; max-width: 1500px; margin: 0 auto; }
+  .viz { flex: 0 0 65%; min-width: 0; }
+  .side { flex: 1; min-width: 300px; display: flex; flex-direction: column; gap: 12px; }
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; }
+  .card + .card { margin-top: 12px; }
+  .tabs { display: flex; gap: 6px; margin-bottom: 10px; flex-wrap: wrap; }
+  .tabs button {
+    border: 1px solid var(--border); background: #fff; color: var(--text-sub);
+    padding: 7px 14px; border-radius: 8px; cursor: pointer; font-size: 13.5px;
+  }
+  .tabs button.active { background: var(--blue); border-color: var(--blue); color: #fff; font-weight: 600; }
+  canvas { display: block; width: 100%; border-radius: 6px; touch-action: none; }
+  .chart-wrap { position: relative; }
+  .hint { font-size: 12px; color: var(--text-sub); margin-top: 6px; line-height: 1.6; }
+  .sec-title { font-size: 13.5px; font-weight: 700; margin: 2px 0 6px; }
+  /* 模块编号徽标：只有教学内容模块才带编号；控制面板等辅助面板不是模块，不加 */
+  .sec-title .mtag {
+    display: inline-block; background: var(--blue); color: #fff;
+    font-size: 11px; font-weight: 700; padding: 1.5px 7px;
+    border-radius: 5px; margin-right: 6px; vertical-align: 1.5px; letter-spacing: .3px;
+  }
+  .ctrl { margin-bottom: 12px; }
+  .ctrl:last-child { margin-bottom: 0; }
+  .ctrl-head { display: flex; justify-content: space-between; align-items: baseline; font-size: 13.5px; font-weight: 600; margin-bottom: 4px; }
+  .ctrl-head .val { color: var(--blue); font-variant-numeric: tabular-nums; font-weight: 700; }
+  .ctrl input[type=range] { width: 100%; accent-color: var(--blue); }
+  .ctrl .sub { font-size: 12px; color: var(--text-sub); margin-top: 2px; line-height: 1.55; }
+  .btn-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+  .btn-row button {
+    border: 1px solid var(--border); background: #fff; color: var(--text);
+    padding: 5px 11px; border-radius: 7px; cursor: pointer; font-size: 12.5px;
+  }
+  .btn-row button:hover { border-color: var(--blue); color: var(--blue); }
+  .btn-row button.primary { background: var(--blue-light); border-color: var(--blue); color: var(--blue); font-weight: 600; }
+  .btn-row button.sel { background: var(--blue); border-color: var(--blue); color: #fff; font-weight: 600; }
+  .btn-row button:disabled { opacity: .45; cursor: not-allowed; }
+  .legend { display: flex; gap: 6px 14px; flex-wrap: wrap; align-items: center; font-size: 12px; color: var(--text-sub); margin-top: 6px; }
+  /* 只对直接子项生效：写成 .legend span 会把嵌套公式里的文本节点拆成 flex item 而被撑散 */
+  .legend > span { display: inline-block; }
+  .legend .m { white-space: normal; line-height: 1.5; }
+  .swatch {
+    display: inline-block; vertical-align: middle; width: 20px; height: 0;
+    border-top: 3px solid currentColor; border-radius: 2px; margin-right: 6px;
+  }
+  .swatch.dash { border-top-style: dashed; }
+  .swatch.dot { width: 12px; height: 12px; border: none; border-radius: 50%; }
+  .swatch.sq { width: 12px; height: 12px; border: none; border-radius: 3px; }
+  /* 显示项目勾选行 */
+  .chk-row { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12.5px; color: var(--text-sub); margin-top: 6px; }
+  .chk-row label { display: inline-flex; align-items: center; gap: 5px; cursor: pointer; }
+  .chk-row input[type=checkbox] { accent-color: var(--blue); }
+  /* 并排对比 */
+  .cmp-grid { display: flex; gap: 12px; }
+  .cmp-grid > div { flex: 1; min-width: 0; }
+  .cmp-head { display: flex; align-items: center; gap: 6px; margin-bottom: 5px; }
+  .cmp-head b { font-size: 12.5px; color: var(--text-sub); }
+  select {
+    font-family: inherit; font-size: 12.5px; border: 1px solid var(--border);
+    border-radius: 7px; padding: 4px 6px; background: #fff; color: var(--text); flex: 1; min-width: 0;
+  }
+  .mini { font-size: 11.5px; color: var(--text-sub); line-height: 1.6; }
+  .empty { font-size: 12px; color: var(--text-sub); padding: 6px 2px; }
+  /* 挑战任务卡片 */
+  .chal-wrap { max-width: 1500px; margin: 14px auto 0; }
+  .chal-grid { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+  .chal { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 8px 12px; }
+  .chal-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; cursor: pointer; }
+  .chal-head b { font-size: 13.5px; }
+  .chal-head .chev { color: var(--text-sub); font-size: 12px; transition: transform .15s; }
+  .chal.open .chal-head .chev { transform: rotate(90deg); display: inline-block; }
+  .chal-body { display: none; margin-top: 6px; font-size: 12.5px; color: var(--text-sub); line-height: 1.75; }
+  .chal.open { border-color: var(--blue); }
+  .chal.open .chal-body { display: block; }
+  .chal-body .ans { display: none; margin-top: 6px; padding: 7px 10px; background: var(--blue-light); border-radius: 6px; color: var(--text); }
+  .chal-body .ans.show { display: block; }
+  .chal-body .ans b { color: var(--blue); }
+  .chal .q { color: var(--text); }
+  /* ============ 数学公式排版（纯 CSS，零依赖，离线可用） ============ */
+  .frac {
+    display: inline-block; vertical-align: -0.50em; text-align: center;
+    margin: 0 .18em; font-size: .92em; line-height: 1.25;
+  }
+  .frac > .num { display: block; padding: 0 .32em; border-bottom: 1px solid currentColor; }
+  .frac > .den { display: block; padding: 0 .32em; }
+  .frac > .num > .frac, .frac > .den > .frac { vertical-align: -0.32em; }
+  header .formula { font-size: 15px; color: var(--text-sub); }
+
+  @media (max-width: 980px) {
+    .layout { flex-direction: column; }
+    .viz { flex: 1 1 auto; width: 100%; }
+    .cmp-grid { flex-direction: column; }
+  }
+  /* ---- 课程页脚 ---- */
+  .site-foot { max-width: 1500px; margin: 18px auto 0; padding: 12px 16px 24px;
+    border-top: 1px solid var(--border); color: var(--text-sub);
+    font-size: 12.5px; line-height: 1.8; text-align: center; }
+  .site-foot a { color: var(--blue, #1976d2); text-decoration: none; }
+  .site-foot a:hover { text-decoration: underline; }
+
+  .m { font-family: "Cambria Math", "STIX Two Math", "Latin Modern Math", "Times New Roman", Times, serif;
+       font-size: 1.05em; font-style: normal; white-space: nowrap; letter-spacing: .01em; }
+  .m i, .m var { font-style: italic; }
+  .m .rm { font-style: normal; }
+  .m sub, .m sup { font-size: .70em; font-style: normal; line-height: 1; }
+  .m sub { vertical-align: -.28em; }
+  .m sup { vertical-align: .50em; }
+.m .m { font-size: 1em; }   /* 嵌套容器（TEXH 下标转换叠加）不再放大字号 */
+  .m .op { font-style: normal; padding: 0 .24em; }
+  .m .sl { font-style: normal; padding: 0 .05em; }
+  .m .un { font-style: normal; padding-left: .16em; }
+  .op, .rm, .un { font-style: normal; }
+  .frac { display: inline-flex; flex-direction: column; vertical-align: -.45em; text-align: center; margin: 0 .18em; }
+  .frac .num { border-bottom: 1px solid currentColor; padding: 0 .22em; line-height: 1.16; }
+  .frac .den { padding: 0 .22em; line-height: 1.16; }
+  .sqrt { display: inline-flex; align-items: stretch; }
+  .sqrt .rd { position: relative; padding-left: .30em; padding-top: .10em; }
+  .sqrt .rdc { border-top: 1px solid currentColor; }
+  .sqrt > .rdc, .sqrt .rdc { display: inline-block; position: static; font-size: 1em;
+             border-top: .055em solid currentColor; padding: .06em .12em 0 .10em; margin: 0; line-height: 1; }
+
+  /* 公式排版：分式 / 根式 —— 全站统一为「回旋共振 v06」写法（置于末尾，覆盖本文件早期变体） */
+  .frac { display: inline-block; vertical-align: -0.52em; text-align: center; font-size: .78em; margin: 0 .12em; }
+  .frac > .num, .frac .num { display: block; padding: 0 .22em; border-bottom: .055em solid currentColor; line-height: inherit; }
+  .frac > .den, .frac .den { display: block; padding: 0 .22em; line-height: inherit; }
+  .sqrt { display: inline-block; white-space: nowrap; vertical-align: baseline; margin: 0; font-size: 1em; }
+  .sqrt > .rd, .sqrt .rd { display: inline-block; position: static; font-size: 1em; line-height: inherit; padding: 0 .02em 0 0; margin: 0; }
+  .sqrt > .rdc, .sqrt .rdc { display: inline-block; position: static; font-size: 1em;
+             border-top: .055em solid currentColor; padding: .06em .12em 0 .10em; margin: 0; line-height: 1; }
+  .sqrt .rdc:has(sup) { padding-top: .18em; }
+</style>
+</head>
+<body>
+
+<header>
+  <button id="langBtn" class="lang-btn" data-noi18n title="中文 / English">EN</button>
+  <h1>半导体晶格交互教学工具</h1>
+  <div class="formula m">四面体键角 <i>θ</i><span class="op">=</span><span class="rm">arccos</span><span class="op">(</span><span class="op">−</span><span class="frac"><span class="num">1</span><span class="den">3</span></span><span class="op">)</span><span class="op">=</span>109°28′　·　金刚石键长 <i>d</i><span class="op">=</span><span class="frac"><span class="num"><span class='sqrt'><span class='rd'>√</span><span class='rdc'>3</span></span></span><span class="den">4</span></span><i>a</i></div>
+</header>
+
+<div class="layout">
+  <!-- ============ 左侧：三维视图区 ============ -->
+  <div class="viz">
+    <div class="card">
+      <div class="sec-title"><span class="mtag">模块一</span>三维晶体结构视图（金刚石 · 闪锌矿 · 纤锌矿 · 岩盐）</div>
+      <div class="tabs" id="viewTabs">
+        <button class="active" data-view="single">单视图</button>
+        <button data-view="compare">对比视图</button>
+      </div>
+
+      <!-- 单视图 -->
+      <div id="singleArea">
+        <div class="chart-wrap"><canvas id="view" data-h="440" tabindex="0"></canvas></div>
+        <div class="legend" id="legend"></div>
+        <div class="hint" id="viewHint"></div>
+      </div>
+
+      <!-- 对比视图 -->
+      <div id="cmpArea" style="display:none;">
+        <div class="cmp-grid">
+          <div>
+            <div class="cmp-head"><b>A</b><select id="selA"></select></div>
+            <div class="chart-wrap"><canvas id="viewA" data-h="360" tabindex="0"></canvas></div>
+          </div>
+          <div>
+            <div class="cmp-head"><b>B</b><select id="selB"></select></div>
+            <div class="chart-wrap"><canvas id="viewB" data-h="360" tabindex="0"></canvas></div>
+          </div>
+        </div>
+        <div class="btn-row" id="cmpPresets"></div>
+        <div class="chk-row">
+          <label><input type="checkbox" id="syncRot" checked> 同步旋转（A 拖动时 B 跟随）</label>
+        </div>
+        <div class="hint">提示：两个视图可分别选择材料。勾选「同步旋转」后拖动任一视图，另一视图跟随同一视角，便于直接比较堆积方式。</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ 右侧：控制面板 ============ -->
+  <div class="side">
+    <div class="card">
+      <div class="sec-title">控制面板</div>
+      <div class="ctrl">
+        <div class="ctrl-head"><span>晶体结构 / 典型材料</span><span class="val" id="matVal">Si</span></div>
+        <div class="btn-row" id="structBtns" style="margin-top:0;"></div>
+        <div class="btn-row" id="matBtns"></div>
+      </div>
+
+      <div class="ctrl">
+        <div class="ctrl-head"><span>显示模式</span></div>
+        <div class="btn-row" id="modeBtns"></div>
+      </div>
+
+      <div class="ctrl">
+        <div class="ctrl-head"><span>显示项目</span><span class="val" id="atomVal" title="当前超胞内的原子位置数（括号内为晶胞净原子数）">18 个位置（净 8）</span></div>
+        <div class="chk-row">
+          <label><input type="checkbox" id="chkBond" checked> 化学键</label>
+          <label><input type="checkbox" id="chkCell" checked> 晶胞框</label>
+          <label><input type="checkbox" id="chkAxis" checked> 晶轴</label>
+          <label><input type="checkbox" id="chkLabel" checked> 元素标签</label>
+          <label><input type="checkbox" id="chkShare" checked> 含共享原子（边界位置与邻胞分摊）</label>
+          <label id="labHexP" style="display:none"><input type="checkbox" id="chkHexP" checked> 六方柱轮廓（常规胞 ×3）</label>
+        </div>
+      </div>
+
+      <div class="ctrl">
+        <div class="ctrl-head"><span>超胞尺寸</span><span class="val" id="cellVal">1×1×1</span></div>
+        <div class="btn-row" id="cellBtns"></div>
+      </div>
+
+      <div class="ctrl">
+        <div class="ctrl-head"><span>预设晶向（正对晶面观察）</span></div>
+        <div class="btn-row" id="dirBtns"></div>
+      </div>
+
+      <div class="btn-row">
+        <button class="primary" id="resetBtn">重置视角</button>
+        <button id="clearSelBtn">取消选中</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ============ 底部：挑战任务 ============ -->
+<div class="chal-wrap">
+  <div class="card">
+    <div style="display:flex; justify-content:space-between; align-items:baseline; gap:10px;">
+      <b style="font-size:14.5px;">引导探究（点击展开，先自己试一试再看答案）</b>
+      <span style="font-size:12px; color:var(--text-sub);">挑战任务</span>
+    </div>
+    <div class="chal-grid" id="chalGrid"></div>
+  </div>
+</div>
+
+<script>
+/* ==================================================================
+   i18n（C1 单文件双语：物理代码仍然只有一份）
+   LANG 取值优先级：URL ?lang=en / ?lang=zh  >  localStorage('opl_lang')  >  默认中文。
+   不做 location 跳转——保住「单文件拷走也能用」。
+   三个注入点，**业务字符串一个都不改**：
+     ① partsOf()   画布 token：带 i/sub/sup/un 标记的是物理量、下标与单位，跳过
+     ② fillText/measureText 原型挂钩：兜住直接写进画布的中文串
+     ③ DOM 文本节点：静态 HTML 与 JS 写进来的 innerHTML，用 MutationObserver 兜住新增节点
+   T() 先查整句词典，未命中再按「最长优先」做短语替换，因此拼接串也能翻。
+   漏翻会被记进 window.__MISS，可导出核对。 */
+var LANG = (function () {
+  var m = /[?&]lang=([a-zA-Z]+)/.exec(location.search);
+  var q = m ? m[1].toLowerCase() : "";
+  if (q === "en" || q === "zh") return q;
+  var s = "";
+  try { s = localStorage.getItem("opl_lang") || ""; } catch (e) { }
+  return (s === "en" || s === "zh") ? s : "zh";
+})();
+var ORIG_TITLE = document.title;
+var __MISS = [];
+try { window.__MISS = __MISS; } catch (e) { }
+function noteMiss(s) { if (__MISS.indexOf(s) < 0) __MISS.push(s); }
+function TSoft(s) {
+  if (!T._K) T._K = Object.keys(I18N).sort(function (a, b) { return b.length - a.length; });
+  var out = s, i, k, orig = s;
+  /* 两遍：第一遍只吃长度 ≥ 2 的短语；第二遍的单字 key 只在「传进来的串
+     恰好就是这一个字」时才上场——画布逐字排版会拿单字去 measureText，那一
+     路必须翻。反过来，绝不让单字 key 去切更长的句子：否则「导」「子」「原」
+     会把「半导体」「电子数」「泡利原理」切成半 conduction 体、电 quantum 数、
+     泡利 origin 理这类中英混排。同一条理由也适用于「下」：整句不该被切碎。 */
+  for (var pass = 0; pass < 2; pass++) {
+    for (i = 0; i < T._K.length; i++) {
+      k = T._K[i];
+      if (k.length < 2 && (pass === 0 || orig !== k)) continue;
+      if (out.indexOf(k) >= 0) out = out.split(k).join(I18N[k]);
+    }
+  }
+  return out;
+}
+/* 同一句被 DOM 切成好几个文本节点时，首尾空格会随机落在 data 里；
+   所以除了「整句命中」，再试一次「去空格后命中」并原样补回首尾空白。 */
+function trimMap() {
+  if (T._TM) return T._TM;
+  var m = {};
+  for (var k in I18N) if (Object.prototype.hasOwnProperty.call(I18N, k)) {
+    var t = k.replace(/^\s+|\s+$/g, "");
+    if (t && m[t] === undefined) m[t] = I18N[k];
+  }
+  T._TM = m;
+  return m;
+}
+/* eslint-disable no-use-before-define */
+function T(s) {
+  if (LANG !== "en" || typeof s !== "string" || !s) return s;
+  if (!/[一-鿿]/.test(s)) return s;
+  if (Object.prototype.hasOwnProperty.call(I18N, s)) return I18N[s];
+  var tm = trimMap(), core = s.replace(/^\s+|\s+$/g, "");
+  if (core && tm[core] !== undefined) {
+    var lead = s.slice(0, s.length - s.replace(/^\s+/, "").length);
+    var tail = s.slice(s.replace(/\s+$/, "").length);
+    return lead + tm[core] + tail;
+  }
+  var v = TSoft(s);
+  /* 译完还剩汉字也算漏翻：只翻掉一半的「半吊子译文」曾经让 __MISS 恒为 0。 */
+  if (v === s || /[\u3400-\u9FFF]/.test(v)) noteMiss(s);
+  return v;
+}
+var I18N = {
+  /* ---- 词典：中文原文 → 英文。key 禁含运行时数字（换个参数就漏），数字前后要拆开 ---- */
+  /* ---- 标题与页脚 ---- */
+  "半导体晶格交互教学工具（金刚石 / 闪锌矿 / 纤锌矿 / NaCl）": "Semiconductor Crystal Lattices (diamond / zinc blende / wurtzite / NaCl) — Interactive Toolkit",
+  "半导体晶格交互教学工具": "Semiconductor Crystal Lattices — Interactive Toolkit",
+  "本工具是 EIT-SP（半导体物理交互式教学工具箱）的一部分（武汉大学物理学院《半导体物理》智慧课程），以 MIT 协议开源，可自由使用与二次开发；转载请保留出处。": "This tool is part of EIT-SP, the Educational Interactive Toolkit for Semiconductor Physics (School of Physics and Technology, Wuhan University). Released under the MIT licence: free to use, modify and redistribute, including commercially. Please keep this attribution.",
+  "反馈意见": " Feedback",
+  /* ---- 页首公式 ---- */
+  "四面体键角 ": "Tetrahedral bond angle ",
+  "109°28′　·　金刚石键长 ": "109°28′　·　diamond bond length ",
+  /* ---- 模块与图例 ---- */
+  "模块一": "Module 1",
+  "三维晶体结构视图（金刚石 · 闪锌矿 · 纤锌矿 · 岩盐）": "3-D crystal structure view (diamond · zinc blende · wurtzite · rock salt)",
+  "单视图": "Single view",
+  "对比视图": "Compare views",
+  "晶胞框 / 晶轴 ": "Cell box / axes ",
+  "选中原子与最近邻": "Selected atom & nearest neighbours",
+  "拖拽旋转 · 滚轮缩放 · 右键（或 Shift+拖拽）平移 · 单击原子选中 · 双击原子居中 · 方向键微调视角。": "Drag to rotate · wheel to zoom · right-drag (or Shift+drag) to pan · click an atom to select · double-click to centre on it · arrow keys to nudge the view.",
+  /* ---- 同步旋转 ---- */
+  " 同步旋转（A 拖动时 B 跟随）": " Synced rotation (drag A and B follows)",
+  "提示：两个视图可分别选择材料。勾选「同步旋转」后拖动任一视图，另一视图跟随同一视角，便于直接比较堆积方式。": "Tip: the two views can use different materials. Tick “synced rotation” and dragging either view drives the other, so the two stackings can be compared directly.",
+  /* ---- 材料名（按钮与画布标题共用） ---- */
+  "Si 硅": "Si (silicon)",
+  "Ge 锗": "Ge (germanium)",
+  "C 金刚石": "C (diamond)",
+  "GaAs 砷化镓": "GaAs (gallium arsenide)",
+  "InP 磷化铟": "InP (indium phosphide)",
+  "ZnS 硫化锌": "ZnS (zinc sulfide)",
+  "GaN 氮化镓": "GaN (gallium nitride)",
+  "ZnO 氧化锌": "ZnO (zinc oxide)",
+  "SiC 碳化硅": "SiC (silicon carbide)",
+  "NaCl 氯化钠": "NaCl (sodium chloride)",
+  "MgO 氧化镁": "MgO (magnesium oxide)",
+  "KBr 溴化钾": "KBr (potassium bromide)",
+  /* ---- 结构名与画布标题 ---- */
+  "金刚石 · ": "Diamond · ",
+  "闪锌矿 · ": "Zinc blende · ",
+  "纤锌矿 · ": "Wurtzite · ",
+  "氯化钠 · ": "Rock salt · ",
+  "岩盐 · ": "Rock salt · ",
+  /* ---- 　 ---- */
+  " 超胞": " supercell",
+  "金刚石": "diamond",
+  "闪锌矿": "zinc blende",
+  "纤锌矿": "wurtzite",
+  "岩盐": "rock salt",
+  /* ---- 对比预设 ---- */
+  "金刚石 vs 闪锌矿（原子种类）": "Diamond vs zinc blende (atom species)",
+  "闪锌矿 vs 纤锌矿（堆积序列）": "Zinc blende vs wurtzite (stacking sequence)",
+  "四面体 vs 八面体（配位对比）": "Tetrahedral vs octahedral (coordination)",
+  /* ---- 控制面板 ---- */
+  "控制面板": "Control Panel",
+  "晶体结构": "Crystal structure",
+  "氯化钠（岩盐）": "Sodium chloride (rock salt)",
+  "典型材料": "Typical materials",
+  "显示模式": "Display mode",
+  "球棍模型": "Ball & stick",
+  "空间填充": "Space filling",
+  "线框": "Wireframe",
+  "多面体": "Polyhedra",
+  "显示项目": "Show items",
+  " 化学键": " Bonds",
+  " 晶胞框": " Cell box",
+  " 晶轴": " Axes",
+  " 元素标签": " Element labels",
+  " 含共享原子（边界位置与邻胞分摊）": " counting shared atoms (boundary sites shared with neighbouring cells)",
+  " 六方柱轮廓（常规胞 ×3）": " Hexagonal prism (3× conventional cell)",
+  "配位多面体": "Coordination polyhedra",
+  "超胞尺寸": "Supercell size",
+  " 个位置（净 ": " sites (net ",
+  "含共享原子": "counting shared atoms",
+  "预设晶向（正对晶面观察）": "Orientation presets (view face-on)",
+  "重置视角": "Reset view",
+  "取消选中": "Deselect",
+  /* ---- 悬停气泡（画布直写：数字是运行时拼进去的，key 只能取到空格为止） ---- */
+  "与邻胞共享": "shared with neighbouring cells",
+  "最近邻 ": "Nearest neighbours: ",
+  " 个 · ": ", d = ",
+  /* ---- 引导探究与挑战 ---- */
+  "引导探究（点击展开，先自己试一试再看答案）": "Guided inquiry (click to expand — try it yourself before opening the answers)",
+  "挑战任务": "Challenges",
+  "显示答案": "Show answer",
+  "挑战一 · 数一数配位数": "Challenge 1 · Count the coordination number",
+  "选择「金刚石 / Si」，把超胞切到 2×2×2，旋转视图找到内部的一个 Si 原子，单击它。它周围有几个最近邻？键长是多少？": "Select “diamond / Si”, switch the supercell to 2×2×2, rotate the view to find a Si atom well inside, and click it. How many nearest neighbours surround it, and how long are the bonds?",
+  "配位数 4，最近邻距离 ": "Coordination number 4; the nearest-neighbour distance is ",
+  "）。选中后四个最近邻被高亮，连成一个正四面体——它的六个棱角都是 109°28′。取消勾选「含共享原子」可见 Si 的 8 个净原子 = 1 个角点 + 3 个面心 + 4 个内部；重新勾选则是 18 个位置，角点与面心被相邻晶胞分摊（悬停气泡会标注「与邻胞共享」，8×1/8 + 6×1/2 + 4 = 8），但仍按实心球绘制。超胞的净原子数 = 晶胞净原子数 × ": "). The four nearest neighbours are highlighted, forming a regular tetrahedron — all six bond angles are 109°28′. Untick “counting shared atoms” to see the 8 net Si atoms = 1 corner + 3 face-centre + 4 interior; tick it again and there are 18 sites, with corner and face-centre atoms shared with neighbouring cells (the hover bubble notes “shared with neighbouring cells”: 8×1/8 + 6×1/2 + 4 = 8), though they are still drawn as full spheres. Net atoms of the supercell = net atoms of the cell × ",
+  "、纤锌矿 4n": ", wurtzite 4n",
+  "）；边界原子的部分最近邻落在相邻晶胞中，工具只画出落在晶胞内的键段、胞外一律不画，这正是周期性边界条件的直观体现。": "). Some nearest neighbours of boundary atoms lie in neighbouring cells; the tool draws only the bond segments that fall inside the cell and nothing outside — a direct illustration of periodic boundary conditions.",
+  "挑战二 · 金刚石与闪锌矿差在哪": "Challenge 2 · Diamond vs zinc blende",
+  "在金刚石（Si）与闪锌矿（GaAs）之间来回切换，观察化学键两端原子的颜色是否相同，以及晶胞框形状有没有变化。": "Switch back and forth between diamond (Si) and zinc blende (GaAs): do the two ends of each bond have the same colour, and does the shape of the cell box change?",
+  "原子位置完全相同、晶胞形状完全相同（都是面心立方 + 双原子基元），唯一区别是两个基元原子是否同种：Si–Si 同种 → 纯共价；Ga–As 异种 → 极性共价，且失去反演中心（空间群由 Fd-3m 降为 F-43m）。": "The atomic positions are identical and so is the cell shape (both are face-centred cubic with a two-atom basis); the only difference is whether the two basis atoms are the same species: Si–Si same species → pure covalent; Ga–As different → polar covalent, and the inversion centre is lost (space group drops from Fd-3m to F-43m).",
+  "挑战三 · 闪锌矿与纤锌矿的堆积": "Challenge 3 · Stacking: zinc blende vs wurtzite",
+  "把视图 A 设为 GaAs、视图 B 设为 GaN（可用下方预设按钮），勾选「同步旋转」，对比两个晶胞框的形状与晶轴。": "Set view A to GaAs and view B to GaN (the preset buttons below do this), tick “synced rotation”, and compare the shape of the two cell boxes and their axes.",
+  "两者都是四面体配位，但堆积序列不同：闪锌矿沿 ⟨111⟩ 为 ABCABC（立方），纤锌矿沿 ⟨0001⟩ 为 ABAB（六方）。所以 GaAs 是立方晶系 ": "Both are tetrahedrally coordinated, but the stacking sequence differs: zinc blende runs ABCABC along ⟨111⟩ (cubic), wurtzite runs ABAB along ⟨0001⟩ (hexagonal). GaAs is therefore cubic ",
+  "，GaN 是六方晶系 ": ", while GaN is hexagonal ",
+  "。GaN 也可长成闪锌矿，取决于生长条件。": ". GaN can also grow in the zinc-blende structure, depending on the growth conditions.",
+  "挑战四 · NaCl 的八面体配位": "Challenge 4 · Octahedral coordination in NaCl",
+  "切到氯化钠（NaCl），悬停或单击任意一个 Na": "Switch to sodium chloride (NaCl) and hover or click any Na",
+  "（气泡会显示最近邻数，选中后自动画出配位多面体）。多面体是什么形状？键角是多少度？": " (the bubble shows the number of nearest neighbours; selecting the atom draws its coordination polyhedron). What shape is the polyhedron, and what are the bond angles?",
+  "八面体：最近邻 6 个 Cl": "An octahedron: the 6 nearest-neighbour Cl",
+  "，相邻两个 Cl": "; adjacent Cl",
+  " 的夹角为 90°（12 组），相对的三个方向为 180°，最近邻距离 ": " pairs meet at 90° (12 such pairs), opposite directions are 180° apart, and the nearest-neighbour distance is ",
+  "。与四面体配位（4 个邻居、109°28′）形成鲜明对比，这是离子晶体无方向性键合的结果。": ". This contrasts sharply with tetrahedral coordination (4 neighbours, 109°28′) — the signature of non-directional bonding in ionic crystals.",
+  "挑战五 · 晶向与晶面": "Challenge 5 · Directions and faces",
+  "切到 Si，依次点击 (100)、(110)、(111) 三个预设晶向，观察同一结构在三种方向上的投影有什么不同；再换成 GaN，看看六方晶系的 (0001)、(10-10)、(11-20)。": "Switch to Si and click the three orientation presets (100), (110), (111) in turn: how does the projection of the same structure differ? Then switch to GaN and look at the hexagonal (0001), (10-10) and (11-20).",
+  "沿 ⟨100⟩ 看，原子呈正方形网格排列（这是硅片最常用的取向，Si 并不沿此面解理）；沿 ⟨110⟩ 看，出现矩形沟槽（Si 的 (110) 面原子密度最高，GaAs 等闪锌矿沿 {110} 解理）；沿 ⟨111⟩ 看，可见 ABCABC 密排层的六角对称——Si、Ge 等金刚石结构的解理面正是 {111}。六方的 (0001) 为 c 面（GaN 外延常用），俯视可见六角环；(10-10) 与 (11-20) 为非极性的 m 面与 a 面，可看到沿 c 方向的层状堆积。": "Along ⟨100⟩ the atoms form a square grid (the most common wafer orientation; Si does not cleave on this face). Along ⟨110⟩ rectangular grooves appear (the Si (110) face has the highest atomic density, and zinc-blende crystals such as GaAs cleave on {110}). Along ⟨111⟩ the six-fold symmetry of the ABCABC close-packed layers is visible — {111} is exactly the cleavage face of diamond-structure Si and Ge. In the hexagonal case (0001) is the c-face (common for GaN epitaxy), with six-membered rings seen from above; (10-10) and (11-20) are the non-polar m- and a-faces, showing the layer-by-layer stacking along c.",
+  /* ---- 标点兜底 ---- */
+  "（": " (",
+  "）": ")",
+  /* ---- 属性文案：title / optgroup label（悬停提示与下拉分组名） ---- */
+  "当前超胞内的原子位置数（括号内为晶胞净原子数）": "Atom sites in the current supercell (net atoms of the cell in brackets)",
+  "硅片最常用的晶面取向（Si 不沿此面解理）；沿 ⟨100⟩ 看，正方形排列": "The most common wafer orientation (Si does not cleave on it); along ⟨100⟩ the atoms sit on a square grid",
+  "沿 ⟨110⟩ 看，原子排成矩形沟槽；Si 的 (110) 面原子密度最高，闪锌矿（GaAs 等）沿 {110} 解理": "Along ⟨110⟩ the atoms form rectangular grooves; the Si (110) face has the highest atomic density, and zinc-blende crystals (GaAs and friends) cleave on {110}",
+  "Si、Ge 等金刚石结构的解理面；沿 ⟨111⟩ 看可见 ABCABC 密排层的六角对称": "The cleavage face of diamond-structure Si and Ge; along ⟨111⟩ the six-fold symmetry of the ABCABC close-packed layers is visible",
+  "纤锌矿 · GaN 氮化镓　": "Wurtzite · GaN, gallium nitride　",
+  "超胞　·　虚线六方柱 = 常规胞（": "Supercell　·　dashed hexagonal prism = the conventional cell (",
+  "× 原胞，半透明 = 胞内其余原子）": "× primitive cells; semi-transparent = the remaining atoms of the cell)",
+  "c 面（极性面）：沿 c 轴俯视，可见六角排列，GaN 外延的常用面": "c-plane (polar): looking down the c axis, the hexagonal arrangement is visible; the usual plane for GaN epitaxy",
+  "m 面（非极性面）：垂直于 a₁，可见沿 c 方向的层状堆积": "m-plane (non-polar): perpendicular to a₁, showing the layered stacking along c",
+  "a 面（非极性面）：垂直于 a₁ + a₂": "a-plane (non-polar): perpendicular to a₁ + a₂",
+  "（离子半径 ": " (ionic radius ",
+  "个原子": " atoms",
+  "纤锌矿 · ZnO 氧化锌　": "Wurtzite · ZnO, zinc oxide　",
+  "纤锌矿 · SiC 碳化硅　": "Wurtzite · SiC, silicon carbide　",
+};
+
+/* 注入点②：画布直写字符串。老工具直接调 g.fillText()，这里在原型上兜住。
+   measureText 必须一起挂钩，否则「量的宽度」和「量的文字」用的不是同一个串。 */
+(function () {
+  if (typeof CanvasRenderingContext2D === "undefined") return;
+  var ft = CanvasRenderingContext2D.prototype.fillText;
+  CanvasRenderingContext2D.prototype.fillText = function (s, x, y) {
+    if (typeof s === "string") arguments[0] = T(s);
+    return ft.apply(this, arguments);
+  };
+  var mt = CanvasRenderingContext2D.prototype.measureText;
+  CanvasRenderingContext2D.prototype.measureText = function (s) {
+    return mt.call(this, typeof s === "string" ? T(s) : s);
+  };
+})();
+
+/* 注入点④：逐字绘制的画布串。drawMath 一类把中文按单字拆成 token 再逐个 fillText，
+   T() 每次只见到一个汉字 ⇒ 整句词条永远命中不了。这里在整串进入分词之前先整体翻译，
+   于是画布标注也走「整句优先」，与 DOM 同一个口径。没有这些函数的工具自动跳过。
+   ⚠️ 签名坑：drawMath / measureMath 的第一个参数是 canvas context（对象），文本在第
+   二位；早期版本照着 arguments[0] 翻，等于把 context 送去 T()，补丁全程空转。
+   这里改为「找到第一个含中文的字符串参数」再翻，既躲开 context，也不会误伤
+   align / weight 之类以英文字符串传的选项。 */
+(function () {
+  ["drawMath", "drawMathHalo", "measureMath"].forEach(function (n) {
+    var f = window[n];
+    if (typeof f !== "function") return;
+    window[n] = function () {
+      for (var i = 0; i < arguments.length; i++) {
+        if (typeof arguments[i] === "string" && /[\u3400-\u9FFF]/.test(arguments[i])) {
+          arguments[i] = T(arguments[i]);
+          break;
+        }
+      }
+      return f.apply(this, arguments);
+    };
+  });
+})();
+
+
+/* ---- DOM 文本节点 ---- */
+function i18nNode(n) {
+  var el = n.parentElement;
+  if (!el) return;
+  var tag = el.tagName;
+  if (tag === "SCRIPT" || tag === "STYLE") return;
+  if (el.closest && el.closest("[data-noi18n]")) return;
+  var cur = n.nodeValue;
+  if (n.__orig === undefined || (cur !== n.__last && cur !== n.__orig)) n.__orig = cur;
+  var want = LANG === "en" ? T(n.__orig) : n.__orig;
+  if (want !== cur) n.nodeValue = want;
+  n.__last = want;
+}
+/* 属性（title / placeholder / optgroup label …）不是文本节点，MutationObserver 覆盖不到，
+   必须单独过一遍：否则悬停提示、下拉分组名会残留中文。原文缓存在元素 expando 上，
+   切回中文时原样写回。改属性不会触发 childList/characterData 观察器，不会递归。 */
+var I18N_ATTRS = ["title", "placeholder", "aria-label", "alt", "label"];
+function i18nAttrs(root) {
+  var els = [root], i, j;
+  if (root.querySelectorAll) els = els.concat(Array.prototype.slice.call(root.querySelectorAll("*")));
+  for (i = 0; i < els.length; i++) {
+    var el = els[i];
+    if (!el.getAttribute) continue;
+    if (el.closest && el.closest("[data-noi18n]")) continue;
+    for (j = 0; j < I18N_ATTRS.length; j++) {
+      var a = I18N_ATTRS[j];
+      if (!el.hasAttribute(a)) continue;
+      var key = "__a_" + a;
+      if (el[key] === undefined) el[key] = el.getAttribute(a);
+      var want = LANG === "en" ? T(el[key]) : el[key];
+      if (want !== el.getAttribute(a)) el.setAttribute(a, want);
+    }
+  }
+}
+function i18nWalk(root) {
+  var w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null, false), n, c = 0;
+  while ((n = w.nextNode())) { i18nNode(n); c++; }
+  i18nAttrs(root);
+  return c;
+}
+var _i18nBusy = false;
+function i18nWatch() {
+  if (typeof MutationObserver === "undefined") return;
+  var mo = new MutationObserver(function (ms) {
+    if (_i18nBusy) return;
+    _i18nBusy = true;
+    try {
+      for (var i = 0; i < ms.length; i++) {
+        var m = ms[i];
+        if (m.type === "childList") {
+          for (var j = 0; j < m.addedNodes.length; j++) {
+            var nd = m.addedNodes[j];
+            if (nd.nodeType === 3) i18nNode(nd);
+            else if (nd.nodeType === 1) i18nWalk(nd);
+          }
+        } else if (m.type === "characterData") i18nNode(m.target);
+      }
+    } finally { _i18nBusy = false; }
+  });
+  mo.observe(document.body, { childList: true, subtree: true, characterData: true });
+}
+function setLang(l) {
+  LANG = l;
+  try { localStorage.setItem("opl_lang", l); } catch (e) { }
+  document.documentElement.lang = l === "en" ? "en" : "zh-CN";
+  var btn = document.getElementById("langBtn");
+  if (btn) btn.textContent = l === "en" ? "中文" : "EN";
+  document.title = l === "en" ? T(ORIG_TITLE) : ORIG_TITLE;
+  i18nWalk(document.body);
+  if (typeof syncInputs === "function") syncInputs();
+  if (typeof render === "function") render();
+}
+"use strict";
+
+
+/* ---------------- HTML 侧自动 LaTeX 排版 ----------------
+   读数 / 说明 / 按钮名里由 JS 拼出来的 cm⁻³、E_c、2.5e+8，
+   在写进 innerHTML 之前转成真 <sup>/<sub>；标签与属性原样放过（title 不会被塞进尖括号）。
+   与画布侧 AUTO() 对偶，保证网页和画布按同一套规则排版。 */
+const AUTOH_SUP = { "⁰": "0", "¹": "1", "²": "2", "³": "3", "⁴": "4", "⁵": "5", "⁶": "6",
+  "⁷": "7", "⁸": "8", "⁹": "9", "⁺": "+", "⁻": "−", "⁼": "=", "⁽": "(", "⁾": ")", "ⁿ": "n", "ⁱ": "i" };
+const AUTOH_SUB = { "₀": "0", "₁": "1", "₂": "2", "₃": "3", "₄": "4", "₅": "5", "₆": "6",
+  "₇": "7", "₈": "8", "₉": "9", "₊": "+", "₋": "−", "₌": "=", "₍": "(", "₎": ")",
+  "ₐ": "a", "ₑ": "e", "ₒ": "o", "ₓ": "x", "ₔ": "ə", "ₕ": "h", "ₖ": "k", "ₗ": "l",
+  "ₘ": "m", "ₙ": "n", "ₚ": "p", "ₛ": "s", "ₜ": "t", "ᵣ": "r", "ᵤ": "u", "ᵥ": "v" };
+const TEXH_NEED = /[\u2070-\u209C\u00B2\u00B3\u00B9]|_\{?[A-Za-z0-9\u0370-\u03ff]|\^\{?[\d(\-]|\d(\.\d+)?[eE][+\-]\d|\u221A/;
+/* 从 i 处（必须是 '<'）扫出一个"完整元素"的结束下标（含嵌套），失败返回 -1 */
+function TEXH_elemEnd(h, i) {
+  if (h.charAt(i) !== "<") return -1;
+  let depth = 0, j = i, guard = 0;
+  while (j < h.length && guard++ < 4000) {
+    if (h.charAt(j) !== "<") { j++; continue; }
+    const e = TEXH_tagEnd(h, j);
+    if (e < 0) return -1;
+    const isClose = h.charAt(j + 1) === "/";
+    const selfClose = h.charAt(e - 2) === "/";
+    if (isClose) { depth--; j = e; if (depth <= 0) return j; }
+    else if (selfClose) { j = e; if (depth === 0) return j; }
+    else { depth++; j = e; }
+  }
+  return -1;
+}
+/* √ 后面直接跟一个元素：√<i>E</i> → √‾E（前两条规则只吃 √(A) 与 √字母串） */
+function TEXHsqrtElem(s) {
+  let out = "", i = 0, guard = 0;
+  while (guard++ < 400) {
+    const k = s.indexOf("\u221A", i);
+    if (k < 0) break;
+    out += s.slice(i, k);
+    /* 守卫：√ 后面已是闭标签 ⇒ 该 √ 已排版过（对整段 HTML 重复跑 TEXH 会把 </span> 当成被开方式，
+       层层包出空壳根号，视觉上变成 √−3 / √−E），原样输出不再包裹 */
+    if (s.charAt(k + 1) === "<" && s.charAt(k + 2) === "/") { out += "\u221A"; i = k + 1; continue; }
+    let rad = null, end = k + 1;
+    if (s.charAt(k + 1) === "(") {
+      /* √(…) ：被开方式里常有标签，括号本身不在同一个文本片段里，必须整串扫 */
+      let depth = 0, p = k + 1;
+      while (p < s.length) {
+        const c = s.charAt(p);
+        if (c === "(") depth++;
+        else if (c === ")") { depth--; if (depth === 0) { rad = s.slice(k + 2, p); end = p + 1; break; } }
+        p++;
+      }
+    } else {
+      const e = TEXH_elemEnd(s, k + 1);
+      if (e > 0 && e - k < 500) { rad = s.slice(k + 1, e); end = e; }
+    }
+    if (rad !== null && rad.length) {
+      out += "<span class=\"sqrt\"><span class=\"rd\">\u221A</span><span class=\"rdc\">" + rad + "</span></span>";
+      i = end;
+    } else { out += "\u221A"; i = k + 1; }
+  }
+  return out + s.slice(i);
+}
+function TEXHpart(t) {
+  let s = t;
+  /* 根号：√ 或 √(A) → <span class="sqrt">√<span class="rd"><span class="rdc">A</span></span></span>（A 内不含嵌套括号） */
+  s = s.replace(/<span class="(?:op|rm|fn|v|u)">\u221A<\/span>/g, "\u221A");
+  s = s.replace(/\u221A<span class="(?:op|rm)">\(<\/span>([^()]{1,120}?)<span class="(?:op|rm)">\)<\/span>/g, function (m, a) {
+    return "<span class=\"sqrt\"><span class=\"rd\">\u221A</span><span class=\"rdc\">" + a + "</span></span>";
+  });
+  s = s.replace(/\u221A\(([^()]{1,120})\)/g, function (m, a) {
+    return "<span class=\"sqrt\"><span class=\"rd\">\u221A</span><span class=\"rdc\">" + a + "</span></span>";
+  });
+  s = s.replace(/\u221A([A-Za-z0-9\u0370-\u03ff]{1,6})/g, function (m, a) {
+    return "<span class=\"sqrt\"><span class=\"rd\">\u221A</span><span class=\"rdc\">" + a + "</span></span>";
+  });
+  s = s.replace(/(\d(?:\.\d+)?)e([+-])(\d+)/g, function (m, a, sg, e) {
+    return a + "\u00d710<sup>" + (sg === "-" ? "\u2212" : "") + e + "</sup>";
+  });
+  s = s.replace(/([A-Za-z\u0370-\u03ff)\]])\^\{([^{}]{1,12})\}/g, "$1<sup>$2</sup>");
+  s = s.replace(/([A-Za-z\u0370-\u03ff)\]])\^(\d+(?:\.\d+)?)/g, "$1<sup>$2</sup>");
+  s = s.replace(/([A-Za-z\u0370-\u03ff])_\{([A-Za-z0-9\u0370-\u03ff+\-]{1,8})\}/g, "<span class='m'><i>$1</i><sub>$2</sub></span>");
+  s = s.replace(/([A-Za-z\u0370-\u03ff])_([A-Za-z0-9\u0370-\u03ff]{1,6})(?![A-Za-z0-9])/g, "<span class='m'><i>$1</i><sub>$2</sub></span>");
+  if (/[\u2070-\u209C\u00B2\u00B3\u00B9]/.test(s)) {
+    let out = "", i = 0;
+    while (i < s.length) {
+      const ch = s[i];
+      if (AUTOH_SUP[ch] !== undefined || AUTOH_SUB[ch] !== undefined) {
+        const isSup = AUTOH_SUP[ch] !== undefined, tab = isSup ? AUTOH_SUP : AUTOH_SUB;
+        let j = i, buf = "";
+        while (j < s.length && (isSup ? AUTOH_SUP[s[j]] !== undefined : AUTOH_SUB[s[j]] !== undefined)) {
+          buf += tab[s[j]]; j++;
+        }
+        out += "<" + (isSup ? "sup" : "sub") + ">" + buf + "</" + (isSup ? "sup" : "sub") + ">";
+        i = j;
+      } else { out += ch; i++; }
+    }
+    s = out;
+  }
+  return s.indexOf("\u221A") >= 0 ? TEXHsqrtElem(s) : s;
+}
+/* 只有真正的标签才整段跳过：正文里裸写的 '<'（如 "t₂ < 0"）必须当普通字符，
+   否则 indexOf('>') 会一路吞掉后面整段，E₂⁰ 这类记法就漏排了。 */
+function TEXH_tagEnd(h, i) {
+  if (h.charAt(i) !== "<") return -1;
+  const c = h.charAt(i + 1);
+  if (c === "!" || c === "/") { const j = h.indexOf(">", i); return (j >= 0 && j - i < 300) ? j + 1 : -1; }
+  if (!/[A-Za-z]/.test(c)) return -1;
+  let j = i + 1;
+  while (j < h.length && /[A-Za-z0-9]/.test(h.charAt(j))) j++;
+  if (j === i + 1) return -1;
+  if (h.charAt(j) === ">") return j + 1;
+  if (h.charAt(j) !== " " && h.charAt(j) !== "\n" && h.charAt(j) !== "\t") return -1;
+  const g = h.indexOf(">", j), nx = h.indexOf("<", j);
+  if (g < 0 || g - i > 300) return -1;
+  if (nx >= 0 && nx < g) return -1;
+  return g + 1;
+}
+function TEXH(h) {
+  if (typeof h !== "string" || !TEXH_NEED.test(h)) return h;
+  if (h.indexOf("\u221A") >= 0) h = h.replace(/<span class="(?:op|rm|fn|v|u)">\u221A<\/span>/g, "\u221A");
+  if (h.indexOf("<") < 0) return TEXHpart(h);
+  let out = "", i = 0, n = h.length, guard = 0;
+  while (i < n && guard++ < 40000) {
+    const e = TEXH_tagEnd(h, i);
+    if (e > 0) { out += h.slice(i, e); i = e; continue; }
+    let j = i;
+    while (j < n && TEXH_tagEnd(h, j) <= 0) j++;
+    out += TEXHpart(h.slice(i, j)); i = j;
+  }
+  const r = out + h.slice(i);
+  return r.indexOf("\u221A") >= 0 ? TEXHsqrtElem(r) : r;
+}
+(function hookHTML() {
+  if (window.__TEXH_HOOK) return; window.__TEXH_HOOK = 1;
+  const d = Object.getOwnPropertyDescriptor(Element.prototype, "innerHTML");
+  if (!d || !d.set) return;
+  Object.defineProperty(Element.prototype, "innerHTML", {
+    configurable: true, get: d.get,
+    set: function (v) { d.set.call(this, typeof v === "string" ? TEXH(v) : v); }
+  });
+  /* insertAdjacentHTML 也会被用到 */
+  const ia = Element.prototype.insertAdjacentHTML;
+  Element.prototype.insertAdjacentHTML = function (pos, v) {
+    return ia.call(this, pos, typeof v === "string" ? TEXH(v) : v);
+  };
+})();
+
+/* ---------------- 画布自动 LaTeX 排版（原型挂钩版） ----------------
+   这些老工具直接调用 g.fillText()，这里统一在绘制前把
+     cm⁻³ / ω₀      → 真上/下标（单位与描述符保持正体）
+     E_c / v_th / k → 主符号斜体 + 正体下标
+     X^{−3}          → 真上标
+     2.5e+8          → 2.5×10⁸
+   拆成分段绘制；measureText 同步返回分段宽度，白底标签框长度自动跟着变。 */
+const AUTO_SUP = { "⁰": "0", "¹": "1", "²": "2", "³": "3", "⁴": "4", "⁵": "5", "⁶": "6",
+  "⁷": "7", "⁸": "8", "⁹": "9", "⁺": "+", "⁻": "−", "⁼": "=", "⁽": "(", "⁾": ")", "ⁿ": "n", "ⁱ": "i" };
+const AUTO_SUB = { "₀": "0", "₁": "1", "₂": "2", "₃": "3", "₄": "4", "₅": "5", "₆": "6",
+  "₇": "7", "₈": "8", "₉": "9", "₊": "+", "₋": "−", "₌": "=", "₍": "(", "₎": ")",
+  "ₐ": "a", "ₑ": "e", "ₒ": "o", "ₓ": "x", "ₔ": "ə", "ₕ": "h", "ₖ": "k", "ₗ": "l",
+  "ₘ": "m", "ₙ": "n", "ₚ": "p", "ₛ": "s", "ₜ": "t", "ᵣ": "r", "ᵤ": "u", "ᵥ": "v" };
+const NEED_MATH = /[\u2070-\u209C\u00B2\u00B3\u00B9]|_\{?[A-Za-z0-9\u0370-\u03ff]|\^\{?[\d(\-]|\d(\.\d+)?[eE][+\-]\d/;
+function AUTO(s) {
+  const out = []; let buf = "", mode = 0;
+  const emit = (t, kind) => {
+    if (!t) return;
+    if (kind === 1) out.push({ s: t, sup: true });
+    else if (kind === -1) out.push({ s: t, sub: true });
+    else out.push({ s: t });
+  };
+  let i = 0;
+  while (i < s.length) {
+    const ch = s[i];
+    if (AUTO_SUP[ch] !== undefined) { if (mode !== 1) { emit(buf, mode); buf = ""; mode = 1; } buf += AUTO_SUP[ch]; i++; continue; }
+    if (AUTO_SUB[ch] !== undefined) { if (mode !== -1) { emit(buf, mode); buf = ""; mode = -1; } buf += AUTO_SUB[ch]; i++; continue; }
+    if (mode) { emit(buf, mode); buf = ""; mode = 0; }
+    const rest = s.slice(i);
+    const sc = /^\d(\.\d+)?[eE][+\-]\d{1,3}/.exec(rest);
+    if (sc) {
+      const pp = sc[0].split(/[eE]/);
+      emit(pp[0] + "\u00d710", 0); emit(String(+pp[1]).replace("-", "\u2212"), 1);
+      i += sc[0].length; continue;
+    }
+    if (/[A-Za-z\u0370-\u03ff]/.test(ch) && i + 1 < s.length && (s[i + 1] === "_" || s[i + 1] === "^")) {
+      const sup = s[i + 1] === "^";
+      let j = i + 2, grp = "";
+      if (s[j] === "{") { const e = s.indexOf("}", j); if (e > 0) { grp = s.slice(j + 1, e); j = e + 1; } }
+      else {
+        const RCJK = /[\u2E80-\u9FFF]/, RASC = /[A-Za-z0-9\u0370-\u03ff+\-]/;
+        if (RCJK.test(s[j])) { while (j < s.length && RCJK.test(s[j]) && j - i < 8) j++; }   /* 中文描述性下标：τ_直接、E_声子 */
+        else { while (j < s.length && RASC.test(s[j])) j++; }
+        grp = s.slice(i + 2, j);
+      }
+      if (grp) {
+        /* 先把累积的前缀 flush 出去。漏了这行，含「前缀 + X_y」的串（ΔE_sp、
+           E=(E_s+3E_p)/4 之类）会把前缀甩到段尾，渲染成「E_spΔ」。 */
+        emit(buf, 0); buf = "";
+        emit(ch, 0); out[out.length - 1].i = true;
+        emit(sup ? grp.replace(/-/g, "\u2212") : grp, sup ? 1 : -1);
+        i = j; continue;
+      }
+    }
+    buf += ch; i++;
+  }
+  emit(buf, mode);
+  return out;
+}
+function mathSegs(g, s) {
+  const f = String(g.font || "");
+  const size = (function () { const m = /(\d+(?:\.\d+)?)px/.exec(f); return m ? parseFloat(m[1]) : 12; })();
+  const family = f.replace(/^(?:\s*(?:italic|oblique|bold|[1-9]00)\s*)*\d+(?:\.\d+)?px\s*/, "");
+  const style = /italic|oblique/.test(f) ? "italic " : (/bold|[6-9]00/.test(f) ? "bold " : "");
+  const parts = AUTO(s), laid = [];
+  let w = 0;
+  for (const p of parts) {
+    const small = !!(p.sup || p.sub);
+    const fs = style + (small ? (size * 0.74).toFixed(2) : size.toFixed(2)) + "px " + family;
+    g.font = fs;
+    const tw = g.measureText(p.s).width;
+    laid.push({ s: p.s, w: tw, fs: fs, dy: small ? (p.sup ? -size * 0.40 : size * 0.22) : 0 });
+    w += tw;
+  }
+  return { laid, w, family, style, size };
+}
+(function hookMath() {
+  if (window.__MATH_HOOK) return; window.__MATH_HOOK = 1;
+  const P = CanvasRenderingContext2D.prototype;
+  const _fill = P.fillText, _stroke = P.strokeText, _measure = P.measureText;
+  function draw(drawRaw, g, s, x, y, rest) {
+    const info = mathSegs(g, s);
+    const al = g.textAlign, bl = g.textBaseline;
+    const cx = al === "right" ? x - info.w : (al === "center" ? x - info.w / 2 : x);
+    g.textAlign = "left"; g.textBaseline = bl || "middle";
+    let px = cx;
+    for (const L of info.laid) {
+      g.font = L.fs;
+      drawRaw.call(g, L.s, px, y + L.dy, ...rest);
+      px += L.w;
+    }
+    g.textAlign = al; g.textBaseline = bl;
+    g.font = info.style + info.size.toFixed(2) + "px " + info.family;
+    return info;
+  }
+  P.fillText = function (s, x, y) {
+    if (typeof s !== "string" || !NEED_MATH.test(s)) return _fill.apply(this, arguments);
+    draw(_fill, this, s, x, y, Array.prototype.slice.call(arguments, 3));
+  };
+  P.strokeText = function (s, x, y) {
+    if (typeof s !== "string" || !NEED_MATH.test(s)) return _stroke.apply(this, arguments);
+    draw(_stroke, this, s, x, y, Array.prototype.slice.call(arguments, 3));
+  };
+  P.measureText = function (s) {
+    if (typeof s !== "string" || !NEED_MATH.test(s)) return _measure.call(this, s);
+    const save = this.font;
+    const info = mathSegs(this, s);
+    this.font = save;
+    return { width: info.w, get actualBoundingBoxLeft() { return 0; }, get actualBoundingBoxRight() { return info.w; } };
+  };
+})();
+
+const FONT = '"Segoe UI","Microsoft YaHei",sans-serif';
+
+const FONTM = '"Cambria Math","STIX Two Math","Times New Roman",Times,serif';
+
+
+/* ---------------- 画布 LaTeX 排版层（零依赖；物理量斜体、下标/单位正体、幂次真上标） ---------------- */
+const SUBR = 0.74, SUBDY = 0.22, SUPDY = 0.40;
+function isCJKch(ch) {
+  const c = ch.codePointAt(0);
+  return (c >= 0x2E80 && c <= 0x9FFF) || (c >= 0xF900 && c <= 0xFAFF) ||
+    (c >= 0xFF00 && c <= 0xFF60) || c === 0x2014 || c === 0x2015 || c === 0x2026;
+}
+function segRuns(s) {
+  const out = []; let cur = "", curC = null;
+  for (const ch of s) {
+    const c = isCJKch(ch);
+    if (curC === null) { cur = ch; curC = c; }
+    else if (c === curC) cur += ch;
+    else { out.push({ s: cur, cjk: curC }); cur = ch; curC = c; }
+  }
+  if (cur) out.push({ s: cur, cjk: curC });
+  return out;
+}
+function pFont(q, fp, bd, cjk) {
+  const sz = fp * ((q.sub || q.sup) ? SUBR : 1);
+  return (bd ? "bold " : "") + (!cjk && q.i ? "italic " : "") + sz.toFixed(2) + "px " + (cjk ? FONT : FONTM);
+}
+/* i18n 注入点①：画布 token。带 i / sub / sup / un 标记的是物理量、下标与单位，一律不动；
+   没有这些标记的 token 才是自然语言，交给 T() —— 所以这里的判断只看标记，不看内容。 */
+const partsOf = p => p.map(q => {
+  const o = (typeof q === "string" ? { s: q } : q);
+  const natural = !(o.i || o.sub || o.sup || o.un);
+  if (LANG === "en" && natural && typeof o.s === "string" && /[\u4E00-\u9FFF]/.test(o.s)) {
+    const t = T(o.s);
+    return t === o.s ? o : Object.assign({}, o, { s: t });
+  }
+  return o;
+});
+function mMeasure(g, parts, fp, bd) {
+  let w = 0;
+  for (const q of partsOf(parts))
+    for (const sg of segRuns(q.s)) { g.font = pFont(q, fp, bd, sg.cjk); w += g.measureText(sg.s).width; }
+  return w;
+}
+function mRun(g, parts, x, y, fp, bd, align, stroke) {
+  const ps = partsOf(parts), w = mMeasure(g, ps, fp, bd);
+  let cx = align === "right" ? x - w : (align === "center" ? x - w / 2 : x);
+  g.textAlign = "left"; g.textBaseline = "middle"; g.lineJoin = "round";
+  for (const q of ps) {
+    const dy = q.sub ? fp * SUBDY : (q.sup ? -fp * SUPDY : 0);
+    for (const sg of segRuns(q.s)) {
+      g.font = pFont(q, fp, bd, sg.cjk);
+      if (stroke) { g.lineWidth = (q.sub || q.sup) ? 2.4 : 3.2; g.strokeText(sg.s, cx, y + dy); }
+      else g.fillText(sg.s, cx, y + dy);
+      cx += g.measureText(sg.s).width;
+    }
+  }
+}
+function mtxt(g, parts, x, y, col, fp, align, bd) {
+  g.fillStyle = col; mRun(g, parts, x, y, fp, bd || false, align, false);
+}
+function mtxtHalo(g, parts, x, y, col, fp, align, bd) {
+  g.strokeStyle = "rgba(255,255,255,0.94)";
+  mRun(g, parts, x, y, fp, bd || false, align, true);
+  mtxt(g, parts, x, y, col, fp, align, bd);
+}
+
+
+/* ---------------- HTML 字符串 → 画布零件（网页与画布共用同一份排版） ----------------
+   mtxt(g, TX(H_NA), x, y, col, fp) —— H_* 常量本来就在喂 innerHTML，
+   再喂给 TX() 就不会出现「网页斜体、画布正体」的两边不一致。
+   <i> 斜体、<sub> 下标、<sup> 上标；<span class="op|un|rm|sqrt|frac"> 只剥标签（保持正体）。 */
+const catA = (...a) => [].concat(...a);
+function TX(h) {
+  const t = String(h == null ? "" : h)
+    .replace(/<span\b[^>]*>/g, "").replace(/<\/span>/g, "")
+    .replace(/<i\b[^>]*>/g, "<i>").replace(/<b\b[^>]*>/g, "").replace(/<\/b>/g, "")
+    .replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&").replace(/&nbsp;/g, " ");
+  const out = [], re = /<i>([\s\S]*?)<\/i>|<sub>([\s\S]*?)<\/sub>|<sup>([\s\S]*?)<\/sup>|([^<]+)/g;
+  let m;
+  while ((m = re.exec(t))) {
+    const raw = s => s == null ? null : s.replace(/<[^>]*>/g, "");
+    if (m[1] != null) out.push({ s: raw(m[1]), i: true });
+    else if (m[2] != null) out.push({ s: raw(m[2]), sub: true });
+    else if (m[3] != null) out.push({ s: raw(m[3]), sup: true });
+    else if (m[4]) out.push({ s: m[4] });
+  }
+  return out;
+}
+function TXof(...a) { return catA(...a.map(TX)); }
+
+
+function PSci(v, n) {
+  if (!isFinite(v) || v === 0) return [{ s: "0" }];
+  const e = Math.floor(Math.log10(Math.abs(v)));
+  const m = (v / Math.pow(10, e)).toFixed(n === undefined ? 1 : n);
+  /* 1 ≦ |v| < 10 时直接写尾数，不再拖一个 ×10⁰（与 sciH 一致） */
+  if (e === 0) return [{ s: m }];
+  /* 指数负号用 U+2212 */
+  return [{ s: m + "×10" },
+          { s: String(e).replace("-", "−"), sup: true }];
+}
+
+/* ==================================================================
+   半导体晶格交互教学工具
+   —— 零依赖单文件：三维渲染为自研 Canvas 2D 透视投影 + 画家算法
+   ================================================================== */
+
+/* ---------------- 小工具 ---------------- */
+const $ = (id) => document.getElementById(id);
+const clamp = (v, a, b) => v < a ? a : (v > b ? b : v);
+const RAD = Math.PI / 180;
+
+const V = {
+  sub: (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]],
+  add: (a, b) => [a[0] + b[0], a[1] + b[1], a[2] + b[2]],
+  mul: (a, s) => [a[0] * s, a[1] * s, a[2] * s],
+  dot: (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2],
+  len: (a) => Math.sqrt(a[0] * a[0] + a[1] * a[1] + a[2] * a[2]),
+  cross: (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]]
+};
+const angDeg = (a, b) => {
+  const c = V.dot(a, b) / ((V.len(a) * V.len(b)) || 1);
+  return Math.acos(clamp(c, -1, 1)) / RAD;
+};
+
+/* ---------------- 元素 / 离子 ---------------- */
+/* 半径有共价 / 离子两套口径，不能混用：
+     r  = 共价半径（Å），用于金刚石、闪锌矿、纤锌矿这类共价晶体；
+     ri = 离子半径（Å，Shannon 六配位），只在岩盐等离子晶体语境下启用。
+   全表只有 O 跨两种语境：纤锌矿 ZnO 取共价 0.66 Å，岩盐 MgO 取离子 1.40 Å（O²⁻）。
+   （校验：Mg²⁺ 0.72 + O²⁻ 1.40 = 2.12 Å，与 MgO 的 a/2 = 2.106 Å 差 0.7%，球正好相切。） */
+const ELEMENTS = {
+  Si: { c: "#8e9aa6", r: 1.11 }, Ge: { c: "#6f808c", r: 1.20 }, C: { c: "#55606b", r: 0.77 },
+  Ga: { c: "#2b7fd4", r: 1.26 }, As: { c: "#e0821e", r: 1.19 },
+  In: { c: "#5b6fd0", r: 1.42 }, P: { c: "#2e9e5b", r: 1.07 },
+  Zn: { c: "#8e5bd0", r: 1.22 }, S: { c: "#e8c021", r: 1.05 },
+  N: { c: "#3fae7e", r: 0.71 }, O: { c: "#d94a3d", r: 0.66, ri: 1.40, labIon: "O²⁻", q: "−2" },
+  Na: { c: "#9b59b6", r: 1.02, lab: "Na⁺", q: "+1" },
+  Cl: { c: "#43b581", r: 1.81, lab: "Cl⁻", q: "−1" },
+  Mg: { c: "#7d4bb8", r: 0.72, lab: "Mg²⁺", q: "+2" },
+  K:  { c: "#6c3483", r: 1.38, lab: "K⁺", q: "+1" },
+  Br: { c: "#1f9c6f", r: 1.96, lab: "Br⁻", q: "−1" }
+};
+/* st 省略时按当前结构取（岩盐 → 离子口径，其余 → 共价口径） */
+const ctxSt = (st) => st || (typeof OPT !== "undefined" ? OPT.st : "");
+const elLabel = (e, st) => {
+  const x = ELEMENTS[e];
+  if (!x) return e;
+  return (ctxSt(st) === "rocksalt" && x.labIon) ? x.labIon : (x.lab || e);
+};
+const elColor = (e) => (ELEMENTS[e] && ELEMENTS[e].c) || "#888";
+const elRad = (e, st) => {
+  const x = ELEMENTS[e];
+  if (!x) return 1.0;
+  return (ctxSt(st) === "rocksalt" && x.ri != null) ? x.ri : x.r;
+};
+
+/* ---------------- 材料参数（Å，300 K 附近实测值） ---------------- */
+const MATS = {
+  Si:   { st: "diamond",    lab: "Si 硅",     a: 5.431, els: ["Si", "Si"] },
+  Ge:   { st: "diamond",    lab: "Ge 锗",     a: 5.658, els: ["Ge", "Ge"] },
+  C:    { st: "diamond",    lab: "C 金刚石",  a: 3.567, els: ["C", "C"] },
+  GaAs: { st: "zincblende", lab: "GaAs 砷化镓", a: 5.653, els: ["Ga", "As"] },
+  InP:  { st: "zincblende", lab: "InP 磷化铟", a: 5.869, els: ["In", "P"] },
+  ZnS:  { st: "zincblende", lab: "ZnS 硫化锌", a: 5.409, els: ["Zn", "S"] },
+  GaN:  { st: "wurtzite",   lab: "GaN 氮化镓", a: 3.189, c: 5.185, u: 0.377, els: ["Ga", "N"] },
+  ZnO:  { st: "wurtzite",   lab: "ZnO 氧化锌", a: 3.249, c: 5.207, u: 0.382, els: ["Zn", "O"] },
+  SiC:  { st: "wurtzite",   lab: "SiC 碳化硅", a: 3.076, c: 5.048, u: 0.375, els: ["Si", "C"] },
+  NaCl: { st: "rocksalt",   lab: "NaCl 氯化钠", a: 5.640, els: ["Na", "Cl"] },
+  MgO:  { st: "rocksalt",   lab: "MgO 氧化镁", a: 4.212, els: ["Mg", "O"] },
+  KBr:  { st: "rocksalt",   lab: "KBr 溴化钾", a: 6.600, els: ["K", "Br"] }
+};
+
+/* ---------------- 四种结构 ---------------- */
+const STRUCTS = {
+  diamond: {
+    name: "金刚石", en: "Diamond", sys: "立方", space: "Fd-3m", lat: "cubic",
+    cn: 4, poly: "四面体", angle: "109.47°", stack: "ABCABC…（沿 ⟨111⟩）",
+    bond: "共价", mats: ["Si", "Ge", "C"],
+    note: "两个基元原子同种 → 纯共价晶体，键无极性。"
+  },
+  zincblende: {
+    name: "闪锌矿", en: "Zinc blende", sys: "立方", space: "F-43m", lat: "cubic",
+    cn: 4, poly: "四面体", angle: "109.47°", stack: "ABCABC…（沿 ⟨111⟩）",
+    bond: "极性共价", mats: ["GaAs", "InP", "ZnS"],
+    note: "与金刚石原子位置完全相同，只是两个基元原子不同种 → 键有极性，无反演中心。"
+  },
+  wurtzite: {
+    name: "纤锌矿", en: "Wurtzite", sys: "六方", space: "P6₃mc", lat: "hex",
+    cn: 4, poly: "四面体", angle: "≈109.47°", stack: "ABAB…（沿 ⟨0001⟩）",
+    bond: "极性共价", mats: ["GaN", "ZnO", "SiC"],
+    note: "同为四面体配位，但堆积序列为 ABAB，故晶系为六方；GaN 亦可长成闪锌矿，取决于生长条件。"
+  },
+  rocksalt: {
+    name: "氯化钠（岩盐）", en: "Rock salt", sys: "立方", space: "Fm-3m", lat: "cubic",
+    cn: 6, poly: "八面体", angle: "90° / 180°", stack: "两套 FCC 互相偏移",
+    bond: "离子键", mats: ["NaCl", "MgO", "KBr"],
+    note: "Na⁺ 与 Cl⁻ 各自成 FCC 子格，沿棱方向错开 a/2；配位数 6，是离子晶体的典型结构。"
+  }
+};
+
+/* FCC 常规晶胞内的四个平移 */
+const FCC = [[0, 0, 0], [0, .5, .5], [.5, 0, .5], [.5, .5, 0]];
+
+/* 基元（常规晶胞内的全部原子） */
+function basisOf(matKey) {
+  const m = MATS[matKey], out = [];
+  if (m.st === "diamond" || m.st === "zincblende") {
+    FCC.forEach(t => out.push({ el: m.els[0], f: [t[0], t[1], t[2]] }));
+    FCC.forEach(t => out.push({ el: m.els[1], f: [t[0] + .25, t[1] + .25, t[2] + .25] }));
+  } else if (m.st === "rocksalt") {
+    FCC.forEach(t => out.push({ el: m.els[0], f: [t[0], t[1], t[2]] }));
+    FCC.forEach(t => out.push({ el: m.els[1], f: [t[0] + .5, t[1], t[2]] }));
+  } else { /* wurtzite */
+    const u = m.u;
+    out.push({ el: m.els[0], f: [0, 0, 0] });
+    out.push({ el: m.els[0], f: [2 / 3, 1 / 3, .5] });
+    out.push({ el: m.els[1], f: [0, 0, u] });
+    out.push({ el: m.els[1], f: [2 / 3, 1 / 3, .5 + u] });
+  }
+  return out;
+}
+
+/* 晶格基向量（L[i] 为第 i 个基向量）：立方用常规晶胞轴，六方用常规六方胞轴 */
+function latMatrix(lat, a, c) {
+  if (lat === "hex") return [[a, 0, 0], [-a / 2, a * Math.sqrt(3) / 2, 0], [0, 0, c]];
+  return [[a, 0, 0], [0, a, 0], [0, 0, a]];
+}
+const fracToCart = (L, f) => [
+  L[0][0] * f[0] + L[1][0] * f[1] + L[2][0] * f[2],
+  L[0][1] * f[0] + L[1][1] * f[1] + L[2][1] * f[2],
+  L[0][2] * f[0] + L[1][2] * f[1] + L[2][2] * f[2]
+];
+
+/* ---------------- 倒格子 ---------------- */
+/* 3×3 矩阵求逆 */
+function mat3Inv(M) {
+  const a = M[0][0], b = M[0][1], c = M[0][2];
+  const d = M[1][0], e = M[1][1], f = M[1][2];
+  const g = M[2][0], h = M[2][1], i = M[2][2];
+  const det = a * (e * i - f * h) - b * (d * i - f * g) + c * (d * h - e * g);
+  const s = 1 / det;
+  return [
+    [(e * i - f * h) * s, (c * h - b * i) * s, (b * f - c * e) * s],
+    [(f * g - d * i) * s, (a * i - c * g) * s, (c * d - a * f) * s],
+    [(d * h - e * g) * s, (b * g - a * h) * s, (a * e - b * d) * s]
+  ];
+}
+/* 倒格基矢（物理学定义，含 2π）：b_i · a_j = 2π δ_ij。
+   M 的行是正格子基向量 a_i，故 B = 2π (M⁻¹)ᵀ。 */
+function recipMatrix(M) {
+  const inv = mat3Inv(M), T = [];
+  for (let i = 0; i < 3; i++) T.push([inv[0][i] * 2 * Math.PI, inv[1][i] * 2 * Math.PI, inv[2][i] * 2 * Math.PI]);
+  return T;
+}
+/* 晶面 (hkl) 的法线方向（正空间）= h b₁ + k b₂ + l b₃ */
+const planeNormal = (B, h, k, l) => fracToCart(B, [h, k, l]);
+
+/* 单位晶胞平移的所有 27 种镜像（用于周期性最近邻） */
+const TRANS = (() => {
+  const t = [];
+  for (let i = -1; i <= 1; i++) for (let j = -1; j <= 1; j++) for (let k = -1; k <= 1; k++) t.push([i, j, k]);
+  return t;
+})();
+
+/* 线段裁剪到 frac 空间的盒 [lo,hi]^3（用于把伸出晶胞的键截掉，只保留胞内部分） */
+function clipSeg(a, b, lo, hi) {
+  let t0 = 0, t1 = 1;
+  for (let k = 0; k < 3; k++) {
+    const d = b[k] - a[k];
+    if (Math.abs(d) < 1e-9) { if (a[k] < lo - 1e-6 || a[k] > hi + 1e-6) return null; continue; }
+    let lo2 = (lo - a[k]) / d, hi2 = (hi - a[k]) / d;
+    if (lo2 > hi2) { const tmp = lo2; lo2 = hi2; hi2 = tmp; }
+    t0 = Math.max(t0, lo2); t1 = Math.min(t1, hi2);
+    if (t0 > t1 - 1e-9) return null;
+  }
+  const P = (t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
+  return [P(t0), P(t1)];
+}
+
+/* ---------------- 建模：超胞 + 最近邻 + 键 ---------------- */
+/* share = true ：含共享原子（把落在超胞边界面 / 棱 / 角上的等价位置全部列出，
+                  这些原子与相邻晶胞共享，渲染时与内部原子一样为实心球，仅在悬停气泡中标注）
+   share = false：晶胞净原子（每个晶胞只取一套基元）
+   两种表示下「净原子数」都是 basis.length × n³。 */
+function buildModel(matKey, n, share) {
+  const m = MATS[matKey], S = STRUCTS[m.st];
+  const L = latMatrix(S.lat, m.a, m.c || m.a);
+  const basis = basisOf(matKey);
+  const atoms = [];
+  const EPS = 1e-6, TOL = 1e-4;
+  const onEdge = (v) => Math.abs(v) < TOL || Math.abs(v - n) < TOL;
+  const seenAt = Object.create(null);
+  const keyAt = (p) => p[0].toFixed(4) + "," + p[1].toFixed(4) + "," + p[2].toFixed(4);
+  for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) for (let k = 0; k < n; k++) {
+    for (const b of basis) {
+      const base = [i + b.f[0], j + b.f[1], k + b.f[2]];
+      if (!share) {
+        atoms.push({ el: b.el, f: base, p: fracToCart(L, base), uf: b.f, shared: false });
+        continue;
+      }
+      /* 把该基元原子的所有周期镜像中、落在闭区间 [0, n]³ 内的都列出来（含边界面上的） */
+      for (let dx = -1; dx <= 1; dx++) for (let dy = -1; dy <= 1; dy++) for (let dz = -1; dz <= 1; dz++) {
+        const f = [base[0] + dx, base[1] + dy, base[2] + dz];
+        if (f[0] < -EPS || f[0] > n + EPS) continue;
+        if (f[1] < -EPS || f[1] > n + EPS) continue;
+        if (f[2] < -EPS || f[2] > n + EPS) continue;
+        const kk = keyAt(f);
+        if (seenAt[kk]) continue;          /* 相邻晶胞在同一边界面上给出的重复位置 */
+        seenAt[kk] = 1;
+        atoms.push({
+          el: b.el, f: f, p: fracToCart(L, f), uf: b.f,
+          shared: onEdge(f[0]) || onEdge(f[1]) || onEdge(f[2])
+        });
+      }
+    }
+  }
+  const N = atoms.length;
+
+  /* 先抽样求最小原子间距，用它定键长阈值（避免为每种结构硬编码） */
+  let dmin = Infinity;
+  const ref = Math.min(N, 48);
+  for (let i = 0; i < ref; i++) for (let j = 0; j < N; j++) {
+    if (i === j) continue;
+    for (const t of TRANS) {
+      const d = V.len(fracToCart(L, [atoms[j].f[0] + t[0] - atoms[i].f[0],
+                                     atoms[j].f[1] + t[1] - atoms[i].f[1],
+                                     atoms[j].f[2] + t[2] - atoms[i].f[2]]));
+      if (d > 1e-6 && d < dmin) dmin = d;
+    }
+  }
+  const thresh = dmin * 1.18;
+
+  /* 最近邻：对每个原子 i，遍历所有 j 与 27 种周期镜像，
+     凡距离落在 (0, thresh) 内的都算一个最近邻。
+     注意两点：
+       ① 同一对 (i, j) 可能有多个等价镜像（如 NaCl 中同一 Cl 在 ±x 两侧），必须都保留；
+       ② 超胞内互为周期副本的原子会产生 d = 0 的假邻居，必须用位置字符串去重。 */
+  const fkey = (p) => p[0].toFixed(3) + "," + p[1].toFixed(3) + "," + p[2].toFixed(3);
+  const neigh = atoms.map(() => []);
+  const bonds = [];
+  const bondSeen = Object.create(null);
+  for (let i = 0; i < N; i++) {
+    const seen = Object.create(null);
+    const fi = atoms[i].f, ki = fkey(fi);
+    for (let j = 0; j < N; j++) {
+      if (i === j) continue;
+      const fj = atoms[j].f;
+      const base = [fj[0] - fi[0], fj[1] - fi[1], fj[2] - fi[2]];
+      for (const t of TRANS) {
+        const df = [base[0] + t[0], base[1] + t[1], base[2] + t[2]];
+        if (Math.abs(df[0]) > 1.5 || Math.abs(df[1]) > 1.5 || Math.abs(df[2]) > 1.5) continue;
+        const d = V.len(fracToCart(L, df));
+        if (d <= 1e-6 || d >= thresh) continue;
+        const pos = [fj[0] + t[0], fj[1] + t[1], fj[2] + t[2]];
+        const kp = fkey(pos);
+        if (!seen[kp]) { seen[kp] = 1; neigh[i].push({ j: j, f: pos, p: fracToCart(L, pos), d: d }); }
+        /* 键按「两端位置」去重，与遍历顺序无关，不会因 i<j 而漏记 */
+        const bk = ki < kp ? ki + "|" + kp : kp + "|" + ki;
+        if (!bondSeen[bk]) { bondSeen[bk] = 1; bonds.push({ i: i, j: j, a: fi, b: pos, d: d }); }
+      }
+    }
+  }
+
+  /* 几何中心（超胞）与包围半径 */
+  let lo = [Infinity, Infinity, Infinity], hi = [-Infinity, -Infinity, -Infinity];
+  for (const at of atoms) for (let k = 0; k < 3; k++) { lo[k] = Math.min(lo[k], at.p[k]); hi[k] = Math.max(hi[k], at.p[k]); }
+  const center = [(lo[0] + hi[0]) / 2, (lo[1] + hi[1]) / 2, (lo[2] + hi[2]) / 2];
+  const rr = Math.max(hi[0] - lo[0], hi[1] - lo[1], hi[2] - lo[2]) / 2 + 1.2;
+
+  /* 键的两端点：严格裁剪到晶胞盒 [0, n]³，
+     伸向相邻晶胞的那一段一律不画（晶胞外不出现任何化学键） */
+  const PAD = 0;
+  const bondSegs = bonds.map(b => {
+    const seg = clipSeg(b.a, b.b, -PAD, n + PAD);
+    if (!seg) return null;
+    return { i: b.i, j: b.j, p0: fracToCart(L, seg[0]), p1: fracToCart(L, seg[1]), d: b.d };
+  }).filter(Boolean);
+
+  return {
+    key: matKey, mat: m, st: S, L: L, B: recipMatrix(L), n: n, atoms: atoms, neigh: neigh,
+    bonds: bondSegs, center: center, radius: rr, dmin: dmin, thresh: thresh,
+    cellCount: n * n * n, basis: basis, share: !!share, netAtoms: basis.length * n * n * n
+  };
+}
+
+/* 最近邻距离与键角统计 */
+function atomStats(model, idx) {
+  const nb = model.neigh[idx];
+  if (!nb || !nb.length) return null;
+  let dmin = Infinity, dmax = 0;
+  for (const x of nb) { dmin = Math.min(dmin, x.d); dmax = Math.max(dmax, x.d); }
+  /* 键角：邻居两两夹角 */
+  const groups = {};
+  const c = model.atoms[idx].p;
+  for (let a = 0; a < nb.length; a++) for (let b = a + 1; b < nb.length; b++) {
+    const ang = angDeg(V.sub(nb[a].p, c), V.sub(nb[b].p, c));
+    const key = (Math.round(ang * 10) / 10).toFixed(1);
+    groups[key] = (groups[key] || 0) + 1;
+  }
+  const angles = Object.keys(groups).sort((x, y) => (+x) - (+y)).map(k => k + "° ×" + groups[k]);
+  /* 邻居在超胞内的比例（判断是否为完整配位） */
+  let inside = 0;
+  for (const x of nb) {
+    const f = x.f;
+    if (f[0] >= -1e-6 && f[0] <= model.n + 1e-6 && f[1] >= -1e-6 && f[1] <= model.n + 1e-6 && f[2] >= -1e-6 && f[2] <= model.n + 1e-6) inside++;
+  }
+  return { cn: nb.length, dmin: dmin, dmax: dmax, angles: angles, inside: inside };
+}
+
+/* 配位多面体的三角面：三点两两间距都接近最近邻间距 → 属于同一面 */
+function polyFaces(cp, pts) {
+  const m = pts.length;
+  if (m < 3) return [];
+  let mn = Infinity;
+  for (let i = 0; i < m; i++) for (let j = i + 1; j < m; j++) mn = Math.min(mn, V.len(V.sub(pts[i], pts[j])));
+  const faces = [];
+  /* 阈值取 1.25：四面体任意两顶点都相邻（比值 1）；八面体对顶点间距为相邻顶点的 √2 倍（1.414），
+     会被排除，正好留下 8 个三角面。取 1.5 会把对顶点误判成面内边（NaCl 多面体会多出面）。 */
+  for (let i = 0; i < m; i++) for (let j = i + 1; j < m; j++) for (let k = j + 1; k < m; k++) {
+    const d1 = V.len(V.sub(pts[i], pts[j])), d2 = V.len(V.sub(pts[j], pts[k])), d3 = V.len(V.sub(pts[i], pts[k]));
+    if (d1 < mn * 1.25 && d2 < mn * 1.25 && d3 < mn * 1.25) faces.push([i, j, k]);
+  }
+  return faces;
+}
+
+/* ---------------- 颜色与球体精灵（离屏缓存，避免每帧建渐变） ---------------- */
+function hex2rgb(h) {
+  h = h.replace("#", "");
+  if (h.length === 3) h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
+  return [parseInt(h.substr(0, 2), 16), parseInt(h.substr(2, 2), 16), parseInt(h.substr(4, 2), 16)];
+}
+function mix(c1, c2, t) {
+  const a = hex2rgb(c1), b = hex2rgb("#" + c2);
+  return "rgb(" + Math.round(a[0] + (b[0] - a[0]) * t) + "," + Math.round(a[1] + (b[1] - a[1]) * t) + "," + Math.round(a[2] + (b[2] - a[2]) * t) + ")";
+}
+const lighten = (c, t) => mix(c, "ffffff", t);
+const darken = (c, t) => mix(c, "000000", t);
+
+/* 背景色（画布底色），空气透视的雾化目标 */
+const BG_HEX = "fbfcfe";
+const BG_RGB = hex2rgb(BG_HEX);
+const WHITE = [255, 255, 255], BLACK = [0, 0, 0];
+/* 把 rgb 数组朝 to 方向混合 t（0→原色，1→目标色） */
+function shd(rgb, to, t) {
+  return "rgb(" + Math.round(rgb[0] + (to[0] - rgb[0]) * t) + ","
+                 + Math.round(rgb[1] + (to[1] - rgb[1]) * t) + ","
+                 + Math.round(rgb[2] + (to[2] - rgb[2]) * t) + ")";
+}
+const FOG_N = 4;                               /* 雾化档数（0 = 清晰，4 = 最远最淡） */
+const FOG_MAX = 0.60;                          /* 最远档向背景色混合的比例 */
+/* 空气透视：越远（t 越大）颜色越向背景色靠拢，量化成 FOG_N+1 档以便缓存 */
+function fogBucket(t, dof) {
+  if (dof <= 0.02) return 0;
+  return clamp(Math.round(clamp(t, 0, 1) * FOG_N * dof * 1.15), 0, FOG_N);
+}
+
+/* 原子球精灵：单光源（左上）+ 底部反光 + 暗边，并按雾档变淡。
+   同一 (元素, 雾档) 只生成一次，渲染时直接 drawImage，零每帧开销。 */
+const SPRITE = {};
+function sprite(el, fog) {
+  const b = fog | 0;
+  const key = el + "@" + b;
+  if (SPRITE[key]) return SPRITE[key];
+  const S = 128, cv = document.createElement("canvas");
+  cv.width = S; cv.height = S;
+  const g = cv.getContext("2d");
+  const r = S / 2;
+  const f = b / FOG_N * FOG_MAX;               /* 雾化比例 */
+  const base = hex2rgb(elColor(el));
+  const c = [base[0] + (BG_RGB[0] - base[0]) * f,
+             base[1] + (BG_RGB[1] - base[1]) * f,
+             base[2] + (BG_RGB[2] - base[2]) * f];
+  const gl = 1 - f * 0.55;                     /* 雾化时高光减弱 */
+  const dk = 1 - f * 0.45;                     /* 雾化时暗部减弱 */
+
+  /* 主体：明暗过渡（terminator 更靠外，立体感更强） */
+  const grd = g.createRadialGradient(r * .64, r * .56, r * .03, r * .82, r * .86, r * 1.22);
+  grd.addColorStop(0.00, shd(c, WHITE, .70 * gl));
+  grd.addColorStop(0.16, shd(c, WHITE, .44 * gl));
+  grd.addColorStop(0.38, shd(c, WHITE, .12 * gl));
+  grd.addColorStop(0.60, shd(c, WHITE, .00));
+  grd.addColorStop(0.82, shd(c, BLACK, .30 * dk));
+  grd.addColorStop(1.00, shd(c, BLACK, .56 * dk));
+  g.beginPath(); g.arc(r, r, r - 1, 0, Math.PI * 2); g.closePath();
+  g.fillStyle = grd; g.fill();
+
+  /* 底部反光（bounce light）：右下内缘一道柔和亮弧 */
+  g.save();
+  g.beginPath(); g.arc(r, r, r - 1.5, 0, Math.PI * 2); g.clip();
+  const g2 = g.createRadialGradient(r * .74, r * 1.32, r * .04, r * .74, r * 1.32, r * 1.02);
+  g2.addColorStop(0, "rgba(255,255,255," + (0.34 * (1 - f * 0.8)).toFixed(3) + ")");
+  g2.addColorStop(1, "rgba(255,255,255,0)");
+  g.fillStyle = g2; g.fillRect(0, 0, S, S);
+  g.restore();
+
+  /* 镜面高光点 */
+  g.save();
+  g.beginPath(); g.arc(r, r, r - 1.5, 0, Math.PI * 2); g.clip();
+  const g3 = g.createRadialGradient(r * .60, r * .50, 0, r * .60, r * .50, r * .26);
+  g3.addColorStop(0, "rgba(255,255,255," + (0.28 * gl).toFixed(3) + ")");
+  g3.addColorStop(1, "rgba(255,255,255,0)");
+  g.fillStyle = g3; g.fillRect(0, 0, S, S);
+  g.restore();
+
+  /* 暗边轮廓 */
+  g.beginPath(); g.arc(r, r, r - 1, 0, Math.PI * 2); g.closePath();
+  g.lineWidth = 1.2; g.strokeStyle = shd(c, BLACK, .58 * dk); g.stroke();
+  SPRITE[key] = cv;
+  return cv;
+}
+
+function rrect(g, x, y, w, h, r) {
+  g.beginPath();
+  g.moveTo(x + r, y);
+  g.lineTo(x + w - r, y); g.quadraticCurveTo(x + w, y, x + w, y + r);
+  g.lineTo(x + w, y + h - r); g.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  g.lineTo(x + r, y + h); g.quadraticCurveTo(x, y + h, x, y + h - r);
+  g.lineTo(x, y + r); g.quadraticCurveTo(x, y, x + r, y);
+  g.closePath();
+}
+function arrow(g, x0, y0, x1, y1) {
+  g.beginPath(); g.moveTo(x0, y0); g.lineTo(x1, y1); g.stroke();
+  const dx = x1 - x0, dy = y1 - y0, L = Math.hypot(dx, dy) || 1;
+  const ux = dx / L, uy = dy / L, s = 7;
+  g.beginPath();
+  g.moveTo(x1, y1);
+  g.lineTo(x1 - ux * s - uy * s * .5, y1 - uy * s + ux * s * .5);
+  g.lineTo(x1 - ux * s + uy * s * .5, y1 - uy * s - ux * s * .5);
+  g.closePath(); g.fill();
+}
+
+/* ---------------- 视图（相机 + 渲染 + 拾取） ---------------- */
+function makeView(canvasId, onPick) {
+  const cv = $(canvasId);
+  const view = {
+    cv: cv, g: null, W: 600, H: 440, dpr: 1,
+    yaw: -35 * RAD, pitch: 22 * RAD, zoom: 1, panX: 0, panY: 0,
+    target: null, model: null, sel: -1, hover: -1, mouse: null,
+    dirty: true, onPick: onPick,
+    proj: [],    /* 每个原子的屏幕信息，供拾取复用 */
+    zmin: 0, zmax: 1,
+    dragging: false, mode: 0, lx: 0, ly: 0, moved: 0
+  };
+  view.resize = function () {
+    const dpr = window.devicePixelRatio || 1;
+    const h = +cv.dataset.h || 440;
+    const w = cv.clientWidth || cv.parentNode.clientWidth || 600;
+    view.dpr = dpr; view.W = Math.max(w, 200); view.H = h;
+    cv.width = Math.round(view.W * dpr); cv.height = Math.round(h * dpr);
+    cv.style.height = h + "px";
+    view.g = cv.getContext("2d");
+    view.dirty = true;
+  };
+  return view;
+}
+
+/* 投影：返回 {x,y,depth,f} */
+function project(view, p) {
+  const m = view.model;
+  const t = view.target || m.center;
+  const x0 = p[0] - t[0], y0 = p[1] - t[1], z0 = p[2] - t[2];
+  const cy = Math.cos(view.yaw), sy = Math.sin(view.yaw);
+  const x1 = x0 * cy + z0 * sy, z1 = -x0 * sy + z0 * cy;
+  const cp = Math.cos(view.pitch), sp = Math.sin(view.pitch);
+  const y2 = y0 * cp - z1 * sp, z2 = y0 * sp + z1 * cp;
+  const focal = 60;
+  const S0 = view.baseScale * view.zoom;
+  const f = focal / (focal + z2);
+  return { x: view.W / 2 + view.panX + x1 * S0 * f, y: view.H / 2 + view.panY - y2 * S0 * f, z: z2, f: f, s: S0 * f };
+}
+
+/* ---------------- 景深与立体感 ---------------- */
+const DOF_LEVEL = 0.45;   /* 景深强度，固定 45%（远近虚化 + 空气透视），不再提供调节 */
+const BLUR_MAX = 7.5;     /* 景深 100% 时最虚层的模糊半径（px） */
+const DOF_SHARP = 0.42;   /* 离焦量小于此值视为在焦平面内（清晰层） */
+const DOF_LAYER = 0.72;   /* 虚化层的代表离焦量 */
+/* 化学键配色：暗底 / 受光侧 / 高光，三档都随空气透视变淡 */
+const BOND_COL = [], BOND_LIT = [];
+for (let b = 0; b <= FOG_N; b++) {
+  const f = b / FOG_N * FOG_MAX * 0.85;
+  const c = hex2rgb("788498").map((v, i) => v + (BG_RGB[i] - v) * f);
+  BOND_COL.push("rgb(" + Math.round(c[0]) + "," + Math.round(c[1]) + "," + Math.round(c[2]) + ")");
+  BOND_LIT.push(shd(c, WHITE, 0.42));
+}
+
+/* 离屏画布：用于给某一层原子做一次整体模糊，尺寸随视图变化重建 */
+function offCanvas(view) {
+  const w = Math.max(1, Math.round(view.W * view.dpr)), h = Math.max(1, Math.round(view.H * view.dpr));
+  if (!view.off || view.off.width !== w || view.off.height !== h) {
+    const cv = document.createElement("canvas");
+    cv.width = w; cv.height = h;
+    view.off = cv;
+  }
+  return view.off;
+}
+
+/* 绘制一组原子球（调用方负责深度排序）；雾化档由深度决定 */
+function drawAtoms(view, g, m, list, opt, zmin, zmax) {
+  const wire = opt.mode === "wire";
+  for (const o of list) {
+    const a = m.atoms[o.i];
+    /* 全部实心球：与相邻晶胞共享的（角点 / 棱 / 面心）原子也用实心渲染，
+       仅在悬停气泡中标注「与邻胞共享」；不透明 */
+    g.globalAlpha = 1;
+    if (wire) {
+      g.beginPath(); g.arc(o.p.x, o.p.y, o.r, 0, Math.PI * 2);
+      g.fillStyle = "rgba(255,255,255,0.55)"; g.fill();
+      g.lineWidth = 1.3; g.strokeStyle = elColor(a.el); g.stroke();
+    } else {
+      const sp = sprite(a.el, fogBucket(clamp((o.p.z - zmin) / (zmax - zmin), 0, 1), DOF_LEVEL));
+      g.drawImage(sp, o.p.x - o.r, o.p.y - o.r, o.r * 2, o.r * 2);
+    }
+    g.globalAlpha = 1;
+  }
+}
+
+/* ---------------- 主渲染 ---------------- */
+function render(view) {
+  const g = view.g, m = view.model;
+  if (!g || !m) return;
+  g.setTransform(view.dpr, 0, 0, view.dpr, 0, 0);
+  g.clearRect(0, 0, view.W, view.H);
+  g.fillStyle = "#fbfcfe"; g.fillRect(0, 0, view.W, view.H);
+
+  const opt = OPT;
+  const showBond = opt.bond;            /* 空间填充模式在切换时已自动关掉化学键 */
+  const radScale = opt.radius;          /* 相对共价半径的比例 */
+  const wire = opt.mode === "wire";
+
+  /* 自动缩放：让超胞投影占据约 72% 画面（六方柱叠加会伸出超胞，包围半径一并算上） */
+  const effR = (m.st.lat === "hex" && opt.hexP) ? Math.max(m.radius || 1, m.mat.a * m.n + 1.2) : (m.radius || 1);
+  view.baseScale = 0.36 * Math.min(view.W, view.H) / effR;
+
+  /* --- 深度范围（用于景深与空气透视） --- */
+  let zmin = Infinity, zmax = -Infinity;
+  const pts = m.atoms.map(a => project(view, a.p));
+  for (const p of pts) { zmin = Math.min(zmin, p.z); zmax = Math.max(zmax, p.z); }
+  if (zmax - zmin < 1e-6) zmax = zmin + 1;
+  view.zmin = zmin; view.zmax = zmax;
+  const depthT = (z) => clamp((z - zmin) / (zmax - zmin), 0, 1);   /* 1 = 最远，0 = 最近 */
+  const dof = DOF_LEVEL;
+
+  /* --- 1. 晶胞框（超胞外框 + 内部晶胞分隔线） --- */
+  if (opt.cell) drawCellFrame(view, g, m);
+  /* --- 1b. 六方柱轮廓（常规胞 = 3 × 原胞，仅六方晶系） --- */
+  if (opt.hexP) drawHexPrism(view, g, m);
+
+  /* --- 2. 晶轴 --- */
+  if (opt.axis) drawAxes(view, g, m);
+
+  /* --- 3. 化学键（按深度排序，远 → 近） --- */
+  if (showBond) {
+    const segs = [];
+    for (const b of m.bonds) {
+      const p0 = project(view, b.p0), p1 = project(view, b.p1);
+      segs.push({ p0: p0, p1: p1, z: (p0.z + p1.z) / 2 });
+    }
+    segs.sort((a, b) => b.z - a.z);
+    const bw = clamp(0.16 * view.baseScale * view.zoom, 0.8, 9);
+    for (const s of segs) {
+      const tf = depthT((s.p0.z + s.p1.z) / 2);                 /* 键的深度，用于空气透视 */
+      const fb = fogBucket(tf, dof);
+      const w = clamp(bw * (s.p0.f + s.p1.f) / 2, 0.7, 12) * (1 - 0.18 * tf * dof);
+      /* 键的法向（始终指向屏幕上方），用于把键画成有明暗的圆柱 */
+      const dx = s.p1.x - s.p0.x, dy = s.p1.y - s.p0.y, LL = Math.hypot(dx, dy) || 1;
+      let nx = -dy / LL, ny = dx / LL;
+      if (ny > 0) { nx = -nx; ny = -ny; }
+      g.lineCap = "round";
+      g.strokeStyle = BOND_COL[fb]; g.lineWidth = w;
+      g.beginPath(); g.moveTo(s.p0.x, s.p0.y); g.lineTo(s.p1.x, s.p1.y); g.stroke();
+      if (w > 2) {
+        const o1 = w * .20;
+        g.strokeStyle = BOND_LIT[fb]; g.lineWidth = w * .62;
+        g.beginPath(); g.moveTo(s.p0.x + nx * o1, s.p0.y + ny * o1); g.lineTo(s.p1.x + nx * o1, s.p1.y + ny * o1); g.stroke();
+      }
+      if (w > 3.4) {
+        const o2 = w * .30;
+        g.strokeStyle = "rgba(255,255,255," + (0.5 * (1 - 0.6 * tf * dof)).toFixed(3) + ")";
+        g.lineWidth = w * .22;
+        g.beginPath(); g.moveTo(s.p0.x + nx * o2, s.p0.y + ny * o2); g.lineTo(s.p1.x + nx * o2, s.p1.y + ny * o2); g.stroke();
+      }
+    }
+  }
+
+  /* --- 4. 原子球（按深度排序，远 → 近） --- */
+  const order = m.atoms.map((a, i) => i).sort((i, j) => pts[j].z - pts[i].z);
+  const list = [];
+  for (const i of order) {
+    const a = m.atoms[i], p = pts[i];
+    const rr = elRad(a.el, m.mat.st) * radScale * p.s;
+    list.push({ i: i, p: p, r: Math.max(rr, 1.2) });
+  }
+  view.proj = list.map(o => ({ i: o.i, x: o.p.x, y: o.p.y, r: o.r, z: o.p.z }));
+
+  /* 景深：把原子按离焦程度切成「远端虚化 / 焦平面清晰 / 近端虚化」三段。
+     三段在深度上是连续区间，从远到近依次合成，既保持画家算法的遮挡关系，
+     又只需两次全屏模糊（而不是每个原子一次模糊）。 */
+  if (view.blurOK === undefined) {
+    /* 只有真正支持 ctx.filter 的浏览器才走离屏模糊；不支持时自动降级为「只雾化、不虚化」 */
+    let ok = false;
+    try { ok = typeof CanvasRenderingContext2D !== "undefined" && "filter" in CanvasRenderingContext2D.prototype; } catch (e) { ok = false; }
+    if (ok) { try { g.save(); g.filter = "blur(1px)"; ok = g.filter !== "none"; g.restore(); } catch (e) { ok = false; } }
+    view.blurOK = ok;
+  }
+  const blurOn = dof > 0.02 && view.blurOK && !wire;
+  if (!blurOn) {
+    drawAtoms(view, g, m, list, opt, zmin, zmax);
+  } else {
+    const seg = [[], [], []];
+    for (const o of list) {
+      const t = depthT(o.p.z);
+      const coc = Math.abs(t - 0.5) * 2;                        /* 0 = 在焦平面，1 = 最虚 */
+      seg[coc < DOF_SHARP ? 1 : (t > 0.5 ? 0 : 2)].push(o);
+    }
+    const off = offCanvas(view), og = off.getContext("2d");
+    for (let k = 0; k < 3; k++) {
+      if (!seg[k].length) continue;
+      /* 远端虚化明显（空气感），近景只轻微离焦，避免挡住要看的结构 */
+      const bpx = (k === 1) ? 0 : BLUR_MAX * dof * DOF_LAYER * (k === 0 ? 1 : 0.45);
+      if (bpx < 0.35) { drawAtoms(view, g, m, seg[k], opt, zmin, zmax); continue; }
+      og.setTransform(1, 0, 0, 1, 0, 0);
+      og.clearRect(0, 0, off.width, off.height);
+      og.setTransform(view.dpr, 0, 0, view.dpr, 0, 0);
+      drawAtoms(view, og, m, seg[k], opt, zmin, zmax);
+      g.save();
+      g.setTransform(1, 0, 0, 1, 0, 0);
+      g.filter = "blur(" + (bpx * view.dpr).toFixed(2) + "px)";
+      g.drawImage(off, 0, 0);
+      g.restore();
+    }
+  }
+
+  /* --- 5. 配位多面体（半透明覆盖层） --- */
+  if (opt.poly !== "off") drawPolyhedra(view, g, m, pts);
+
+  /* --- 6. 元素标签 --- */
+  if (opt.label) {
+    g.font = "600 12px 'Segoe UI','Microsoft YaHei',sans-serif";
+    g.textAlign = "center"; g.textBaseline = "middle";
+    for (const o of list) {
+      if (o.r < 9) continue;
+      const a = m.atoms[o.i];
+      const lum = (hex2rgb(elColor(a.el))[0] * .299 + hex2rgb(elColor(a.el))[1] * .587 + hex2rgb(elColor(a.el))[2] * .114);
+      g.fillStyle = lum > 150 ? "#2c3e50" : "#ffffff";
+      /* 远处标签随之淡化，避免抢视线（与景深一致） */
+      g.globalAlpha = 0.92 - 0.32 * depthT(o.p.z) * (0.45 + 0.55 * dof);
+      g.fillText(elLabel(a.el, m.mat.st), o.p.x, o.p.y);
+      g.globalAlpha = 1;
+    }
+  }
+
+  /* --- 7. 高亮：hover / 选中 --- */
+  if (view.hover >= 0 && view.hover < m.atoms.length) {
+    const o = list.find(x => x.i === view.hover);
+    if (o) {
+      g.beginPath(); g.arc(o.p.x, o.p.y, o.r + 2.5, 0, Math.PI * 2);
+      g.lineWidth = 2.2; g.strokeStyle = "#ffffff"; g.stroke();
+      g.beginPath(); g.arc(o.p.x, o.p.y, o.r + 2.5, 0, Math.PI * 2);
+      g.lineWidth = 1.2; g.strokeStyle = "#1976d2"; g.stroke();
+    }
+  }
+  if (view.sel >= 0 && view.sel < m.atoms.length) {
+    const o = list.find(x => x.i === view.sel);
+    if (o) {
+      g.beginPath(); g.arc(o.p.x, o.p.y, o.r + 4, 0, Math.PI * 2);
+      g.lineWidth = 2.6; g.strokeStyle = "#f5c518"; g.stroke();
+      /* 邻居描边 */
+      const nb = m.neigh[view.sel];
+      for (const x of nb) {
+        const q = list.find(y => y.i === x.j);
+        if (q) {
+          g.beginPath(); g.arc(q.p.x, q.p.y, q.r + 2.2, 0, Math.PI * 2);
+          g.lineWidth = 1.6; g.strokeStyle = "rgba(245,197,24,0.85)"; g.stroke();
+        }
+      }
+    }
+  }
+
+  /* --- 8. 悬停气泡 --- */
+  if (view.mouse && view.hover >= 0) drawTip(view, g, m, view.hover);
+
+  /* --- 9. 角标：晶格常数（嵌入视图左上，随结构变化） --- */
+  const F1 = "12.5px 'Segoe UI','Microsoft YaHei',sans-serif";
+  const F2 = "italic 13px 'Cambria Math','Segoe UI',serif";
+  const segs = latSegs(m);
+  let tw = 0;
+  for (const s of segs) { g.font = s[1] ? F2 : F1; tw += g.measureText(s[0]).width; }
+  const bw = tw + 18, bh = 26, bx = 10, by = 10;
+  g.fillStyle = "rgba(255,255,255,0.86)"; g.strokeStyle = "#dde4ec"; g.lineWidth = 1;
+  rrect(g, bx, by, bw, bh, 6); g.fill(); g.stroke();
+  let cx = bx + 9;
+  g.textAlign = "left"; g.textBaseline = "middle"; g.fillStyle = "#2c3e50";
+  for (const s of segs) {
+    g.font = s[1] ? F2 : F1;
+    g.fillText(s[0], cx, by + bh / 2 + 0.5);
+    cx += g.measureText(s[0]).width;
+  }
+
+  /* --- 10. 角标：结构与超胞 --- */
+  g.font = "12px 'Segoe UI','Microsoft YaHei',sans-serif";
+  g.textAlign = "left"; g.textBaseline = "alphabetic";
+  g.fillStyle = "#6b7a8c";
+  g.fillText(m.st.name + " · " + m.mat.lab + "　" + m.n + "×" + m.n + "×" + m.n + " 超胞" +
+    (m.st.lat === "hex" && OPT.hexP ? "　·　虚线六方柱 = 常规胞（3 × 原胞，半透明 = 胞内其余原子）" : ""), 10, view.H - 10);
+}
+
+/* 晶胞框 */
+function drawCellFrame(view, g, m) {
+  const L = m.L, n = m.n;
+  const corner = (i, j, k) => fracToCart(L, [i * n, j * n, k * n]);
+  const C = [];
+  for (let i = 0; i < 2; i++) for (let j = 0; j < 2; j++) for (let k = 0; k < 2; k++) C.push(corner(i, j, k));
+  const P = C.map(p => project(view, p));
+  const E = [[0, 1], [2, 3], [4, 5], [6, 7], [0, 2], [1, 3], [4, 6], [5, 7], [0, 4], [1, 5], [2, 6], [3, 7]];
+  /* 深度线索：远处的棱更细、更淡，近处更实，增强立方体的立体感 */
+  const zr = (view.zmax - view.zmin) || 1;
+  for (const e of E) {
+    const t = clamp(((P[e[0]].z + P[e[1]].z) / 2 - view.zmin) / zr, 0, 1);   /* 1 = 最远 */
+    g.lineWidth = 1.9 - 0.7 * t;
+    g.strokeStyle = "rgba(150,163,178," + (0.95 - 0.5 * t).toFixed(3) + ")";
+    g.beginPath(); g.moveTo(P[e[0]].x, P[e[0]].y); g.lineTo(P[e[1]].x, P[e[1]].y); g.stroke();
+  }
+  /* 内部单位晶胞分隔线（淡虚线） */
+  if (n > 1) {
+    g.save();
+    g.setLineDash([3, 4]); g.lineWidth = 1; g.strokeStyle = "rgba(150,163,178,0.45)";
+    for (let s = 1; s < n; s++) {
+      for (let ax = 0; ax < 3; ax++) {
+        const axs = [0, 1, 2].filter(x => x !== ax);
+        /* 每个截面画 4 条线：分别沿另外两轴，位于该面的两条对边 */
+        for (let dir = 0; dir < 2; dir++) {
+          for (let e = 0; e < 2; e++) {
+            const A = [0, 0, 0], B = [0, 0, 0];
+            A[ax] = s; B[ax] = s;
+            A[axs[dir]] = 0; B[axs[dir]] = n;          /* 沿线方向 */
+            A[axs[1 - dir]] = n * e; B[axs[1 - dir]] = n * e;
+            const pa = project(view, fracToCart(L, A)), pb = project(view, fracToCart(L, B));
+            g.beginPath(); g.moveTo(pa.x, pa.y); g.lineTo(pb.x, pb.y); g.stroke();
+          }
+        }
+      }
+    }
+    g.restore();
+  }
+}
+
+/* 六方柱轮廓（常规胞 = 3 × 原胞）——只在六方晶系（纤锌矿）下绘制。
+   晶体学上六方晶系的「晶胞」就是原胞（a₁、a₂ 夹 120° 的平行六面体，含 1 个格点），
+   工具主视图画的正是它；常规六方柱（底面 = 6 个最近邻格点连成的正六边形、高 c）
+   含 3 个原胞，不是最小重复单元，但能把六重对称轴一眼画出来，
+   故作为可选叠加：虚线轮廓 + 常规胞内、原胞之外的原子画成半透明幽灵球。 */
+function drawHexPrism(view, g, m) {
+  if (m.st.lat !== "hex") return;
+  const L = m.L, n = m.n, a = m.mat.a, TOL = 1e-4;
+  const proj = f => project(view, fracToCart(L, f));
+
+  /* --- 虚线轮廓：底/顶六边形（顶点取 6 个最近邻格点）+ 6 条竖棱 --- */
+  const Vf = [[n, 0], [n, n], [0, n], [-n, 0], [-n, -n], [0, -n]];
+  const zr = (view.zmax - view.zmin) || 1;
+  const zt = p => clamp((p.z - view.zmin) / zr, 0, 1);
+  const strokeP = (P, close) => {
+    let zm = 0; for (const p of P) zm += zt(p); zm /= P.length;
+    g.lineWidth = 1.7 - 0.6 * zm;
+    g.strokeStyle = "rgba(15,140,120," + (0.9 - 0.45 * zm).toFixed(3) + ")";
+    g.beginPath(); g.moveTo(P[0].x, P[0].y);
+    for (let i = 1; i < P.length; i++) g.lineTo(P[i].x, P[i].y);
+    if (close) g.closePath();
+    g.stroke();
+  };
+  g.save();
+  g.setLineDash([7, 5]); g.lineJoin = "round";
+  const BOT = Vf.map(v => proj([v[0], v[1], 0]));
+  const TOP = Vf.map(v => proj([v[0], v[1], n]));
+  strokeP(BOT, true); strokeP(TOP, true);
+  for (let i = 0; i < 6; i++) strokeP([BOT[i], TOP[i]], false);
+  g.restore();
+
+  /* --- 常规胞内的「额外」原子（半透明）：基元 + 格点平移，取落在六方柱内、
+         且未被超胞画过的位置。n=1 时恰为常规胞 12 原子中原胞外的 8 个位置。 --- */
+  const ghosts = [];
+  const seen = Object.create(null);
+  const inPlane = f => Math.hypot(L[0][0] * f[0] + L[1][0] * f[1], L[0][1] * f[0] + L[1][1] * f[1]);
+  for (const b of m.basis) {
+    for (let i = -2 * n; i <= 2 * n; i++) for (let j = -2 * n; j <= 2 * n; j++) for (let k = -1; k <= n; k++) {
+      const f = [b.f[0] + i, b.f[1] + j, b.f[2] + k];
+      if (inPlane(f) > a * n + TOL) continue;
+      if (f[2] < -TOL || f[2] > n + TOL) continue;
+      const key = f[0].toFixed(3) + "," + f[1].toFixed(3) + "," + f[2].toFixed(3);
+      if (seen[key]) continue;
+      seen[key] = 1;
+      let dup = false;
+      for (const at of m.atoms) {
+        if (Math.abs(at.f[0] - f[0]) < TOL && Math.abs(at.f[1] - f[1]) < TOL && Math.abs(at.f[2] - f[2]) < TOL) { dup = true; break; }
+      }
+      if (!dup) ghosts.push({ el: b.el, p: fracToCart(L, f) });
+    }
+  }
+  ghosts.sort((x, y) => project(view, y.p).z - project(view, x.p).z);
+  const radScale = OPT.radius;
+  for (const gh of ghosts) {
+    const p = project(view, gh.p);
+    const r = Math.max(elRad(gh.el, m.mat.st) * radScale * p.s * 0.88, 1.2);
+    const t = zt(p);
+    g.beginPath(); g.arc(p.x, p.y, r, 0, 6.2832);
+    g.fillStyle = "rgba(" + hex2rgb(elColor(gh.el)).join(",") + "," + (0.34 - 0.12 * t).toFixed(3) + ")";
+    g.fill();
+    g.lineWidth = 1;
+    g.strokeStyle = "rgba(" + hex2rgb(elColor(gh.el)).join(",") + "," + (0.55 - 0.2 * t).toFixed(3) + ")";
+    g.stroke();
+    /* 左上高光点，保留球体感 */
+    g.beginPath(); g.arc(p.x - r * 0.32, p.y - r * 0.32, Math.max(r * 0.22, 0.8), 0, 6.2832);
+    g.fillStyle = "rgba(255,255,255," + (0.5 - 0.2 * t).toFixed(3) + ")";
+    g.fill();
+  }
+}
+
+/* 晶轴 */
+function drawAxes(view, g, m) {
+  const L = m.L, n = m.n;
+  const O = project(view, [0, 0, 0]);
+  const cols = ["#d94a3d", "#2e9e5b", "#1976d2"];
+  const names = m.st.lat === "hex" ? ["a₁", "a₂", "c"] : ["a", "b", "c"];
+  g.font = "italic 13px 'Cambria Math',serif";
+  g.textAlign = "center"; g.textBaseline = "middle";
+  for (let i = 0; i < 3; i++) {
+    const tip = fracToCart(L, [i === 0 ? n : 0, i === 1 ? n : 0, i === 2 ? n : 0]);
+    const P = project(view, tip);
+    g.strokeStyle = cols[i]; g.fillStyle = cols[i]; g.lineWidth = 2;
+    arrow(g, O.x, O.y, P.x, P.y);
+    g.fillText(names[i], P.x + (P.x - O.x) * .10, P.y + (P.y - O.y) * .10);
+  }
+}
+
+/* 配位多面体 */
+function drawPolyhedra(view, g, m, pts) {
+  const opt = OPT;
+  let idxs = [];
+  if (opt.poly === "sel") {
+    if (view.sel >= 0) idxs = [view.sel];
+  } else {
+    /* 全部：优先画配位完整且邻居都在胞内的原子，超胞大时限量（40 个）以免层层重叠 */
+    const inside = [], partial = [];
+    for (let i = 0; i < m.atoms.length; i++) {
+      if (m.neigh[i].length < m.st.cn) continue;
+      let allIn = true;
+      for (const x of m.neigh[i]) {
+        if (x.f[0] < -1e-6 || x.f[0] > m.n + 1e-6 || x.f[1] < -1e-6 || x.f[1] > m.n + 1e-6 || x.f[2] < -1e-6 || x.f[2] > m.n + 1e-6) { allIn = false; break; }
+      }
+      (allIn ? inside : partial).push(i);
+    }
+    idxs = inside.concat(partial).slice(0, 40);
+  }
+  if (!idxs.length) return;
+  const faces = [];
+  for (const i of idxs) {
+    const nb = m.neigh[i];
+    const ps = nb.map(x => x.p);
+    const fs = polyFaces(m.atoms[i].p, ps);
+    for (const f of fs) {
+      const A = project(view, nb[f[0]].p), B = project(view, nb[f[1]].p), C = project(view, nb[f[2]].p);
+      faces.push({ a: A, b: B, c: C, z: (A.z + B.z + C.z) / 3, el: m.atoms[i].el });
+    }
+  }
+  faces.sort((p, q) => q.z - p.z);
+  for (const f of faces) {
+    g.beginPath();
+    g.moveTo(f.a.x, f.a.y); g.lineTo(f.b.x, f.b.y); g.lineTo(f.c.x, f.c.y); g.closePath();
+    g.fillStyle = "rgba(25,118,210,0.16)"; g.fill();
+    g.lineWidth = 1.1; g.strokeStyle = "rgba(25,118,210,0.55)"; g.stroke();
+  }
+}
+
+/* 悬停气泡 */
+function drawTip(view, g, m, idx) {
+  const a = m.atoms[idx], st = atomStats(m, idx);
+  const f = a.f.map(v => { let x = v % 1; if (x < 0) x += 1; return x.toFixed(2); });
+  const lines = [elLabel(a.el, m.mat.st) + "　(" + f[0] + ", " + f[1] + ", " + f[2] + ")" + (a.shared ? "　与邻胞共享" : "")];
+  if (st) lines.push("最近邻 " + st.cn + " 个 · " + st.dmin.toFixed(3) + " Å");
+  g.font = "12px 'Segoe UI','Microsoft YaHei',sans-serif";
+  let w = 0;
+  for (const s of lines) w = Math.max(w, g.measureText(s).width);
+  w += 18;
+  const h = 16 + lines.length * 16;
+  let x = view.mouse.x + 14, y = view.mouse.y + 12;
+  if (x + w > view.W - 4) x = view.mouse.x - w - 12;
+  if (y + h > view.H - 4) y = view.H - h - 4;
+  if (x < 4) x = 4;
+  g.globalAlpha = 0.96;
+  g.fillStyle = "#ffffff"; g.strokeStyle = "#dde4ec"; g.lineWidth = 1;
+  rrect(g, x, y, w, h, 6); g.fill(); g.stroke();
+  g.fillStyle = "#2c3e50"; g.textAlign = "left"; g.textBaseline = "middle";
+  for (let i = 0; i < lines.length; i++) g.fillText(lines[i], x + 9, y + 14 + i * 16);
+  g.globalAlpha = 1;
+}
+
+/* ==================================================================
+   界面状态与交互
+   ================================================================== */
+const OPT = {
+  mat: "Si", st: "diamond", n: 1,
+  mode: "ballstick", poly: "sel",
+  bond: true, cell: true, axis: true, label: true,
+  hexP: true,          /* 六方柱轮廓（常规胞 = 3 × 原胞，仅六方晶系显示） */
+  radius: 0.35,        /* 相对共价 / 离子半径的比例，随显示模式自动切换 */
+  share: true          /* 含共享原子（角点 / 棱 / 面心，与内部原子同为实心球） */
+};
+let TAB = "single";
+let CMP = { A: "Si", B: "GaAs", sync: true };
+
+const MODES = [
+  { k: "ballstick", t: "球棍模型" },
+  { k: "spacefill", t: "空间填充" },
+  { k: "wire", t: "线框" },
+  { k: "polyhedron", t: "多面体" }
+];
+
+/* 配位多面体不设独立按钮组：随「显示模式」联动（空间填充 / 线框关掉，
+   球棍模型只画选中原子的一圈，多面体模式画全部原子），见 applyMode()。 */
+
+const mainView = makeView("view", onPick);
+const viewA = makeView("viewA", onPickCmp);
+const viewB = makeView("viewB", onPickCmp);
+const VIEWS = [mainView, viewA, viewB];
+
+/* ---------------- 预设晶向（晶面） ---------------- */
+/* 立方：三指数；六方：四指数 (hkil) 在内部转成三指数 (h k l) */
+const DIRS = {
+  cubic: [
+    { t: "(100)", h: 1, k: 0, l: 0, d: "硅片最常用的晶面取向（Si 不沿此面解理）；沿 ⟨100⟩ 看，正方形排列" },
+    { t: "(110)", h: 1, k: 1, l: 0, d: "沿 ⟨110⟩ 看，原子排成矩形沟槽；Si 的 (110) 面原子密度最高，闪锌矿（GaAs 等）沿 {110} 解理" },
+    { t: "(111)", h: 1, k: 1, l: 1, d: "Si、Ge 等金刚石结构的解理面；沿 ⟨111⟩ 看可见 ABCABC 密排层的六角对称" }
+  ],
+  hex: [
+    { t: "(0001)", h: 0, k: 0, l: 1, d: "c 面（极性面）：沿 c 轴俯视，可见六角排列，GaN 外延的常用面" },
+    { t: "(10-10)", h: 1, k: 0, l: 0, d: "m 面（非极性面）：垂直于 a₁，可见沿 c 方向的层状堆积" },
+    { t: "(11-20)", h: 1, k: 1, l: 0, d: "a 面（非极性面）：垂直于 a₁ + a₂" }
+  ]
+};
+let DIR_LAB = "";      /* 当前预设晶向标签，仅用于按钮高亮；"" 表示手动视角 */
+
+/* 把视角转到「沿 [hkl] 晶向观察」：视线方向 = 晶面法线（指向观察者） */
+function dirYawPitch(view, h, k, l) {
+  const mo = view.model;
+  if (!mo || !mo.B) return null;
+  const n = planeNormal(mo.B, h, k, l);
+  const L = V.len(n);
+  if (!(L > 1e-9)) return null;
+  const d = V.mul(n, 1 / L);                    /* d = 由晶体指向观察者的单位向量 */
+  const pitch = Math.asin(clamp(-d[1], -1, 1));
+  const yaw = Math.atan2(d[0], -d[2]);
+  return { yaw: yaw, pitch: clamp(pitch, -85 * RAD, 85 * RAD) };
+}
+const nowMs = () => (typeof performance !== "undefined" && performance.now) ? performance.now() : Date.now();
+function animateTo(views, yaw, pitch) {
+  const st = views.map(v => {
+    let dy = yaw - v.yaw;
+    while (dy > Math.PI) dy -= 2 * Math.PI;
+    while (dy < -Math.PI) dy += 2 * Math.PI;
+    return { v: v, y0: v.yaw, p0: v.pitch, x0: v.panX, yy0: v.panY, dy: dy, dp: pitch - v.pitch };
+  });
+  const t0 = nowMs(), dur = 450;
+  (function step() {
+    const t = clamp((nowMs() - t0) / dur, 0, 1);
+    const e = t < .5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+    for (const s of st) {
+      s.v.yaw = s.y0 + s.dy * e;
+      s.v.pitch = s.p0 + s.dp * e;
+      s.v.panX = s.x0 * (1 - e); s.v.panY = s.yy0 * (1 - e);
+      s.v.dirty = true;
+    }
+    if (t < 1) requestAnimationFrame(step);
+  })();
+}
+function applyDir(h, k, l, lab) {
+  const views = TAB === "single" ? [mainView] : (CMP.sync ? [viewA, viewB] : [viewA]);
+  const ok = views.map(v => dirYawPitch(v, h, k, l)).filter(Boolean);
+  if (!ok.length) return;
+  animateTo(views, ok[0].yaw, ok[0].pitch);
+  if (lab) DIR_LAB = lab;
+  requestDraw();
+}
+
+/* ---------------- 建模与刷新 ---------------- */
+const MODEL_CACHE = {};
+function modelFor(matKey) {
+  const k = matKey + "@" + OPT.n + (OPT.share ? "@s" : "@n");  /* 建模有点耗时（3×3×3 约 200 ms），缓存后切换材料即时响应 */
+  if (!MODEL_CACHE[k]) MODEL_CACHE[k] = buildModel(matKey, OPT.n, OPT.share);
+  return MODEL_CACHE[k];
+}
+function rebuildAll() {
+  mainView.model = modelFor(OPT.mat);
+  viewA.model = modelFor(CMP.A);
+  viewB.model = modelFor(CMP.B);
+  /* 超胞变化后旧的选中可能越界 */
+  for (const v of VIEWS) {
+    /* 切换材料 / 超胞后旧的索引可能越界，选中与悬停都要清掉 */
+    if (v.model && v.sel >= v.model.atoms.length) v.sel = -1;
+    if (v.model && v.hover >= v.model.atoms.length) v.hover = -1;
+    v.dirty = true;
+  }
+  updateLegend();
+  syncDirButtons();
+  $("matVal").textContent = MATS[OPT.mat].lab.replace(/ .*$/, "");
+  $("cellVal").textContent = OPT.n + "×" + OPT.n + "×" + OPT.n;
+  const mo = mainView.model;
+  $("atomVal").textContent = mo
+    ? (mo.share ? mo.atoms.length + " 个位置（净 " + mo.netAtoms + "）" : mo.netAtoms + " 个原子")
+    : "—";
+}
+const requestDraw = () => { for (const v of VIEWS) v.dirty = true; };
+
+/* ---------------- 按钮组 ---------------- */
+function buildButtons() {
+  /* 结构 */
+  const sb = $("structBtns");
+  sb.innerHTML = "";
+  Object.keys(STRUCTS).forEach(k => {
+    const b = document.createElement("button");
+    b.textContent = STRUCTS[k].name;
+    b.className = OPT.st === k ? "sel" : "";
+    b.onclick = () => {
+      OPT.st = k;
+      OPT.mat = STRUCTS[k].mats[0];
+      rebuildAll();
+      syncButtons();
+    };
+    sb.appendChild(b);
+  });
+  /* 材料（随结构变化） */
+  syncMatButtons();
+  /* 显示模式 */
+  const mb = $("modeBtns");
+  mb.innerHTML = "";
+  MODES.forEach(m => {
+    const b = document.createElement("button");
+    b.textContent = m.t;
+    b.onclick = () => applyMode(m.k);
+    b.dataset.mode = m.k;
+    mb.appendChild(b);
+  });
+  /* 超胞 */
+  const cb = $("cellBtns");
+  cb.innerHTML = "";
+  [1, 2, 3].forEach(n => {
+    const b = document.createElement("button");
+    b.textContent = n + "×" + n + "×" + n;
+    b.dataset.cell = n;
+    b.onclick = () => { OPT.n = n; rebuildAll(); syncButtons(); };
+    cb.appendChild(b);
+  });
+  /* 对比预设 */
+  const pr = $("cmpPresets");
+  pr.innerHTML = "";
+  [
+    { t: "金刚石 vs 闪锌矿（原子种类）", a: "Si", b: "GaAs" },
+    { t: "闪锌矿 vs 纤锌矿（堆积序列）", a: "GaAs", b: "GaN" },
+    { t: "四面体 vs 八面体（配位对比）", a: "Si", b: "NaCl" }
+  ].forEach(p => {
+    const b = document.createElement("button");
+    b.textContent = p.t;
+    b.onclick = () => { CMP.A = p.a; CMP.B = p.b; $("selA").value = p.a; $("selB").value = p.b; rebuildAll(); syncButtons(); };
+    pr.appendChild(b);
+  });
+  syncButtons();
+}
+function syncMatButtons() {
+  const mb = $("matBtns");
+  mb.innerHTML = "";
+  STRUCTS[OPT.st].mats.forEach(k => {
+    const b = document.createElement("button");
+    b.textContent = MATS[k].lab;
+    b.className = OPT.mat === k ? "sel" : "";
+    b.onclick = () => { OPT.mat = k; rebuildAll(); syncButtons(); };
+    mb.appendChild(b);
+  });
+}
+/* 预设晶向按钮：随晶系（立方三指数 / 六方四指数）自动切换 */
+function syncDirButtons() {
+  const db = $("dirBtns");
+  if (!db) return;
+  const lat = STRUCTS[OPT.st].lat === "hex" ? "hex" : "cubic";
+  const list = DIRS[lat];
+  if (list.map(d => d.t).indexOf(DIR_LAB) < 0) { DIR_LAB = ""; }
+  db.innerHTML = "";
+  list.forEach(d => {
+    const b = document.createElement("button");
+    b.textContent = d.t;
+    b.title = d.d;
+    b.className = d.t === DIR_LAB ? "sel" : "";
+    b.onclick = () => { applyDir(d.h, d.k, d.l, d.t); syncDirButtons(); };
+    db.appendChild(b);
+  });
+}
+function syncButtons() {
+  /* 六方柱轮廓只对六方晶系（纤锌矿）有意义 */
+  const hex = STRUCTS[OPT.st].lat === "hex";
+  $("labHexP").style.display = hex ? "" : "none";
+  $("chkHexP").checked = OPT.hexP;
+  Array.prototype.forEach.call($("structBtns").children, b => {
+    b.className = STRUCTS[OPT.st].name === b.textContent ? "sel" : "";
+  });
+  syncMatButtons();
+  Array.prototype.forEach.call($("modeBtns").children, b => {
+    b.className = b.dataset.mode === OPT.mode ? "sel" : "";
+  });
+  $("chkShare").checked = !!OPT.share;
+  Array.prototype.forEach.call($("cellBtns").children, b => {
+    b.className = (+b.dataset.cell) === OPT.n ? "sel" : "";
+  });
+  syncDirButtons();
+}
+function applyMode(k) {
+  OPT.mode = k;
+  if (k === "spacefill") { OPT.radius = 1.0; OPT.bond = false; OPT.poly = "off"; }
+  else if (k === "wire") { OPT.radius = 0.28; OPT.bond = true; OPT.poly = "off"; }
+  else if (k === "polyhedron") { OPT.radius = 0.22; OPT.bond = true; OPT.poly = "all"; }
+  else { OPT.radius = 0.35; OPT.bond = true; OPT.poly = "sel"; }
+  $("chkBond").checked = OPT.bond;
+  syncButtons();
+  requestDraw();
+}
+
+/* ---------------- 图例与提示 ---------------- */
+function updateLegend() {
+  const m = MATS[OPT.mat], seen = [];
+  m.els.forEach(e => { if (seen.indexOf(e) < 0) seen.push(e); });
+  $("legend").innerHTML = seen.map(e =>
+    '<span><span class="swatch sq" style="background:' + elColor(e) + ';"></span>' + elLabel(e, m.st) +
+    (m.st === "rocksalt" ? "（离子半径 " + elRad(e, m.st).toFixed(2) + " Å）" : "") + '</span>'
+  ).join("") +
+    '<span><span class="swatch" style="border-color:#96a3b2;"></span>晶胞框 / 晶轴 <span class="m"><i>a</i>, <i>b</i>, <i>c</i></span></span>' +
+    '<span><span class="swatch dash" style="border-color:#f5c518;"></span>选中原子与最近邻</span>';
+  $("viewHint").innerHTML = "拖拽旋转 · 滚轮缩放 · 右键（或 Shift+拖拽）平移 · 单击原子选中 · 双击原子居中 · 方向键微调视角。";
+}
+
+/* ---------------- 晶格常数（画在三维视图左上角，变量用斜体） ----------------
+   返回 [文本, 是否斜体] 片段序列 */
+function latSegs(m) {
+  const mm = m.mat, S = m.st;
+  const segs = [["a", 1], [" = ", 0], [mm.a.toFixed(3) + " Å", 0]];
+  if (S.lat === "hex") {
+    segs.push(["　·　", 0], ["c", 1], [" = ", 0], [mm.c.toFixed(3) + " Å", 0],
+              ["　·　", 0], ["c", 1], ["/", 0], ["a", 1], [" = ", 0], [(mm.c / mm.a).toFixed(3), 0]);
+  }
+  return segs;
+}
+
+/* ---------------- 选中回调 ---------------- */
+/* 单击原子：仅高亮该原子及其最近邻（配位多面体由「配位多面体」开关决定），
+   悬停气泡会给出元素、分数坐标、最近邻数与距离 */
+function onPick(view, idx) {
+  view.sel = idx;
+  requestDraw();
+}
+function onPickCmp(view, idx) { onPick(view, idx); }
+/* ---------------- 鼠标 / 触摸交互 ---------------- */
+function pickAt(view, mx, my) {
+  let best = -1, bz = Infinity, bd = Infinity;
+  for (const p of view.proj) {
+    const d = Math.hypot(p.x - mx, p.y - my);
+    if (d <= Math.max(p.r, 6) + 2) {
+      if (d < bd - 0.5 || (d < bd + 0.5 && p.z < bz)) { best = p.i; bd = Math.min(bd, d); bz = p.z; }
+    }
+  }
+  return best;
+}
+function attach(view, syncPartner) {
+  const cv = view.cv;
+  const partner = syncPartner || null;
+  cv.addEventListener("mousedown", e => {
+    cv.focus();
+    view.dragging = true; view.moved = 0;
+    view.mode = (e.button === 2 || e.shiftKey) ? 2 : 1;
+    view.lx = e.clientX; view.ly = e.clientY;
+    e.preventDefault();
+  });
+  window.addEventListener("mouseup", () => { view.dragging = false; });
+  cv.addEventListener("mousemove", e => {
+    const r = cv.getBoundingClientRect();
+    const mx = e.clientX - r.left, my = e.clientY - r.top;
+    view.mouse = { x: mx, y: my };
+    if (view.dragging) {
+      const dx = e.clientX - view.lx, dy = e.clientY - view.ly;
+      view.lx = e.clientX; view.ly = e.clientY;
+      view.moved += Math.abs(dx) + Math.abs(dy);
+      if (view.mode === 2) { view.panX += dx; view.panY += dy; }
+      else {
+        view.yaw += dx * 0.008;
+        view.pitch = clamp(view.pitch + dy * 0.008, -85 * RAD, 85 * RAD);
+        if (DIR_LAB) { DIR_LAB = ""; syncDirButtons(); }   /* 手动旋转后视角不再是预设晶向 */
+      }
+      if (partner && CMP.sync) {
+        partner.yaw = view.yaw; partner.pitch = view.pitch;
+        partner.panX = view.panX; partner.panY = view.panY; partner.zoom = view.zoom;
+        partner.dirty = true;
+      }
+      view.dirty = true;
+      return;
+    }
+    const h = pickAt(view, mx, my);
+    if (h !== view.hover) { view.hover = h; view.dirty = true; }
+    else if (h >= 0) view.dirty = true;
+  });
+  cv.addEventListener("mouseleave", () => { view.mouse = null; view.hover = -1; view.dirty = true; });
+  cv.addEventListener("click", e => {
+    if (view.moved > 6) return;
+    if (!view.onPick) return;
+    const r = cv.getBoundingClientRect();
+    const idx = pickAt(view, e.clientX - r.left, e.clientY - r.top);
+    if (view.onPick) view.onPick(view, idx);
+  });
+  cv.addEventListener("dblclick", e => {
+    if (view.sel < 0 || !view.model) return;
+    view.target = view.model.atoms[view.sel].p.slice();
+    view.panX = 0; view.panY = 0;
+    view.dirty = true;
+  });
+  cv.addEventListener("contextmenu", e => e.preventDefault());
+  cv.addEventListener("wheel", e => {
+    e.preventDefault();
+    view.zoom = clamp(view.zoom * Math.exp(-e.deltaY * 0.0012), 0.35, 4);
+    if (partner && CMP.sync) { partner.zoom = view.zoom; partner.dirty = true; }
+    view.dirty = true;
+  }, { passive: false });
+  cv.addEventListener("keydown", e => {
+    const s = 4 * RAD;
+    if (e.key === "ArrowLeft") view.yaw -= s;
+    else if (e.key === "ArrowRight") view.yaw += s;
+    else if (e.key === "ArrowUp") view.pitch = clamp(view.pitch + s, -85 * RAD, 85 * RAD);
+    else if (e.key === "ArrowDown") view.pitch = clamp(view.pitch - s, -85 * RAD, 85 * RAD);
+    else if (e.key === "+" || e.key === "=") view.zoom = clamp(view.zoom * 1.1, 0.35, 4);
+    else if (e.key === "-" || e.key === "_") view.zoom = clamp(view.zoom / 1.1, 0.35, 4);
+    else return;
+    e.preventDefault();
+    if (DIR_LAB) { DIR_LAB = ""; syncDirButtons(); }
+    if (partner && CMP.sync) { partner.yaw = view.yaw; partner.pitch = view.pitch; partner.zoom = view.zoom; partner.dirty = true; }
+    view.dirty = true;
+  });
+  /* 触摸：单指旋转，双指缩放 */
+  let td = 0;
+  cv.addEventListener("touchstart", e => {
+    if (e.touches.length === 1) { view.dragging = true; view.mode = 1; view.lx = e.touches[0].clientX; view.ly = e.touches[0].clientY; view.moved = 0; }
+    else if (e.touches.length === 2) { view.dragging = false; td = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY); }
+    e.preventDefault();
+  }, { passive: false });
+  cv.addEventListener("touchmove", e => {
+    if (e.touches.length === 1 && view.dragging) {
+      const dx = e.touches[0].clientX - view.lx, dy = e.touches[0].clientY - view.ly;
+      view.lx = e.touches[0].clientX; view.ly = e.touches[0].clientY;
+      view.moved += Math.abs(dx) + Math.abs(dy);
+      view.yaw += dx * 0.008;
+      view.pitch = clamp(view.pitch + dy * 0.008, -85 * RAD, 85 * RAD);
+      if (DIR_LAB) { DIR_LAB = ""; syncDirButtons(); }
+      if (partner && CMP.sync) { partner.yaw = view.yaw; partner.pitch = view.pitch; partner.dirty = true; }
+      view.dirty = true;
+    } else if (e.touches.length === 2) {
+      const d = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+      if (td > 0) view.zoom = clamp(view.zoom * (d / td), 0.35, 4);
+      td = d;
+      if (partner && CMP.sync) { partner.zoom = view.zoom; partner.dirty = true; }
+      view.dirty = true;
+    }
+    e.preventDefault();
+  }, { passive: false });
+  cv.addEventListener("touchend", () => { view.dragging = false; td = 0; });
+}
+
+/* ---------------- 挑战任务 ---------------- */
+const CHALS = [
+  {
+    t: "挑战一 · 数一数配位数",
+    q: "选择「金刚石 / Si」，把超胞切到 2×2×2，旋转视图找到内部的一个 Si 原子，单击它。它周围有几个最近邻？键长是多少？",
+    a: "配位数 4，最近邻距离 <span class='m'>2.352 <span class='un'>Å</span></span>（= <span class='m'><span class='sqrt'><span class='rd'>√</span><span class='rdc'>3</span></span><span class='sl'>/</span>4 <span class='op'>×</span> 5.431 <span class='un'>Å</span></span>）。选中后四个最近邻被高亮，连成一个正四面体——它的六个棱角都是 109°28′。取消勾选「含共享原子」可见 Si 的 8 个净原子 = 1 个角点 + 3 个面心 + 4 个内部；重新勾选则是 18 个位置，角点与面心被相邻晶胞分摊（悬停气泡会标注「与邻胞共享」，8×1/8 + 6×1/2 + 4 = 8），但仍按实心球绘制。超胞的净原子数 = 晶胞净原子数 × <span class='m'><i>n</i><sup>3</sup></span>（NaCl 8n³、纤锌矿 4n³）；边界原子的部分最近邻落在相邻晶胞中，工具只画出落在晶胞内的键段、胞外一律不画，这正是周期性边界条件的直观体现。"
+  },
+  {
+    t: "挑战二 · 金刚石与闪锌矿差在哪",
+    q: "在金刚石（Si）与闪锌矿（GaAs）之间来回切换，观察化学键两端原子的颜色是否相同，以及晶胞框形状有没有变化。",
+    a: "原子位置完全相同、晶胞形状完全相同（都是面心立方 + 双原子基元），唯一区别是两个基元原子是否同种：Si–Si 同种 → 纯共价；Ga–As 异种 → 极性共价，且失去反演中心（空间群由 Fd-3m 降为 F-43m）。"
+  },
+  {
+    t: "挑战三 · 闪锌矿与纤锌矿的堆积",
+    q: "把视图 A 设为 GaAs、视图 B 设为 GaN（可用下方预设按钮），勾选「同步旋转」，对比两个晶胞框的形状与晶轴。",
+    a: "两者都是四面体配位，但堆积序列不同：闪锌矿沿 ⟨111⟩ 为 ABCABC（立方），纤锌矿沿 ⟨0001⟩ 为 ABAB（六方）。所以 GaAs 是立方晶系 <span class='m'><i>a</i> = 5.653 <span class='un'>Å</span></span>，GaN 是六方晶系 <span class='m'><i>a</i> = 3.189 <span class='un'>Å</span></span>、<span class='m'><i>c</i> = 5.185 <span class='un'>Å</span></span>。GaN 也可长成闪锌矿，取决于生长条件。"
+  },
+  {
+    t: "挑战四 · NaCl 的八面体配位",
+    q: "切到氯化钠（NaCl），悬停或单击任意一个 Na⁺（气泡会显示最近邻数，选中后自动画出配位多面体）。多面体是什么形状？键角是多少度？",
+    a: "八面体：最近邻 6 个 Cl⁻，相邻两个 Cl⁻ 的夹角为 90°（12 组），相对的三个方向为 180°，最近邻距离 <span class='m'><i>a</i><span class='sl'>/</span>2 = 2.820 <span class='un'>Å</span></span>。与四面体配位（4 个邻居、109°28′）形成鲜明对比，这是离子晶体无方向性键合的结果。"
+  },
+  {
+    t: "挑战五 · 晶向与晶面",
+    q: "切到 Si，依次点击 (100)、(110)、(111) 三个预设晶向，观察同一结构在三种方向上的投影有什么不同；再换成 GaN，看看六方晶系的 (0001)、(10-10)、(11-20)。",
+    a: "沿 ⟨100⟩ 看，原子呈正方形网格排列（这是硅片最常用的取向，Si 并不沿此面解理）；沿 ⟨110⟩ 看，出现矩形沟槽（Si 的 (110) 面原子密度最高，GaAs 等闪锌矿沿 {110} 解理）；沿 ⟨111⟩ 看，可见 ABCABC 密排层的六角对称——Si、Ge 等金刚石结构的解理面正是 {111}。六方的 (0001) 为 c 面（GaN 外延常用），俯视可见六角环；(10-10) 与 (11-20) 为非极性的 m 面与 a 面，可看到沿 c 方向的层状堆积。"
+  }
+];
+function buildChals() {
+  const grid = $("chalGrid");
+  grid.innerHTML = "";
+  CHALS.forEach((c, i) => {
+    const d = document.createElement("div");
+    d.className = "chal";
+    d.innerHTML =
+      '<div class="chal-head"><b>' + c.t + '</b><span class="chev">▶</span></div>' +
+      '<div class="chal-body"><div class="q">' + c.q + '</div>' +
+      '<div class="btn-row"><button class="primary">显示答案</button></div>' +
+      '<div class="ans">' + c.a + '</div></div>';
+    d.querySelector(".chal-head").onclick = () => d.classList.toggle("open");
+    d.querySelector(".btn-row button").onclick = () => {
+      const ans = d.querySelector(".ans");
+      ans.classList.toggle("show");
+    };
+    grid.appendChild(d);
+  });
+}
+
+/* ---------------- 下拉框（对比视图） ---------------- */
+function buildSelects() {
+  [["selA", "A"], ["selB", "B"]].forEach(pair => {
+    const sel = $(pair[0]);
+    sel.innerHTML = "";
+    Object.keys(STRUCTS).forEach(k => {
+      const og = document.createElement("optgroup");
+      og.label = STRUCTS[k].name;
+      STRUCTS[k].mats.forEach(mk => {
+        const o = document.createElement("option");
+        o.value = mk; o.textContent = MATS[mk].lab;
+        og.appendChild(o);
+      });
+      sel.appendChild(og);
+    });
+    sel.value = CMP[pair[1]];
+    sel.onchange = () => { CMP[pair[1]] = sel.value; rebuildAll(); };
+  });
+}
+
+/* ---------------- 标签页 ---------------- */
+function setTab(t) {
+  TAB = t;
+  Array.prototype.forEach.call($("viewTabs").children, b => {
+    b.className = b.dataset.view === t ? "active" : "";
+  });
+  $("singleArea").style.display = t === "single" ? "" : "none";
+  $("cmpArea").style.display = t === "compare" ? "" : "none";
+  if (t === "compare") { viewA.resize(); viewB.resize(); }
+  else mainView.resize();
+  requestDraw();
+}
+
+/* ---------------- 初始化 ---------------- */
+function init() {
+  buildButtons();
+  buildSelects();
+  buildChals();
+  attach(mainView, null);
+  attach(viewA, viewB);
+  attach(viewB, viewA);
+
+  $("chkBond").onchange = e => { OPT.bond = e.target.checked; requestDraw(); };
+  $("chkCell").onchange = e => { OPT.cell = e.target.checked; requestDraw(); };
+  $("chkAxis").onchange = e => { OPT.axis = e.target.checked; requestDraw(); };
+  $("chkLabel").onchange = e => { OPT.label = e.target.checked; requestDraw(); };
+  $("chkHexP").onchange = e => { OPT.hexP = e.target.checked; requestDraw(); };
+  $("chkShare").onchange = e => { OPT.share = e.target.checked; rebuildAll(); };
+  $("syncRot").onchange = e => { CMP.sync = e.target.checked; };
+  $("resetBtn").onclick = () => {
+    for (const v of VIEWS) {
+      v.yaw = -35 * RAD; v.pitch = 22 * RAD; v.zoom = 1; v.panX = 0; v.panY = 0; v.target = null; v.dirty = true;
+    }
+    DIR_LAB = ""; syncDirButtons();
+  };
+  $("clearSelBtn").onclick = () => {
+    for (const v of VIEWS) { v.sel = -1; v.dirty = true; }
+  };
+  Array.prototype.forEach.call($("viewTabs").children, b => {
+    b.onclick = () => setTab(b.dataset.view);
+  });
+
+  for (const v of VIEWS) v.resize();
+  rebuildAll();
+  setTab("single");
+  window.addEventListener("resize", () => { for (const v of VIEWS) v.resize(); });
+
+  (function loop() {
+    for (const v of VIEWS) {
+      if (v.dirty && v.model) { render(v); v.dirty = false; }
+    }
+    requestAnimationFrame(loop);
+  })();
+}
+if (typeof window !== "undefined" && window.document) init();
+/* i18n 启动必须在 init() 之后：setLang() 会重跑 syncInputs()/render()，
+   放到 init() 之前会在 fitAll() 之前触发绘制，一旦抛异常整个 init() 就跑不到（挑战与画布会空）。 */
+(function () {
+  try {
+    i18nWatch();
+    ORIG_TITLE = ORIG_TITLE || document.title;
+    var btn = document.getElementById("langBtn");
+    if (btn) btn.onclick = function () { setLang(LANG === "en" ? "zh" : "en"); };
+    if (LANG === "en") setLang("en"); else { document.title = ORIG_TITLE; i18nWalk(document.body); }
+  } catch (e) { }
+})();
+</script>
+<div class="site-foot">本工具是 EIT-SP（半导体物理交互式教学工具箱）的一部分（武汉大学物理学院《半导体物理》智慧课程），以 MIT 协议开源，可自由使用与二次开发；转载请保留出处。反馈意见 <a href="mailto:doctorwanghao@qq.com">doctorwanghao@qq.com</a></div>
+</body>
+</html>

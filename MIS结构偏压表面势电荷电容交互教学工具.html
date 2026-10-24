@@ -1,0 +1,2862 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<!-- SPDX-License-Identifier: MIT -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MIS结构偏压 表面势 电荷 电容交互教学工具</title>
+<style>
+
+  :root {
+    --bg: #f7f9fb;
+    --panel: #ffffff;
+    --border: #dde4ec;
+    --text: #2c3e50;
+    --text-sub: #6b7a8c;
+    --blue: #1976d2;
+    --blue-light: #e3f0fb;
+    --orange: #ef8c1a;
+    --red: #d94a3d;
+    --teal: #0f9b8e;
+    --green: #2e9e5b;
+    --purple: #7b3fa0;
+    --gray-ref: #9aa5b1;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Microsoft YaHei", "PingFang SC", "Segoe UI", sans-serif;
+    background: var(--bg); color: var(--text); padding: 14px;
+  }
+  header { position: relative; display: flex; align-items: baseline; justify-content: center; gap: 14px; flex-wrap: wrap; text-align: center; margin-bottom: 2px; }
+  .lang-btn { position: absolute; right: 0; top: 0; border: 1px solid var(--border); background: #fff;
+    color: var(--text-sub); padding: 3px 10px; border-radius: 7px; cursor: pointer; font-size: 12px; font-weight: 600; }
+  .lang-btn:hover { border-color: var(--blue); color: var(--blue); }
+  header h1 { font-size: 20px; }
+  header .formula { font-size: 14.5px; color: var(--text-sub); }
+  .sub-note { text-align: center; font-size: 12.5px; color: var(--text-sub); margin-bottom: 12px; line-height: 1.75; }
+  .sub-note b { color: var(--blue); }
+
+  .layout { display: flex; gap: 14px; align-items: flex-start; max-width: 1500px; margin: 0 auto; }
+  .viz { flex: 0 0 64%; min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+  .side { flex: 1; min-width: 310px; display: flex; flex-direction: column; gap: 12px; }
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; }
+  .sec-title { font-size: 13.5px; font-weight: 700; margin: 2px 0 6px; }
+  /* 模块编号徽标：只有教学内容模块才带编号；控制面板等辅助面板不是模块，不加 */
+  .sec-title .mtag {
+    display: inline-block; background: var(--blue); color: #fff;
+    font-size: 11px; font-weight: 700; padding: 1.5px 7px;
+    border-radius: 5px; margin-right: 6px; vertical-align: 1.5px; letter-spacing: .3px;
+  }
+  canvas { display: block; width: 100%; border-radius: 6px; touch-action: none; }
+  canvas:focus { outline: 2px solid rgba(25,118,210,.45); outline-offset: 1px; }
+  .chart-wrap { position: relative; }
+  .hint { font-size: 12px; color: var(--text-sub); margin-top: 6px; line-height: 1.6; }
+  .ctrl { margin-bottom: 10px; }
+  .ctrl:last-child { margin-bottom: 0; }
+  .ctrl-head { display: flex; justify-content: space-between; align-items: baseline; font-size: 13px; font-weight: 600; margin-bottom: 2px; gap: 8px; }
+  .ctrl-head .val { color: var(--blue); font-variant-numeric: tabular-nums; font-weight: 700; white-space: nowrap; }
+  .ctrl input[type=range] { width: 100%; accent-color: var(--blue); }
+  .ctrl .sub { font-size: 11.5px; color: var(--text-sub); margin-top: 1px; line-height: 1.5; }
+  .btn-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+  .btn-row button {
+    border: 1px solid var(--border); background: #fff; color: var(--text);
+    padding: 5px 11px; border-radius: 7px; cursor: pointer; font-size: 12.5px;
+  }
+  .btn-row button:hover { border-color: var(--blue); color: var(--blue); }
+  .btn-row.tight button { padding: 4px 9px; font-size: 12px; }
+  .btn-row button.sel { background: var(--blue); border-color: var(--blue); color: #fff; font-weight: 600; }
+  .btn-row button.primary { background: var(--blue-light); border-color: var(--blue); color: var(--blue); font-weight: 600; }
+  .mode-switch { display: flex; gap: 6px; }
+  .mode-switch button {
+    flex: 1; border: 1px solid var(--border); background: #fff; color: var(--text-sub);
+    padding: 6px 10px; border-radius: 8px; cursor: pointer; font-size: 12.5px; font-weight: 600;
+  }
+  .mode-switch button.active { background: var(--blue); border-color: var(--blue); color: #fff; }
+  .chk-row { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12.5px; color: var(--text-sub); margin-top: 4px; }
+  .chk-row label { display: inline-flex; align-items: center; gap: 5px; cursor: pointer; }
+  .chk-row input[type=checkbox] { accent-color: var(--blue); }
+  .legend { display: flex; gap: 6px 14px; flex-wrap: wrap; align-items: center; font-size: 12px; color: var(--text-sub); margin-top: 6px; }
+  .swatch { display: inline-block; vertical-align: middle; width: 20px; height: 0; border-top: 3px solid currentColor; border-radius: 2px; margin-right: 6px; }
+  .swatch.dash { border-top-style: dashed; }
+  .swatch.dot { width: 11px; height: 11px; border: none; border-radius: 50%; }
+  .swatch.sq { width: 11px; height: 11px; border: none; border-radius: 3px; }
+  /* 一幅画布含多行「分解图」时，图例按行分组，避免同色被张冠李戴 */
+  .legend .lg-grp { display: flex; gap: 6px 14px; flex-wrap: wrap; align-items: center; width: 100%; }
+  .legend .lg-grp + .lg-grp { margin-top: 4px; }
+  .legend .lg-tag {
+    flex: 0 0 auto; background: #eef4fb; color: var(--blue); border: 1px solid #cfe2f5;
+    border-radius: 5px; font-size: 11px; font-weight: 700; padding: 1px 7px;
+  }
+  /* ---- 图例条目：色块 + 文字 + 线型注 ---- */
+  .legend .lg { display: inline-flex; align-items: center; gap: 5px; }
+  .legend .lg > i { display: inline-block; width: 18px; height: 3px; border-radius: 2px; flex: 0 0 auto; }
+  .legend .lg > em { font-style: normal; color: #adb7c2; font-size: 11px; }
+  .legend .lg.off { opacity: .36; }
+  .legend .lg.cur { font-weight: 700; color: var(--text); }
+  .legend .lg[data-k] { cursor: pointer; }
+  /* ---- LaTeX 风格数学排版（纯 CSS，无外部库） ---- */
+  .m { font-family: "Cambria Math", "STIX Two Math", "Latin Modern Math", "Times New Roman", Times, serif;
+       font-size: 1.05em; font-style: normal; white-space: nowrap; letter-spacing: .01em; }
+  .m i, .m var { font-style: italic; }
+  .m .rm { font-style: normal; }
+  .m sub, .m sup { font-size: .70em; font-style: normal; line-height: 1; }
+  .m sub { vertical-align: -.28em; }
+  .m sup { vertical-align: .50em; }
+.m .m { font-size: 1em; }   /* 嵌套容器（TEXH 下标转换叠加）不再放大字号 */
+  .m sub i, .m sup i { font-style: italic; }
+  .m .op { font-style: normal; padding: 0 .24em; }
+  .m .sl { font-style: normal; padding: 0 .05em; }
+  .m .un { font-style: normal; padding-left: .16em; }
+  .frac { display: inline-block; vertical-align: -0.52em; text-align: center; margin: 0 .16em; font-size: .86em; line-height: 1.18; }
+  .frac > .num { display: block; padding: 0 .34em; border-bottom: 1px solid currentColor; }
+  .frac > .den { display: block; padding: 0 .34em; }
+  /* 根号：√ 符号 + 一条压住被开方式的横线（纯 CSS 模拟 \sqrt{}，不用任何外部库） */
+  .sqrt { display: inline-flex; align-items: flex-start; vertical-align: baseline; margin: 0 .08em; }
+  .sqrt > .rd { font-size: 1.20em; line-height: 1; padding-right: .04em; }
+  .sqrt > .rdc { border-top: 1px solid currentColor; padding: .12em .12em 0 .14em; margin-top: .16em; }
+  /* ---- 读数区 ---- */
+  .kv { display: grid; grid-template-columns: 1fr; gap: 2px 22px; font-size: 12.5px; }
+  .kv .row { display: flex; justify-content: space-between; gap: 8px; border-bottom: 1px dotted #eef2f7; padding: 2px 0; }
+  .kv .k { color: var(--text-sub); white-space: nowrap; }
+  /* 英文模式下键名更长，允许换行，避免读数行被撑出横向滚动（中文模式不受影响） */
+  html[lang="en"] .kv .k { white-space: normal; }
+  .kv .v { font-variant-numeric: tabular-nums; text-align: right; }
+  .kv .v b { color: var(--blue); }
+  .kv .hd { grid-column: 1 / -1; font-weight: 700; color: var(--text); font-size: 12px; margin: 6px 0 2px; }
+  .kv .hd:first-child { margin-top: 0; }
+  /* 折叠组件（.fold）：独立类名，不复用 .chal-head/.chev，避免污染挑战区回归计数 */
+  .fold { margin-top: 7px; border-top: 1px dotted var(--border); padding-top: 5px; }
+  .fold-head { display: flex; align-items: center; gap: 6px; cursor: pointer;
+    font-size: 12px; font-weight: 600; color: var(--text-sub); user-select: none; }
+  .fold-head:hover { color: var(--blue); }
+  .fold-head .chev { font-size: 11px; transition: transform .15s; display: inline-block; }
+  .fold.open .fold-head .chev { transform: rotate(90deg); }
+  .fold-body { display: none; margin-top: 4px; }
+  .fold.open .fold-body { display: block; }
+  .kv .v .nt2 { color: var(--text-sub); font-size: 11px; margin-left: 3px; }
+  .unit-note { font-size: 11.5px; color: var(--text-sub); line-height: 1.55; margin-top: 6px; }
+  /* ---- 引导探究 ---- */
+  .chal-wrap { max-width: 1500px; margin: 14px auto 0; }
+  .chal-bar { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+  .chal-bar b { font-size: 14.5px; }
+  .chal-bar span { font-size: 12px; color: var(--text-sub); }
+  .chal-grid { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+  .chal { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 8px 12px; }
+  .chal-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; cursor: pointer; }
+  .chal-head b { font-size: 13.5px; }
+  .chal-head .chev { color: var(--text-sub); font-size: 12px; transition: transform .15s; display: inline-block; }
+  .chal.open .chal-head .chev { transform: rotate(90deg); }
+  .chal.open { border-color: var(--blue); }
+  .chal-body { display: none; margin-top: 6px; font-size: 12.5px; color: var(--text-sub); line-height: 1.75; }
+  .chal.open .chal-body { display: block; }
+  .chal-body .ans { display: none; margin-top: 6px; padding: 7px 10px; background: var(--blue-light); border-radius: 6px; color: var(--text); }
+  .chal-body .ans.show { display: block; }
+  .chal-body .ans b { color: var(--blue); }
+  .chal-body .btn-row { margin-top: 8px; }
+  @media (max-width: 1100px) {
+    .layout { flex-direction: column; }
+    .viz { flex: 1 1 auto; width: 100%; }
+  }
+  /* ---- 课程页脚 ---- */
+  .site-foot { max-width: 1500px; margin: 18px auto 0; padding: 12px 16px 24px;
+    border-top: 1px solid var(--border); color: var(--text-sub);
+    font-size: 12.5px; line-height: 1.8; text-align: center; }
+  .site-foot a { color: var(--blue, #1976d2); text-decoration: none; }
+  .site-foot a:hover { text-decoration: underline; }
+
+  .grp { border-top: 1px dotted #e6ecf3; padding-top: 8px; margin-top: 8px; }
+  .grp:first-child { border-top: 0; padding-top: 0; margin-top: 0; }
+  .sqrt > .rdc, .sqrt .rdc { display: inline-block; position: static; font-size: 1em;
+             border-top: .055em solid currentColor; padding: .06em .12em 0 .10em; margin: 0; line-height: 1; }
+
+  /* 公式排版：分式 / 根式 —— 全站统一为「回旋共振 v06」写法（置于末尾，覆盖本文件早期变体） */
+  .frac { display: inline-block; vertical-align: -0.52em; text-align: center; font-size: .78em; margin: 0 .12em; }
+  .frac > .num, .frac .num { display: block; padding: 0 .22em; border-bottom: .055em solid currentColor; line-height: inherit; }
+  .frac > .den, .frac .den { display: block; padding: 0 .22em; line-height: inherit; }
+  .sqrt { display: inline-block; white-space: nowrap; vertical-align: baseline; margin: 0; font-size: 1em; }
+  .sqrt > .rd, .sqrt .rd { display: inline-block; position: static; font-size: 1em; line-height: inherit; padding: 0 .02em 0 0; margin: 0; }
+  .sqrt > .rdc, .sqrt .rdc { display: inline-block; position: static; font-size: 1em;
+             border-top: .055em solid currentColor; padding: .06em .12em 0 .10em; margin: 0; line-height: 1; }
+  .sqrt .rdc:has(sup) { padding-top: .18em; }
+</style>
+</head>
+<body>
+
+<header>
+  <button id="langBtn" class="lang-btn" data-noi18n title="中文 / English">EN</button>
+  <h1>MIS结构偏压 表面势 电荷 电容交互教学工具</h1>
+  <div class="formula"><span class="m"><i>V</i><sub>G</sub><span class="op">=</span><i>ψ</i><sub>s</sub><span class="op">+</span><i>V</i><sub>ox</sub></span>（理想 MIS：<span class="m"><i>V</i><sub>FB</sub><span class="op">=</span>0</span>）　·　<span class="m"><i>V</i><sub>ox</sub><span class="op">=</span><span class="op">−</span><i>Q</i><sub>s</sub><span class="sl">/</span><i>C</i><sub>ox</sub></span>　·　<span class="m"><i>Q</i><sub>s</sub><span class="op">=</span><span class="op">∓</span></span><span class="m"><span class='sqrt'><span class='rd'>√</span><span class='rdc'>2<i>ε</i><sub>s</sub><i>kT</i><span class="op">·</span><i>F</i>(<i>u</i>)</span></span></span>　·　<span class="m"><i>ψ</i><sub>s</sub><span class="op">=</span>2<i>φ</i><sub>F</sub></span>　·　<span class="m"><i>C</i><span class="op">=</span><i>C</i><sub>ox</sub><i>C</i><sub>s</sub><span class="sl">/</span>(<i>C</i><sub>ox</sub><span class="op">+</span><i>C</i><sub>s</sub>)</span></div>
+</header>
+<div class="sub-note">
+  三层夹心：<b>金属</b> — <b>绝缘层</b> — <b>半导体</b>。栅压 <span class="m"><i>V</i><sub>G</sub></span> 加上去之后，一部分降在氧化层上（<span class="m"><i>V</i><sub>ox</sub></span>），一部分变成半导体的<b>表面势</b> <span class="m"><i>ψ</i><sub>s</sub></span>；两者的分配由<b>电荷平衡</b> <span class="m"><i>Q</i><sub>s</sub><span class="op">=</span><span class="op">−</span><i>C</i><sub>ox</sub>(<i>V</i><sub>G</sub><span class="op">−</span><i>ψ</i><sub>s</sub>)</span> 与<b>泊松方程</b> <span class="m"><i>Q</i><sub>s</sub><span class="op">=</span><span class="op">∓</span><span class='sqrt'><span class='rd'>√</span><span class='rdc'>2<i>ε</i><sub>s</sub><i>kT</i><span class="op">·</span><i>F</i>(<i>u</i>)</span></span></span> 联立自洽决定。栅压往一个方向走，多子被吸到表面 ⇒ <b>积累</b>；往另一个方向走，多子被赶走 ⇒ <b>耗尽</b>，再走下去<b>表面少子浓度反超体内多子浓度</b>（p 型看表面电子 vs 体内空穴、n 型反过来）⇒ <b>反型</b>，判据就是 <span class="m"><i>ψ</i><sub>s</sub><span class="op">=</span>2<i>φ</i><sub>F</sub></span>。最后把这条曲线测出来就是 <b>C–V</b>：反型层电荷<b>跟不跟得上</b>交流信号，决定了高频与低频两条曲线在强反型区会不会分道扬镳。
+</div>
+
+<div class="layout">
+  <div class="viz">
+    <div class="card">
+      <div class="sec-title"><span class="mtag">模块一</span>四个视图<b>共用同一条横轴</b>：截面（有什么电荷、各有多少）／载流子浓度（<span class="m"><i>p</i></span>、<span class="m"><i>n</i></span> 各有几个）／净电荷密度（净剩多少）／能带（弯了多少）　<b>（鼠标移到任一行，读出该深度的数值）</b></div>
+      <div class="chart-wrap"><canvas id="sec" data-h="652" tabindex="0"></canvas></div>
+      <div class="legend" id="legSec"></div>
+    </div>
+
+    <div class="card">
+      <div class="sec-title"><span class="mtag">模块二</span>C–V 特性曲线：低频 vs 高频</div>
+      <div class="chart-wrap"><canvas id="cv" data-h="280" tabindex="0"></canvas></div>
+      <div class="legend" id="legCv"></div>
+      <div class="hint">纵轴是 <span class="m"><i>C</i><span class="sl">/</span><i>C</i><sub>ox</sub></span>。三条规律：<b>积累区</b>电容就是氧化层电容 <span class="m"><i>C</i><sub>ox</sub></span>（电荷直接堆在表面，半导体侧没有厚度）；<b>耗尽区</b>电容是 <span class="m"><i>C</i><sub>ox</sub></span> 与耗尽层电容 <span class="m"><i>ε</i><sub>s</sub><span class="sl">/</span><i>W</i></span> <b>串联</b>，随 <span class="m"><i>W</i></span> 变宽而下降；<b>强反型区</b>，<span class="m"><i>W</i></span> 饱和在 <span class="m"><i>W</i><sub>max</sub></span>，于是高频曲线停在那条 <span class="m"><i>C</i><sub>min</sub></span> 水平线上 —— 因为反型层里的少子要靠<b>产生–复合</b>慢慢补充，<b>跟不上</b>高频信号；低频下它们跟得上，电荷又直接堆在表面，电容便重新回到 <span class="m"><i>C</i><sub>ox</sub></span>。</div>
+    </div>
+  </div>
+
+  <div class="side">
+    <div class="card">
+      <div class="sec-title">控制面板</div>
+
+      <div class="ctrl grp">
+        <div class="ctrl-head"><span>情境预设</span><span class="val" id="preVal">强反型</span></div>
+        <div class="btn-row tight" id="preBtns"></div>
+        <div class="sub" id="preNote"></div>
+      </div>
+
+      <div class="ctrl grp">
+        <div class="ctrl-head"><span>掺杂类型</span><span class="val" id="dopVal">p 型</span></div>
+        <div class="btn-row tight" id="dopBtns"></div>
+        <div class="sub">半导体固定为 <b>Si</b>（<span class="m"><i>E</i><sub>g</sub>(300 K)<span class="op">≈</span>1.12<span class="un">eV</span></span>，<span class="m"><i>ε</i><sub>r</sub><span class="op">=</span>11.7</span>，<span class="m"><i>χ</i><span class="op">=</span>4.05<span class="un">eV</span></span>，<span class="m"><i>n</i><sub>i</sub><span class="op">≈</span>6.1×10<sup>9</sup></span> <span class="m"><span class="un">cm<sup>−3</sup></span></span>（教材常引用的 <span class="m">1.0×10<sup>10</sup></span> 是取整近似；本工具全篇用按 <span class="m"><i>E</i><sub>g</sub></span>、<span class="m"><i>N</i><sub>c</sub></span>、<span class="m"><i>N</i><sub>v</sub></span> 算出的同一个值），栅介质固定为 <b>SiO<sub>2</sub></b>（<span class="m"><i>ε</i></span><sub>r</sub> = 3.9，<span class="m"><i>d</i><sub>ox</sub></span> = 20 nm），温度固定 <b>300 K</b>，掺杂浓度固定 <b><span class="m">1.0×10<sup>16</sup></span> <span class="m"><span class="un">cm<sup>−3</sup></span></span></b>（典型的 MOS 衬底），并按<b>理想 MIS</b> 处理（<span class="m"><i>Φ</i><sub>ms</sub><span class="op">=</span>0</span>、无氧化层电荷 ⇒ <span class="m"><i>V</i><sub>FB</sub><span class="op">=</span>0</span>）。可调的只有<b>掺杂类型</b>与<b>栅压</b>。</div>
+        <div class="ctrl-head" style="margin-top:6px;"><span>掺杂浓度 <span class="m"><i>N</i><sub>A</sub><span class="op">/</span><i>N</i><sub>D</sub></span>（固定）</span><span class="val" id="ndVal"><span class="m">1.0×10<sup>16</sup></span> <span class="m"><span class="un">cm<sup>−3</sup></span></span></span></div>
+        <div class="sub" id="ndSub"></div>
+      </div>
+
+      <div class="ctrl grp">
+        <div class="ctrl-head"><span>栅压 <span class="m"><i>V</i><sub>G</sub></span>（核心旋钮）</span><span class="val" id="vgVal">0.00 V</span></div>
+        <input type="range" id="vgSlider" min="0" max="1000" step="1" value="500">
+        <div class="sub" id="vgSub"></div>
+      </div>
+
+      <div class="ctrl grp">
+        <div class="btn-row tight">
+          <button id="btnPlay" class="primary">▶ 自动扫描 <span class="m"><i>V</i><sub>G</sub></span></button>
+          <button id="btnReset">⟲ 重置</button>
+        </div>
+        <div class="ctrl-head" style="margin-top:6px;"><span>扫描速度</span><span class="val" id="spVal">1.00×</span></div>
+        <input type="range" id="spSlider" min="20" max="400" step="5" value="100">
+      </div>
+
+      <div class="ctrl grp">
+        <div class="ctrl-head"><span>显示项目</span></div>
+        <div class="chk-row">
+          <label><input type="checkbox" id="ckCharge" checked> 电荷符号</label>
+          <label><input type="checkbox" id="ckFermi" checked> 能级 <span class="m"><i>E</i><sub>F</sub></span> 与 <span class="m"><i>E</i><sub>i</sub></span></label>
+          <label><input type="checkbox" id="ckBend" checked> 表面势 <span class="m"><i>ψ</i><sub>s</sub></span> 标注</label>
+          <label><input type="checkbox" id="ckDep" checked> 耗尽层 <span class="m"><i>W</i></span> 标注</label>
+          <label><input type="checkbox" id="ckReg" checked> C–V 分区</label>
+          <label><input type="checkbox" id="ckLF" checked> 低频 C–V</label>
+          <label><input type="checkbox" id="ckHF" checked> 高频 C–V</label>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="card">
+      <div class="sec-title">读数面板</div>
+      <div class="kv" id="readout"></div>
+      <div class="fold" id="foldRo">
+        <div class="fold-head"><span class="chev">▶</span><span>更多读数（结构参数、电荷分解与对账、表面载流子）</span></div>
+        <div class="fold-body">
+          <div class="kv" id="readoutMore"></div>
+        </div>
+      </div>
+      <div class="unit-note">表面势由 <span class="m"><i>V</i><sub>G</sub><span class="op">−</span><i>V</i><sub>FB</sub><span class="op">=</span><i>ψ</i><sub>s</sub><span class="op">−</span><i>Q</i><sub>s</sub><span class="sl">/</span><i>C</i><sub>ox</sub></span> 与<b>泊松方程精确解</b> <span class="m"><i>Q</i><sub>s</sub><span class="op">=</span><span class="op">−</span>sgn(<i>u</i>)<span class='sqrt'><span class='rd'>√</span><span class='rdc'>2<i>ε</i><sub>s</sub><i>kT</i><span class="op">·</span><i>F</i>(<i>u</i>)</span></span></span>、<span class="m"><i>F</i>(<i>u</i>)<span class="op">=</span><i>p</i><sub>0</sub>(<span class="rm">e</span><sup><span class="op">−</span><i>u</i></sup><span class="op">+</span><i>u</i><span class="op">−</span>1)<span class="op">+</span><i>n</i><sub>0</sub>(<span class="rm">e</span><sup><i>u</i></sup><span class="op">−</span><i>u</i><span class="op">−</span>1)</span> 联立二分求解（<b>不做耗尽近似</b>，积累与反型同样成立；<span class="m">|<i>u</i>|<span class="op">&lt;</span>10<sup><span class="op">−</span>3</sup></span> 时改用级数展开避免灾难性相消）。耗尽层宽度 <span class="m"><i>W</i><span class="op">=</span>min(<span class='sqrt'><span class='rd'>√</span><span class='rdc'>2<i>ε</i><sub>s</sub>|<i>ψ</i><sub>s</sub>|<span class="sl">/</span><i>qN</i></span></span>, <i>W</i><sub>max</sub>)</span>，<span class="m"><i>W</i><sub>max</sub><span class="op">=</span><span class='sqrt'><span class='rd'>√</span><span class='rdc'>4<i>ε</i><sub>s</sub>|<i>φ</i><sub>F</sub>|<span class="sl">/</span><i>qN</i></span></span></span>。掺杂按<b>完全电离</b>处理。本工具取<b>理想 MIS</b>：<span class="m"><i>Φ</i><sub>ms</sub><span class="op">=</span>0</span>、氧化层内无电荷 ⇒ <span class="m"><i>V</i><sub>FB</sub><span class="op">=</span>0</span>，栅压全部在<span class="m"><i>ψ</i><sub>s</sub></span> 与 <span class="m"><i>V</i><sub>ox</sub></span> 之间分配。</div>
+    </div>
+  </div>
+</div>
+
+<div class="chal-wrap">
+  <div class="card">
+    <div class="chal-bar">
+      <b>引导探究（点击展开，先自己试一试再看答案）</b>
+      <span>挑战任务</span>
+    </div>
+    <div class="chal-grid" id="chalGrid"></div>
+  </div>
+</div>
+
+<div class="site-foot">本工具是 EIT-SP（半导体物理交互式教学工具箱）的一部分（武汉大学物理学院《半导体物理》智慧课程），以 MIT 协议开源，可自由使用与二次开发；转载请保留出处。反馈意见 <a href="mailto:doctorwanghao@qq.com">doctorwanghao@qq.com</a></div>
+
+<script>
+/* ==================================================================
+   i18n（C1 单文件双语：物理代码仍然只有一份）
+   LANG 取值优先级：URL ?lang=en / ?lang=zh  >  localStorage('opl_lang')  >  默认中文。
+   不做 location 跳转——保住「单文件拷走也能用」。
+   三个注入点，**业务字符串一个都不改**：
+     ① partsOf()   画布 token：带 i/sub/sup/un 标记的是物理量、下标与单位，跳过
+     ② fillText/measureText 原型挂钩：兜住直接写进画布的中文串
+     ③ DOM 文本节点：静态 HTML 与 JS 写进来的 innerHTML，用 MutationObserver 兜住新增节点
+   T() 先查整句词典，未命中再按「最长优先」做短语替换，因此拼接串也能翻。
+   漏翻会被记进 window.__MISS，可导出核对。 */
+var LANG = (function () {
+  var m = /[?&]lang=([a-zA-Z]+)/.exec(location.search);
+  var q = m ? m[1].toLowerCase() : "";
+  if (q === "en" || q === "zh") return q;
+  var s = "";
+  try { s = localStorage.getItem("opl_lang") || ""; } catch (e) { }
+  return (s === "en" || s === "zh") ? s : "zh";
+})();
+var ORIG_TITLE = document.title;
+var __MISS = [];
+try { window.__MISS = __MISS; } catch (e) { }
+function noteMiss(s) { if (__MISS.indexOf(s) < 0) __MISS.push(s); }
+function TSoft(s) {
+  if (!T._K) T._K = Object.keys(I18N).sort(function (a, b) { return b.length - a.length; });
+  var out = s, i, k, orig = s;
+  /* 两遍：第一遍只吃长度 ≥ 2 的短语，第二遍才让单字 key 上场。
+     否则「下」会先被翻掉，把「留不下净电荷」「1 T 下输出」这类整句切碎。
+     ⚠️ 第二遍仍有硬门槛：单字 key 只在「传进来的整串恰好等于这一个字」时才生效
+     （弱门槛 `pass === 0` 会被基座里的 "个"→bound states、"上"→upper、"高"→high
+       这类污染词条钻空子，把「耗尽区几乎全在…」切得七零八落。2026-10-21 踩过。） */
+  for (var pass = 0; pass < 2; pass++) {
+    for (i = 0; i < T._K.length; i++) {
+      k = T._K[i];
+      if (k.length < 2 && (pass === 0 || orig !== k)) continue;
+      if (out.indexOf(k) < 0) continue;
+      /* 中文片段之间没有空格：前一片段已翻成英文时，本片段英文直连进去会粘连
+         （「更深」「或」「更浅」逐段替换成 deeper、or、shallower 会拼出 deeperor），
+         所以替换时看上下文：key 以中文开头、前一字符已是英文 ⇒ 前面补一个空格。 */
+      out = out.replace(new RegExp(k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "g"), function (m, off, str) {
+        var v = I18N[k];
+        var pre = off > 0 ? str.charAt(off - 1) : "";
+        if (/[A-Za-z0-9]/.test(pre) && /^[A-Za-z0-9(]/.test(v) && /[\u3400-\u9FFF]/.test(k.charAt(0))) v = " " + v;
+        return v;
+      });
+    }
+  }
+  return out;
+}
+/* 同一句被 DOM 切成好几个文本节点时，首尾空格会随机落在 data 里；
+   所以除了「整句命中」，再试一次「去空格后命中」并原样补回首尾空白。 */
+function trimMap() {
+  if (T._TM) return T._TM;
+  var m = {};
+  for (var k in I18N) if (Object.prototype.hasOwnProperty.call(I18N, k)) {
+    var t = k.replace(/^\s+|\s+$/g, "");
+    if (t && m[t] === undefined) m[t] = I18N[k];
+  }
+  T._TM = m;
+  return m;
+}
+/* eslint-disable no-use-before-define */
+function T(s) {
+  if (LANG !== "en" || typeof s !== "string" || !s) return s;
+  if (!/[一-鿿]/.test(s)) return s;
+  if (Object.prototype.hasOwnProperty.call(I18N, s)) return I18N[s];
+  var tm = trimMap(), core = s.replace(/^\s+|\s+$/g, "");
+  if (core && tm[core] !== undefined) {
+    var lead = s.slice(0, s.length - s.replace(/^\s+/, "").length);
+    var tail = s.slice(s.replace(/\s+$/, "").length);
+    return lead + tm[core] + tail;
+  }
+  var v = TSoft(s);
+  if (v === s) noteMiss(s);
+  return v;
+}
+var I18N = {
+  /* ---- 词典：中文原文 → 英文。key 禁含运行时数字（换个参数就漏），数字前后要拆开 ---- */
+  "模块一": "Module 1",
+  "控制面板": "Control Panel",
+  "费米能级 ": "Fermi level ",
+  "挑战任务": "Challenges",
+  "为什么 ": "Why is ",
+  "？": "?",
+  "，": ", ",
+  "、": ", ",
+  "：": ": ",
+  "；": "; ",
+  "（": " (",
+  "）": ")",
+  "本工具是 EIT-SP（半导体物理交互式教学工具箱）的一部分（武汉大学物理学院《半导体物理》智慧课程），以 MIT 协议开源，可自由使用与二次开发；转载请保留出处。": "This tool is part of EIT-SP, the Educational Interactive Toolkit for Semiconductor Physics (School of Physics and Technology, Wuhan University). Released under the MIT licence: free to use, modify and redistribute, including commercially. Please keep this attribution.",
+  "反馈意见": " Feedback",
+  "材料": "Material",
+  "读数面板": "Readout Panel",
+  "空": "empty",
+  "能量": "energy",
+  "看答案": "Show answer",
+  "条）": " are drawn)",
+  "从 ": " from ",
+  "），": "), and ",
+  "固定 ": "Fix ",
+  "）；": "); ",
+  "）：": "): ",
+  " ⇒ ": " ⇒ ",
+  "几乎": "almost ",
+  " 的 ": " ",
+  "预设": "Preset",
+  "，所以 ": ", so ",
+  " / ": " / ",
+  "杂质": "impurity",
+  " 的": " ",
+  " 与": " and ",
+  "宽度": "width",
+  "本工具是 EIT-SP（半导体物理交互式教学工具箱）的一部分（武汉大学物理学院《半导体物理》智慧课程），以 MIT 协议开源，可自由使用与二次开发；转载请保留出处。反馈意见": "This tool is part of EIT-SP, the Educational Interactive Toolkit for Semiconductor Physics (School of Physics and Technology, Wuhan University). Released under the MIT licence: free to use, modify and redistribute, including commercially. Please keep this attribution. Feedback",
+  "本工具是": "This tool is part of",
+  "（半导体物理交互式教学工具箱）的一部分（武汉大学物理学院《半导体物理》智慧课程），以": ", the Educational Interactive Toolkit for Semiconductor Physics (School of Physics and Technology, Wuhan University). Released under the",
+  "协议开源，可自由使用与二次开发；转载请保留出处。反馈意见": "licence: free to use, modify and redistribute, including commercially. Please keep this attribution. Feedback",
+  "协议开源，可自由使用与二次开发；转载请保留出处。": "licence: free to use, modify and redistribute, including commercially. Please keep this attribution.",
+  "。当前": ". Current",
+  "，所以": ", so",
+  "固定": "fixed",
+  "方向": "direction",
+  "温度": "temperature",
+  "注意": "note",
+  "×": " × ",
+  "到": "to",
+  "施主": "donor",
+  "受主": "acceptor",
+  "全部": "all",
+  "开": "on",
+  "关": "Off",
+  "现在": "Now",
+  "平衡": "equilibrium",
+  "只有": "only",
+  "费米能": "Fermi energy",
+  "一侧": "one side",
+  "是": "is",
+  "比": "than",
+  "随": "varies with",
+  "差 ": "a factor of ",
+  "同时": "at the same time",
+  "线性": "linearly",
+  "换成": "Switch to",
+  "为什么": "why",
+  "电离": "ionisation",
+  "相等": "equal",
+  "时": "when",
+  "浓度": "concentration",
+  "费米能级": "Fermi level",
+  "本征": "Intrinsic",
+  "载流子": "carrier",
+  "）的": ") has the largest",
+  "挑战": "Challenge",
+  "和": " and ",
+  "或": "or",
+  "电荷": "charge",
+  "，而": ", while",
+  " 用": " uses",
+  "大": "larger",
+  "差": "differ by",
+  "能": "Energy",
+  "量": " ",
+  "原": "origin",
+  "点": "",
+  "导": "conduction",
+  "子": "quantum",
+  "几": "almost",
+  "乎": " ",
+  "全": "",
+  "没": "no ",
+  "的": "",
+  "占": "Occupation",
+  "据": " ",
+  "）。": "at room temperature).",
+  "倍": " times",
+  "下": "lower",
+  "能带": "Band diagram",
+  "面电荷": "sheet charge",
+  "正": "positive",
+  "5. 对比": "5. Compare the ",
+  "水平": "horizontal",
+  "负": "negative",
+  "，而是": ", but are",
+  "模块二": "Module 2",
+  "取": "Take ",
+  "显示": "Display",
+  "水平线": "a horizontal line",
+  "下方": "below",
+  "半导体固定为": "The semiconductor is fixed at",
+  "正好抵消": "exactly cancels",
+  "相反": "opposite to the field",
+  "状态": "state",
+  "⟲ 重置": "⟲ Reset",
+  "重置": "Reset",
+  "理想": "ideal",
+  " 载流子": " Carriers",
+  "调到": "to",
+  "底": "bottom",
+  "满": "full",
+  "半导体固定为 ": "The semiconductor is fixed to ",
+  "压低": "down",
+  "抬高": "up",
+  "一个 ": "one ",
+  "偏压 ": "Bias ",
+  "▶ 自动扫描": "▶ Auto sweep",
+  "耗尽近似": "depletion approximation",
+  "变宽": "is wider",
+  "，越过": ", which crosses the ",
+  "到 ": "to ",
+  " 轴": " axis",
+  "%）": "%)",
+  "个": "bound states",
+  "示意": "schematic",
+  " 曲线": " curve",
+  " 只是": " given by this tool is only",
+  "有 ": " ",
+  "直接": "direct",
+  "。注意": ". Note that the ",
+  "拉到": "to",
+  "只是": "are just",
+  "其中": "of which",
+  "）。注意": "). Note",
+  "曲线": "curve",
+  "只由": "only by",
+  "＋": " + ",
+  " 里": ", ",
+  "多了": "extra",
+  "那条 ": ", the ",
+  " 只由 ": " is set only by ",
+  " 拉到 ": " pulled to ",
+  "变成": "becomes that of",
+  "整条曲线": "the whole curve",
+  "情境预设": "Scenario preset",
+  "沿 ": "along ",
+  "速度": "a velocity",
+  "（与": " (with",
+  "切到": "Switch to",
+  "（或": "(or",
+  "结构": "structure",
+  "决定": "set by",
+  "往下": "downwards",
+  "往上": "upwards",
+  "以及": "and",
+  "电子浓度": "Electron concentration",
+  "空穴浓度": "Hole concentration",
+  "更深": "deeper",
+  " 费米能级 ": " Fermi level ",
+  "关键在于": "The key point is",
+  " 截面（": " cross-section (",
+  "截面（": "cross-section (",
+  "，但 ": ", but ",
+  "杂质浓度": "impurity concentration",
+  "，但": ", but",
+  "符号": "sign",
+  "均匀": "uniform",
+  "）就": ") ",
+  "），但": "), but it ",
+  "就是": "is exactly",
+  "完全电离": "fully ionised",
+  "德拜长度": "Debye length",
+  "下降": "falls",
+  "。这正是 ": ". This is exactly ",
+  "（理想 ": " (the ideal ",
+  "阈值 ": "threshold ",
+  "阈值": "Threshold",
+  "距": "distance to the ",
+  "情境": "Scenario",
+  "电子浓度 ": "Electron concentration ",
+  "空穴浓度 ": "Hole concentration ",
+  "从": "from",
+  "一": "one",
+  "不": "not",
+  "（占 ": "(",
+  "，盯住": ", keeping an eye on the ",
+  "个）": ")",
+  " 决定，而 ": ", while ",
+  "厚度": "thickness",
+  "上": "upper",
+  "高": "high",
+  "厚度 ": "The thickness ",
+  " 什么时候": " — when does it ",
+  "？为什么 ": "? Why can the electrons still turn the tables when ",
+  "表面 ": "Surface ",
+  "表面": "Surface",
+  "不动": "stay put",
+  "少子": "minority-carrier",
+  "时间": "Time",
+  "介电弛豫": "dielectric relaxation",
+  " 由": " set by",
+  " 而不是 ": " rather than ",
+  "比值": "ratio",
+  "边界": "boundaries",
+  "平的": "flat there",
+  "栅": "Gate",
+  "Si p 型": "p-type Si",
+  "体内：⊕⊖ 成对相消 ⇒ 净电荷 0（示意，不计数）": "Bulk: ⊕⊖ cancel in pairs ⇒ net charge 0 (schematic, not counted)",
+  "体内净电荷 0": "Net bulk charge 0",
+  "栅电荷 ": "Gate charge ",
+  " ⊕ × 10 枚　": " ⊕ × 10 tokens　",
+  "栅电荷": "Gate charge",
+  "枚　": " tokens　",
+  "半导体 10 枚（耗尽 3 ＋ 表面 7）　": "Semiconductor: 10 tokens (3 depletion + 7 surface)　",
+  "半导体": "Semiconductor",
+  "枚（耗尽": " tokens (depletion",
+  "一枚 ⊕/⊖ = ": "One ⊕/⊖ token = ",
+  "一枚": "One",
+  "空穴 p(x)": "Holes p(x)",
+  "电子 n(x)": "Electrons n(x)",
+  "状态：强反型": "State: strong inversion",
+  "（能带向下弯）": " (bands bend downward)",
+  "反型层电子 ": "Inversion-layer electrons ",
+  "反型层电子": "Inversion-layer electrons",
+  "当前状态：强反型": "Current state: strong inversion",
+  "距表面的距离 ": "Distance from the surface ",
+  "（线性轴，左＝表面，四行共用；体区只画到 ≈1.6 ": " (linear axis, left = surface, shared by the four rows; the bulk region is drawn only to ≈1.6 ",
+  "，更深的省略）": "; deeper parts are omitted)",
+  "距表面的距离": "Distance from the surface",
+  "（线性轴，左＝表面，四行共用；体区只画到": " (linear axis, left = surface, shared by the four rows; the bulk region is drawn only to",
+  "积累": "Accumulation",
+  "耗尽": "Depletion",
+  "反型": "Inversion",
+  " 饱和于 ": " saturates at ",
+  "饱和于": "Saturates at",
+  " = 0.942（低频） / 0.162（高频）": " = 0.942 (low frequency) / 0.162 (high frequency)",
+  "（低频）": " (low frequency)",
+  "（高频）": " (high frequency)",
+  "栅压 ": "Gate voltage ",
+  "栅压": "Gate voltage",
+  "MIS结构偏压 表面势 电荷 电容交互教学工具": "MIS Structure: Bias, Surface Potential, Charge and Capacitance — Interactive Toolkit",
+  "\n  三层夹心：": "\n  A sandwich of three layers:",
+  "金属": "metal",
+  "绝缘层": "insulator",
+  "。栅压 ": ". Once the gate voltage ",
+  " 加上去之后，一部分降在氧化层上（": " is applied, part of it drops across the oxide (",
+  "），一部分变成半导体的": "), and part becomes the semiconductor's",
+  "表面势": "surface potential",
+  "；两者的分配由": "; how it is shared between them is fixed by",
+  "泊松方程": "the Poisson equation",
+  " 联立自洽决定。栅压往一个方向走，多子被吸到表面 ⇒ ": " solved self-consistently. Push the gate one way and majority carriers are drawn to the surface ⇒ ",
+  "；往另一个方向走，多子被赶走 ⇒ ": "; push it the other way and majority carriers are driven away ⇒ ",
+  "，再走下去": ", and pushing further",
+  "表面少子浓度反超体内多子浓度": "the surface minority-carrier concentration overtakes the bulk majority concentration",
+  "（p 型看表面电子 vs 体内空穴、n 型反过来）⇒ ": " (for p-type compare surface electrons with bulk holes; for n-type the reverse) ⇒ ",
+  "，判据就是 ": ", the criterion being ",
+  "。最后把这条曲线测出来就是 ": ". Measuring this curve at the end gives ",
+  "：反型层电荷": ": whether the inversion-layer charge",
+  "跟不跟得上": "can keep up with",
+  "交流信号，决定了高频与低频两条曲线在强反型区会不会分道扬镳。\n": " the AC signal decides whether the high- and low-frequency curves part company in strong inversion.\n",
+  "四个视图": "The four views",
+  "共用同一条横轴": "share one horizontal axis",
+  "：截面（有什么电荷、各有多少）／载流子浓度（": ": cross-section (which charges, and how much) / carrier concentration (",
+  " 各有几个）／净电荷密度（净剩多少）／能带（弯了多少）　": " of each kind) / net charge density (what is left over) / bands (how much they bend)　",
+  "（鼠标移到任一行，读出该深度的数值）": " (move the mouse over any row to read the value at that depth)",
+  "第一行 截面（一枚 ⊕/⊖ = 定额电荷）": "Row 1: cross-section (one ⊕/⊖ token = a fixed amount of charge)",
+  "（⊕/⊖，枚数 = 半导体侧之和）": " (⊕/⊖; the number of tokens equals the semiconductor-side total)",
+  "耗尽层里的固定电离杂质（枚数 = ": "Fixed ionised impurities in the depletion layer (number of tokens = ",
+  " ÷ 定额）": " ÷ the fixed amount)",
+  "表面多余的可动空穴 ⊕（正电荷：p 型积累 / n 型反型）": "Excess mobile holes ⊕ at the surface (positive charge: p-type accumulation / n-type inversion)",
+  "表面多余的可动电子 ⊖（负电荷：p 型反型 / n 型积累）": "Excess mobile electrons ⊖ at the surface (negative charge: p-type inversion / n-type accumulation)",
+  "耗尽层范围（边界 ": "Depletion region (its boundary ",
+  " 标在第三行）": " is marked in row 3)",
+  "体内（淡色＝示意）：多子与电离杂质成对出现，正好抵消（净电荷 0，不计数）": "Bulk (pale = schematic): majority carriers and ionised impurities appear in pairs and exactly cancel (net charge 0, not counted)",
+  "第二行 载流子浓度": "Row 2: carrier concentration",
+  "（多子压在这条线上 = 相消）": " (majority carriers pinned to this line = cancellation)",
+  "耗尽层边界 ": "Depletion-layer edge ",
+  "（读数标在第三行）": " (the readout is marked in row 3)",
+  "第三行 电荷": "Row 3: charge",
+  " 为正（空穴 / 电离施主）": " is positive (holes / ionised donors)",
+  " 为负（电子 / 电离受主）": " is negative (electrons / ionised acceptors)",
+  "第四行 能带": "Row 4: bands",
+  "（本征能级）": " (intrinsic level)",
+  "（半导体，处处水平）": " (semiconductor, horizontal everywhere)",
+  "（金属，随 ": " (metal, moving with ",
+  " 移动）": ")",
+  "表面势 ": "Surface potential ",
+  "耗尽层 ": "Depletion layer ",
+  "C–V 特性曲线：低频 vs 高频": "C–V characteristics: low frequency vs high frequency",
+  "低频 C–V（反型层跟得上）": "Low-frequency C–V (the inversion layer keeps up)",
+  "高频 C–V（反型层跟不上）": "High-frequency C–V (the inversion layer cannot keep up)",
+  " 饱和）": " saturation)",
+  "纵轴是 ": "The vertical axis is ",
+  "。三条规律：": ". Three rules:",
+  "积累区": "Accumulation region",
+  "电容就是氧化层电容 ": "the capacitance is simply the oxide capacitance ",
+  "（电荷直接堆在表面，半导体侧没有厚度）；": " (charge piles up right at the surface, the semiconductor side adds no thickness);",
+  "耗尽区": "Depletion region",
+  "电容是 ": "the capacitance is ",
+  " 与耗尽层电容 ": " in series with the depletion-layer capacitance ",
+  "串联": "in series",
+  " 变宽而下降；": " and falls as it widens;",
+  "强反型区": "Strong-inversion region",
+  " 饱和在 ": " saturates at ",
+  "，于是高频曲线停在那条 ": ", so the high-frequency curve stops on that ",
+  " 水平线上 —— 因为反型层里的少子要靠": " horizontal line — because the minority carriers in the inversion layer have to be replenished slowly by",
+  "产生–复合": "generation–recombination",
+  "慢慢补充，": ", and therefore",
+  "跟不上": "cannot keep up with",
+  "高频信号；低频下它们跟得上，电荷又直接堆在表面，电容便重新回到 ": " the high-frequency signal; at low frequency they do keep up, the charge again piles up right at the surface, and the capacitance returns to ",
+  "强反型": "Strong inversion",
+  "平带": "Flat band",
+  "多子积累": "Majority-carrier accumulation",
+  "弱反型": "Weak inversion",
+  "栅过驱动 ": "Gate overdrive ",
+  "：多出来的电压几乎全落在氧化层上（": ": the extra voltage drops almost entirely across the oxide (",
+  " 只从 ": " rises only from ",
+  " 抬到 ": " to ",
+  " 就被钳住），而反型层电荷按 ": " before being clamped), while the inversion-layer charge grows exponentially as ",
+  " 指数暴涨。同时 ": ". At the same time ",
+  " 已经饱和、低频电容回到 ": " has already saturated and the low-frequency capacitance returns to ",
+  "掺杂类型": "Doping type",
+  "p 型": "p-type",
+  "n 型": "n-type",
+  "（教材常引用的 ": " (the value often quoted in textbooks, ",
+  " 是取整近似；本工具全篇用按 ": ", is a rounded approximation; throughout this tool the single value computed from ",
+  " 算出的同一个值），栅介质固定为 ": " is used), the gate dielectric is fixed at ",
+  "，掺杂浓度固定 ": ", and the doping concentration is fixed at ",
+  "（典型的 MOS 衬底），并按": " (a typical MOS substrate), treated in the",
+  " 处理（": " approximation (",
+  "、无氧化层电荷 ⇒ ": ", no oxide charge ⇒ ",
+  "）。可调的只有": "). The only adjustable quantities are",
+  "与": " and",
+  "掺杂浓度 ": "Doping concentration ",
+  "：多子是空穴 ⇒ ": ": the majority carriers are holes ⇒ ",
+  "；正栅压把空穴赶走（耗尽→反型），负栅压把空穴吸到表面（积累）。 ": "; a positive gate drives the holes away (depletion → inversion), a negative gate draws them to the surface (accumulation). ",
+  "（核心旋钮）": " (the core knob)",
+  "量程 ": "Range ",
+  " 自适应）。": " adaptive).",
+  "扫描速度": "Sweep speed",
+  "显示项目": "Display items",
+  " 本征能级 ": " intrinsic level ",
+  " 表面势 ": " surface potential ",
+  " 标注": " labels",
+  " 耗尽层 ": " depletion layer ",
+  " C–V 分区": " C–V regions",
+  " 低频 C–V": " low-frequency C–V",
+  " 高频 C–V": " high-frequency C–V",
+  "当前结构": "Structure",
+  "更多读数（结构参数、电荷分解与对账、表面载流子）": "More readings (structure parameters, charge budget and cross-check, surface carriers)",
+  "电荷分解与对账": "Charge budget and cross-check",
+  "表面载流子与其余": "Surface carriers and the rest",
+  " 能级 ": " energy levels ",
+  "）—— 占比就写在读数面板这两行里。关键在于 ": ") — the percentages are exactly the two readout rows. The key is ",
+  " 两行各自的数值与占比": ": read the values and percentages in the two rows",
+  "材料 / 掺杂": "Material/doping",
+  "（固定）/ p 型　": " (fixed) / p-type　",
+  "，无氧化层电荷）": ", no oxide charge)",
+  " 的自洽解": " self-consistent solution",
+  "　（量程 ": "　(range ",
+  "氧化层压降 ": "Oxide voltage drop ",
+  "半导体表面电荷 ": "Semiconductor surface charge ",
+  "├ 多子电荷 ": "├ Majority-carrier charge ",
+  "（耗尽时为 ": " (in depletion it is ",
+  "（反型层）": " (inversion layer)",
+  "两者之和 vs ": "Sum of the two vs ",
+  "：数值积分误差）": ": numerical-integration error)",
+  "耗尽层宽度 ": "Depletion-layer width ",
+  "已饱和": "saturated",
+  "表面电子 ": "Surface electrons ",
+  " / 空穴 ": " / holes ",
+  "强反型判据 ": "Strong-inversion criterion ",
+  "（≥1 即进入强反型）": " (≥1 means strong inversion has set in)",
+  "电容与阈值": "Capacitance and threshold",
+  "阈值电压 ": "Threshold voltage ",
+  " 低频 / 高频": " low frequency / high frequency",
+  "表面势由 ": "The surface potential follows from ",
+  "泊松方程精确解": "the exact solution of the Poisson equation",
+  " 联立二分求解（": " solved jointly by bisection (",
+  "不做耗尽近似": "no depletion approximation is made",
+  "，积累与反型同样成立；": "; it holds for accumulation and inversion alike;",
+  " 时改用级数展开避免灾难性相消）。耗尽层宽度 ": " a series expansion is used instead, to avoid catastrophic cancellation). The depletion-layer width ",
+  "。掺杂按": ". The doping is treated in the",
+  "处理。本工具取": " approximation. This tool takes",
+  "、氧化层内无电荷 ⇒ ": ", and with no charge inside the oxide ⇒ ",
+  "，栅压全部在": ", so the gate voltage is shared entirely between",
+  " 之间分配。": ".",
+  "引导探究（点击展开，先自己试一试再看答案）": "Guided inquiry (click to expand; try it yourself before reading the answers)",
+  "1. 把": "1. Drag",
+  " 从最负慢慢拖到最正（或点「自动扫描 ": " slowly from the most negative to the most positive value (or click the auto-sweep button ",
+  "第四行的能带": "the bands in row 4",
+  "。三种状态分别朝哪边弯？": ". Which way do the three states bend?",
+  " 什么时候是零？模块一第一行截面里的电荷符号怎么跟着变？": " When is it zero? How do the charge signs in the row-1 cross-section change with it?",
+  "规则只有一条：": "There is only one rule:",
+  "能带弯曲量 ": "Band bending ",
+  " 时表面电子能量被压低 ⇒ 能带": ", the surface electron energy is pushed down ⇒ the bands bend",
+  "向下": "downward",
+  "弯；": ";",
+  "向上": "upward",
+  "弯。对 p 型硅：": ". For p-type silicon:",
+  "负栅压": "a negative gate",
+  "把多子（空穴）吸到表面 ⇒ ": " draws the majority carriers (holes) to the surface ⇒ ",
+  "（能带朝一边弯，表面一层极薄的高浓度同号电荷）；": " (bands bend to one side, an extremely thin layer of high-concentration charge of the same sign at the surface);",
+  "正栅压": "a positive gate",
+  "把多子赶走，露出固定的电离杂质 ⇒ ": " drives the majority carriers away, exposing the fixed ionised impurities ⇒ ",
+  "，继续加大就进入": ", and increasing it further takes you into",
+  " 的那个点就是 ": " is exactly ",
+  "（平带电压），此时半导体里一点空间电荷都没有。当前 ": " (the flat-band voltage), at which the semiconductor holds no space charge at all. Currently ",
+  "向下弯（表面电子能量降低）": "bends downward (the surface electron energy is lowered)",
+  "。第一行的符号": ". The signs in row 1",
+  "带定额": "carry a fixed amount of charge",
+  "（一枚 ⊕/⊖ = ": " (one ⊕/⊖ token = ",
+  "栅上画几枚，半导体里（耗尽层 ＋ 表面层）就是几枚": "as many tokens as are drawn on the gate, so many are inside the semiconductor (depletion layer + surface layer)",
+  " —— 拖 ": " — as you drag ",
+  " 时数一数，看到的就是电荷量怎么被栅压调出来。": ", count them: what you see is how the amount of charge is dialled out by the gate voltage.",
+  "看看答案": "Show the answer",
+  "2. 看读数里的 ": "2. Look at the ",
+  "分配条": "sharing bar",
+  "。进入强反型后继续加大 ": ". Once strong inversion has set in, keep increasing ",
+  "，哪一部分在涨？为什么 ": " — which part grows? Why does ",
+  " 几乎不动了？": " almost stop moving?",
+  "栅压只有两个去处：": "The gate voltage has only two destinations:",
+  "，其中半导体拿走 ": ", of which the semiconductor takes ",
+  "），氧化层拿走 ": "), and the oxide takes ",
+  "：强反型之后，反型层电荷随 ": ": after strong inversion the inversion-layer charge grows with ",
+  " 指数暴涨，只要 ": " exponentially; as soon as ",
+  " 再抬高一两个 ": " rises by another one or two ",
+  "，电荷就够吸掉": ", the charge suffices to absorb",
+  "任意多": "arbitrarily much",
+  "的额外栅压 ⇒ ": " of the extra gate voltage ⇒ ",
+  " 被钳在 2": " is clamped at 2",
+  " 附近（≈ ": " (≈ ",
+  "），多出来的栅压全部变成 ": "), and all the extra gate voltage becomes ",
+  "。这正是 MOSFET 里「栅压增加只增加沟道电荷、不增加耗尽层厚度」的原因 —— 也是 ": ". This is exactly why in a MOSFET a larger gate voltage only adds channel charge and does not increase the depletion-layer thickness — and also why ",
+  " 成立的前提。": " holds.",
+  "3. 把 ": "3. Set ",
+  "」。此时 ": "\". At this point ",
+  " 差多少？表面": "? How much do the surface ",
+  "浓度和体内": " concentration and the bulk ",
+  "多子": "majority",
+  "浓度之比是多少（p 型看 ": " concentration differ (for p-type look at ",
+  "、n 型看 ": ", for n-type look at ",
+  "）？为什么偏偏是 ": ")? Why exactly ",
+  "？再点「强反型」，反型层符号多了几枚？": "? Then click the strong-inversion preset: how many more tokens appear in the inversion layer?",
+  "强反型的定义是": "Strong inversion is defined by",
+  "表面少子浓度追平体内多子浓度": "the surface minority concentration catching up with the bulk majority concentration",
+  "。体内：": ". In the bulk:",
+  "，所以多子浓度 ": ", so the majority concentration is ",
+  " —— 令两者相等立刻得到 ": " — equating the two immediately gives ",
+  " 用来把 ": " serves to bring ",
+  "，另一个 ": ", while the other ",
+  " 用来让它继续越过 ": " serves to push it past ",
+  "、落到对称的另一侧": " and onto the symmetric other side",
+  "（p 型往下、n 型往上）。换成能带图的话：表面 ": " (downward for p-type, upward for n-type). In band-diagram terms: the surface ",
+  " 必须越过 ": " must cross ",
+  "（拿第四行的 ": " (compare the ",
+  " 曲线去比那条水平的 ": " curve in row 4 against the horizontal ",
+  " 线）。当前 ": " line). Currently ",
+  " vs 体内多子 ": " vs bulk majority ",
+  "已进入强反型": "Strong inversion has set in",
+  "定义": "definition",
+  "上的起点 —— 此刻反型层的面电荷还不到耗尽层的 2%，薄到连一个反型载流子的小圆圈都凑不满；能导电的沟道要再往上加栅压才出现（点「强反型」预设，越过阈值 ": " — at this moment the inversion-layer sheet charge is still under 2% of the depletion charge, so thin that it cannot even fill one small circle standing for an inverted carrier; a conducting channel appears only at higher gate voltage (click the strong-inversion preset, pass the threshold ",
+  "，反型层就涨到耗尽层电荷的两倍多）。": ", and the inversion layer grows to more than twice the depletion charge).",
+  "4. 一步一步加大栅压，盯住模块一里的": "4. Increase the gate voltage step by step and keep your eye on",
+  "耗尽层宽度": "the depletion-layer width",
+  "（和读数中的 ": " in module 1 (and on the ",
+  "）。进入强反型后 ": " in the readout). Once strong inversion has set in, does ",
+  " 还长吗？多出来的电荷去哪了？": " still grow? Where does the extra charge go?",
+  "耗尽层宽度由": "The depletion-layer width is set by",
+  "电势": "the potential",
+  "，而强反型后 ": ", and after strong inversion ",
+  " 被钳在 ": " is clamped at ",
+  " 也跟着": " and so",
+  "饱和": "saturates",
+  "在 ": " at ",
+  "）。多出来的电荷不再来自更深的耗尽层，而是变成": "). The extra charge no longer comes from a deeper depletion layer; instead it becomes",
+  "紧贴表面的反型层少子": "inversion-layer minority carriers hugging the surface",
+  "，相比之下耗尽层电荷只有 ": ", whereas the depletion charge is only ",
+  "。反型层厚度只有几个 ": ". The inversion layer is only a few ",
+  "（模块一里那一薄条），却可以装下比耗尽层多几十倍的电荷 —— 所以 MOSFET 的沟道是一层": " thick (the thin strip in module 1), yet it can hold tens of times more charge than the depletion layer — which is why the MOSFET channel is a layer of",
+  "极薄的二维载流子气": "extremely thin two-dimensional carrier gas",
+  "，而沟道下方那片耗尽层厚度基本不随栅压变化。": ", while the depletion layer beneath the channel hardly changes with gate voltage.",
+  "高频": "high frequency",
+  "低频": "low frequency",
+  "两条 C–V 曲线。强反型区它们差在哪？把掺杂": " the two C–V curves. Where do they differ in strong inversion? Switch the doping",
+  "类型": "type",
+  "从 p 型切到 n 型，整条曲线怎么动？为什么高频下电容回不到 ": " from p-type to n-type — how does the whole curve move? Why, at high frequency, does the capacitance fail to return to ",
+  "两条曲线在": "The two curves",
+  "积累区和耗尽区完全重合": "coincide exactly in the accumulation and depletion regions",
+  "（那里响应的是多子，介电弛豫时间极短，随时跟得上），分歧只出现在": " (there the majority carriers respond, with an extremely short dielectric relaxation time, always able to keep up); the divergence appears only in",
+  "：低频下反型层电荷随交流信号增减 ⇒ 电荷又直接堆在表面，半导体侧没有厚度 ⇒ ": ": at low frequency the inversion-layer charge rises and falls with the AC signal ⇒ the charge again piles up right at the surface, the semiconductor side adds no thickness ⇒ ",
+  "；高频下反型层的少子只能靠": "; at high frequency the minority carriers in the inversion layer can only be replenished slowly by",
+  "慢慢补充（微秒到毫秒），跟不上 MHz 信号 ⇒ 交流电荷只能在耗尽层边缘进出 ⇒ 电容停在 ": " (microseconds to milliseconds) and cannot follow an MHz signal ⇒ the AC charge can only move in and out at the depletion edge ⇒ the capacitance stops at ",
+  "掺杂越重 ⇒ ": "Heavier doping ⇒ ",
+  " 越薄 ⇒ ": " thinner ⇒ ",
+  " 越大 ⇒ ": " larger ⇒ ",
+  "（本工具把 ": " (this tool fixes ",
+  " 固定在 ": " at ",
+  "，这条留给读者推演）。换": ", leaving this one for the reader to work out). Changing the",
+  "则不动这些数值（p 与 n 的 ": " leaves these values unchanged (p and n share the same ",
+  " 相同），但 ": "), but ",
+  " 由 正 变号、积累与反型两侧互换，整条 C–V 曲线沿 ": " flips sign and the accumulation and inversion sides swap, so the whole C–V curve is",
+  "左右镜像": "mirrored left–right",
+  "。这套「高频曲线不回升」正是工业上判断界面态与反型层响应时间的标准手段。": ". This failure of the high-frequency curve to rise again is exactly the standard industrial test for interface states and for the response time of the inversion layer.",
+  "VG=VFB：半导体里一点电荷都没有，能带是平的，C=CFB。": "VG=VFB: the semiconductor holds no charge at all, the bands are flat, C=CFB.",
+  "栅压把多子吸到表面：薄薄一层高浓度同号电荷，能带朝相反方向弯，C≈Cox。": "The gate voltage draws the majority carriers to the surface: a thin layer of high-concentration charge of the same sign, bands bend the other way, C≈Cox.",
+  "0<ψs<φF：多子被赶走，露出固定电离杂质，形成均匀的耗尽层电荷。": "0<ψs<φF: the majority carriers are driven away, exposing the fixed ionised impurities and forming a uniform depletion charge.",
+  "|φF|<|ψs|<2|φF|：表面 Ei 已经越过 EF（p 型：往下压到 EF 之下），开始出现少量反型载流子。": "|φF|<|ψs|<2|φF|: the surface Ei has crossed EF (for p-type: pushed down below EF), and a small number of inverted carriers begin to appear.",
+  "ψs=2φF、VG=VT：表面少子浓度刚好追平体内多子浓度（ns=p0），这是「强反型」的定义起点。": "ψs=2φF, VG=VT: the surface minority concentration just catches up with the bulk majority concentration (ns=p0) — the starting point of the definition of strong inversion.",
+  "栅过驱动 VG−VT=0.8V：多出来的电压几乎全落在氧化层上（ψs 只从 2φF 抬到 ≈2.4φF 就被钳住），而反型层电荷按 eqψs/2kT 指数暴涨。同时 W 已经饱和、低频电容回到 ≈0.94Cox。": "Gate overdrive VG−VT=0.8 V: the extra voltage drops almost entirely across the oxide (ψs rises only from 2φF to ≈2.4φF before being clamped), while the inversion-layer charge grows exponentially as exp(qψs/2kT). At the same time W has saturated and the low-frequency capacitance returns to ≈0.94Cox.",
+  "NA：多子是空穴 ⇒ φF>0；正栅压把空穴赶走（耗尽→反型），负栅压把空穴吸到表面（积累）。": "NA: the majority carriers are holes ⇒ φF>0; a positive gate drives the holes away (depletion → inversion), a negative gate draws them to the surface (accumulation).",
+  "ND：多子是电子 ⇒ φF<0；负栅压把电子赶走（耗尽→反型），正栅压把电子吸到表面（积累）。": "ND: the majority carriers are electrons ⇒ φF<0; a negative gate drives the electrons away (depletion → inversion), a positive gate draws them to the surface (accumulation).",
+  "（随 ": " (moving with ",
+  "，随 ": ", moving with ",
+  "，状态是": ", the state is",
+  " 占 (": " accounts for (",
+  "对比模块二的": "In module 2, compare the",
+  "（能带": " (bands bending",
+  "弯）": ")",
+  "，以及下方的": ", and the ",
+  "向上弯（表面电子能量升高）": "bends upward (the surface electron energy rises)",
+  "完全不弯（平带）": "does not bend at all (flat band)",
+  "完全不弯": "does not bend at all",
+  "（p 型：往下压到 ": " (p-type: pushed down to ",
+  "（n 型：往上抬到 ": " (n-type: raised up to ",
+  " 之下），开始出现少量反型载流子。": " below), and a small number of inverted carriers begin to appear.",
+  " 之上），开始出现少量反型载流子。": " above), and a small number of inverted carriers begin to appear.",
+  "：表面 ": ": the surface ",
+  " 已经越过 ": " has crossed ",
+  "：半导体里一点电荷都没有，能带是平的，": ": the semiconductor holds no charge at all and the bands are flat, ",
+  "栅压把多子吸到表面：薄薄一层高浓度同号电荷，能带朝相反方向弯，": "The gate voltage draws the majority carriers to the surface: a thin layer of high-concentration charge of the same sign, and the bands bend the other way, ",
+  "：多子被赶走，露出固定电离杂质，形成均匀的耗尽层电荷。": ": the majority carriers are driven away, exposing the fixed ionised impurities and forming a uniform depletion charge.",
+  "（还差一点）": " (still a little short)",
+  "层空穴": "layer holes",
+  "层电子": "layer electrons",
+  "　（电中性区）": "　(charge-neutral region)",
+  "（电中性区）": "(charge-neutral region)",
+  "（负）": " (negative)",
+  "　空穴 ": " holes ",
+  "　电子 ": " electrons ",
+  "　空穴": " holes",
+  "　电子": " electrons",
+  " nm　弯曲 ": " nm　bending ",
+  "　弯曲": "　bending",
+  "⏸ 暂停": "⏸ Pause",
+  "当前状态：": "Current state: ",
+  "（还在长）": " (still growing)",
+  "：表面少子浓度刚好追平体内多子浓度（": ": the surface minority concentration just catches up with the bulk majority concentration (",
+  "），这就是「强反型」的定义起点": "), and this is the starting point of the definition of strong inversion",
+  "自定义": "custom",
+  "手动调节的组合（预设之外显示「自定义」）。": "A manually adjusted combination (shown as custom when it falls outside the presets).",
+  "：多子是电子 ⇒": ": the majority carriers are electrons ⇒",
+  "；负栅压把电子赶走（耗尽→反型），正栅压把电子吸到表面（积累）。": "; a negative gate drives the electrons away (depletion → inversion), a positive gate draws them to the surface (accumulation).",
+  "弯。对 n 型硅：": ". For n-type silicon:",
+  "把多子（电子）吸到表面 ⇒": " draws the majority carriers (electrons) to the surface ⇒",
+  "（还在长）。多出来的电荷不再来自更深的耗尽层，而是变成": " (still growing). The extra charge no longer comes from a deeper depletion layer; instead it becomes",
+  "），这是「强反型」的": "), this being the starting point of the ",
+  "定义起点": "definition of strong inversion",
+  " 变号、积累与反型两侧互换，整条 C–V 曲线沿 ": " to the opposite sign; the accumulation and inversion sides swap, and the whole C–V curve is mirrored along ",
+  " 由 负 变号、积累与反型两侧互换，整条 C–V 曲线沿 ": " goes from negative to positive; the accumulation and inversion sides swap, and the whole C–V curve is mirrored along ",
+  "（固定）": " (fixed)",
+  "（正）": " (positive)",
+  "（耗尽层内）": " (inside the depletion layer)",
+};
+
+/* 注入点②：画布直写字符串。老工具直接调 g.fillText()（描边文字走 g.strokeText()），这里在原型上兜住。
+   measureText 必须一起挂钩，否则「量的宽度」和「量的文字」用的不是同一个串。 */
+(function () {
+  if (typeof CanvasRenderingContext2D === "undefined") return;
+  var ft = CanvasRenderingContext2D.prototype.fillText;
+  CanvasRenderingContext2D.prototype.fillText = function (s, x, y) {
+    if (typeof s === "string") arguments[0] = T(s);
+    return ft.apply(this, arguments);
+  };
+  /* 描边文字（白边包字）走 strokeText，同样要过 T()，否则画布标签漏翻 */
+  var stx = CanvasRenderingContext2D.prototype.strokeText;
+  CanvasRenderingContext2D.prototype.strokeText = function (s, x, y) {
+    if (typeof s === "string") arguments[0] = T(s);
+    return stx.apply(this, arguments);
+  };
+  var mt = CanvasRenderingContext2D.prototype.measureText;
+  CanvasRenderingContext2D.prototype.measureText = function (s) {
+    return mt.call(this, typeof s === "string" ? T(s) : s);
+  };
+})();
+
+/* ---- DOM 文本节点 ---- */
+function i18nNode(n) {
+  var el = n.parentElement;
+  if (!el) return;
+  var tag = el.tagName;
+  if (tag === "SCRIPT" || tag === "STYLE") return;
+  if (el.closest && el.closest("[data-noi18n]")) return;
+  var cur = n.nodeValue;
+  if (n.__orig === undefined || (cur !== n.__last && cur !== n.__orig)) n.__orig = cur;
+  var want = LANG === "en" ? T(n.__orig) : n.__orig;
+  if (want !== cur) n.nodeValue = want;
+  n.__last = want;
+}
+/* 属性（title / placeholder / optgroup label …）不是文本节点，MutationObserver 覆盖不到，
+   必须单独过一遍：否则悬停提示、下拉分组名会残留中文。原文缓存在元素 expando 上，
+   切回中文时原样写回。改属性不会触发 childList/characterData 观察器，不会递归。 */
+var I18N_ATTRS = ["title", "placeholder", "aria-label", "alt", "label"];
+function i18nAttrs(root) {
+  var els = [root], i, j;
+  if (root.querySelectorAll) els = els.concat(Array.prototype.slice.call(root.querySelectorAll("*")));
+  for (i = 0; i < els.length; i++) {
+    var el = els[i];
+    if (!el.getAttribute) continue;
+    if (el.closest && el.closest("[data-noi18n]")) continue;
+    for (j = 0; j < I18N_ATTRS.length; j++) {
+      var a = I18N_ATTRS[j];
+      if (!el.hasAttribute(a)) continue;
+      var key = "__a_" + a;
+      if (el[key] === undefined) el[key] = el.getAttribute(a);
+      var want = LANG === "en" ? T(el[key]) : el[key];
+      if (want !== el.getAttribute(a)) el.setAttribute(a, want);
+    }
+  }
+}
+/* 英文补空格（跨节点）：中文片段被行内标签切开时，各自翻成英文后直连会粘连。
+   判定用 DOM 结构而不是渲染矩形——折叠区（挑战答案）矩形为零，矩形法会漏。
+   两文本节点在文档序里紧邻（中间没有任何文本节点，包括空格节点）、
+   前段末尾与后段开头都是字母、双方词条都没自带空格、且不在上下标里 ⇒ 插一个空格。
+   空格节点记录在案，切回中文时移除。只动 i18n 注入层，不改业务文本。 */
+function fixGlue(root) {
+  var all = [];
+  var w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null, false), n;
+  while ((n = w.nextNode())) all.push(n);
+  function subbed(el) {
+    while (el) { var t = el.tagName; if (t === "SUB" || t === "SUP") return true; el = el.parentElement; }
+    return false;
+  }
+  for (var i = 0; i + 1 < all.length; i++) {
+    var a = all[i], b = all[i + 1];
+    if (!a.nodeValue || !b.nodeValue) continue;
+    if (/\s$/.test(a.nodeValue) || /^\s/.test(b.nodeValue)) continue;
+    if (!/[A-Za-z0-9]$/.test(a.nodeValue) || !/^[A-Za-z]/.test(b.nodeValue)) continue;
+    var pa = a.parentElement, pb = b.parentElement;
+    if (!pa || !pb || subbed(pa) || subbed(pb)) continue;
+    var sp = document.createTextNode(" ");
+    sp.__glue = 1;
+    (fixGlue._n = fixGlue._n || []).push(sp);
+    b.parentNode.insertBefore(sp, b);
+  }
+}
+function removeGlue() {
+  if (!fixGlue._n) return;
+  for (var i = 0; i < fixGlue._n.length; i++) { var g = fixGlue._n[i]; if (g.parentNode) g.parentNode.removeChild(g); }
+  fixGlue._n = [];
+}
+/* 全局防抖补空格：挑战答案这类「点击时才重建」的区域，observer 回调里对子树跑
+   fixGlue 的时机不全（答案重写、延迟渲染都会错过）。任何 DOM 变更后 60ms
+   对整页补一次；空格本身不触发新插入，收敛。 */
+var _glueTimer = null;
+function _glueKick() {
+  if (LANG !== "en") return;
+  if (_glueTimer) clearTimeout(_glueTimer);
+  _glueTimer = setTimeout(function () {
+    _glueTimer = null;
+    if (LANG === "en") fixGlue(document.body);
+  }, 60);
+}
+function i18nWalk(root) {
+  var w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null, false), n, c = 0;
+  while ((n = w.nextNode())) { i18nNode(n); c++; }
+  i18nAttrs(root);
+  if (LANG === "en") fixGlue(root === document ? document.body : root);
+  return c;
+}
+var _i18nBusy = false;
+function i18nWatch() {
+  if (typeof MutationObserver === "undefined") return;
+  var mo = new MutationObserver(function (ms) {
+    if (_i18nBusy) return;
+    _i18nBusy = true;
+    try {
+      for (var i = 0; i < ms.length; i++) {
+        var m = ms[i];
+        if (m.type === "childList") {
+          for (var j = 0; j < m.addedNodes.length; j++) {
+            var nd = m.addedNodes[j];
+            if (nd.nodeType === 3) i18nNode(nd);
+            else if (nd.nodeType === 1) i18nWalk(nd);
+          }
+        } else if (m.type === "characterData") i18nNode(m.target);
+      }
+    } finally { _i18nBusy = false; }
+    _glueKick();
+  });
+  mo.observe(document.body, { childList: true, subtree: true, characterData: true });
+}
+function setLang(l) {
+  LANG = l;
+  try { localStorage.setItem("opl_lang", l); } catch (e) { }
+  document.documentElement.lang = l === "en" ? "en" : "zh-CN";
+  var btn = document.getElementById("langBtn");
+  if (btn) btn.textContent = l === "en" ? "中文" : "EN";
+  document.title = l === "en" ? T(ORIG_TITLE) : ORIG_TITLE;
+  if (l !== "en") removeGlue();
+  i18nWalk(document.body);
+  _glueKick();
+  if (typeof syncInputs === "function") syncInputs();
+  if (typeof render === "function") render();
+}
+
+
+
+
+
+/* ---------------- 直接 fillText / strokeText 的自动排版钩子 ----------------
+   有些标注不走 txt() 而是直接 g.fillText()（状态徽标、能带边等），
+   这里在原型层统一处理：含数学记法的字符串先按 LaTeX 规则拆段再绘制，
+   measureText 同步返回拆段总宽，白底框长度自动跟着变。 */
+const NEED_MATH_HM = /[\u2070-\u209C\u00B2\u00B3\u00B9]|_\{?[A-Za-z0-9\u0370-\u03ff]|\^\{?[\d(\-]|\d(\.\d+)?[eE][+\-]\d|\u221A/;
+/* 原生 measureText：mathSegsHM 内部量宽必须走这一条，
+   否则 measureText 被钩子接管后会 self-recursion（RangeError）。 */
+var _mRawHM = null;
+function measureRawHM(g, s) { return (_mRawHM ? _mRawHM : g.measureText).call(g, s).width; }
+function mathSegsHM(g, s) {
+  const f = String(g.font || "");
+  const mm = /(\d+(?:\.\d+)?)px/.exec(f);
+  const size = mm ? parseFloat(mm[1]) : 12;
+  const family = f.replace(/^(?:\s*(?:italic|oblique|bold|[1-9]00)\s*)*\d+(?:\.\d+)?px\s*/, "");
+  const style = /italic|oblique/.test(f) ? "italic " : (/bold|[6-9]00/.test(f) ? "bold " : "");
+  const parts = AUTO(s), laid = [];
+  let w = 0;
+  for (const p of parts) {
+    const small = !!(p.sup || p.sub);
+    const fs = style + (small ? (size * 0.74).toFixed(2) : size.toFixed(2)) + "px " + family;
+    g.font = fs;
+    const tw = measureRawHM(g, p.s);
+    laid.push({ s: p.s, w: tw, fs: fs, dy: small ? (p.sup ? -size * 0.40 : size * 0.22) : 0 });
+    w += tw;
+  }
+  return { laid: laid, w: w, family: family, style: style, size: size };
+}
+(function hookMathHM() {
+  if (window.__MATH_HOOK) return; window.__MATH_HOOK = 1;
+  const P = CanvasRenderingContext2D.prototype;
+  const _fill = P.fillText, _stroke = P.strokeText, _measure = P.measureText;
+  function draw(drawRaw, g, s, x, y, rest) {
+    const info = mathSegsHM(g, s);
+    const al = g.textAlign, bl = g.textBaseline;
+    const cx = al === "right" ? x - info.w : (al === "center" ? x - info.w / 2 : x);
+    g.textAlign = "left";
+    let px = cx;
+    for (const L of info.laid) {
+      g.font = L.fs;
+      drawRaw.call(g, L.s, px, y + L.dy, ...rest);
+      px += L.w;
+    }
+    g.textAlign = al; g.textBaseline = bl;
+    g.font = info.style + info.size.toFixed(2) + "px " + info.family;
+    return info;
+  }
+  P.fillText = function (s, x, y) {
+    if (typeof s !== "string" || !NEED_MATH_HM.test(s)) return _fill.apply(this, arguments);
+    draw(_fill, this, s, x, y, Array.prototype.slice.call(arguments, 3));
+  };
+  P.strokeText = function (s, x, y) {
+    if (typeof s !== "string" || !NEED_MATH_HM.test(s)) return _stroke.apply(this, arguments);
+    draw(_stroke, this, s, x, y, Array.prototype.slice.call(arguments, 3));
+  };
+  if (!_mRawHM) _mRawHM = _measure;
+  P.measureText = function (s) {
+    if (window.__HM_IN || typeof s !== "string" || !NEED_MATH_HM.test(s)) return _measure.call(this, s);
+    window.__HM_IN = 1;
+    const save = this.font;
+    let info;
+    try { info = mathSegsHM(this, s); } finally { window.__HM_IN = 0; }
+    this.font = save;
+    return { width: info.w, get actualBoundingBoxLeft() { return 0; }, get actualBoundingBoxRight() { return info.w; } };
+  };
+})();
+
+/* ---------------- HTML 侧自动 LaTeX 排版 ----------------
+   读数 / 说明 / 按钮名里由 JS 拼出来的 cm⁻³、E_c、2.5e+8，
+   在写进 innerHTML 之前转成真 <sup>/<sub>；标签与属性原样放过（title 不会被塞进尖括号）。
+   与画布侧 AUTO() 对偶，保证网页和画布按同一套规则排版。 */
+const AUTOH_SUP = { "⁰": "0", "¹": "1", "²": "2", "³": "3", "⁴": "4", "⁵": "5", "⁶": "6",
+  "⁷": "7", "⁸": "8", "⁹": "9", "⁺": "+", "⁻": "−", "⁼": "=", "⁽": "(", "⁾": ")", "ⁿ": "n", "ⁱ": "i" };
+const AUTOH_SUB = { "₀": "0", "₁": "1", "₂": "2", "₃": "3", "₄": "4", "₅": "5", "₆": "6",
+  "₇": "7", "₈": "8", "₉": "9", "₊": "+", "₋": "−", "₌": "=", "₍": "(", "₎": ")",
+  "ₐ": "a", "ₑ": "e", "ₒ": "o", "ₓ": "x", "ₔ": "ə", "ₕ": "h", "ₖ": "k", "ₗ": "l",
+  "ₘ": "m", "ₙ": "n", "ₚ": "p", "ₛ": "s", "ₜ": "t", "ᵣ": "r", "ᵤ": "u", "ᵥ": "v" };
+const TEXH_NEED = /[\u2070-\u209C\u00B2\u00B3\u00B9]|_\{?[A-Za-z0-9\u0370-\u03ff]|\^\{?[\d(\-]|\d(\.\d+)?[eE][+\-]\d|\u221A/;
+/* 从 i 处（必须是 '<'）扫出一个"完整元素"的结束下标（含嵌套），失败返回 -1 */
+function TEXH_elemEnd(h, i) {
+  if (h.charAt(i) !== "<") return -1;
+  let depth = 0, j = i, guard = 0;
+  while (j < h.length && guard++ < 4000) {
+    if (h.charAt(j) !== "<") { j++; continue; }
+    const e = TEXH_tagEnd(h, j);
+    if (e < 0) return -1;
+    const isClose = h.charAt(j + 1) === "/";
+    const selfClose = h.charAt(e - 2) === "/";
+    if (isClose) { depth--; j = e; if (depth <= 0) return j; }
+    else if (selfClose) { j = e; if (depth === 0) return j; }
+    else { depth++; j = e; }
+  }
+  return -1;
+}
+/* √ 后面直接跟一个元素：√<i>E</i> → √‾E（前两条规则只吃 √(A) 与 √字母串） */
+function TEXHsqrtElem(s) {
+  let out = "", i = 0, guard = 0;
+  while (guard++ < 400) {
+    const k = s.indexOf("\u221A", i);
+    if (k < 0) break;
+    out += s.slice(i, k);
+    /* 守卫：√ 后面已是闭标签 ⇒ 该 √ 已排版过（对整段 HTML 重复跑 TEXH 会把 </span> 当成被开方式，
+       层层包出空壳根号，视觉上变成 √−3 / √−E），原样输出不再包裹 */
+    if (s.charAt(k + 1) === "<" && s.charAt(k + 2) === "/") { out += "\u221A"; i = k + 1; continue; }
+    let rad = null, end = k + 1;
+    if (s.charAt(k + 1) === "(") {
+      /* √(…) ：被开方式里常有标签，括号本身不在同一个文本片段里，必须整串扫 */
+      let depth = 0, p = k + 1;
+      while (p < s.length) {
+        const c = s.charAt(p);
+        if (c === "(") depth++;
+        else if (c === ")") { depth--; if (depth === 0) { rad = s.slice(k + 2, p); end = p + 1; break; } }
+        p++;
+      }
+    } else {
+      const e = TEXH_elemEnd(s, k + 1);
+      if (e > 0 && e - k < 500) { rad = s.slice(k + 1, e); end = e; }
+    }
+    if (rad !== null && rad.length) {
+      out += "<span class=\"sqrt\"><span class=\"rd\">\u221A</span><span class=\"rdc\">" + rad + "</span></span>";
+      i = end;
+    } else { out += "\u221A"; i = k + 1; }
+  }
+  return out + s.slice(i);
+}
+function TEXHpart(t) {
+  let s = t;
+  s = s.replace(/(\d(?:\.\d+)?)e([+-])(\d+)/g, function (m, a, sg, e) {
+    return a + "\u00d710<sup>" + (sg === "-" ? "\u2212" : "") + e + "</sup>";
+  });
+  s = s.replace(/([A-Za-z\u0370-\u03ff)\]])\^\{([^{}]{1,12})\}/g, "$1<sup>$2</sup>");
+  s = s.replace(/([A-Za-z\u0370-\u03ff)\]])\^(\d+(?:\.\d+)?)/g, "$1<sup>$2</sup>");
+  s = s.replace(/([A-Za-z\u0370-\u03ff])_\{([A-Za-z0-9\u0370-\u03ff+\-]{1,8})\}/g, "<span class='m'><i>$1</i><sub>$2</sub></span>");
+  s = s.replace(/([A-Za-z\u0370-\u03ff])_([A-Za-z0-9\u0370-\u03ff]{1,6})(?![A-Za-z0-9])/g, "<span class='m'><i>$1</i><sub>$2</sub></span>");
+  if (/[\u2070-\u209C\u00B2\u00B3\u00B9]/.test(s)) {
+    let out = "", i = 0;
+    while (i < s.length) {
+      const ch = s[i];
+      if (AUTOH_SUP[ch] !== undefined || AUTOH_SUB[ch] !== undefined) {
+        const isSup = AUTOH_SUP[ch] !== undefined, tab = isSup ? AUTOH_SUP : AUTOH_SUB;
+        let j = i, buf = "";
+        while (j < s.length && (isSup ? AUTOH_SUP[s[j]] !== undefined : AUTOH_SUB[s[j]] !== undefined)) {
+          buf += tab[s[j]]; j++;
+        }
+        out += "<" + (isSup ? "sup" : "sub") + ">" + buf + "</" + (isSup ? "sup" : "sub") + ">";
+        i = j;
+      } else { out += ch; i++; }
+    }
+    s = out;
+  }
+  return s.indexOf("\u221A") >= 0 ? TEXHsqrtElem(s) : s;
+}
+/* 只有真正的标签才整段跳过：正文里裸写的 '<'（如 "t₂ < 0"）必须当普通字符，
+   否则 indexOf('>') 会一路吞掉后面整段，E₂⁰ 这类记法就漏排了。 */
+function TEXH_tagEnd(h, i) {
+  if (h.charAt(i) !== "<") return -1;
+  const c = h.charAt(i + 1);
+  if (c === "!" || c === "/") { const j = h.indexOf(">", i); return (j >= 0 && j - i < 300) ? j + 1 : -1; }
+  if (!/[A-Za-z]/.test(c)) return -1;
+  let j = i + 1;
+  while (j < h.length && /[A-Za-z0-9]/.test(h.charAt(j))) j++;
+  if (j === i + 1) return -1;
+  if (h.charAt(j) === ">") return j + 1;
+  if (h.charAt(j) !== " " && h.charAt(j) !== "\n" && h.charAt(j) !== "\t") return -1;
+  const g = h.indexOf(">", j), nx = h.indexOf("<", j);
+  if (g < 0 || g - i > 300) return -1;
+  if (nx >= 0 && nx < g) return -1;
+  return g + 1;
+}
+function TEXH(h) {
+  if (typeof h !== "string" || !TEXH_NEED.test(h)) return h;
+  if (h.indexOf("\u221A") >= 0) h = h.replace(/<span class="(?:op|rm|fn|v|u)">\u221A<\/span>/g, "\u221A");
+  if (h.indexOf("<") < 0) return TEXHpart(h);
+  let out = "", i = 0, n = h.length, guard = 0;
+  while (i < n && guard++ < 40000) {
+    const e = TEXH_tagEnd(h, i);
+    if (e > 0) { out += h.slice(i, e); i = e; continue; }
+    let j = i;
+    while (j < n && TEXH_tagEnd(h, j) <= 0) j++;
+    out += TEXHpart(h.slice(i, j)); i = j;
+  }
+  const r = out + h.slice(i);
+  return r.indexOf("\u221A") >= 0 ? TEXHsqrtElem(r) : r;
+}
+(function hookHTML() {
+  if (window.__TEXH_HOOK) return; window.__TEXH_HOOK = 1;
+  const d = Object.getOwnPropertyDescriptor(Element.prototype, "innerHTML");
+  if (!d || !d.set) return;
+  Object.defineProperty(Element.prototype, "innerHTML", {
+    configurable: true, get: d.get,
+    set: function (v) { d.set.call(this, typeof v === "string" ? TEXH(v) : v); }
+  });
+  /* insertAdjacentHTML 也会被用到 */
+  const ia = Element.prototype.insertAdjacentHTML;
+  Element.prototype.insertAdjacentHTML = function (pos, v) {
+    return ia.call(this, pos, typeof v === "string" ? TEXH(v) : v);
+  };
+})();
+
+/* ---------------- 画布自动 LaTeX 排版 ----------------
+   老调用点 txt(g, "cm⁻³") / txt(g, "E_c") / txt(g, "2.5e+8") 一行都不用改，
+   只要在绘制前把字符串解析成分段零件即可。规则与网页侧一致：
+   物理量斜体、描述性下标与单位正体、幂次用真上标（不用 Unicode 伪字符）。 */
+const SUPMAP = { "⁰": "0", "¹": "1", "²": "2", "³": "3", "⁴": "4", "⁵": "5", "⁶": "6",
+  "⁷": "7", "⁸": "8", "⁹": "9", "⁺": "+", "⁻": "−", "⁼": "=", "⁽": "(", "⁾": ")", "ⁿ": "n", "ⁱ": "i" };
+const SUBMAP = { "₀": "0", "₁": "1", "₂": "2", "₃": "3", "₄": "4", "₅": "5", "₆": "6",
+  "₇": "7", "₈": "8", "₉": "9", "₊": "+", "₋": "−", "₌": "=", "₍": "(", "₎": ")",
+  "ₐ": "a", "ₑ": "e", "ₒ": "o", "ₓ": "x", "ₔ": "ə", "ₕ": "h", "ₖ": "k", "ₗ": "l",
+  "ₘ": "m", "ₙ": "n", "ₚ": "p", "ₛ": "s", "ₜ": "t", "ᵣ": "r", "ᵤ": "u", "ᵥ": "v" };
+const MATH_IDCH = /[A-Za-z\u0370-\u03ff]/;
+const NEED_MATH = /[\u2070-\u209C\u00B2\u00B3\u00B9]|_\{?[A-Za-z0-9\u0370-\u03ff]|\^\{?[\d(\-]|\d(\.\d+)?[eE][+\-]\d/;
+function AUTO(s) {
+  const out = [];
+  let buf = "", mode = 0;
+  const emit = (t, kind) => {
+    if (!t) return;
+    if (kind === 1) out.push({ s: t, sup: true });
+    else if (kind === -1) out.push({ s: t, sub: true });
+    else out.push({ s: t });
+  };
+  let i = 0, italicAll = false;
+  while (i < s.length) {
+    const ch = s[i];
+    if (SUPMAP[ch] !== undefined) { if (mode !== 1) { emit(buf, mode); buf = ""; mode = 1; } buf += SUPMAP[ch]; i++; continue; }
+    if (SUBMAP[ch] !== undefined) { if (mode !== -1) { emit(buf, mode); buf = ""; mode = -1; } buf += SUBMAP[ch]; i++; continue; }
+    if (mode) { emit(buf, mode); buf = ""; mode = 0; }
+    const rest = s.slice(i);
+    const sc = /^\d(\.\d+)?[eE][+\-]\d{1,3}/.exec(rest);       /* ASCII 伪科学计数 2.5e+8 */
+    if (sc) {
+      const parts = sc[0].split(/[eE]/);
+      emit(parts[0] + "\u00d710", 0); emit(String(+parts[1]).replace("-", "\u2212"), 1);
+      i += sc[0].length; continue;
+    }
+    if (MATH_IDCH.test(ch) && i + 1 < s.length && (s[i + 1] === "_" || s[i + 1] === "^")) {
+      const sup = s[i + 1] === "^";
+      let j = i + 2, grp = "";
+      if (s[j] === "{") { const e = s.indexOf("}", j); if (e > 0) { grp = s.slice(j + 1, e); j = e + 1; } }
+      else {
+        const RCJK = /[\u2E80-\u9FFF]/, RASC = /[A-Za-z0-9\u0370-\u03ff+\-]/;
+        if (RCJK.test(s[j])) { while (j < s.length && RCJK.test(s[j]) && j - i < 8) j++; }   /* 中文描述性下标：τ_直接、E_声子 */
+        else { while (j < s.length && RASC.test(s[j])) j++; }
+        grp = s.slice(i + 2, j);
+      }
+      if (grp) {
+        emit(ch, 0);
+        if (italicAll || /^[A-Za-z\u0370-\u03ff]$/.test(ch)) out[out.length - 1].i = true;
+        emit(sup ? grp.replace(/-/g, "\u2212") : grp, sup ? 1 : -1);
+        i = j; continue;
+      }
+    }
+    buf += ch; i++;
+  }
+  emit(buf, mode);
+  return out;
+}
+function fontInfo(font, dflt) {
+  const f = String(font || "");
+  const m = /(\d+(?:\.\d+)?)px/.exec(f);
+  return { fp: m ? parseFloat(m[1]) : (dflt || 12), bd: /bold|70\d|600/.test(f), it: /italic|oblique/.test(f) };
+}
+
+/* ---------------- HTML 字符串 → 画布零件（网页与画布共用同一份排版） ----------------
+   mtxt(g, TX(H_NA), x, y, col, fp) —— H_* 常量本来就在喂 innerHTML，
+   再喂给 TX() 就不会出现「网页斜体、画布正体」的两边不一致。
+   <i> 斜体、<sub> 下标、<sup> 上标；<span class="op|un|rm|sqrt|frac"> 只剥标签（保持正体）。 */
+const catA = (...a) => [].concat(...a);
+function TX(h) {
+  const t = String(h == null ? "" : h)
+    .replace(/<span\b[^>]*>/g, "").replace(/<\/span>/g, "")
+    .replace(/<i\b[^>]*>/g, "<i>").replace(/<b\b[^>]*>/g, "").replace(/<\/b>/g, "")
+    .replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&").replace(/&nbsp;/g, " ");
+  const out = [], re = /<i>([\s\S]*?)<\/i>|<sub>([\s\S]*?)<\/sub>|<sup>([\s\S]*?)<\/sup>|([^<]+)/g;
+  let m;
+  while ((m = re.exec(t))) {
+    const raw = s => s == null ? null : s.replace(/<[^>]*>/g, "");
+    if (m[1] != null) out.push({ s: raw(m[1]), i: true });
+    else if (m[2] != null) out.push({ s: raw(m[2]), sub: true });
+    else if (m[3] != null) out.push({ s: raw(m[3]), sup: true });
+    else if (m[4]) out.push({ s: m[4] });
+  }
+  return out;
+}
+function TXof(...a) { return catA(...a.map(TX)); }
+
+/* ---------------- 0. 小工具 ---------------- */
+const $ = id => document.getElementById(id);
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const fmt = (v, n) => (isFinite(v) ? v.toFixed(n === undefined ? 2 : n) : "—");
+const MM = h => '<span class="m">' + h + "</span>";
+
+/* ---------- HTML 侧的数学排版：与画布同一套规则（零外部库） ----------
+   · 单位一律 UN()：正体 + 真上标（cm<sup>−3</sup>，而不是 cm⁻³ 这类字符）
+   · 科学计数法用 sciH()：指数是真 <sup>
+   · 根号用 SQ()：√ 符号 + 一条压住被开方式的横线（纯 CSS 的 \sqrt{}）
+   · 公式一律 MM()：.m 容器 + <i> 斜体 + <sub> / <sup> */
+const UN = s => "<span class='un'>" + s + "</span>";
+const SQ = s => "<span class='sqrt'><span class='rd'>√</span><span class='rdc'>" + s + "</span></span>";
+function sciH(v, n) {
+  if (!isFinite(v) || v === 0) return "0";
+  const e = Math.floor(Math.log10(Math.abs(v)));
+  const m = (v / Math.pow(10, e)).toFixed(n === undefined ? 1 : n);
+  /* 1 ≦ |v| < 10 时直接写尾数，不再拖一个 ×10⁰ */
+  if (e === 0) return m;
+  /* 指数里的负号用 U+2212（LaTeX 减号），不用 ASCII 连字符 */
+  return m + "×10<sup>" + String(e).replace("-", "−") + "</sup>";
+}
+const U_CM3H = UN("cm<sup>−3</sup>"), U_CM2H = UN("cm<sup>−2</sup>"), U_EVH = UN("eV"), U_VH = UN("V"),
+  U_KH = UN("K"), U_NMH = UN("nm"), U_FCM2H = UN("F/cm<sup>2</sup>"), U_MEVH = UN("meV");
+const P_VGH = MM("<i>V</i><sub>G</sub>"), P_VOXH = MM("<i>V</i><sub>ox</sub>"), P_VFBH = MM("<i>V</i><sub>FB</sub>"),
+  P_VTH = MM("<i>V</i><sub>T</sub>"), P_PSIH = MM("<i>ψ</i><sub>s</sub>"), P_PHIH = MM("<i>φ</i><sub>F</sub>"),
+  P_QSH = MM("<i>Q</i><sub>s</sub>"), P_QGH = MM("<i>Q</i><sub>g</sub>"), P_QMAJH = MM("<i>Q</i><sub>maj</sub>"),
+  P_QMINH = MM("<i>Q</i><sub>min</sub>"), P_NAH = MM("<i>N</i><sub>A</sub>"), P_NDH = MM("<i>N</i><sub>D</sub>"),
+  P_NSH = MM("<i>n</i><sub>s</sub>"), P_PSH = MM("<i>p</i><sub>s</sub>"), P_NIH = MM("<i>n</i><sub>i</sub>"),
+  P_N0H = MM("<i>n</i><sub>0</sub>"), P_P0H = MM("<i>p</i><sub>0</sub>"),
+  P_WH = MM("<i>W</i>"), P_WMAXH = MM("<i>W</i><sub>max</sub>"), P_COXH = MM("<i>C</i><sub>ox</sub>"),
+  P_CMINH = MM("<i>C</i><sub>min</sub>"), P_CDMH = MM("<i>C</i><sub>dm</sub>"), P_CH = MM("<i>C</i>"),
+  P_ECH = MM("<i>E</i><sub>c</sub>"), P_EVH2 = MM("<i>E</i><sub>v</sub>"), P_EIH = MM("<i>E</i><sub>i</sub>"),
+  P_EFH = MM("<i>E</i><sub>F</sub>"), P_EFMH = MM("<i>E</i><sub>F,M</sub>"), P_EGH = MM("<i>E</i><sub>g</sub>"),
+  P_RHOQH = MM("|<i>ρ</i>|<span class='sl'>/</span><i>q</i>"), P_XH = MM("<i>x</i>"), P_LDH = MM("<i>L</i><sub>D</sub>"),
+  P_NDOPH = MM("<i>N</i><sub>A</sub><span class='op'>/</span><i>N</i><sub>D</sub>");
+
+/* ---------------- 3. 画布与画布内排版 ---------------- */
+const CV = {};
+function fitCanvas(id) {
+  const el = $(id);
+  if (!el || !el.clientWidth) return null;
+  const w = el.clientWidth, h = +el.dataset.h;
+  const dpr = window.devicePixelRatio || 1;
+  el.width = Math.round(w * dpr); el.height = Math.round(h * dpr);
+  el.style.height = h + "px";
+  const g = el.getContext("2d");
+  g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  CV[id] = { g: g, W: w, H: h, el: el };
+  return CV[id];
+}
+function fitAll() { ["chain", "disp", "zoom"].forEach(fitCanvas); }
+
+const FONT = "\"Microsoft YaHei\",\"PingFang SC\",sans-serif";
+const FONTM = "\"Cambria Math\",\"Times New Roman\",Times,serif";
+const SUBR = 0.74, SUBDY = 0.22, SUPDY = 0.40;
+const C_AC = "#1976d2", C_OP = "#d94a3d";
+const C_HEAVY = "#2f4a6b", C_LIGHT = "#7fb2e3";
+const C_ARROW = "#ef8c1a", C_SUB = "#6b7a8c", C_GRID = "#e7edf4", C_REF = "#9aa5b1";
+const C_ZOOM = "#54636f";   // 载流子浓度行里那条「固定电离杂质」虚线：比普通参考线更醒目
+
+function txt(g, s, x, y, col, font, align, base) {
+  g.fillStyle = col; g.font = font || "12px " + FONT;
+  g.textAlign = align || "left"; g.textBaseline = base || "middle";
+  if (typeof s === "string" && NEED_MATH.test(s)) {
+    const fi = fontInfo(font, 12);
+    mRun(g, AUTO(s), x, y, fi.fp, fi.bd, align || "left", false);
+    return;
+  }
+  g.fillText(s, x, y);
+}
+function txtHalo(g, s, x, y, col, font, align, base) {
+  g.font = font || "12px " + FONT;  g.textAlign = align || "left"; g.textBaseline = base || "middle";
+  g.lineJoin = "round"; g.strokeStyle = "rgba(255,255,255,0.94)"; g.lineWidth = 3.2;
+  if (typeof s === "string" && NEED_MATH.test(s)) {
+    const fi = fontInfo(font, 12), parts = AUTO(s);
+    g.lineJoin = "round";
+    mRun(g, parts, x, y, fi.fp, fi.bd, align || "left", true);
+    g.fillStyle = col;
+    mRun(g, parts, x, y, fi.fp, fi.bd, align || "left", false);
+    return;
+  }
+  g.strokeText(s, x, y); g.fillStyle = col; g.fillText(s, x, y);
+}
+function isCJKch(ch) {
+  const c = ch.codePointAt(0);
+  return (c >= 0x2E80 && c <= 0x9FFF) || (c >= 0xF900 && c <= 0xFAFF) ||
+    (c >= 0xFF00 && c <= 0xFF60) || c === 0x2014 || c === 0x2015 || c === 0x2026;
+}
+function segRuns(s) {
+  const out = []; let cur = "", curC = null;
+  for (const ch of s) {
+    const c = isCJKch(ch);
+    if (curC === null) { cur = ch; curC = c; }
+    else if (c === curC) cur += ch;
+    else { out.push({ s: cur, cjk: curC }); cur = ch; curC = c; }
+  }
+  if (cur) out.push({ s: cur, cjk: curC });
+  return out;
+}
+function pFont(q, fp, bd, cjk) {
+  const sz = fp * ((q.sub || q.sup) ? SUBR : 1);
+  return (bd ? "bold " : "") + (!cjk && q.i ? "italic " : "") + sz.toFixed(2) + "px " + (cjk ? FONT : FONTM);
+}
+/* i18n 注入点①：画布 token。带 i / sub / sup / un 标记的是物理量、下标与单位，一律不动；
+   没有这些标记的 token 才是自然语言，交给 T() —— 所以这里的判断只看标记，不看内容。 */
+const partsOf = p => p.map(q => {
+  const o = (typeof q === "string" ? { s: q } : q);
+  const natural = !(o.i || o.sub || o.sup || o.un);
+  if (LANG === "en" && natural && typeof o.s === "string" && /[\u4E00-\u9FFF]/.test(o.s)) {
+    const t = T(o.s);
+    return t === o.s ? o : Object.assign({}, o, { s: t });
+  }
+  return o;
+});
+function mMeasure(g, parts, fp, bd) {
+  let w = 0;
+  for (const q of partsOf(parts))
+    for (const sg of segRuns(q.s)) { g.font = pFont(q, fp, bd, sg.cjk); w += g.measureText(sg.s).width; }
+  return w;
+}
+function mRun(g, parts, x, y, fp, bd, align, stroke) {
+  const ps = partsOf(parts), w = mMeasure(g, ps, fp, bd);
+  let cx = align === "right" ? x - w : (align === "center" ? x - w / 2 : x);
+  g.textAlign = "left"; g.textBaseline = "middle"; g.lineJoin = "round";
+  for (const q of ps) {
+    const dy = q.sub ? fp * SUBDY : (q.sup ? -fp * SUPDY : 0);
+    for (const sg of segRuns(q.s)) {
+      g.font = pFont(q, fp, bd, sg.cjk);
+      if (stroke) { g.lineWidth = (q.sub || q.sup) ? 2.4 : 3.2; g.strokeText(sg.s, cx, y + dy); }
+      else g.fillText(sg.s, cx, y + dy);
+      cx += g.measureText(sg.s).width;
+    }
+  }
+}
+function mtxt(g, parts, x, y, col, fp, align, bd) {
+  g.fillStyle = col; mRun(g, parts, x, y, fp, bd || false, align, false);
+}
+function mtxtHalo(g, parts, x, y, col, fp, align, bd) {
+  g.strokeStyle = "rgba(255,255,255,0.94)";
+  mRun(g, parts, x, y, fp, bd || false, align, true);
+  mtxt(g, parts, x, y, col, fp, align, bd);
+}
+function line(g, x1, y1, x2, y2, col, lw, dash) {
+  g.save();
+  g.strokeStyle = col; g.lineWidth = lw || 1;
+  if (dash) g.setLineDash(dash);
+  g.beginPath(); g.moveTo(x1, y1); g.lineTo(x2, y2); g.stroke();
+  g.restore();
+}
+function arrowHead(g, x, y, ang, sz, col) {
+  g.save(); g.translate(x, y); g.rotate(ang);
+  g.beginPath(); g.moveTo(0, 0); g.lineTo(-sz, sz * 0.42); g.lineTo(-sz, -sz * 0.42);
+  g.closePath(); g.fillStyle = col; g.fill(); g.restore();
+}
+function arrow(g, x1, y1, x2, y2, col, lw, sz) {
+  const dx = x2 - x1, dy = y2 - y1, L = Math.hypot(dx, dy);
+  if (L < 0.5) return;
+  line(g, x1, y1, x2, y2, col, lw || 1.4);
+  arrowHead(g, x2, y2, Math.atan2(dy, dx), sz || 6, col);
+}
+function chip(g, s, x, y, col, font, align) {
+  g.font = font || "11px " + FONT;
+  const w = g.measureText(s).width, al = align || "left";
+  const bx = al === "right" ? x - w : (al === "center" ? x - w / 2 : x);
+  g.fillStyle = "rgba(255,255,255,0.92)";
+  g.fillRect(bx - 4, y - 8, w + 8, 16);
+  txt(g, s, bx, y, col, font, "left", "middle");
+}
+
+
+/* ---------- 画布里的公式零件（LaTeX 规则，纯 canvas 排版，不用任何外部库） ----------
+   · 物理量（V、ψ、Q、C、W、N、n、p、x、ε、φ）斜体            ⇒ { i: true }
+   · 描述性下标（G、ox、FB、T、s、maj、min、A、D、max）正体      ⇒ { sub: true } 且不斜
+   · 单位（V、eV、cm⁻³、F/cm²）正体，幂次用真正的上标            ⇒ { sup: true }
+   · 科学计数法也按 LaTeX 写：尾数 ×10 的真上标                  ⇒ PSci()   */
+const cat = (...a) => [].concat(...a);
+const PSym = (s, sub) => [{ s: s, i: true }, { s: sub, sub: true }];
+function PSci(v, n) {
+  if (!isFinite(v) || v === 0) return [{ s: "0" }];
+  const e = Math.floor(Math.log10(Math.abs(v)));
+  const m = (v / Math.pow(10, e)).toFixed(n === undefined ? 1 : n);
+  /* 1 ≦ |v| < 10 时直接写尾数，不再拖一个 ×10⁰（与 sciH 一致） */
+  if (e === 0) return [{ s: m }];
+  /* 指数负号用 U+2212 */
+  return [{ s: m + "×10" },
+          { s: String(e).replace("-", "−"), sup: true }];
+}
+/* 单位零件都带 un: true（给回归断言用：单位一律正体，绝不带 i） */
+const U_V = [{ s: " V", un: true }], U_EV = [{ s: " eV", un: true }], U_NM = [{ s: " nm", un: true }];
+const U_CM2 = [{ s: " cm", un: true }, { s: "−2", sup: true, un: true }];
+const U_CM3 = [{ s: " cm", un: true }, { s: "−3", sup: true, un: true }];
+const P_VG = PSym("V", "G"), P_VOX = PSym("V", "ox"), P_VFB = PSym("V", "FB"), P_VT = PSym("V", "T");
+const P_PSI = PSym("ψ", "s"), P_PHI = PSym("φ", "F");
+const P_QS = PSym("Q", "s"), P_QG = PSym("Q", "g"), P_QMAJ = PSym("Q", "maj"), P_QMIN = PSym("Q", "min");
+const P_NA = PSym("N", "A"), P_ND = PSym("N", "D"), P_N = [{ s: "N", i: true }];
+const P_NS = PSym("n", "s"), P_PS = PSym("p", "s"), P_NI = PSym("n", "i"), P_N0 = PSym("n", "0"), P_P0 = PSym("p", "0");
+const P_W = [{ s: "W", i: true }], P_WMAX = PSym("W", "max"), P_LD = PSym("L", "D");
+const P_COX = PSym("C", "ox"), P_CMIN = PSym("C", "min"), P_CDM = PSym("C", "dm"), P_C = [{ s: "C", i: true }];
+const P_EC = PSym("E", "c"), P_EVB = PSym("E", "v"), P_EI = PSym("E", "i"), P_EF = PSym("E", "F"), P_EFM = PSym("E", "F,M"), P_EG = PSym("E", "g");
+const P_E = [{ s: "E", i: true }];
+const P_RHOQ = [{ s: "|" }, { s: "ρ", i: true }, { s: "|/" }, { s: "q", i: true }];
+const P_X = [{ s: "x", i: true }];
+/* 中文 + 公式混排的浮动标签：与 chipC 同一套「白底 + 钳进画布」，但走数学排版 */
+function chipM(g, parts, x, y, col, fp, align, W, H, bd) {
+  const w = mMeasure(g, parts, fp, bd || false), al = align || "left";
+  const bx = clamp(al === "right" ? x - w : (al === "center" ? x - w / 2 : x), 2, Math.max(2, W - w - 2));
+  const by = clamp(y, 10, Math.max(10, H - 8));
+  g.fillStyle = "rgba(255,255,255,0.93)";
+  g.fillRect(bx - 4, by - 8, w + 8, 16);
+  mtxt(g, parts, bx, by, col, fp, "left", bd);
+  return by;
+}
+
+/* ---------------- 1. 常数与材料（半导体固定为 Si） ---------------- */
+const QE = 1.602176634e-19;     // C
+const KB = 1.380649e-23;        // J/K
+const EPS0 = 8.8541878128e-12;  // F/m
+
+/* Eg0/va/vb：Varshni 禁带宽度 Eg(T)=Eg0−va·T²/(T+vb) (eV, K)
+   Nc300/Nv300：300 K 有效态密度 (cm⁻³)；eps：相对介电常数；chi：电子亲和能 (eV)
+   本工具只讨论 Si/SiO₂ 这一套 MIS（MOS 的标准结构），不再提供半导体材料切换 */
+/* 材料表的说明文字已移到控制面板顶部（第 209 行那句「半导体固定为 Si（…）」）；
+   这里只留计算要用的参数，避免同一句话在两个地方各写一遍、将来改一个忘另一个 */
+const MATS = [
+  { name: "Si", Eg0: 1.170, va: 4.730e-4, vb: 636, Nc300: 2.80e19, Nv300: 1.04e19, eps: 11.7, chi: 4.05 }
+];
+/* 绝缘层：SiO₂ */
+const OX = { name: "SiO₂", eps: 3.9, chi: 0.9, Eg: 9.0 };
+const DOPT = [
+  { name: "p 型", note: MM("<i>N</i><sub>A</sub>") + "：多子是空穴 ⇒ " + MM("<i>φ</i><sub>F</sub><span class='op'>&gt;</span>0") +
+      "；正栅压把空穴赶走（耗尽→反型），负栅压把空穴吸到表面（积累）。" },
+  { name: "n 型", note: MM("<i>N</i><sub>D</sub>") + "：多子是电子 ⇒ " + MM("<i>φ</i><sub>F</sub><span class='op'>&lt;</span>0") +
+      "；负栅压把电子赶走（耗尽→反型），正栅压把电子吸到表面（积累）。" }
+];
+
+const C_ACC = "#ef8c1a", C_INV = "#1976d2", C_DEP = "#7b3fa0";
+const C_FERMI = "#b8860b", C_GAP = "#eef2f7", C_OXF = "#f2c14e";
+
+/* 情境预设：psi 为「表面势模式」0 平带 / 1 积累 / 2 耗尽 / 3 弱反型 / 4 阈值（ψ_s = 2φ_F）；
+   带 od 的按「栅过驱动」定位：V_G = V_T ± od —— 强反型不落在阈值上，而落在「反型层电荷已经显著」的地方 */
+const PRESETS = [
+  { name: "平带", psi: 0, note: MM("<i>V</i><sub>G</sub><span class='op'>=</span><i>V</i><sub>FB</sub>") + "：半导体里一点电荷都没有，能带是平的，" + MM("<i>C</i><span class='op'>=</span><i>C</i><sub>FB</sub>") + "。" },
+  { name: "多子积累", psi: 1, note: "栅压把多子吸到表面：薄薄一层高浓度同号电荷，能带朝相反方向弯，" + MM("<i>C</i><span class='op'>≈</span><i>C</i><sub>ox</sub>") + "。" },
+  { name: "耗尽", psi: 2, note: MM("0<span class='op'>&lt;</span><i>ψ</i><sub>s</sub><span class='op'>&lt;</span><i>φ</i><sub>F</sub>") + "：多子被赶走，露出固定电离杂质，形成均匀的耗尽层电荷。" },
+  {
+    name: "弱反型", psi: 3, note: d =>
+      MM("|<i>φ</i><sub>F</sub>|<span class='op'>&lt;</span>|<i>ψ</i><sub>s</sub>|<span class='op'>&lt;</span>2|<i>φ</i><sub>F</sub>|") +
+      "：表面 " + P_EIH + " 已经越过 " + P_EFH + "（" + (d && d.dop === 1 ? "n 型：往上抬到 " + P_EFH + " 之上" : "p 型：往下压到 " + P_EFH + " 之下") +
+      "），开始出现少量反型载流子。"
+  },
+  {
+    name: "阈值 " + P_VTH, psi: 4, note: d =>
+      MM("<i>ψ</i><sub>s</sub><span class='op'>=</span>2<i>φ</i><sub>F</sub>") + "、" + MM("<i>V</i><sub>G</sub><span class='op'>=</span><i>V</i><sub>T</sub>") +
+      "：表面少子浓度刚好追平体内多子浓度（" + (d && d.dop === 1
+        ? MM("<i>p</i><sub>s</sub><span class='op'>=</span><i>n</i><sub>0</sub>")
+        : MM("<i>n</i><sub>s</sub><span class='op'>=</span><i>p</i><sub>0</sub>")) +
+      "），这是「强反型」的<b>定义起点</b>。"
+  },
+  {
+    name: "强反型", od: 0.8, note: d =>
+      "栅过驱动 " + MM("<i>V</i><sub>G</sub><span class='op'>−</span><i>V</i><sub>T</sub><span class='op'>=</span>0.8" + U_VH) +
+      "：多出来的电压几乎全落在氧化层上（" + P_PSIH + " 只从 " + MM("2<i>φ</i><sub>F</sub>") + " 抬到 " + MM("≈2.4<i>φ</i><sub>F</sub>") +
+      " 就被钳住），而反型层电荷按 " + MM("<span class='rm'>e</span><sup><i>qψ</i><sub>s</sub><span class='sl'>/</span>2<i>kT</i></sup>") +
+      " 指数暴涨。同时 " + P_WH + " 已经饱和、低频电容回到 " + MM("≈0.94<i>C</i><sub>ox</sub>") + "。"
+  }
+];
+/* 预设说明可以是字符串，也可以是 d => string（符号的正负要跟着掺杂类型走时用它） */
+const noteOf = (p, d) => typeof p.note === "function" ? p.note(d || der()) : p.note;
+/* 原生 tooltip 只吃纯文本：把公式的标签剥掉，实体（&lt; 等）顺带解回字符 */
+const stripTags = h => { const t = document.createElement("span"); t.innerHTML = h || ""; return t.textContent; };
+
+/* ---------------- 2. 状态 ---------------- */
+const OPT = {
+  preset: 5, mat: 0, dop: 0,
+  VG: 0,          // V（真实电压；滑块位置由自适应量程反推）
+  speed: 1.0, playing: false,
+  ckCharge: true, ckFermi: true, ckBend: true,
+  ckDep: true, ckReg: true, ckLF: true, ckHF: true
+};
+/* 固定量：理想 MIS 只留「掺杂类型」与「栅压」两个正交旋钮 */
+const T_FIX = 300;              // K
+const DOX_FIX = 20e-9;          // m（SiO₂ 20 nm）
+const PHIMS_FIX = 0;            // V（理想 MIS：金属与半导体功函数相同）
+const ND_FIX = 1.0e16;          // cm⁻³（掺杂浓度固定：典型 MOS 衬底，p / n 型通用）
+
+/* ---------------- 3. 数值小工具 ---------------- */
+function bisect(f, lo, hi) {
+  let flo = f(lo), fhi = f(hi);
+  if (!isFinite(flo) || !isFinite(fhi) || flo * fhi > 0) return null;
+  for (let i = 0; i < 100; i++) {
+    const m = (lo + hi) / 2, fm = f(m);
+    if (flo * fm <= 0) { hi = m; fhi = fm; } else { lo = m; flo = fm; }
+  }
+  return (lo + hi) / 2;
+}
+const exs = x => Math.exp(Math.max(-500, Math.min(500, x)));
+const sgn0 = v => (v > 0 ? 1 : (v < 0 ? -1 : 0));
+function fmtLen(m) {
+  const nm = m * 1e9;
+  if (!isFinite(nm)) return "—";
+  if (nm < 1) return fmt(nm * 1000, 1) + " pm";
+  if (nm < 1000) return fmt(nm, nm < 10 ? 2 : 0) + " nm";
+  return fmt(nm / 1000, 2) + " µm";
+}
+
+/* ---------------- 4. 物理内核 ---------------- */
+/* 把表面电荷按「载流子种类」精确拆开（不做耗尽近似）：
+   ρ/q = p₀(e^{−u}−1) − n₀(e^{u}−1)，沿泊松剖面 u(x) 积分。
+   Q_maj = q∫p₀(e^{−u}−1)dx（多子：耗尽时为负、积累时为正）
+   Q_min = −q∫n₀(e^{u}−1)dx（少子：反型时大负）
+   恒等式 Q_maj + Q_min = Q_s 由构造保证。*/
+function splitCharge(Fsc, us, p0m, n0m, epsS, kTJ) {
+  if (Math.abs(us) < 1e-9) return { Qmaj: 0, Qmin: 0 };
+  /* 在 u 上取**等间距**步长（不是等比！）：强反型时 integrand ∝ e^{u} 集中在表面，
+     等比步长在 u_s 附近一步就跨掉 Δu≈0.7，积分误差会大到 6% */
+  const G = u => Math.sqrt(2 * QE * QE * Math.max(Fsc(u), 0) / (epsS * kTJ));
+  const du = Math.max(0.04, Math.abs(us) / 1600), s = Math.sign(us);
+  let u = us, dm = p0m * (exs(-u) - 1), dn = n0m * (exs(u) - 1), x = 0;
+  let Imaj = 0, Imin = 0;
+  for (let k = 0; k < 1800; k++) {
+    const uEnd = s > 0 ? Math.max(u - du, 0) : Math.min(u + du, 0);
+    const gv = G((u + uEnd) / 2);
+    if (!isFinite(gv) || gv <= 0) break;
+    const dx = Math.abs(uEnd - u) / gv;
+    const dm2 = p0m * (exs(-uEnd) - 1), dn2 = n0m * (exs(uEnd) - 1);
+    Imaj += 0.5 * (dm + dm2) * dx;
+    Imin += 0.5 * (dn + dn2) * dx;
+    u = uEnd; dm = dm2; dn = dn2; x += dx;
+    if (Math.abs(u) < 1e-7 || x > 3e-3) break;
+  }
+  return { Qmaj: QE * Imaj, Qmin: -QE * Imin };
+}
+
+function phys(o) {
+  const M = MATS[0];                            // 半导体固定为 Si
+  const dop = o.dop === undefined ? OPT.dop : o.dop;
+  const T = o.T === undefined ? T_FIX : o.T;
+  const Ndop = o.Ndop === undefined ? ND_FIX : o.Ndop;
+  const dox = o.dox === undefined ? DOX_FIX : o.dox;
+  const VG = o.VG === undefined ? OPT.VG : o.VG;
+
+  const kT = KB * T / QE;                       // eV ≡ V（数值上 qψ[eV] 与 ψ[V] 相等）
+  const kTJ = KB * T;                           // J
+  const Eg = M.Eg0 - M.va * T * T / (T + M.vb); // eV
+  const Nc = M.Nc300 * Math.pow(T / 300, 1.5);
+  const Nv = M.Nv300 * Math.pow(T / 300, 1.5);
+  const ni = Math.sqrt(Nc * Nv) * exs(-Eg / (2 * kT));
+  const epsS = M.eps * EPS0, epsOX = OX.eps * EPS0;
+  const Cox = epsOX / dox;                      // F/m²
+  const VFB = PHIMS_FIX;                        // V（理想 MIS：无氧化层电荷 ⇒ V_FB = Φ_ms = 0）
+  const NdopM = Ndop * 1e6;                     // m⁻³
+
+  /* 体内费米能级（能量零点取 E_F = 0，E_v,bulk = −E_F0，E_c,bulk = E_g − E_F0） */
+  const uF = bisect(u => dop === 0
+    ? (Nv * exs(-u / kT) - Nc * exs(-(Eg - u) / kT) - Ndop)
+    : (Nc * exs(-(Eg - u) / kT) - Nv * exs(-u / kT) - Ndop), -0.8, Eg + 0.8);
+  const EF0 = uF === null ? Eg / 2 : uF;
+  const n0 = Nc * exs(-(Eg - EF0) / kT);        // cm⁻³
+  const p0 = Nv * exs(-EF0 / kT);
+  const n0m = n0 * 1e6, p0m = p0 * 1e6;         // m⁻³
+  /* 本征能级 E_i ≠ 禁带中央：Nc ≠ Nv 时要加 (kT/2)ln(Nv/Nc)，
+     否则 φ_F ≠ (kT/q)ln(p₀/n_i)，强反型判据 ψ_s = 2φ_F 会整体偏移约 13 mV */
+  const Evb = -EF0, Ecb = Eg - EF0;
+  const Eib = Eg / 2 - EF0 + (kT / 2) * Math.log(Nv / Nc);
+  const phiF = Eib;                             // (E_i,bulk − E_F)/q，单位 V（p 型 > 0，n 型 < 0）
+
+  /* 泊松方程：F(u) = p₀(e^{−u}+u−1) + n₀(e^{u}−u−1)，|u| 很小时用级数避免相消 */
+  const makeF = (nM, pM) => u => {
+    if (Math.abs(u) < 1e-3) {
+      const s = nM + pM, dm = nM - pM;
+      return s * u * u / 2 * (1 + u * dm / (3 * Math.max(s, 1e-300)));
+    }
+    return pM * (exs(-u) + u - 1) + nM * (exs(u) - u - 1);
+  };
+  const Fsc = makeF(n0m, p0m);
+  const QsOf = u => -sgn0(u) * Math.sqrt(2 * epsS * kTJ * Math.max(Fsc(u), 0));   // C/m²
+  const LD = Math.sqrt(epsS * kTJ / (QE * QE * (n0m + p0m)));                     // m
+
+  /* 耗尽层（耗尽近似）与最大耗尽宽度 */
+  const Wmax = Math.sqrt(2 * epsS * 2 * Math.abs(phiF) / (QE * NdopM));
+  const Wunsat = psi => Math.sqrt(2 * epsS * Math.abs(psi) / (QE * NdopM));
+  const QdepOf = psi => -sgn0(psi) * Math.sqrt(2 * epsS * QE * NdopM * Math.abs(psi));
+
+  /* 阈值电压（ψ_s = 2φ_F 时的栅压） */
+  const psiT = 2 * phiF;
+  const VT = VFB + psiT + sgn0(phiF) * Math.sqrt(2 * epsS * QE * NdopM * 2 * Math.abs(phiF)) / Cox;
+
+  /* 由 V_G 反解 ψ_s：h(ψ) = V_FB + ψ − Q_s/C_ox − V_G，对 ψ 严格单调递增 */
+  const hfun = psi => VFB + psi - QsOf(psi / kT) / Cox - VG;
+  let Vlim = clamp(2 * Math.abs(phiF) + 20 * kT + 0.5, 1.2, 6);
+  let psi = bisect(hfun, -Vlim, Vlim);
+  for (let k = 0; k < 6 && psi === null; k++) { Vlim = Math.min(30, Vlim * 1.8); psi = bisect(hfun, -Vlim, Vlim); }
+  const sat = psi === null;
+  if (sat) psi = clamp(VG - VFB, -Vlim, Vlim);
+
+  const u = psi / kT;
+  const Qs = QsOf(u);
+  const Vox = -Qs / Cox;
+  const depleting = psi * phiF > 0;
+  const W = depleting ? Math.min(Wunsat(psi), Math.max(Wmax, 1e-15)) : 0;
+  const sp = splitCharge(Fsc, u, p0m, n0m, epsS, kTJ);
+  const Qmaj = sp.Qmaj, Qmin = sp.Qmin;
+  const Qg = -Qs;
+  const ns = n0 * exs(u), ps = p0 * exs(-u);      // 表面载流子浓度 cm⁻³
+  /* 「多子 / 少子」随掺杂类型翻转：判据、读数、探究文案一律从这里取，
+     不要再写死 p 型的 n_s/p_0 —— 否则切到 n 型后判据会整个反掉（积累区反而 ≫1） */
+  const maj0 = dop === 0 ? p0 : n0;               // 体内多子浓度 cm⁻³
+  const min0 = dop === 0 ? n0 : p0;               // 体内少子浓度
+  const sMaj = dop === 0 ? ps : ns;               // 表面多子浓度
+  const sMin = dop === 0 ? ns : ps;               // 表面少子浓度
+  const invRatio = maj0 > 0 ? sMin / maj0 : 0;    // 强反型判据：表面少子 / 体内多子，≥1 即进入强反型
+
+  /* 状态判定 */
+  let reg, regCol;
+  const aP = Math.abs(psi), aF = Math.abs(phiF);
+  if (aP < 0.05 * kT) { reg = "平带"; regCol = "#0f9b8e"; }
+  else if (psi * phiF < 0) { reg = "多子积累"; regCol = C_ACC; }
+  else if (aP >= 2 * aF - 0.1 * kT) { reg = "强反型"; regCol = C_INV; }
+  else if (aP >= aF) { reg = "弱反型"; regCol = "#5b8fd6"; }
+  else { reg = "耗尽"; regCol = C_DEP; }
+
+  /* 电容（单位面积，F/m²） */
+  const hpsi = 1e-3 * kT;
+  const CsAt = p => {
+    const q1 = QsOf((p + hpsi) / kT), q2 = QsOf((p - hpsi) / kT);
+    return Math.abs((q1 - q2) / (2 * hpsi));
+  };
+  const CsHFAt = p => {
+    const cl = CsAt(p);
+    if (p * phiF <= 0) return cl;
+    const wu = Math.max(Wunsat(p), 1e-15);
+    return Math.min(cl, epsS / Math.min(wu, Math.max(Wmax, 1e-15)));
+  };
+  const CsLF = CsAt(psi), CsHF = CsHFAt(psi);
+  const Clf = Cox * CsLF / (Cox + CsLF);
+  const Chf = Cox * CsHF / (Cox + CsHF);
+  const Cmin = Cox * (epsS / Math.max(Wmax, 1e-15)) / (Cox + epsS / Math.max(Wmax, 1e-15));
+
+  /* 栅压滑块的自适应量程：积累侧（V_FB 那一侧）留一小段，反型侧（越过 V_T 那一侧）留一大段。
+     两侧的余量必须按「积累 / 反型」给，而不是按「上下界」给 —— 否则 p 型能越过 V_T 走 1.2 V、
+     n 型只能走 0.8 V，p / n 就不镜像了（同一个过驱动在 n 型下会顶到量程边界）。 */
+  const span = Math.abs(VT - VFB);
+  const accRoom = Math.max(0.8, 0.55 * span), invRoom = Math.max(1.2, 0.9 * span);
+  const vgLo = VFB <= VT ? VFB - accRoom : VT - invRoom;
+  const vgHi = VFB <= VT ? VT + invRoom : VFB + accRoom;
+
+  /* 模块一（四行共用）的横轴上限：耗尽层最深只能长到 W_max，体区只需留出「看得出已经是体区」
+     的那一小段（≈4 个德拜长度，比 W_max 短得多）当代表 —— 到那里 |ρ|/q 已降到 N 的 1% 以下、
+     剩余带弯曲不到 <span class="m">0.2<span class="un">meV</span></span>，再画下去是一条没有任何新信息的平尾巴，
+     只会把耗尽区压成图幅里的一小条，积累／反型那一两个像素宽的薄层更看不见 */
+  const XR = clamp(Math.max(1.6 * Wmax, 4 * LD, 60e-9), 60e-9, 3e-6);
+
+  return {
+    T: T, Eg: Eg, kT: kT, Nc: Nc, Nv: Nv, ni: ni, epsS: epsS, epsOX: epsOX, epsRel: M.eps,
+    chi: M.chi, Ndop: Ndop, NdopM: NdopM, dop: dop, EF0: EF0, n0: n0, p0: p0,
+    Evb: Evb, Ecb: Ecb, Eib: Eib, phiF: phiF, VFB: VFB, VT: VT, psiT: psiT,
+    dox: dox, doxNm: dox * 1e9, Cox: Cox,
+    VG: VG, psi: psi, us: u, Qs: Qs, Vox: Vox, Qmaj: Qmaj, Qmin: Qmin, Qg: Qg,
+    W: W, Wmax: Wmax, LD: LD, ns: ns, ps: ps, reg: reg, regCol: regCol, sat: sat,
+    maj0: maj0, min0: min0, sMaj: sMaj, sMin: sMin, invRatio: invRatio,
+    CsLF: CsLF, CsHF: CsHF, Clf: Clf, Chf: Chf, Cmin: Cmin, CminN: Cmin / Cox,
+    vgLo: vgLo, vgHi: vgHi, XR: XR,
+    Fsc: Fsc, QsOf: QsOf, CsAt: CsAt, CsHFAt: CsHFAt, Wunsat: Wunsat, matName: M.name
+  };
+}
+function der() { return phys({}); }
+
+/* ⊕/⊖ 符号的「定额」：一枚符号代表多少 cm⁻² 的电荷（全图只有这一个 Δ）。
+   要求：① 同一个掺杂下定额恒定 —— 这样拖 V_G 时「符号个数」严格正比于电荷量；
+        ② 个数不能太多（画不下、符号被迫缩小）也不能太少（看不出变化）。
+   标定：把 V_G 滑块从一头拉到另一头取样若干次，取最大面密度 ÷ 目标个数（12），再取 1/2/5 的整齿。
+   12 这个目标是按截面图里「栅 + 半导体两侧」排得下、且符号仍保持正常大小反推的：
+   目标定到 26 时栅电荷最多要 29 枚，符号被迫缩到半径 3 px 以下，反而数不清。
+   掺杂类型一变才重新标定（浓度已固定，所以只按 dop 缓存），过程中不会再变 */
+const DQTARGET = 12, DQCACHE = new Map();
+function niceStep(v) {
+  const e = Math.floor(Math.log10(v)), m = v / Math.pow(10, e);
+  return (m < 1.5 ? 1 : (m < 3.5 ? 2 : (m < 7.5 ? 5 : 10))) * Math.pow(10, e);
+}
+function symDQ(d) {
+  const key = d.dop + "|" + d.Ndop;
+  if (DQCACHE.has(key)) return DQCACHE.get(key);
+  let mx = 0;
+  for (let k = 0; k <= 8; k++) {
+    const dd = phys({ VG: d.vgLo + (d.vgHi - d.vgLo) * k / 8 });
+    mx = Math.max(mx, Math.abs(dd.Qmaj) / QE * 1e-4, Math.abs(dd.Qmin) / QE * 1e-4);
+  }
+  const q0 = niceStep(Math.max(mx / DQTARGET, 1));
+  DQCACHE.set(key, q0);
+  return q0;
+}
+
+/* ---------------- 5. 空间剖面 u(x) ---------------- */
+let PROF = null;
+function profile(d) {
+  const arr = [[0, d.us]];
+  if (Math.abs(d.us) < 1e-7) { arr.push([1e-9, 0]); return arr; }
+  const G = u => Math.sqrt(2 * QE * QE * Math.max(d.Fsc(u), 0) / (d.epsS * KB * d.T));
+  const N = 420, r = Math.exp(Math.log(1e-5) / N);
+  let u = d.us, x = 0;
+  for (let k = 0; k < N; k++) {
+    const u2 = u * r, gv = G((u + u2) / 2);
+    if (!isFinite(gv) || gv <= 0) break;
+    x += Math.abs(u2 - u) / gv;
+    u = u2;
+    arr.push([x, u]);
+    if (x > 3e-4) break;
+  }
+  arr.push([x * 1.6, 0]);
+  return arr;
+}
+function uAt(arr, x) {
+  if (x <= arr[0][0]) return arr[0][1];
+  for (let i = 1; i < arr.length; i++) {
+    if (x <= arr[i][0]) {
+      const x0 = arr[i - 1][0], x1 = arr[i][0], u0 = arr[i - 1][1], u1 = arr[i][1];
+      const t = x1 > x0 ? (x - x0) / (x1 - x0) : 0;
+      return u0 + (u1 - u0) * t;
+    }
+  }
+  return 0;
+}
+/* ---------------- 6. C–V 曲线扫描 ---------------- */
+function cvSweep(d) {
+  const s = Math.sign(d.phiF) || 1;
+  const a = -s * Math.max(0.12, 5 * d.kT);
+  const b = s * (2 * Math.abs(d.phiF) + Math.max(0.12, 8 * d.kT));
+  const lo = Math.min(a, b), hi = Math.max(a, b);
+  const N = 421, pts = [];
+  for (let i = 0; i < N; i++) {
+    const p = lo + (hi - lo) * i / (N - 1);
+    const qs = d.QsOf(p / d.kT);
+    const vg = d.VFB + p - qs / d.Cox;
+    const cl = d.CsAt(p), ch = d.CsHFAt(p);
+    pts.push([vg, d.Cox * cl / (d.Cox + cl) / d.Cox, d.Cox * ch / (d.Cox + ch) / d.Cox, p]);
+  }
+  /* 反型侧：低频电容回到 0.97 C_ox 处的栅压，用来定横轴上限 */
+  const dir = d.VT > d.VFB ? 1 : -1;
+  let v95 = dir > 0 ? Infinity : -Infinity;
+  for (const q of pts) {
+    if (dir > 0 && q[1] >= 0.97 && q[0] < v95) v95 = q[0];
+    if (dir < 0 && q[1] >= 0.97 && q[0] > v95) v95 = q[0];
+  }
+  const vgAll = pts.map(q => q[0]);
+  const vmin = Math.min.apply(null, vgAll), vmax = Math.max.apply(null, vgAll);
+  const sp = Math.max(Math.abs(d.VT - d.VFB), 0.6);
+  let xlo, xhi;
+  if (dir > 0) {
+    xlo = Math.max(vmin, Math.min(d.VFB, d.VT) - 0.5 * sp - 0.4);
+    xhi = isFinite(v95) ? Math.min(vmax, v95) : Math.min(vmax, Math.max(d.VFB, d.VT) + 3 * sp + 2);
+  } else {
+    xlo = isFinite(v95) ? Math.max(vmin, v95) : Math.max(vmin, Math.min(d.VFB, d.VT) - 3 * sp - 2);
+    xhi = Math.min(vmax, Math.max(d.VFB, d.VT) + 0.5 * sp + 0.4);
+  }
+  if (!(xhi - xlo > 0.2)) { xlo = Math.min(d.VFB, d.VT) - 1; xhi = Math.max(d.VFB, d.VT) + 1.5; }
+  return { pts: pts, xlo: xlo, xhi: xhi, vmin: vmin, vmax: vmax };
+}
+
+function fitAll() { ["sec", "cv"].forEach(fitCanvas); }
+
+/* ---------------- 7. 模块一：四行共用一条横轴（截面 / 载流子浓度 / 电荷密度 / 能带） ---------------- */
+const HOV = { sec: null, cv: null };
+
+function chipC(g, s, x, y, col, font, align, W, H) {
+  g.font = font || "11px " + FONT;
+  const w = g.measureText(s).width, al = align || "left";
+  let bx = al === "right" ? x - w : (al === "center" ? x - w / 2 : x);
+  bx = clamp(bx, 2, Math.max(2, W - w - 2));
+  const by = clamp(y, 10, Math.max(10, H - 8));
+  g.fillStyle = "rgba(255,255,255,0.93)";
+  g.fillRect(bx - 4, by - 8, w + 8, 16);
+  txt(g, s, bx, by, col, font, "left", "middle");
+}
+/* 电荷符号：s=+1 画 ⊕，s=−1 画 ⊖；rr 是半径（默认 5.4，挤在一起时自动缩小） */
+function csym(g, x, y, s, col, rr) {
+  const R = rr || 5.4, a = R * 0.48;
+  g.beginPath(); g.arc(x, y, R, 0, 6.2832);
+  g.fillStyle = "#fff"; g.fill();
+  g.strokeStyle = col; g.lineWidth = clamp(R * 0.30, 1.2, 1.6); g.stroke();
+  g.strokeStyle = col;
+  g.beginPath();
+  g.moveTo(x - a, y); g.lineTo(x + a, y);
+  if (s > 0) { g.moveTo(x, y - a); g.lineTo(x, y + a); }
+  g.stroke();
+}
+/* 把 n 枚同款符号排进一个矩形（自下往上堆）：列数、行距、半径都按可用空间自适应，
+   取「符号尽量大、且整副排得下」的那一档；实在排不下就把装不下的枚数记在 over 里 */
+function packSym(n, x0, x1, y0, y1) {
+  const gw = Math.max(x1 - x0, 10), gh = Math.max(y1 - y0, 10);
+  const res = { pts: [], r: 4.6, over: 0 };
+  if (n <= 0) return res;
+  let best = null;
+  for (let nc = 1; nc <= 4; nc++) {
+    const nr = Math.ceil(n / nc);
+    const r = Math.min(4.6, (gw / nc - 1.7) / 2, (gh / nr - 1.7) / 2);
+    if (!best || r > best.r + 0.02) best = { nc: nc, r: r };
+  }
+  const r = Math.max(best.r, 2.2), sp = 2 * r + 1.7;
+  const rows = Math.max(1, Math.floor(1 + (gh - 0.8 - 2 * r) / sp));
+  const cap = best.nc * rows, m = Math.min(n, cap);
+  res.r = r; res.over = n - m;
+  for (let k = 0; k < m; k++) {
+    const col = k % best.nc, row = Math.floor(k / best.nc);
+    res.pts.push({ x: x0 + (col + 0.5) * gw / best.nc, y: y1 - r - 0.8 - row * sp });
+  }
+  return res;
+}
+
+function drawSec() {
+  const c = CV.sec || fitCanvas("sec"); if (!c) return;
+  const g = c.g, W = c.W, H = c.H;
+  g.clearRect(0, 0, W, H); g.fillStyle = "#fbfdff"; g.fillRect(0, 0, W, H);
+  const d = der();
+
+  /* ===== 四行共用的列边界与 x 映射（竖直对齐的唯一来源） ===== */
+  const L0 = 52, R0 = W - 14, Wd = R0 - L0;
+  const mw = 0.10 * Wd;
+  const ow = (0.07 + 0.09 * clamp((d.doxNm - 2) / 98, 0, 1)) * Wd;
+  const xm0 = L0, xm1 = L0 + mw, xo1 = xm1 + ow, xs0 = xo1, xs1 = R0;
+  const XR = d.XR;
+  const MX = x => xs0 + clamp(x / XR, 0, 1) * (xs1 - xs0);
+  const XM = px => XR * clamp((px - xs0) / (xs1 - xs0), 0, 1);
+  const xTicks = () => { const a = []; for (let k = 0; k <= 5; k++) a.push(XR * k / 5); return a; };
+  const tickLab = x => fmtLen(x);
+
+  /* ===== 各行的上下边界 ===== */
+  const yT = 12, yB = 140;            // 第一行：截面（定额电荷符号：栅 / 表面层 / 耗尽层）
+  const NT = 168, NB = 262;           // 第二行：载流子浓度 p(x)/n(x)
+  const PT = 294, PB = 388;           // 第三行：净电荷密度
+  const BT = 418, BB = H - 46;        // 第四行：能带（下方留刻度与轴标题两行）
+  const cy = (yT + yB) / 2;
+  const ZR = 20e-9;                   // 「紧贴表面」那一列的宽度：表面层的定额符号就铺在这里
+  const xz = MX(Math.min(ZR, XR));
+
+  /* ================= 第一行：三层截面 ================= */
+  g.fillStyle = "#dfe4ea"; g.fillRect(xm0, yT, mw, yB - yT);
+  g.strokeStyle = "#9aa5b1"; g.lineWidth = 1; g.strokeRect(xm0, yT, mw, yB - yT);
+  g.fillStyle = "#fff4d6"; g.fillRect(xm1, yT, ow, yB - yT);
+  g.save(); g.beginPath(); g.rect(xm1, yT, ow, yB - yT); g.clip();
+  g.strokeStyle = "rgba(242,193,78,0.75)"; g.lineWidth = 1;
+  for (let k = -12; k < 40; k++) { const xx = xm1 + k * 9; line(g, xx, yT, xx + (yB - yT), "rgba(242,193,78,0.75)", 1); }
+  g.restore();
+  g.strokeStyle = "#9aa5b1"; g.strokeRect(xm1, yT, ow, yB - yT);
+  g.fillStyle = "#eef4fa"; g.fillRect(xs0, yT, xs1 - xs0, yB - yT);
+  g.strokeStyle = "#9aa5b1"; g.strokeRect(xs0, yT, xs1 - xs0, yB - yT);
+
+  /* 半导体内的耗尽层 / 表面层底色（x 映射与第二、三行相同） */
+  if (d.W > 1e-12) {
+    const xw = MX(d.W);
+    g.fillStyle = "rgba(123,63,160,0.10)"; g.fillRect(xs0, yT, Math.max(xw - xs0, 0), yB - yT);
+  }
+  const flat = Math.abs(d.psi) <= 0.05 * d.kT;        // 平带：表面与体内一样，没有多余载流子
+  const acc = !flat && d.psi * d.phiF < 0;            // 多子被吸到表面 ⇒ 积累
+  const inv = Math.abs(d.psi) > Math.abs(d.phiF);     // 越过 φ_F ⇒ 开始反型
+  const surfOn = acc || inv;
+  const sr = MX(Math.max(2.5e-9, XR / 300));
+  /* 表面那薄层里到底是什么载流子：+1 空穴 / −1 电子 / 0 无可动载流子
+     颜色跟的是「载流子的正负」，不是「积累还是反型」—— n 型的反型层是空穴，所以是橙的 */
+  const sMob = acc ? (d.dop === 0 ? 1 : -1) : (inv ? (d.dop === 0 ? -1 : 1) : 0);
+  const tagCol = sMob > 0 ? C_ACC : (sMob < 0 ? C_INV : d.regCol);
+  /* ===== 定额：一枚 ⊕/⊖ 代表多少面电荷（全图同一个 Δ）=====
+     Δ 只在掺杂这类「场景参数」变了才重新标定，绝不随 V_G 实时变 —— 否则「枚数 ∝ 电荷量」就不成立 */
+  const DQ = symDQ(d);
+  const nAll = q => Math.round(Math.abs(q) / QE * 1e-4 / DQ);
+  const sg = sgn0(d.Qg);
+  /* 表面层那一份：积累时是多子（空穴项 Q_maj），反型时是少子（电子项 Q_min） */
+  const arealS = sMob === 0 ? 0 : (sMob > 0 ? Math.abs(d.Qmaj) : Math.abs(d.Qmin)) / QE * 1e-4;
+  const nS = Math.round(arealS / DQ);
+  /* 耗尽层里的固定电离杂质：≈ qNW，它落在「多子那一项」上 —— p 型是空穴项 Q_maj，n 型是电子项 Q_min
+     （写死成 Q_maj 会让 n 型的耗尽层符号直接消失，栅上 3 枚对半导体 0 枚）；
+     积累时 W = 0，没有耗尽层，表面那一堆已经把电荷算进去了 */
+  const nD = (acc || d.W <= 1e-12) ? 0 : nAll(d.dop === 0 ? d.Qmaj : d.Qmin);
+  /* 栅上那一堆**由两侧相加得出**，而不是自己再除一次：|Q_s| = |Q_maj| + |Q_min|，但
+     round(a) + round(b) 与 round(a+b) 会差一枚（两个小数部分凑过 0.5 时），
+     那样就会出现「栅 7 枚对半导体 6 枚」—— 守恒是这张图要教的东西，不能败在取整上 */
+  const nG = nD + nS;
+  if (surfOn) {
+    g.fillStyle = sMob > 0 ? "rgba(239,140,26,0.16)" : "rgba(25,118,210,0.16)";
+    g.fillRect(xs0, yT, Math.max(sr - xs0, 2), yB - yT);
+  }
+  if (d.W > 1e-12) { const xw = MX(d.W); line(g, xw, yT, xw, yB, C_DEP, 1.4, [5, 3]); }
+
+  /* 层名 */
+  txt(g, "Metal", (xm0 + xm1) / 2, yT + 14, "#455a64", "bold 11px " + FONT, "center");
+  txt(g, "栅", (xm0 + xm1) / 2, yT + 28, "#6b7a8c", "10px " + FONT, "center");
+  txt(g, OX.name, (xm1 + xo1) / 2, yT + 14, "#8a6d1f", "bold 11px " + FONT, "center");
+  txt(g, fmt(d.doxNm, 1) + " nm", (xm1 + xo1) / 2, yT + 28, "#8a6d1f", "10px " + FONT, "center");
+  txt(g, d.matName + " " + (d.dop === 0 ? "p 型" : "n 型"), xs0 + 6, yT + 14, "#1976d2", "bold 11px " + FONT, "left");
+  mtxt(g, cat(P_N, [{ s: " = " }], PSci(d.Ndop, 1), U_CM3), xs1 - 6, yT + 14, "#5a6572", 10, "right");
+
+  /* 栅压箭头 */
+  const up = d.VG >= 0;
+  arrow(g, (xm0 + xm1) / 2, yT - 6, (xm0 + xm1) / 2, up ? yT - 1 : yT - 9, up ? C_OP : C_INV, 1.6, 5);
+  chipM(g, cat(P_VG, [{ s: " = " + fmt(d.VG, 2) }], U_V), (xm0 + xm1) / 2 + 8, yT - 7, C_OP, 10.5, "left", W, H, true);
+
+  /* ===== 按定额把电荷画成符号：栅 / 表面层 / 耗尽层（枚数 = 电荷量 ÷ Δ）=====
+     「栅上几枚」＝「半导体里几枚（耗尽层 ＋ 表面层）」—— Q_g = −Q_s 可以直接数出来 */
+  if (OPT.ckCharge) {
+    const sIon = d.dop === 0 ? -1 : 1;
+    const cFix = sIon > 0 ? C_OP : C_DEP;
+    /* 1) 栅电荷：贴在金属靠氧化层那一侧（栅电荷本来就压在界面上） */
+    const gp = packSym(nG, xm1 - 40, xm1 - 4, yT + 34, yB - 30);
+    if (sg !== 0) for (const p of gp.pts) csym(g, p.x, p.y, sg, sg > 0 ? C_OP : C_INV, gp.r);
+    /* 2) 表面层（积累的多子 / 反型的少子）：贴着表面画，铺在最靠表面那一列（≈0–20 nm）里 */
+    const zp = packSym(nS, xs0 + 1, xz - 1, yT + 34, yB - 30);
+    for (const p of zp.pts) csym(g, p.x, p.y, sMob, tagCol, zp.r);
+    if (zp.over > 0) txt(g, "＋" + zp.over, xz + 3, yT + 40, tagCol, "9px " + FONT, "left");
+    /* 3) 耗尽层：固定电离杂质沿 0…W 均匀铺开，枚数 = qNW ÷ Δ
+         （起点不早于 20 nm 那一列，免得 W 很小时和表面那一堆挤在同一格里） */
+    for (let i = 0; i < nD; i++) {
+      const xd = Math.max(d.W * (i + 0.5) / nD, Math.min(d.W * 0.98, ZR));
+      csym(g, MX(xd), cy, sIon, cFix);
+    }
+    /* 4) 体内（x > W）：多子与固定电离杂质都在，只是**一一抵消** ⇒ 净电荷 0
+         画出来正是为了回答「为什么不画」 —— 它们本来就在，只是加起来为零。
+         这一对是**示意**（净电荷为零，不参与上面的定额计数），所以画得淡一些 */
+    const xb0 = Math.max(d.W * 1.03, XR * 0.03), xb1 = XR * 0.96;
+    const px0 = Math.max(MX(xb0), xz + 12), px1 = MX(xb1);
+    /* 体区只留约 4 个德拜长度，所以排布要比以前密一点：每 46 px 一对，至少 2 对、最多 6 对 */
+    const nPr = clamp(Math.round((px1 - px0) / 46), 2, 6);
+    const sMaj = d.dop === 0 ? 1 : -1;                     // 多子：p 型空穴 ⊕，n 型电子 ⊖
+    const cMaj = d.dop === 0 ? C_ACC : C_INV;
+    g.save(); g.globalAlpha = 0.5;
+    for (let i = 0; i < nPr; i++) {
+      const xx = px0 + (px1 - px0) * (i + 0.5) / nPr;
+      line(g, xx, cy - 4, xx, cy + 4, "#c3ccd6", 1);
+      csym(g, xx, cy - 10, sMaj, cMaj);
+      csym(g, xx, cy + 10, sIon, cFix);
+    }
+    g.restore();
+    /* 标注必须写在**体区**正上方（也就是成对符号铺开的那一列）：W 随栅压变宽变窄，
+       体区是 W 右边那一段，标签要跟着它走 —— 否则耗尽层一宽，这句「体内净电荷 0」就飘到耗尽区头上了 */
+    g.font = "bold 11px " + FONT;
+    const wMat = g.measureText(d.matName + " " + (d.dop === 0 ? "p 型" : "n 型")).width;
+    g.font = "10px " + FONT;
+    const wN = mMeasure(g, cat(P_N, [{ s: " = " }], PSci(d.Ndop, 1), U_CM3), 10, false);
+    /* 可用空档 = 体区（px0…px1）∩ 不与左右两端层名 / N = … 打架的区间 */
+    const b0 = Math.max(xs0 + 6 + wMat + 10, px0), b1 = Math.min(xs1 - 6 - wN - 10, px1);
+    const labLong = "体内：⊕⊖ 成对相消 ⇒ 净电荷 0（示意，不计数）";
+    const labShrt = "体内净电荷 0";
+    const wLong = g.measureText(labLong).width, wShrt = g.measureText(labShrt).width;
+    const labPr = wLong <= b1 - b0 ? labLong : (wShrt <= b1 - b0 ? labShrt : "");
+    if (labPr) {
+      const wl = labPr === labLong ? wLong : wShrt;
+      /* 居中在体区，再钳进空档，保证整条字都在 W 右边 */
+      txt(g, labPr, clamp((px0 + px1) / 2, b0 + wl / 2, Math.max(b0 + wl / 2, b1 - wl / 2)),
+        cy - 24, "#6b7a8c", "10px " + FONT, "center");
+    }
+    /* 电量小到「一枚都凑不满」时就写 ≈0，别把 10⁻¹⁸ 这种数摆上来 */
+    const qP = (n, q) => n > 0 ? cat(PSci(Math.abs(q) / QE * 1e-4, 2), U_CM2) : [{ s: "≈ 0" }];
+    chipM(g, cat([{ s: "栅电荷 " }], P_QG, [{ s: " " + (sg > 0 ? "⊕" : (sg < 0 ? "⊖" : "≈0")) + " × " + nG + " 枚　" }], qP(nG, d.Qg)),
+      xm0 + 4, yB - 12, sg > 0 ? C_OP : C_INV, 10, "left", W, H);
+    chipM(g, cat([{ s: "半导体 " + (nD + nS) + " 枚（耗尽 " + nD + " ＋ 表面 " + nS + "）　" }], P_QS, [{ s: " " }], qP(nD + nS, d.Qs)),
+      xs1 - 4, yB - 12, d.Qs < 0 ? C_INV : C_ACC, 10, "right", W, H);
+  }
+  /* 定额写在这幅图的右上角：数符号就是读电荷量（全图就是这一个 Δ） */
+  mtxt(g, cat([{ s: "一枚 ⊕/⊖ = " }], PSci(DQ, 1), U_CM2), xs1 - 6, yT + 28, "#5a6572", 10, "right");
+
+  /* ================= 第二行：载流子浓度 p(x) / n(x)（同一条横轴） =================
+     这一行把浓度剖面画在主图的整条深度轴上，于是「多子被赶走的宽度」和「少子冒出来的位置」
+     都能和下面的净电荷、能带逐列对齐 */
+  drawCarrRow(g, W, H, { xs0: xs0, xs1: xs1, MX: MX, XR: XR, T: NT, B: NB }, d);
+
+  /* ================= 第三行：净电荷密度 |ρ|/q ================= */
+  function p0c(u, dd) { return dd.p0 * (exs(-u) - 1) - dd.n0 * (exs(u) - 1); }
+
+  let hi = Math.max(d.Ndop, Math.abs(d.ns - d.n0), Math.abs(d.ps - d.p0), 1);
+  hi = Math.max(hi * 2, d.Ndop * 10);
+  let lo = d.Ndop * 1e-3;
+  if (hi / lo < 1e3) lo = hi / 1e3;
+  const lhi = Math.log10(hi), llo = Math.log10(lo);
+  const Yq = v => PB - clamp((Math.log10(Math.max(v, lo)) - llo) / (lhi - llo), 0, 1.05) * (PB - PT);
+
+  g.fillStyle = "#fff"; g.fillRect(xs0, PT, xs1 - xs0, PB - PT);
+  for (let e = Math.ceil(llo); e <= Math.floor(lhi); e++) {
+    const y = Yq(Math.pow(10, e));
+    line(g, xs0, y, xs1, y, C_GRID, 1);
+    mtxt(g, ["10", { s: String(e).replace("-", "−"), sup: true }], xs0 - 5, y, C_SUB, 10.5, "right");
+  }
+  const NS = 480;
+  for (let i = 0; i < NS; i++) {
+    const x = XR * i / (NS - 1);
+    const x2 = XR * (i + 1) / (NS - 1);
+    const u = uAt(PROF, i === 0 ? x : (x + x2) / 2);
+    const v = Math.abs(p0c(u, d)), sv = sgn0(p0c(u, d));
+    const y0 = Yq(v), xa = MX(x), xb = MX(x2);
+    if (sv !== 0 && v > lo) {
+      g.fillStyle = sv > 0 ? "rgba(239,140,26,0.30)" : "rgba(25,118,210,0.28)";
+      g.fillRect(xa, y0, Math.max(xb - xa + 1, 1), PB - y0);
+    }
+    g.strokeStyle = sv > 0 ? C_ACC : C_INV; g.lineWidth = 1.8;
+    g.beginPath(); g.moveTo(xa, y0); g.lineTo(xb, y0); g.stroke();
+  }
+  g.strokeStyle = "#cfd8e3"; g.lineWidth = 1; g.strokeRect(xs0, PT, xs1 - xs0, PB - PT);
+
+  const yd = Yq(d.Ndop);
+  line(g, xs0, yd, xs1, yd, "#8a94a3", 1.2, [6, 4]);
+  chipM(g, cat(d.dop === 0 ? P_NA : P_ND, [{ s: " = " }], PSci(d.Ndop, 1), U_CM3), xs1 - 6, yd - 10, "#5a6572", 10.5, "right", W, H);
+  if (d.W > 1e-12) {
+    const xw = MX(d.W);
+    line(g, xw, PT, xw, PB, C_DEP, 1.4, [5, 3]);
+    chipM(g, cat(P_W, [{ s: " = " + fmtLen(d.W) }]), xw + 4, PB - 12, C_DEP, 10.5, "left", W, H);
+  }
+  mtxt(g, cat(P_RHOQ, [{ s: " (" }, { s: "cm", un: true }, { s: "−3", sup: true, un: true }, { s: ")" }]), 8, PT + 6, C_SUB, 11.5, "left");
+  txt(g, "状态：" + d.reg, xs0 + 6, PT + 12, d.regCol, "bold 11.5px " + FONT, "left");
+
+  /* ================= 第四行：能带（同一条横轴） ================= */
+  drawBandRow(g, W, H, { xm0: xm0, xm1: xm1, xo1: xo1, xs0: xs0, xs1: xs1, MX: MX, XM: XM, L0: L0, T: BT, B: BB, sr: sr }, d);
+
+  /* ================= 共用横轴刻度（只标在最下面一行下方） ================= */
+  const TKS = xTicks();
+  TKS.forEach((xv, i) => {
+    const xx = MX(xv);
+    line(g, xx, NT, xx, NB, C_GRID, 1);
+    line(g, xx, PT, xx, PB, C_GRID, 1);
+    line(g, xx, BT, xx, BB, C_GRID, 1);
+    /* 首/末刻度标签靠边对齐，居中会溢出画布 */
+    const al = i === 0 ? "left" : (i === TKS.length - 1 ? "right" : "center");
+    txt(g, tickLab(xv), xx, BB + 13, C_SUB, "10.5px " + FONT, al);
+  });
+  mtxt(g, cat([{ s: "距表面的距离 " }], P_X, [{ s: "（线性轴，左＝表面，四行共用；体区只画到 ≈1.6 " }], P_WMAX, [{ s: "，更深的省略）" }]),
+    (xs0 + xs1) / 2, H - 8, C_SUB, 11.5, "center");
+
+  /* ================= 悬停探针 ================= */
+  if (HOV.sec && HOV.sec.x > xs0 && HOV.sec.x < xs1 && HOV.sec.y > yT && HOV.sec.y < BB) {
+    const x = XM(HOV.sec.x), xx = MX(x), u = uAt(PROF, x);
+    line(g, xx, yT, xx, yB, "#8a94a3", 1, [3, 3]);
+    line(g, xx, NT, xx, NB, "#8a94a3", 1, [3, 3]);
+    line(g, xx, PT, xx, PB, "#8a94a3", 1, [3, 3]);
+    line(g, xx, BT, xx, BB, "#8a94a3", 1, [3, 3]);
+    let pt = cat(P_X, [{ s: " = " + fmtLen(x) + "　弯曲 " + fmt(d.kT * u, 3) }], U_EV);
+    if (HOV.sec.y < yB) pt = cat(pt, [{ s: "　" + (d.W > 1e-12 && x < d.W ? "（耗尽层内）" : "（电中性区）") }]);
+    else if (HOV.sec.y < NB) pt = cat(pt, [{ s: "　空穴 " }], PSci(d.p0 * exs(-u), 2), U_CM3, [{ s: "　电子 " }], PSci(d.n0 * exs(u), 2), U_CM3);
+    else if (HOV.sec.y < PB) {
+      const v = p0c(u, d);
+      pt = cat(pt, [{ s: "　" }], P_RHOQ, [{ s: " = " }], PSci(Math.abs(v), 2), U_CM3,
+        [{ s: "（" + (v > 0 ? "正" : v < 0 ? "负" : "0") + "）" }]);
+    } else pt = cat(pt, [{ s: "　" }], P_EC, [{ s: " − " }], P_EF, [{ s: " = " + fmt(d.Ecb - d.kT * u, 3) }], U_EV);
+    chipM(g, pt, xx + 6, clamp(HOV.sec.y, yT + 10, BB - 10), "#2c3e50", 10.5, "left", W, H);
+  }
+}
+
+/* ---------------- 8b. 第二行：载流子浓度 p(x)/n(x)（主图那条横轴） ----------------
+   纵轴固定 10¹²–10²¹ cm⁻³（跨状态可比），横轴就是主图那条（0 → ≈1.6 W_max），
+   于是浓度剖面可以和上面的截面、下面的净电荷与能带逐列对齐：
+     · 体内：多子压在固定杂质虚线上 ⇒ 一一抵消；少子（p 型里的电子）远在纵轴下限之外；
+     · 耗尽：多子从表面往里掉几个数量级（强反型时整段掉出纵轴下限），回到体内又压回杂质虚线上；
+     · 反型：少子曲线在最表面翘起来，阈值处正好与杂质虚线齐平（n_s = N_A），再加大栅压就超过它。
+   紧贴表面那一两个像素宽的尖峰（积累层／反型层）真实比例就这么窄：
+   它的浓度看这一行最左端，它装了多少电荷看第一行表面那一列画了几枚 ⊕/⊖。 */
+function drawCarrRow(g, W, H, G, d) {
+  const xs0 = G.xs0, xs1 = G.xs1, MX = G.MX, XR = G.XR, T = G.T, B = G.B;
+  const LQ = 12, HQ = 21;                 /* 固定纵轴：跨状态可比，体内少子 10⁴ 远在下限之外 */
+  const YQ = v => B - clamp((Math.log10(Math.max(v, 1)) - LQ) / (HQ - LQ), 0, 1) * (B - T);
+  g.fillStyle = "#fff"; g.fillRect(xs0, T, xs1 - xs0, B - T);
+
+  for (let e = LQ; e <= HQ; e += 3) {
+    const y = YQ(Math.pow(10, e));
+    line(g, xs0, y, xs1, y, C_GRID, 1);
+    mtxt(g, ["10", { s: String(e).replace("-", "−"), sup: true }], xs0 - 5, y, C_SUB, 10.5, "right");
+  }
+
+  const pAt = x => d.p0 * exs(-uAt(PROF, x));
+  const nAt = x => d.n0 * exs(uAt(PROF, x));
+  const NS = 480;
+  const curve = (get, fill, col) => {
+    g.save(); g.beginPath(); g.rect(xs0, T, xs1 - xs0, B - T); g.clip();
+    let started = false;
+    g.beginPath();
+    for (let i = 0; i <= NS; i++) { const px = MX(XR * i / NS), py = YQ(get(XR * i / NS)); if (started) g.lineTo(px, py); else { g.moveTo(px, py); started = true; } }
+    g.lineTo(xs1, B + 2); g.lineTo(xs0, B + 2); g.closePath();
+    g.fillStyle = fill; g.fill();
+    started = false; g.beginPath();
+    for (let i = 0; i <= NS; i++) { const px = MX(XR * i / NS), py = YQ(get(XR * i / NS)); if (started) g.lineTo(px, py); else { g.moveTo(px, py); started = true; } }
+    g.strokeStyle = col; g.lineWidth = 1.8; g.stroke();
+    g.restore();
+  };
+  curve(pAt, "rgba(239,140,26,0.16)", C_ACC);      // 空穴：始终是橙（跟载流子的正负，不跟机制）
+  curve(nAt, "rgba(25,118,210,0.15)", C_INV);      // 电子：始终是蓝
+
+  /* 固定电离杂质：处处等于掺杂浓度 —— 多子压在这条线上就是「相消」 */
+  line(g, xs0, YQ(d.Ndop), xs1, YQ(d.Ndop), C_ZOOM, 1.6, [7, 4]);
+  g.strokeStyle = "#cfd8e3"; g.lineWidth = 1; g.strokeRect(xs0, T, xs1 - xs0, B - T);
+  /* W 只画竖线不写字（W 的读数在第三行）：四行同一个像素列，竖直对齐靠眼睛核对 */
+  if (d.W > 1e-12) { const xw = MX(d.W); line(g, xw, T, xw, B, C_DEP, 1.4, [5, 3]); }
+
+  mtxt(g, [{ s: "浓度 (" }, { s: "cm", un: true }, { s: "−3", sup: true, un: true }, { s: ")" }], 8, T + 6, C_SUB, 11.5, "left");
+  txt(g, "空穴 p(x)", xs1 - 6, T + 12, C_ACC, "bold 11px " + FONT, "right");
+  txt(g, "电子 n(x)", xs1 - 6, T + 25, C_INV, "bold 11px " + FONT, "right");
+}
+
+/* ---------------- 8. 能带行（画进模块一画布的第四行，x 映射由调用方给定） ---------------- */
+function drawBandRow(g, W, H, G, d) {
+  const xm0 = G.xm0, xm1 = G.xm1, xo1 = G.xo1, xs0 = G.xs0, xs1 = G.xs1;
+  const MX = G.MX, XM = G.XM, L = G.L0, T = G.T, B = G.B, sr = G.sr;
+  const mw = xm1 - xm0, ow = xo1 - xm1, pw = xs1 - xs0;
+  /* 同一列（x 相近）的标签自动往下错开，避免互相压盖 */
+  const used = [];
+  const avoidY = (x, y) => {
+    let yy = y;
+    for (let k = 0; k < 10; k++) {
+      if (!used.some(r => Math.abs(r.x - x) < 70 && Math.abs(r.y - yy) < 15)) break;
+      yy += 15;
+    }
+    used.push({ x: x, y: yy });
+    return yy;
+  };
+  const chipA = (s, x, y, col, font, align) => chipC(g, s, x, Math.min(avoidY(x, y), B - 12), col, font, align, W, H);
+  /* 含公式的标签走同一套避让，只是排版换成 mtxt */
+  const chipAM = (parts, x, y, col, fp, align, bd) => chipM(g, parts, x, Math.min(avoidY(x, y), B - 12), col, fp, align, W, H, bd);
+
+  const Eu = x => d.kT * uAt(PROF, x);
+  const Ec = x => d.Ecb - Eu(x), Ev = x => d.Evb - Eu(x), Ei = x => d.Eib - Eu(x);
+  const EFM = -d.VG;                                   // eV（E_F 取半导体体内为 0）
+  let Elo = Math.min(d.Evb, Ev(0), EFM, -Math.abs(d.phiF)) - 0.34;
+  let Ehi = Math.max(d.Ecb, Ec(0), EFM, Math.abs(d.phiF)) + 0.34;
+  if (Ehi - Elo < 1.2) { const m = (Elo + Ehi) / 2; Elo = m - 0.6; Ehi = m + 0.6; }
+  const Y = E => B - (clamp(E, Elo, Ehi) - Elo) / (Ehi - Elo) * (B - T);
+
+  /* 三层底色（列边界与上面两行一致） */
+  g.fillStyle = "#eceff1"; g.fillRect(xm0, T, mw, B - T);
+  g.fillStyle = "#fff8e1"; g.fillRect(xm1, T, ow, B - T);
+  g.save(); g.beginPath(); g.rect(xm1, T, ow, B - T); g.clip();
+  for (let k = -20; k < 60; k++) line(g, xm1 + k * 8, T, xm1 + k * 8 + (B - T), "rgba(242,193,78,0.55)", 1);
+  g.restore();
+  g.fillStyle = "#fff"; g.fillRect(xs0, T, xs1 - xs0, B - T);
+
+  /* 纵轴刻度 */
+  const stp = (Ehi - Elo) > 5 ? 1 : ((Ehi - Elo) > 2.4 ? 0.5 : 0.25);
+  for (let e = Math.ceil(Elo / stp) * stp; e <= Ehi + 1e-9; e += stp) {
+    const y = Y(e);
+    line(g, xs0, y, xs1, y, C_GRID, 1);
+    txt(g, fmt(e, 2), L + 4, y, C_SUB, "10px " + FONT, "left");
+  }
+  g.strokeStyle = "#cfd8e3"; g.lineWidth = 1; g.strokeRect(xs0, T, xs1 - xs0, B - T);
+  mtxt(g, cat(P_E, [{ s: " (" }, { s: "eV", un: true }, { s: ")" }]), 8, T + 6, C_SUB, 11.5, "left");
+
+  /* 取样：像素步长为 2，x 由 MX 的逆映射给出 */
+  const XPIX = [];
+  for (let px = 0; px <= pw; px += 2) XPIX.push([xs0 + px, XM(xs0 + px)]);
+
+  /* 禁带填充与能带边 */
+  g.beginPath();
+  XPIX.forEach((p, i) => { const y = Y(Ec(p[1])); i ? g.lineTo(p[0], y) : g.moveTo(p[0], y); });
+  for (let i = XPIX.length - 1; i >= 0; i--) g.lineTo(XPIX[i][0], Y(Ev(XPIX[i][1])));
+  g.closePath(); g.fillStyle = C_GAP; g.fill();
+
+  const band = (fn, col, lw, dash) => {
+    g.save(); g.strokeStyle = col; g.lineWidth = lw; g.lineJoin = "round";
+    if (dash) g.setLineDash(dash);
+    g.beginPath();
+    XPIX.forEach((p, i) => { const y = Y(fn(p[1])); i ? g.lineTo(p[0], y) : g.moveTo(p[0], y); });
+    g.stroke(); g.restore();
+  };
+  band(Ec, "#1976d2", 2.4); band(Ev, "#455a64", 2.4);
+  if (OPT.ckFermi) band(Ei, "#0f9b8e", 1.6, [5, 4]);
+
+  /* 体内参考（平带位置） */
+  g.save(); g.setLineDash([4, 4]);
+  line(g, xs0, Y(d.Ecb), xs1, Y(d.Ecb), "#9aa5b1", 1.1);
+  line(g, xs0, Y(d.Evb), xs1, Y(d.Evb), "#9aa5b1", 1.1);
+  g.restore();
+
+  /* 费米能级（半导体，处处水平） */
+  if (OPT.ckFermi) {
+    line(g, xs0, Y(0), xs1, Y(0), C_FERMI, 2, [8, 4]);
+    mtxt(g, P_EF, xs1 - 4, Y(0) - 10, C_FERMI, 11.5, "right", true);
+  }
+  /* 金属：费米能级 + 填充态 */
+  g.fillStyle = "rgba(120,137,155,0.22)"; g.fillRect(xm0 + 2, Y(EFM), mw - 4, Math.max(B - Y(EFM), 0));
+  line(g, xm0, Y(EFM), xm1, Y(EFM), "#455a64", 2.2);
+  const yFML = clamp(Y(EFM) - 9 < T + 26 ? Y(EFM) + 12 : Y(EFM) - 9, T + 8, B - 8);   /* 别压到顶部的层名 */
+  mtxt(g, P_EFM, xm1 - 6, yFML, "#455a64", 10.5, "right", true);
+  txt(g, "Metal", (xm0 + xm1) / 2, T + 12, "#455a64", "bold 11px " + FONT, "center");
+  txt(g, OX.name + " " + fmt(d.doxNm, 1) + " nm", (xm1 + xo1) / 2, T + 12, "#8a6d1f", "bold 10.5px " + FONT, "center");
+  mtxt(g, cat(P_EG, [{ s: " ≈ 9 " }, { s: "eV", un: true }]), (xm1 + xo1) / 2, T + 26, "#8a6d1f", 10, "center");
+  txt(g, d.matName, (xs0 + xs1) / 2, T + 12, "#1976d2", "bold 11px " + FONT, "center");
+  g.strokeStyle = "#9aa5b1"; g.lineWidth = 1;
+  g.strokeRect(xm0, T, mw, B - T); g.strokeRect(xm1, T, ow, B - T);
+
+  /* 氧化层压降（V_G 已在第一行的栅压箭头旁标过，此处不重复） */
+  chipAM(cat(P_VOX, [{ s: " = " + fmt(d.Vox, 3) }], U_V), (xm1 + xo1) / 2, B - 12, "#8a6d1f", 10.5, "center");
+
+  /* 表面竖线 */
+  line(g, xs0, T, xs0, B, "#455a64", 1.4);
+  chipAM(cat([{ s: "表面 " }], P_X, [{ s: " = 0" }]), xs0 + 3, B - 28, "#455a64", 10, "left");
+
+  /* 表面势 ψ_s 标注 */
+  if (OPT.ckBend && Math.abs(d.psi) > 1e-4) {
+    const xa = xs0 + 0.05 * pw;
+    arrow(g, xa, Y(d.Eib), xa, Y(Ei(0)), C_OP, 1.6, 5.5);
+    arrow(g, xa, Y(Ei(0)), xa, Y(d.Eib), C_OP, 1.6, 5.5);
+    chipAM(cat([{ s: "q", i: true }], P_PSI, [{ s: " = " + fmt(d.psi, 3) }], U_EV,
+      [{ s: "（能带" + (d.psi > 0 ? "向下" : "向上") + "弯）" }]),
+      xa + 7, (Y(d.Eib) + Y(Ei(0))) / 2, C_OP, 10.5, "left", true);
+  }
+  /* 耗尽层宽度（与上面两行同一条竖线） */
+  if (OPT.ckDep && d.W > 1e-12) {
+    const xw = MX(d.W);
+    line(g, xw, T, xw, B, C_DEP, 1.3, [5, 3]);
+  }
+  /* 表面载流子标记：积累时是多子，反型时是少子 */
+  const accB = d.psi * d.phiF < 0;
+  const surfOnB = (accB || Math.abs(d.psi) > Math.abs(d.phiF)) && Math.abs(d.psi) > 0.05 * d.kT;
+  if (surfOnB) {
+    const isElec = accB ? (d.dop === 1) : (d.dop === 0);
+    const yE = Y(isElec ? Ec(0) : Ev(0));
+    g.fillStyle = isElec ? "rgba(25,118,210,0.55)" : "rgba(239,140,26,0.55)";
+    g.fillRect(xs0 + 1, yE - 3, clamp(sr - xs0, 3, 10), 5);
+    const lab = cat([{ s: (accB ? "积累层" : "反型层") + (isElec ? "电子 " : "空穴 ") }], isElec ? P_NS : P_PS,
+      [{ s: " = " }], PSci(isElec ? d.ns : d.ps, 2), U_CM3);
+    chipAM(lab, xs0 + 8, yE - 14, isElec ? C_INV : C_ACC, 10.5, "left");
+  }
+  /* 状态徽标 */
+  chipA("当前状态：" + d.reg, xs1 - 6, T + 14, d.regCol, "bold 12px " + FONT, "right");
+}
+
+/* ---------------- 9. 模块二：C–V 曲线 ---------------- */
+let CVS = null;
+function drawCV() {
+  const c = CV.cv || fitCanvas("cv"); if (!c) return;
+  const g = c.g, W = c.W, H = c.H;
+  g.clearRect(0, 0, W, H); g.fillStyle = "#fbfdff"; g.fillRect(0, 0, W, H);
+  const d = der();
+  const S = cvSweep(d); CVS = S;
+  const L = 54, R = W - 14, T = 14, B = H - 30;
+  const X = v => L + clamp((v - S.xlo) / (S.xhi - S.xlo), 0, 1) * (R - L);
+  const Y = r => B - clamp(r, 0, 1.12) / 1.12 * (B - T);
+
+  g.fillStyle = "#fff"; g.fillRect(L, T, R - L, B - T);
+
+  /* 分区底色 */
+  const invRight = d.VT > d.VFB;
+  if (OPT.ckReg) {
+    const seg = (a, b, col) => {
+      const xa = X(Math.max(Math.min(a, S.xhi), S.xlo)), xb = X(Math.max(Math.min(b, S.xhi), S.xlo));
+      if (xb > xa) { g.fillStyle = col; g.fillRect(xa, T, xb - xa, B - T); }
+    };
+    if (invRight) {
+      seg(S.xlo, d.VFB, "rgba(239,140,26,0.09)");
+      seg(d.VFB, d.VT, "rgba(123,63,160,0.08)");
+      seg(d.VT, S.xhi, "rgba(25,118,210,0.09)");
+      txt(g, "积累", X((S.xlo + d.VFB) / 2), T + 12, C_ACC, "bold 11px " + FONT, "center");
+      txt(g, "耗尽", X((d.VFB + d.VT) / 2), T + 12, C_DEP, "bold 11px " + FONT, "center");
+      txt(g, "反型", X((d.VT + S.xhi) / 2), T + 12, C_INV, "bold 11px " + FONT, "center");
+    } else {
+      seg(S.xlo, d.VT, "rgba(25,118,210,0.09)");
+      seg(d.VT, d.VFB, "rgba(123,63,160,0.08)");
+      seg(d.VFB, S.xhi, "rgba(239,140,26,0.09)");
+      txt(g, "反型", X((S.xlo + d.VT) / 2), T + 12, C_INV, "bold 11px " + FONT, "center");
+      txt(g, "耗尽", X((d.VT + d.VFB) / 2), T + 12, C_DEP, "bold 11px " + FONT, "center");
+      txt(g, "积累", X((d.VFB + S.xhi) / 2), T + 12, C_ACC, "bold 11px " + FONT, "center");
+    }
+  }
+
+  /* 网格与刻度 */
+  for (let r = 0; r <= 1.0001; r += 0.2) {
+    const y = Y(r);
+    line(g, L, y, R, y, C_GRID, 1);
+    txt(g, fmt(r, 1), L - 6, y, C_SUB, "10.5px " + FONT, "right");
+  }
+  const NX = 5;
+  for (let i = 0; i <= NX; i++) {
+    const v = S.xlo + (S.xhi - S.xlo) * i / NX, x = X(v);
+    line(g, x, T, x, B, C_GRID, 1);
+    txt(g, fmt(v, 2), x, B + 13, C_SUB, "10.5px " + FONT, i === 0 ? "left" : (i === NX ? "right" : "center"));
+  }
+  g.strokeStyle = "#cfd8e3"; g.lineWidth = 1; g.strokeRect(L, T, R - L, B - T);
+
+  /* C_min 参考线 */
+  line(g, L, Y(d.CminN), R, Y(d.CminN), "#7b8794", 1.2, [6, 4]);
+  chipM(g, cat(P_CMIN, [{ s: "/" }], P_COX, [{ s: " = " + fmt(d.CminN, 3) + "（" }], P_W, [{ s: " 饱和于 " }], P_WMAX, [{ s: "）" }]),
+    R - 6, Y(d.CminN) - 10, "#5a6572", 10.5, "right", W, H);
+
+  /* 曲线 */
+  const path = (idx, col, lw, dash) => {
+    g.save(); g.strokeStyle = col; g.lineWidth = lw; g.lineJoin = "round";
+    if (dash) g.setLineDash(dash);
+    g.beginPath(); let started = false;
+    for (const q of S.pts) {
+      const x = X(q[0]), y = Y(q[idx]);
+      const inR = q[0] >= S.xlo - 1e-9 && q[0] <= S.xhi + 1e-9;
+      if (!inR) { started = false; continue; }
+      if (!started) { g.moveTo(x, y); started = true; } else g.lineTo(x, y);
+    }
+    g.stroke(); g.restore();
+  };
+  if (OPT.ckLF) path(1, C_INV, 2.6);
+  if (OPT.ckHF) path(2, C_OP, 2.2, [7, 4]);
+
+  /* 平带 / 阈值竖线 */
+  [[d.VFB, P_VFB, "#0f9b8e"], [d.VT, P_VT, "#d94a3d"]].forEach(m => {
+    const x = X(m[0]);
+    if (x <= L + 1 || x >= R - 1) return;
+    line(g, x, T, x, B, m[2], 1.3, [5, 3]);
+    chipM(g, cat(m[1], [{ s: " = " + fmt(m[0], 2) }], U_V), x, T + 28, m[2], 10.5, "center", W, H);
+  });
+
+  /* 当前工作点 */
+  const xv = X(d.VG);
+  if (xv > L && xv < R) {
+    line(g, xv, T, xv, B, "#2c3e50", 1.6, [4, 3]);
+    if (OPT.ckLF) { g.beginPath(); g.arc(xv, Y(d.Clf / d.Cox), 4.4, 0, 6.2832); g.fillStyle = C_INV; g.fill(); g.strokeStyle = "#fff"; g.lineWidth = 1.4; g.stroke(); }
+    if (OPT.ckHF) { g.beginPath(); g.arc(xv, Y(d.Chf / d.Cox), 4.4, 0, 6.2832); g.fillStyle = C_OP; g.fill(); g.strokeStyle = "#fff"; g.lineWidth = 1.4; g.stroke(); }
+    chipM(g, cat(P_C, [{ s: "/" }], P_COX, [{ s: " = " + fmt(d.Clf / d.Cox, 3) + "（低频） / " + fmt(d.Chf / d.Cox, 3) + "（高频）" }]),
+      xv + 6, B - 14, "#2c3e50", 10.5, "left", W, H);
+  }
+
+  mtxt(g, cat(P_C, [{ s: "/" }], P_COX), 8, T + 6, C_SUB, 11.5, "left");
+  mtxt(g, cat([{ s: "栅压 " }], P_VG, [{ s: " (" }, { s: "V", un: true }, { s: ")" }]), (L + R) / 2, H - 8, C_SUB, 11.5, "center");
+
+  /* 悬停 / 点击 */
+  if (HOV.cv && HOV.cv.x > L && HOV.cv.x < R) {
+    const v = S.xlo + (S.xhi - S.xlo) * (HOV.cv.x - L) / (R - L), xx = X(v);
+    line(g, xx, T, xx, B, "#8a94a3", 1, [3, 3]);
+    let best = null, bd = 1e9;
+    for (const q of S.pts) { const dd = Math.abs(q[0] - v); if (dd < bd) { bd = dd; best = q; } }
+    if (best) chipM(g, cat(P_VG, [{ s: " = " + fmt(v, 3) }], U_V, [{ s: "　低频 " + fmt(best[1], 3) + " / 高频 " + fmt(best[2], 3) + "　" }], P_PSI, [{ s: " = " + fmt(best[3], 3) }], U_V),
+      xx + 6, clamp(HOV.cv.y, T + 10, B - 12), "#2c3e50", 10.5, "left", W, H);
+  }
+}
+
+/* ---------------- 10. 图例 ---------------- */
+function grp(tag, items) {
+  return '<div class="lg-grp"><b class="lg-tag">' + tag + '</b>' + items.join("") + '</div>';
+}
+function buildLegends() {
+  $("legSec").innerHTML =
+    grp("第一行 截面（一枚 ⊕/⊖ = 定额电荷）", [
+      '<span><span class="swatch dot" style="background:#d94a3d"></span>栅电荷 ' + P_QGH + '（⊕/⊖，枚数 = 半导体侧之和）</span>',
+      '<span><span class="swatch dot" style="background:#7b3fa0"></span>耗尽层里的固定电离杂质（枚数 = ' + MM("<i>qNW</i>") + ' ÷ 定额）</span>',
+      '<span><span class="swatch dot" style="background:#ef8c1a"></span>表面多余的可动空穴 ⊕（正电荷：p 型积累 / n 型反型）</span>',
+      '<span><span class="swatch dot" style="background:#1976d2"></span>表面多余的可动电子 ⊖（负电荷：p 型反型 / n 型积累）</span>',
+      '<span><span class="swatch sq" style="background:rgba(123,63,160,0.16)"></span>耗尽层范围（边界 ' + P_WH + ' 标在第三行）</span>',
+      '<span><span class="swatch dot" style="background:#ef8c1a;border-color:#c3ccd6"></span>+<span class="swatch dot" style="background:#7b3fa0"></span>体内（淡色＝示意）：多子与电离杂质成对出现，正好抵消（净电荷 0，不计数）</span>'
+    ]) +
+    grp("第二行 载流子浓度", [
+      '<span><span class="swatch" style="border-color:#ef8c1a"></span>空穴浓度 ' + MM("<i>p</i>(<i>x</i>)") + '</span>',
+      '<span><span class="swatch" style="border-color:#1976d2"></span>电子浓度 ' + MM("<i>n</i>(<i>x</i>)") + '</span>',
+      '<span><span class="swatch dash" style="border-color:#54636f"></span>固定电离杂质浓度 ' + MM("<i>N</i>") + '（多子压在这条线上 = 相消）</span>',
+      '<span><span class="swatch dash" style="border-color:#7b3fa0"></span>耗尽层边界 ' + P_WH + '（读数标在第三行）</span>'
+    ]) +
+    grp("第三行 电荷", [
+      '<span><span class="swatch sq" style="background:rgba(239,140,26,0.30)"></span>' + P_RHOQH + ' 为正（空穴 / 电离施主）</span>',
+      '<span><span class="swatch sq" style="background:rgba(25,118,210,0.28)"></span>' + P_RHOQH + ' 为负（电子 / 电离受主）</span>',
+      '<span><span class="swatch dash" style="border-color:#7b3fa0"></span>耗尽层边界 ' + P_WH + '</span>'
+    ]) +
+    grp("第四行 能带", [
+      '<span><span class="swatch" style="border-color:#1976d2"></span>' + MM("<i>E</i><sub>c</sub>(<i>x</i>)") + '</span>',
+      '<span><span class="swatch" style="border-color:#455a64"></span>' + MM("<i>E</i><sub>v</sub>(<i>x</i>)") + '</span>',
+      '<span><span class="swatch dash" style="border-color:#0f9b8e"></span>' + MM("<i>E</i><sub>i</sub>(<i>x</i>)") + '（本征能级）</span>',
+      '<span><span class="swatch dash" style="border-color:#b8860b"></span>' + P_EFH + '（半导体，处处水平）</span>',
+      '<span><span class="swatch" style="border-color:#455a64"></span>' + P_EFMH + '（金属，随 ' + P_VGH + ' 移动）</span>',
+      '<span><span class="swatch" style="border-color:#d94a3d"></span>表面势 ' + MM("<i>qψ</i><sub>s</sub>") + '</span>',
+      '<span><span class="swatch dash" style="border-color:#7b3fa0"></span>耗尽层 ' + P_WH + '</span>'
+    ]);
+  $("legCv").innerHTML = [
+    '<span><span class="swatch" style="border-color:#1976d2"></span>低频 C–V（反型层跟得上）</span>',
+    '<span><span class="swatch dash" style="border-color:#d94a3d"></span>高频 C–V（反型层跟不上）</span>',
+    '<span><span class="swatch dash" style="border-color:#7b8794"></span>' + P_CMINH + '（' + P_WH + ' 饱和）</span>',
+    '<span><span class="swatch dash" style="border-color:#0f9b8e"></span>' + P_VFBH + '</span>',
+    '<span><span class="swatch dash" style="border-color:#d94a3d"></span>' + P_VTH + '</span>'
+  ].join("");
+}
+
+/* ---------------- 11. 引导探究 ---------------- */
+const CHAL = [
+  {
+    q: "把<b>栅压 " + P_VGH + "</b> 从最负慢慢拖到最正（或点「自动扫描 " + P_VGH + "」），盯住模块一<b>第四行的能带</b>。三种状态分别朝哪边弯？" +
+      P_PSIH + " 什么时候是零？模块一第一行截面里的电荷符号怎么跟着变？",
+    a: () => {
+      const d = der();
+      const dir = d.psi < -1e-4 ? "向上弯（表面电子能量升高）" : (d.psi > 1e-4 ? "向下弯（表面电子能量降低）" : "完全不弯（平带）");
+      return "规则只有一条：<b>能带弯曲量 " + MM("<span class='op'>=</span><span class='op'>−</span><i>qψ</i>(<i>x</i>)") + "</b>，所以 " +
+        MM("<i>ψ</i><sub>s</sub><span class='op'>&gt;</span>0") + " 时表面电子能量被压低 ⇒ 能带<b>向下</b>弯；" +
+        MM("<i>ψ</i><sub>s</sub><span class='op'>&lt;</span>0") + " 时<b>向上</b>弯。对 " +
+        (d.dop === 0 ? "p 型" : "n 型") + "硅：<b>" + (d.dop === 0 ? "负" : "正") + "栅压</b>把多子（" + (d.dop === 0 ? "空穴" : "电子") +
+        "）吸到表面 ⇒ <b>积累</b>（能带朝一边弯，表面一层极薄的高浓度同号电荷）；<b>" + (d.dop === 0 ? "正" : "负") +
+        "栅压</b>把多子赶走，露出固定的电离杂质 ⇒ <b>耗尽</b>，继续加大就进入<b>反型</b>。" +
+        MM("<i>ψ</i><sub>s</sub><span class='op'>=</span>0") + " 的那个点就是 " +
+        MM("<i>V</i><sub>G</sub><span class='op'>=</span><i>V</i><sub>FB</sub><span class='op'>=</span>" + fmt(d.VFB, 3) + U_VH) +
+        "（平带电压），此时半导体里一点空间电荷都没有。当前 " + MM("<i>V</i><sub>G</sub><span class='op'>=</span>" + fmt(d.VG, 3) + U_VH) +
+        " ⇒ " + MM("<i>ψ</i><sub>s</sub><span class='op'>=</span>" + fmt(d.psi, 3) + U_VH) + "，能带<b>" + dir +
+        "</b>，状态是<b>" + d.reg + "</b>。第一行的符号<b>带定额</b>（一枚 ⊕/⊖ = " + MM(sciH(symDQ(d), 1) + U_CM2H) + "）：" +
+        "<b>栅上画几枚，半导体里（耗尽层 ＋ 表面层）就是几枚</b> —— 拖 " + P_VGH + " 时数一数，看到的就是电荷量怎么被栅压调出来。";
+    }
+  },
+  {
+    q: "看读数里的 " + P_PSIH + " 与 " + P_VOXH + " 两行各自的数值与占比。进入强反型后继续加大 " + P_VGH + "，哪一部分在涨？为什么 " + P_PSIH + " 几乎不动了？",
+    a: () => {
+      const d = der();
+      const tot = Math.abs(d.VG - d.VFB);
+      const frac = tot > 1e-6 ? Math.abs(d.psi) / tot : 0.5;
+      return "栅压只有两个去处：" + MM("<i>V</i><sub>G</sub><span class='op'>−</span><i>V</i><sub>FB</sub><span class='op'>=</span><i>ψ</i><sub>s</sub><span class='op'>+</span><i>V</i><sub>ox</sub>") +
+        "。当前 " + MM("<i>V</i><sub>G</sub><span class='op'>−</span><i>V</i><sub>FB</sub><span class='op'>=</span>" + fmt(d.VG - d.VFB, 3) + U_VH) +
+        "，其中半导体拿走 " + MM("<i>ψ</i><sub>s</sub><span class='op'>=</span>" + fmt(d.psi, 3) + U_VH) +
+        "（<b>" + fmt(frac * 100, 1) + "%</b>），氧化层拿走 " + MM("<i>V</i><sub>ox</sub><span class='op'>=</span>" + fmt(d.Vox, 3) + U_VH) +
+        "（<b>" + fmt((1 - frac) * 100, 1) + "%</b>）—— 占比就写在读数面板这两行里。关键在于 " + MM("<i>V</i><sub>ox</sub><span class='op'>=</span><span class='op'>−</span><i>Q</i><sub>s</sub><span class='sl'>/</span><i>C</i><sub>ox</sub>") +
+        "：强反型之后，反型层电荷随 " + MM("<span class='rm'>e</span><sup><i>qψ</i><sub>s</sub><span class='sl'>/</span>2<i>kT</i></sup>") +
+        " 指数暴涨，只要 " + P_PSIH + " 再抬高一两个 " + MM("<i>kT</i><span class='sl'>/</span><i>q</i>") +
+        "，电荷就够吸掉<b>任意多</b>的额外栅压 ⇒ <b>" + P_PSIH + " 被钳在 2" + P_PHIH + " 附近（≈ " + MM(fmt(2 * d.phiF, 3) + U_VH) +
+        "），多出来的栅压全部变成 " + P_VOXH + "</b>。这正是 MOSFET 里「栅压增加只增加沟道电荷、不增加耗尽层厚度」的原因 —— 也是 " +
+        MM("<i>I</i><sub>D</sub><span class='op'>∝</span>(<i>V</i><sub>G</sub><span class='op'>−</span><i>V</i><sub>T</sub>)") + " 成立的前提。";
+    }
+  },
+  {
+    q: "把 " + P_VGH + " 调到「阈值 " + P_VTH + "」。此时 " + P_PSIH + " 与 " + MM("2<i>φ</i><sub>F</sub>") +
+      " 差多少？表面<b>少子</b>浓度和体内<b>多子</b>浓度之比是多少（p 型看 " + P_NSH + "<span class='op'>/</span>" + P_P0H +
+      "、n 型看 " + P_PSH + "<span class='op'>/</span>" + P_N0H + "）？为什么偏偏是 " + MM("2<i>φ</i><sub>F</sub>") + " 而不是 " + P_PHIH + "？再点「强反型」，反型层符号多了几枚？",
+    a: () => {
+      const d = der();
+      /* 少子 / 多子的符号跟着掺杂走：p 型是 n_s、p_0；n 型是 p_s、n_0 */
+      const S_MIN = d.dop === 0 ? MM("<i>n</i><sub>s</sub>") : MM("<i>p</i><sub>s</sub>");
+      const S_MAJ0 = d.dop === 0 ? MM("<i>p</i><sub>0</sub>") : MM("<i>n</i><sub>0</sub>");
+      return "强反型的定义是<b>表面少子浓度追平体内多子浓度</b>。体内：" +
+        MM("<i>E</i><sub>i</sub><span class='op'>−</span><i>E</i><sub>F</sub><span class='op'>=</span><i>qφ</i><sub>F</sub><span class='op'>=</span>" + fmt(d.phiF, 3) + U_EVH) +
+        "，所以多子浓度 " + S_MAJ0 + MM("<span class='op'>=</span><i>n</i><sub>i</sub><span class='rm'>e</span><sup>|<i>qφ</i><sub>F</sub>|<span class='sl'>/</span><i>kT</i></sup>") +
+        "。表面少子 " + S_MIN + MM("<span class='op'>=</span><i>n</i><sub>i</sub><span class='rm'>e</span><sup>(|<i>qψ</i><sub>s</sub>|<span class='op'>−</span>|<i>qφ</i><sub>F</sub>|)<span class='sl'>/</span><i>kT</i></sup>") +
+        " —— 令两者相等立刻得到 " + MM("|<i>ψ</i><sub>s</sub>|<span class='op'>=</span>2|<i>φ</i><sub>F</sub>|") +
+        "：<b>一个 " + P_PHIH + " 用来把 " + P_EIH + " 拉到 " + P_EFH + "，另一个 " + P_PHIH + " 用来让它继续越过 " +
+        P_EFH + "、落到对称的另一侧</b>（p 型往下、n 型往上）。" +
+        "换成能带图的话：表面 " + P_EIH + " 必须越过 " + MM("<i>E</i><sub>F</sub><span class='op'>−</span><i>qφ</i><sub>F</sub>") +
+        "（拿第四行的 " + P_EIH + " 曲线去比那条水平的 " + P_EFH + " 线）。当前 " + MM("<i>ψ</i><sub>s</sub><span class='op'>=</span>" + fmt(d.psi, 3) + U_VH) +
+        " vs " + MM("2<i>φ</i><sub>F</sub><span class='op'>=</span>" + fmt(2 * d.phiF, 3) + U_VH) +
+        "；" + S_MIN + MM("<span class='op'>=</span>" + sciH(d.sMin, 2) + U_CM3H) + " vs 体内多子 " +
+        S_MAJ0 + MM("<span class='op'>=</span>" + sciH(d.maj0, 2) + U_CM3H) + "，比值 <b>" + fmt(d.invRatio, 3) + "</b>" +
+        (d.invRatio >= 1 ? "（<b>已进入强反型</b>）" : "（还差一点）") +
+        "。注意：" + P_VTH + " 只是<b>定义</b>上的起点 —— 此刻反型层的面电荷还不到耗尽层的 2%，薄到连一个反型载流子的小圆圈都凑不满；能导电的沟道要再往上加栅压才出现（点「强反型」预设，越过阈值 " +
+        MM("0.8" + U_VH) + "，反型层就涨到耗尽层电荷的两倍多）。";
+    }
+  },
+  {
+    q: "一步一步加大栅压，盯住模块一里的<b>耗尽层宽度</b>（和读数中的 " + P_WH + " 与 " + P_WMAXH + "）。进入强反型后 " + P_WH + " 还长吗？多出来的电荷去哪了？",
+    a: () => {
+      const d = der();
+      return "耗尽层宽度由<b>电势</b>决定：" + MM("<i>W</i><span class='op'>=</span>" + SQ("2<span class='m'><i>ε</i><sub>s</sub></span>|<span class='m'><i>ψ</i><sub>s</sub></span>|<span class='sl'>/</span><i>qN</i>")) +
+        "，而强反型后 " + P_PSIH + " 被钳在 " + MM("2<i>φ</i><sub>F</sub>") + " ⇒ " + P_WH + " 也跟着<b>饱和</b>在 " +
+        MM("<i>W</i><sub>max</sub><span class='op'>=</span>" + SQ("4<span class='m'><i>ε</i><sub>s</sub></span>|<span class='m'><i>φ</i><sub>F</sub></span>|<span class='sl'>/</span><i>qN</i>") + "<span class='op'>=</span>" + fmtLen(d.Wmax)) +
+        "。当前 " + MM("<i>W</i><span class='op'>=</span>" + fmtLen(d.W)) +
+        (d.W >= d.Wmax * 0.999 ? "（<b>已饱和</b>）" : "（还在长）") +
+        "。多出来的电荷不再来自更深的耗尽层，而是变成<b>紧贴表面的反型层少子</b>：" +
+        MM("<i>Q</i><sub>min</sub><span class='op'>=</span><span class='op'>−</span>" + sciH(Math.abs(d.Qmin) / QE * 1e-4, 2) + U_CM2H) +
+        "，相比之下耗尽层电荷只有 " + MM("<i>Q</i><sub>maj</sub><span class='op'>=</span><span class='op'>−</span>" + sciH(Math.abs(d.Qmaj) / QE * 1e-4, 2) + U_CM2H) +
+        "。反型层厚度只有几个 " + MM(U_NMH) + "（模块一里那一薄条），却可以装下比耗尽层多几十倍的电荷 —— 所以 MOSFET 的沟道是一层<b>极薄的二维载流子气</b>，而沟道下方那片耗尽层厚度基本不随栅压变化。";
+    }
+  },
+  {
+    q: "对比模块二的<b>高频</b>与<b>低频</b>两条 C–V 曲线。强反型区它们差在哪？把掺杂<b>类型</b>从 p 型切到 n 型，整条曲线怎么动？为什么高频下电容回不到 " + P_COXH + "？",
+    a: () => {
+      const d = der();
+      return "两条曲线在<b>积累区和耗尽区完全重合</b>（那里响应的是多子，介电弛豫时间极短，随时跟得上），分歧只出现在<b>强反型区</b>：低频下反型层电荷随交流信号增减 ⇒ 电荷又直接堆在表面，半导体侧没有厚度 ⇒ " +
+        MM("<i>C</i><span class='op'>→</span><i>C</i><sub>ox</sub>") + "；高频下反型层的少子只能靠<b>产生–复合</b>慢慢补充（微秒到毫秒），跟不上 MHz 信号 ⇒ 交流电荷只能在耗尽层边缘进出 ⇒ 电容停在 " +
+        MM("<i>C</i><sub>min</sub><span class='op'>=</span><i>C</i><sub>ox</sub><i>C</i><sub>dm</sub><span class='sl'>/</span>(<i>C</i><sub>ox</sub><span class='op'>+</span><i>C</i><sub>dm</sub>)") +
+        "，" + MM("<i>C</i><sub>dm</sub><span class='op'>=</span><i>ε</i><sub>s</sub><span class='sl'>/</span><i>W</i><sub>max</sub>") +
+        "。当前 " + MM("<i>C</i><sub>min</sub><span class='sl'>/</span><i>C</i><sub>ox</sub><span class='op'>=</span>" + fmt(d.CminN, 3)) +
+        "，" + MM("<i>C</i><sub>ox</sub><span class='op'>=</span>" + sciH(d.Cox * 1e-4, 2) + U_FCM2H) +
+        "，" + MM("<i>W</i><sub>max</sub><span class='op'>=</span>" + fmtLen(d.Wmax)) +
+        "。" + P_CMINH + " 只由 " + MM("<i>C</i><sub>dm</sub><span class='op'>=</span><i>ε</i><sub>s</sub><span class='sl'>/</span><i>W</i><sub>max</sub>") +
+        " 决定，而 " + MM("<i>W</i><sub>max</sub><span class='op'>=</span>" + SQ("4<span class='m'><i>ε</i><sub>s</sub></span>|<span class='m'><i>φ</i><sub>F</sub></span>|<span class='sl'>/</span><i>qN</i>")) +
+        "：<b>掺杂越重 ⇒ " + P_WMAXH + " 越薄 ⇒ " + P_CDMH + " 越大 ⇒ " + P_CMINH + " 抬高</b>（本工具把 " + MM("<i>N</i>") +
+        " 固定在 " + MM("10<sup>16</sup>" + U_CM3H) + "，这条留给读者推演）。换<b>掺杂类型</b>则不动这些数值（p 与 n 的 " + MM("|<i>N</i>|") +
+        " 相同），但 " + P_VTH + " 由 " +
+        (d.VT > 0 ? "正" : "负") + " 变号、积累与反型两侧互换，整条 C–V 曲线沿 " + P_VGH + " 轴<b>左右镜像</b>。这套「高频曲线不回升」正是工业上判断界面态与反型层响应时间的标准手段。";
+    }
+  }
+];
+
+let ANS_EL = [];
+function buildChal() {
+  const grid = $("chalGrid");
+  grid.innerHTML = ""; ANS_EL = [];
+  CHAL.forEach((c, i) => {
+    const el = document.createElement("div");
+    el.className = "chal";
+    el.innerHTML = '<div class="chal-head"><b>' + (i + 1) + ". " + c.q + '</b><span class=\"chev\">▶</span></div>' +
+      '<div class="chal-body"><div class=\"ans\"></div><div class="btn-row"><button>看看答案</button></div></div>';
+    grid.appendChild(el);
+    el.querySelector(".chal-head").onclick = () => el.classList.toggle("open");
+    const ans = el.querySelector(".ans");
+    ANS_EL.push(ans);
+    el.querySelector(".btn-row button").onclick = e => { e.stopPropagation(); ans.classList.toggle("show"); };
+  });
+}
+function refreshAnswers() { ANS_EL.forEach((el, i) => { el.innerHTML = CHAL[i].a(); }); }
+
+/* ---------------- 12. 读数 ---------------- */
+function kvRow(k, v) { return '<div class=\"row\"><span class=\"k\">' + k + '</span><span class=\"v\">' + v + "</span></div>"; }
+function hd(s) { return '<div class=\"hd\">' + s + "</div>"; }
+/* 读数里的量也按 LaTeX 写：数量 × 单位（单位正体 + 真上标） */
+const NU = (v, u, n) => MM(sciH(v, n === undefined ? 1 : n) + u);
+const qcm = q => (Math.abs(q) < 1e-9 ? MM("≈ 0")
+  : MM((q < 0 ? "<span class='op'>−</span>" : "<span class='op'>+</span>") + sciH(Math.abs(q) / QE * 1e-4, 2) + U_CM2H));
+
+function updateReadout() {
+  const d = der();
+  /* ---- 核心区：V_G 的自洽分配 + 器件关键量 ---- */
+  const h = [];
+  h.push(hd(MM("<i>V</i><sub>G</sub><span class='op'>−</span><i>V</i><sub>FB</sub><span class='op'>=</span><i>ψ</i><sub>s</sub><span class='op'>+</span><i>V</i><sub>ox</sub>") + " 的自洽解"));
+  h.push(kvRow("栅压 " + P_VGH, MM("<b>" + fmt(d.VG, 3) + "</b>" + U_VH) + "　（量程 " + MM(fmt(d.vgLo, 2) + " ~ " + fmt(d.vgHi, 2) + U_VH) + "）"));
+  h.push(kvRow("表面势 " + P_PSIH, MM("<b>" + fmt(d.psi, 3) + "</b>" + U_VH) + "　状态：<b style='color:" + d.regCol + "'>" + d.reg + "</b>"));
+  h.push(kvRow("氧化层压降 " + P_VOXH, MM(fmt(d.Vox, 3) + U_VH) + "　（占 " +
+    fmt((Math.abs(d.VG - d.VFB) > 1e-6 ? (1 - Math.abs(d.psi) / Math.abs(d.VG - d.VFB)) * 100 : 50), 1) + "%）"));
+  h.push(kvRow("半导体表面电荷 " + P_QSH, qcm(d.Qs)));
+  h.push(kvRow("耗尽层宽度 " + MM("<i>W</i> / <i>W</i><sub>max</sub>"), "<b>" + fmtLen(d.W) + "</b> / " + fmtLen(d.Wmax) +
+    (d.W >= d.Wmax * 0.999 && d.W > 0 ? "（<b>已饱和</b>）" : "")));
+  h.push(kvRow(MM("<i>C</i><span class='sl'>/</span><i>C</i><sub>ox</sub>") + " 低频 / 高频", "<b>" + fmt(d.Clf / d.Cox, 3) + "</b> / <b>" + fmt(d.Chf / d.Cox, 3) + "</b>"));
+  h.push(kvRow("阈值电压 " + P_VTH, MM("<b>" + fmt(d.VT, 3) + "</b>" + U_VH)));
+  $("readout").innerHTML = h.join("");
+
+  /* ---- 折叠区：结构参数 / 电荷分解与对账 / 表面载流子 ---- */
+  const hm = [];
+  hm.push(hd("当前结构（固定）"));
+  hm.push(kvRow("材料 / 掺杂", "<b>" + d.matName + "</b>（固定）/ " + (d.dop === 0 ? "p 型" : "n 型") + "　" + NU(d.Ndop, U_CM3H) + "（固定）"));
+  hm.push(kvRow(MM("<i>T</i>　·　" + U_KH + " / <i>kT</i>"), MM("<b>" + fmt(d.T, 0) + "</b>" + U_KH + "　(" + fmt(d.kT * 1000, 1) + U_MEVH + ")")));
+  hm.push(kvRow(MM("<i>E</i><sub>g</sub> / <i>n</i><sub>i</sub>"), MM(fmt(d.Eg, 3) + U_EVH + "　" + sciH(d.ni, 1) + U_CM3H)));
+  hm.push(kvRow(MM("<i>φ</i><sub>F</sub> / 2<i>φ</i><sub>F</sub>"), MM("<b>" + fmt(d.phiF, 3) + "</b>" + U_VH + " / <b>" + fmt(2 * d.phiF, 3) + "</b>" + U_VH)));
+  hm.push(kvRow(MM("<i>d</i><sub>ox</sub> / <i>C</i><sub>ox</sub>"), MM(fmt(d.doxNm, 1) + U_NMH + "　" + sciH(d.Cox * 1e-4, 2) + U_FCM2H)));
+  hm.push(kvRow(MM("<i>V</i><sub>FB</sub>"), MM("<b>" + fmt(d.VFB, 3) + "</b>" + U_VH) + "　（理想 MIS：" + MM("<i>Φ</i><sub>ms</sub><span class='op'>=</span>0") + "，无氧化层电荷）"));
+
+  hm.push(hd("电荷分解与对账"));
+  hm.push(kvRow("├ 多子电荷 " + P_QMAJH + "（耗尽时为 " + MM("<span class='op'>−</span><i>qNW</i>") + "）", qcm(d.Qmaj)));
+  hm.push(kvRow("└ 少子电荷 " + P_QMINH + "（反型层）", qcm(d.Qmin)));
+  /* Q_maj 与 Q_min 是对 ρ(x) 沿 x 做数值积分得来的，Q_s 是闭式 Q_s(u) —— 两条完全不同的路径，
+     所以这一行的差是「真残差」（数值积分误差），不是代数重言式。把它显示出来才看得到。 */
+  const relQ = Math.abs(d.Qs) > 1e-9 ? Math.abs(d.Qmaj + d.Qmin - d.Qs) / Math.abs(d.Qs) : -1;
+  hm.push(kvRow("两者之和 vs " + P_QSH, qcm(d.Qmaj + d.Qmin) +
+    (relQ >= 0 ? "<span class='nt2'>（与 " + MM("<i>Q</i><sub>s</sub>") + " 差 " + sciH(relQ, 1) + "：数值积分误差）</span>" : "")));
+
+  hm.push(hd("表面载流子与其余"));
+  hm.push(kvRow("德拜长度 " + P_LDH, fmtLen(d.LD)));
+  hm.push(kvRow("表面电子 " + MM("<i>n</i><sub>s</sub>") + " / 空穴 " + MM("<i>p</i><sub>s</sub>"), MM(sciH(d.ns, 2) + " / " + sciH(d.ps, 2) + U_CM3H)));
+  /* 判据跟着掺杂翻转：p 型是 n_s/p_0，n 型是 p_s/n_0 —— 分子永远是「表面少子」、分母永远是「体内多子」 */
+  const criK = d.dop === 0 ? P_NSH + MM("<span class='sl'>/</span>") + P_P0H : P_PSH + MM("<span class='sl'>/</span>") + P_N0H;
+  hm.push(kvRow("强反型判据 " + criK, "<b>" + fmt(d.invRatio, 3) + "</b>（≥1 即进入强反型）"));
+  hm.push(kvRow(MM("<i>C</i><sub>min</sub><span class='sl'>/</span><i>C</i><sub>ox</sub>") + "（" + MM("<i>W</i>") + " 饱和）", fmt(d.CminN, 3)));
+  $("readoutMore").innerHTML = hm.join("");
+  refreshAnswers();
+}
+
+/* ---------------- 13. 同步与渲染 ---------------- */
+function markActive() {
+  const set = (id, idx) => Array.prototype.forEach.call($(id).children, b => b.classList.toggle("sel", +b.dataset.i === idx));
+  set("preBtns", OPT.preset); set("dopBtns", OPT.dop);
+}
+function render() {
+  const d = der();
+  PROF = profile(d);
+  drawSec(); drawCV(); updateReadout(); refreshAnswers();
+}
+
+function syncInputs() {
+  OPT.VG = clamp(OPT.VG, -1e6, 1e6);
+  let d = der();
+  if (!(OPT.VG >= d.vgLo && OPT.VG <= d.vgHi)) { OPT.VG = clamp(OPT.VG, d.vgLo, d.vgHi); d = der(); }
+
+  $("vgSlider").value = Math.round((OPT.VG - d.vgLo) / Math.max(d.vgHi - d.vgLo, 1e-9) * 1000);
+  $("spSlider").value = Math.round(OPT.speed * 100);
+  ["ckCharge", "ckFermi", "ckBend", "ckDep", "ckReg", "ckLF", "ckHF"].forEach(k => { $(k).checked = OPT[k]; });
+
+  $("preVal").innerHTML = PRESETS[OPT.preset] ? PRESETS[OPT.preset].name : "自定义";
+  $("preNote").innerHTML = PRESETS[OPT.preset] ? noteOf(PRESETS[OPT.preset], d) : "手动调节的组合（预设之外显示「自定义」）。";
+  $("dopVal").textContent = d.dop === 0 ? "p 型" : "n 型";
+  $("ndVal").innerHTML = NU(d.Ndop, U_CM3H, 1);
+  $("ndSub").innerHTML = DOPT[d.dop].note + " " + MM("<i>φ</i><sub>F</sub><span class='op'>=</span>") + "<b>" + fmt(d.phiF, 3) + "</b>" + MM(U_VH) +
+    "，" + MM("2<i>φ</i><sub>F</sub><span class='op'>=</span>") + "<b>" + fmt(2 * d.phiF, 3) + "</b>" + MM(U_VH) +
+    "，" + MM("<i>W</i><sub>max</sub><span class='op'>=</span>" + fmtLen(d.Wmax)) +
+    "，" + MM("<i>V</i><sub>T</sub><span class='op'>=</span>" + fmt(d.VT, 3) + U_VH) + "。";
+  $("vgVal").textContent = fmt(OPT.VG, 3) + " V";
+  $("vgSub").innerHTML = "量程 " + MM("<b>" + fmt(d.vgLo, 2) + " ~ " + fmt(d.vgHi, 2) + "</b>" + U_VH) + "（随 " + P_VFBH + " 与 " + P_VTH + " 自适应）。" +
+    MM("<i>ψ</i><sub>s</sub><span class='op'>=</span>") + "<b>" + fmt(d.psi, 3) + "</b>" + MM(U_VH) + "，" +
+    MM("<i>V</i><sub>ox</sub><span class='op'>=</span>") + "<b>" + fmt(d.Vox, 3) + "</b>" + MM(U_VH) + "，状态 <b>" + d.reg + "</b>。";
+  $("spVal").textContent = fmt(OPT.speed, 2) + "×";
+  $("btnPlay").innerHTML = OPT.playing ? "⏸ 暂停" : "▶ 自动扫描 " + P_VGH;
+  markActive();
+}
+
+/* 预设：把目标表面势换算成栅压（psi 模式），或直接用栅过驱动定位（od：V_G = V_T ± od） */
+function psiFromMode(mode, d) {
+  const s = Math.sign(d.phiF) || 1;
+  if (mode === 0) return 0;
+  if (mode === 1) return -s * Math.max(0.25, 4 * d.kT);
+  if (mode === 2) return s * 0.5 * Math.abs(d.phiF);
+  if (mode === 3) return s * 1.35 * Math.abs(d.phiF);
+  return s * 2.0 * Math.abs(d.phiF);          /* 4＝阈值 ψ_s = 2φ_F */
+}
+function presetVG(p, d) {
+  if (p.od !== undefined) return d.VT + (Math.sign(d.phiF) || 1) * p.od;
+  const psi = psiFromMode(p.psi, d);
+  return d.VFB + psi - d.QsOf(psi / d.kT) / d.Cox;
+}
+function applyPreset(i) {
+  const p = PRESETS[i];
+  OPT.preset = i;
+  ANIM_T = 0;
+  OPT.VG = presetVG(p, der());
+  syncInputs(); render();
+}
+
+/* ---------------- 14. 绑定 ---------------- */
+function init() {
+  buildLegends(); buildChal();
+  const mkBtns = (id, arr, fn) => {
+    const box = $(id); box.innerHTML = "";
+    arr.forEach((o, i) => {
+      const b = document.createElement("button");
+      /* 预设名里含公式（如「阈值 V_T」）⇒ 走 innerHTML；原生 tooltip 只吃纯文本 ⇒ 先剥标签 */
+      b.innerHTML = o.name; b.dataset.i = i;
+      b.title = stripTags(noteOf(o));
+      b.onclick = () => fn(i);
+      box.appendChild(b);
+    });
+  };
+  mkBtns("preBtns", PRESETS, applyPreset);
+  mkBtns("dopBtns", DOPT, i => { OPT.dop = i; OPT.preset = -1; syncInputs(); render(); });
+
+  const sl = (id, fn) => $(id).addEventListener("input", e => fn(+e.target.value));
+  sl("vgSlider", v => {
+    const d = der();
+    OPT.VG = d.vgLo + (d.vgHi - d.vgLo) * v / 1000;
+    OPT.playing = false; OPT.preset = -1; syncInputs(); render();
+  });
+  sl("spSlider", v => { OPT.speed = v / 100; syncInputs(); });
+
+  ["ckCharge", "ckFermi", "ckBend", "ckDep", "ckReg", "ckLF", "ckHF"].forEach(k =>
+    $(k).addEventListener("change", e => { OPT[k] = e.target.checked; render(); }));
+
+  /* 折叠区（.fold）：事件委托，与挑战区完全独立 */
+  document.addEventListener("click", e => {
+    const h = e.target.closest ? e.target.closest(".fold-head") : null;
+    if (!h) return;
+    const f = h.parentNode;
+    if (f && f.classList && f.classList.contains("fold")) f.classList.toggle("open");
+  });
+  $("btnPlay").onclick = () => { OPT.playing = !OPT.playing; if (OPT.playing) ANIM_T = 0; syncInputs(); };
+  $("btnReset").onclick = () => { ANIM_T = 0; OPT.playing = false; applyPreset(OPT.preset >= 0 ? OPT.preset : 5); };
+
+  const hov = (id, key) => {
+    const el = $(id);
+    el.addEventListener("mousemove", e => {
+      const r = el.getBoundingClientRect();
+      HOV[key] = { x: e.clientX - r.left, y: e.clientY - r.top };
+      if (key === "sec") drawSec(); else drawCV();
+    });
+    el.addEventListener("mouseleave", () => {
+      HOV[key] = null;
+      if (key === "sec") drawSec(); else drawCV();
+    });
+  };
+  hov("sec", "sec"); hov("cv", "cv");
+  $("cv").addEventListener("click", e => {
+    if (!CVS) return;
+    const r = $("cv").getBoundingClientRect();
+    const t = clamp((e.clientX - r.left - 54) / Math.max(r.width - 68, 1), 0, 1);
+    const v = CVS.xlo + (CVS.xhi - CVS.xlo) * t;
+    const d = der();
+    OPT.VG = clamp(v, d.vgLo, d.vgHi);
+    OPT.playing = false; syncInputs(); render();
+  });
+
+  window.addEventListener("resize", () => { fitAll(); render(); });
+  applyPreset(OPT.preset); fitAll(); render();
+  requestAnimationFrame(loop);
+}
+
+/* ---------------- 15. 动画：自动扫描栅压 ---------------- */
+let ANIM_T = 0, lastT = 0;
+function loop(ts) {
+  if (!lastT) lastT = ts;
+  const dt = Math.min(0.05, (ts - lastT) / 1000);
+  lastT = ts;
+  if (OPT.playing) {
+    ANIM_T += dt * OPT.speed * 0.16;
+    if (ANIM_T >= 1) ANIM_T -= 1;
+    const d = der();
+    const tri = ANIM_T < 0.5 ? ANIM_T * 2 : (1 - ANIM_T) * 2;
+    OPT.VG = d.vgLo + (d.vgHi - d.vgLo) * tri;
+    syncInputs(); render();
+  }
+  requestAnimationFrame(loop);
+}
+
+init();
+
+/* i18n 启动必须在 init() 之后：setLang() 会重跑 syncInputs()/render()，
+   放到 init() 之前会在 fitAll() 之前触发绘制，一旦抛异常整个 init() 就跑不到（挑战与画布会空）。 */
+(function () {
+  try {
+    i18nWatch();
+    ORIG_TITLE = ORIG_TITLE || document.title;
+    var btn = document.getElementById("langBtn");
+    if (btn) btn.onclick = function () { setLang(LANG === "en" ? "zh" : "en"); };
+    if (LANG === "en") setLang("en"); else { document.title = ORIG_TITLE; i18nWalk(document.body); }
+  } catch (e) { }
+})();
+</script>
+</body>
+</html>

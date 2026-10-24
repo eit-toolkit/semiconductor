@@ -1,0 +1,2113 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<!-- SPDX-License-Identifier: MIT -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>半导体掺杂的类氢模型交互教学工具</title>
+<style>
+  :root {
+    --bg: #f7f9fb;
+    --panel: #ffffff;
+    --border: #dde4ec;
+    --text: #2c3e50;
+    --text-sub: #6b7a8c;
+    --blue: #1976d2;
+    --blue-light: #e3f0fb;
+    --orange: #ef8c1a;
+    --red: #d94a3d;
+    --teal: #0f9b8e;
+    --green: #2e9e5b;
+    --purple: #7b3fa0;
+    --acceptor: #e2695f;
+    --gray-ref: #9aa5b1;
+    --olive: #6b8e23;
+    --vb: rgba(239, 140, 26, 0.13);   /* 价带 */
+    --cb: rgba(15, 155, 142, 0.13);   /* 导带 */
+    --gapc: rgba(120, 130, 145, 0.16);/* 禁带 */
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Microsoft YaHei", "PingFang SC", "Segoe UI", sans-serif;
+    background: var(--bg); color: var(--text); padding: 14px;
+  }
+  header { position: relative;
+    display: flex; align-items: baseline; justify-content: center;
+    gap: 14px; flex-wrap: wrap; text-align: center; margin-bottom: 2px;
+  }
+  .lang-btn { position: absolute; right: 0; top: 0; border: 1px solid var(--border); background: #fff;
+    color: var(--text-sub); padding: 3px 10px; border-radius: 7px; cursor: pointer; font-size: 12px; font-weight: 600; }
+  .lang-btn:hover { border-color: var(--blue); color: var(--blue); }
+  header h1 { font-size: 20px; }
+  header .formula { font-size: 14.5px; color: var(--text-sub); }
+  .sub-note { text-align: center; font-size: 12px; color: var(--text-sub); margin-bottom: 10px; line-height: 1.7; }
+  .sub-note b { color: var(--blue); }
+  .layout { display: flex; gap: 14px; align-items: flex-start; max-width: 1500px; margin: 0 auto; }
+  .viz { flex: 0 0 66%; min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+  .side { flex: 1; min-width: 310px; display: flex; flex-direction: column; gap: 12px; }
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; }
+  .sec-title { font-size: 13.5px; font-weight: 700; margin: 2px 0 6px; }
+  canvas { display: block; width: 100%; border-radius: 6px; touch-action: none; }
+  .hint { font-size: 12px; color: var(--text-sub); margin-top: 6px; line-height: 1.6; }
+  .ctrl-grid { display: flex; flex-direction: column; gap: 10px; }
+  .ctrl-head { display: flex; justify-content: space-between; align-items: baseline; font-size: 13px; font-weight: 600; margin-bottom: 2px; }
+  .ctrl-head .val { color: var(--blue); font-variant-numeric: tabular-nums; font-weight: 700; }
+  .ctrl-head .val.a { color: var(--acceptor); }
+  .ctrl input[type=range] { width: 100%; accent-color: var(--blue); }
+  .ctrl .sub { font-size: 11.5px; color: var(--text-sub); margin-top: 1px; line-height: 1.5; }
+  .btn-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+  .btn-row button {
+    border: 1px solid var(--border); background: #fff; color: var(--text);
+    padding: 5px 11px; border-radius: 7px; cursor: pointer; font-size: 12.5px;
+  }
+  .btn-row button:hover { border-color: var(--blue); color: var(--blue); }
+  .btn-row button.sel { background: var(--blue); border-color: var(--blue); color: #fff; font-weight: 600; }
+  .btn-row button.sel.a { background: var(--acceptor); border-color: var(--acceptor); }
+  .btn-row button.primary { background: var(--blue-light); border-color: var(--blue); color: var(--blue); font-weight: 600; }
+  .mode-switch { display: flex; gap: 6px; }
+  .mode-switch button {
+    flex: 1; border: 1px solid var(--border); background: #fff; color: var(--text-sub);
+    padding: 6px 10px; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600;
+  }
+  .mode-switch button.active { background: var(--blue); border-color: var(--blue); color: #fff; }
+  .mode-switch button.active.a { background: var(--acceptor); border-color: var(--acceptor); }
+  .chk-row { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12.5px; color: var(--text-sub); margin-top: 8px; }
+  .chk-row label { display: inline-flex; align-items: center; gap: 5px; cursor: pointer; }
+  .chk-row input[type=checkbox] { accent-color: var(--blue); }
+  .legend { display: flex; gap: 6px 14px; flex-wrap: wrap; align-items: center; font-size: 12px; color: var(--text-sub); margin-top: 6px; }
+  .legend > span { display: inline-block; }
+  .swatch {
+    display: inline-block; vertical-align: middle; width: 20px; height: 0;
+    border-top: 3px solid currentColor; border-radius: 2px; margin-right: 6px;
+  }
+  .swatch.dash { border-top-style: dashed; }
+  /* 模块编号徽标：只有教学内容模块才带编号；控制面板等辅助面板不是模块，不加 */
+  .sec-title .mtag {
+    display: inline-block; background: var(--blue); color: #fff;
+    font-size: 11px; font-weight: 700; padding: 1.5px 7px;
+    border-radius: 5px; margin-right: 6px; vertical-align: 1.5px; letter-spacing: .3px;
+  }
+  /* ---- LaTeX 风格数学排版（纯 CSS，无外部库） ---- */
+  .m {
+    font-family: "Cambria Math", "STIX Two Math", "Latin Modern Math", "Times New Roman", Times, serif;
+    font-size: 1.05em; font-style: normal; white-space: nowrap; letter-spacing: .01em;
+  }
+  .m i, .m var { font-style: italic; }
+  .m .rm { font-style: normal; }
+  .m sub, .m sup { font-size: .70em; font-style: normal; line-height: 1; }
+  .m sub { vertical-align: -.28em; }
+  .m sup { vertical-align: .50em; }
+.m .m { font-size: 1em; }   /* 嵌套容器（TEXH 下标转换叠加）不再放大字号 */
+  .m sub i, .m sup i { font-style: italic; }
+  .m .op { font-style: normal; padding: 0 .24em; }
+  .m .sl { font-style: normal; padding: 0 .05em; }   /* 斜线：LaTeX 中两侧不留空 */
+  .m .fn { font-style: normal; padding-right: .08em; }
+  .m .un { font-style: normal; padding-left: .16em; }
+  .frac {
+    display: inline-block; vertical-align: -0.52em; text-align: center;
+    margin: 0 .16em; font-size: .86em; line-height: 1.18;
+  }
+  .frac > .num { display: block; padding: 0 .34em; border-bottom: 1px solid currentColor; }
+  .frac > .den { display: block; padding: 0 .34em; }
+  /* ---- 读数区 ---- */
+  .kv { display: grid; grid-template-columns: 1fr; gap: 2px 22px; font-size: 12.5px; }
+  .kv .row { display: flex; justify-content: space-between; gap: 8px; border-bottom: 1px dotted #eef2f7; padding: 2px 0; }
+  .kv .k { color: var(--text-sub); white-space: nowrap; }
+  .kv .v { font-variant-numeric: tabular-nums; }
+  .kv .v b { color: var(--blue); }
+  .kv .v u { color: var(--purple); text-decoration: none; }
+  .kv .v em { color: var(--acceptor); font-style: normal; }
+  .kv .hd { grid-column: 1 / -1; font-weight: 700; color: var(--text); font-size: 12px; margin: 6px 0 2px; }
+  .kv .hd:first-child { margin-top: 0; }
+  /* ---- 材料参数表 ---- */
+  table.mat { width: 100%; border-collapse: collapse; font-size: 11px; margin-top: 6px; font-variant-numeric: tabular-nums; }
+  table.mat th, table.mat td { border: 1px solid var(--border); padding: 3px 4px; text-align: right; }
+  table.mat th { background: var(--bg); color: var(--text-sub); font-weight: 600; text-align: center; }
+  table.mat td:first-child, table.mat th:first-child { text-align: center; }
+  table.mat tr.sel td { background: var(--blue-light); font-weight: 700; color: var(--blue); }
+  /* ---- 挑战卡 ---- */
+  .chal-wrap { max-width: 1500px; margin: 14px auto 0; }
+  .chal-bar { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+  .chal-bar b { font-size: 14.5px; }
+  .chal-bar span { font-size: 12px; color: var(--text-sub); }
+  .chal-grid { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+  .chal { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 8px 12px; }
+  .chal-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; cursor: pointer; }
+  .chal-head b { font-size: 13.5px; }
+  .chal-head .chev { color: var(--text-sub); font-size: 12px; transition: transform .15s; }
+  .chal.open .chal-head .chev { transform: rotate(90deg); display: inline-block; }
+  .chal.open { border-color: var(--blue); }
+  .chal-body { display: none; margin-top: 6px; font-size: 12.5px; color: var(--text-sub); line-height: 1.75; }
+  .chal.open .chal-body { display: block; }
+  .chal-body .ans { display: none; margin-top: 6px; padding: 7px 10px; background: var(--blue-light); border-radius: 6px; color: var(--text); }
+  .chal-body .ans.show { display: block; }
+  .chal-body .ans b { color: var(--blue); }
+  .chal .q { color: var(--text); }
+  .chal-body .btn-row { margin-top: 8px; }
+  @media (max-width: 1024px) {
+    .layout { flex-direction: column; }
+    .viz { flex: 1 1 auto; width: 100%; }
+  }
+  /* ---- 课程页脚 ---- */
+  .site-foot { max-width: 1500px; margin: 18px auto 0; padding: 12px 16px 24px;
+    border-top: 1px solid var(--border); color: var(--text-sub);
+    font-size: 12.5px; line-height: 1.8; text-align: center; }
+  .site-foot a { color: var(--blue, #1976d2); text-decoration: none; }
+  .site-foot a:hover { text-decoration: underline; }
+  .sqrt > .rdc, .sqrt .rdc { display: inline-block; position: static; font-size: 1em;
+             border-top: .055em solid currentColor; padding: .06em .12em 0 .10em; margin: 0; line-height: 1; }
+
+  /* 公式排版：分式 / 根式 —— 全站统一为「回旋共振 v06」写法（置于末尾，覆盖本文件早期变体） */
+  .frac { display: inline-block; vertical-align: -0.52em; text-align: center; font-size: .78em; margin: 0 .12em; }
+  .frac > .num, .frac .num { display: block; padding: 0 .22em; border-bottom: .055em solid currentColor; line-height: inherit; }
+  .frac > .den, .frac .den { display: block; padding: 0 .22em; line-height: inherit; }
+  .sqrt { display: inline-block; white-space: nowrap; vertical-align: baseline; margin: 0; font-size: 1em; }
+  .sqrt > .rd, .sqrt .rd { display: inline-block; position: static; font-size: 1em; line-height: inherit; padding: 0 .02em 0 0; margin: 0; }
+  .sqrt > .rdc, .sqrt .rdc { display: inline-block; position: static; font-size: 1em;
+             border-top: .055em solid currentColor; padding: .06em .12em 0 .10em; margin: 0; line-height: 1; }
+  .sqrt .rdc:has(sup) { padding-top: .18em; }
+</style>
+</head>
+<body>
+
+<header>
+  <button id="langBtn" class="lang-btn" data-noi18n title="中文 / English">EN</button>
+  <h1>半导体掺杂的类氢模型交互教学工具</h1>
+  <div class="formula m"><span class="m"><i>E</i><sub>i</sub></span><span class="op">=</span>13.6<span class="un">eV</span><span class="op">·</span><span class="frac"><span class="num"><span class="m"><i>m</i><sup>*</sup></span><span class="sl">/</span><span class="m"><i>m</i><sub>0</sub></span></span><span class="den"><span class="m"><i>ε</i><sub>r</sub><sup>2</sup></span></span></span>，　<span class="m"><i>a</i><sub>B</sub></span><span class="op">=</span>0.529<span class="un">Å</span><span class="op">·</span><span class="frac"><span class="num"><span class="m"><i>ε</i><sub>r</sub></span></span><span class="den"><span class="m"><i>m</i><sup>*</sup></span><span class="sl">/</span><span class="m"><i>m</i><sub>0</sub></span></span></span></div>
+</header>
+<div class="sub-note">
+  把氢原子搬进晶体里：库仑势被 <b>介电常数 <span class="m"><i>ε</i><sub>r</sub></span></b> 削弱，惯性被换成 <b>有效质量 <span class="m"><i>m</i><sup>*</sup></span></b>。
+  两次修正叠加，<b>深达 13.6 eV 的氢能级变成几十 meV 的浅能级</b>，<b>0.53 Å 的玻尔半径胀到几十埃</b>。<br>
+  <span id="noteLine"></span>
+</div>
+
+<div class="layout">
+  <!-- ================= 左侧：可视化 ================= -->
+  <div class="viz">
+
+    <div class="card">
+      <div class="sec-title"><span class="mtag">模块一</span>二维图像：杂质轨道与电离</div>
+      <div class="btn-row" style="margin-top:0; margin-bottom:6px;">
+        <button class="primary" id="btnIon">⚡ 电离：给载流子足够热能，挣脱轨道</button>
+      </div>
+      <canvas id="real" data-h="400"></canvas>
+      <div class="legend" id="realLegend"></div>
+      <div class="hint" id="realHint"></div>
+    </div>
+
+    <div class="card">
+      <div class="sec-title"><span class="mtag">模块二</span>玻尔氢原子模型（真空：质子 ＋ 量子化圆轨道）｜类氢杂质在半导体中的浅能级</div>
+      <div class="btn-row" id="stateRow" style="margin-top:0; margin-bottom:4px;"></div>
+      <canvas id="lv" data-h="330"></canvas>
+      <div class="hint" id="lvHint"></div>
+    </div>
+
+  </div>
+
+  <!-- ================= 右侧：控制与读数 ================= -->
+  <div class="side">
+
+    <div class="card">
+      <div class="sec-title">控制面板</div>
+      <div class="mode-switch" id="typeRow">
+        <button class="active" data-t="donor">施主（电子）</button>
+        <button data-t="acceptor">受主（空穴）</button>
+      </div>
+      <div class="ctrl-head" style="margin-top:10px;"><span>材料预设（浅能级）</span><span class="val" id="matNote">原始参数</span></div>
+      <div class="btn-row" id="matRow" style="margin-top:0;"></div>
+      <div class="ctrl-grid" style="margin-top:10px;">
+        <div class="ctrl">
+          <div class="ctrl-head"><span>有效质量比 <span class="m"><i>m</i><sup>*</sup>/<i>m</i><sub>0</sub></span></span><span class="val" id="vM">0.260</span></div>
+          <input type="range" id="sM" min="0.01" max="1" step="0.005" value="0.26">
+          <div class="sub" id="subM"></div>
+        </div>
+        <div class="ctrl">
+          <div class="ctrl-head"><span>相对介电常数 <span class="m"><i>ε</i><sub>r</sub></span></span><span class="val" id="vE">11.7</span></div>
+          <input type="range" id="sE" min="1" max="20" step="0.05" value="11.7">
+          <div class="sub" id="subE"></div>
+        </div>
+      </div>
+      <div class="ctrl-head" style="margin-top:10px;"><span>显示控制</span></div>
+      <div class="chk-row">
+        <label><input type="checkbox" id="ckLab" checked>原子标号与价键电子</label>
+        <label><input type="checkbox" id="ckAnim" checked>载流子运动动画</label>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="sec-title"><span class="mtag">模块三</span>数量级对比（对数标尺）</div>
+      <canvas id="cmp" data-h="176"></canvas>
+    </div>
+
+    <div class="card">
+      <div class="sec-title">材料参数表（<span id="tblType">施主</span>）</div>
+      <table class="mat" id="matTbl"></table>
+    </div>
+
+    <div class="card">
+      <div class="sec-title">读数面板</div>
+      <div class="kv" id="readout"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ================= 底部：挑战任务 ================= -->
+<div class="chal-wrap">
+  <div class="card">
+    <div class="chal-bar">
+      <b>引导探究（点击展开，先自己试一试再看答案）</b>
+      <span>挑战任务</span>
+    </div>
+    <div class="chal-grid" id="chalGrid"></div>
+  </div>
+</div>
+
+<script>
+/* ==================================================================
+   i18n（C1 单文件双语：物理代码仍然只有一份）
+   LANG 取值优先级：URL ?lang=en / ?lang=zh  >  localStorage('opl_lang')  >  默认中文。
+   不做 location 跳转——保住「单文件拷走也能用」。
+   三个注入点，**业务字符串一个都不改**：
+     ① partsOf()   画布 token：带 i/sub/sup/un 标记的是物理量、下标与单位，跳过
+     ② fillText/measureText 原型挂钩：兜住直接写进画布的中文串
+     ③ DOM 文本节点：静态 HTML 与 JS 写进来的 innerHTML，用 MutationObserver 兜住新增节点
+   T() 先查整句词典，未命中再按「最长优先」做短语替换，因此拼接串也能翻。
+   漏翻会被记进 window.__MISS，可导出核对。 */
+var LANG = (function () {
+  var m = /[?&]lang=([a-zA-Z]+)/.exec(location.search);
+  var q = m ? m[1].toLowerCase() : "";
+  if (q === "en" || q === "zh") return q;
+  var s = "";
+  try { s = localStorage.getItem("opl_lang") || ""; } catch (e) { }
+  return (s === "en" || s === "zh") ? s : "zh";
+})();
+var ORIG_TITLE = document.title;
+var __MISS = [];
+try { window.__MISS = __MISS; } catch (e) { }
+function noteMiss(s) { if (__MISS.indexOf(s) < 0) __MISS.push(s); }
+function TSoft(s) {
+  if (!T._K) T._K = Object.keys(I18N).sort(function (a, b) { return b.length - a.length; });
+  var out = s, i, k, orig = s;
+  /* 两遍：第一遍只吃长度 ≥ 2 的短语；第二遍的单字 key 只在「传进来的串
+     恰好就是这一个字」时才上场——画布逐字排版会拿单字去 measureText，那一
+     路必须翻。反过来，绝不让单字 key 去切更长的句子：否则「导」「子」「原」
+     会把「半导体」「电子数」「泡利原理」切成半 conduction 体、电 quantum 数、
+     泡利 origin 理这类中英混排。同一条理由也适用于「下」：整句不该被切碎。 */
+  for (var pass = 0; pass < 2; pass++) {
+    for (i = 0; i < T._K.length; i++) {
+      k = T._K[i];
+      if (k.length < 2 && (pass === 0 || orig !== k)) continue;
+      if (out.indexOf(k) < 0) continue;
+      /* 中文片段之间没有空格：前一片段已翻成英文时，本片段英文直连进去会粘连
+         （「更深」「或」「更浅」逐段替换成 deeper、or、shallower 会拼出 deeperor），
+         所以替换时看上下文：key 以中文开头、前一字符已是英文 ⇒ 前面补一个空格。 */
+      out = out.replace(new RegExp(k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "g"), function (m, off, str) {
+        var v = I18N[k];
+        var pre = off > 0 ? str.charAt(off - 1) : "";
+        if (/[A-Za-z0-9]/.test(pre) && /^[A-Za-z0-9(]/.test(v) && /[\u3400-\u9FFF]/.test(k.charAt(0))) v = " " + v;
+        return v;
+      });
+    }
+  }
+  return out;
+}
+/* 同一句被 DOM 切成好几个文本节点时，首尾空格会随机落在 data 里；
+   所以除了「整句命中」，再试一次「去空格后命中」并原样补回首尾空白。 */
+function trimMap() {
+  if (T._TM) return T._TM;
+  var m = {};
+  for (var k in I18N) if (Object.prototype.hasOwnProperty.call(I18N, k)) {
+    var t = k.replace(/^\s+|\s+$/g, "");
+    if (t && m[t] === undefined) m[t] = I18N[k];
+  }
+  T._TM = m;
+  return m;
+}
+/* eslint-disable no-use-before-define */
+function T(s) {
+  if (LANG !== "en" || typeof s !== "string" || !s) return s;
+  if (!/[一-鿿]/.test(s)) return s;
+  if (Object.prototype.hasOwnProperty.call(I18N, s)) return I18N[s];
+  var tm = trimMap(), core = s.replace(/^\s+|\s+$/g, "");
+  if (core && tm[core] !== undefined) {
+    var lead = s.slice(0, s.length - s.replace(/^\s+/, "").length);
+    var tail = s.slice(s.replace(/\s+$/, "").length);
+    return lead + tm[core] + tail;
+  }
+  var v = TSoft(s);
+  /* 译完还剩汉字也算漏翻：只翻掉一半的「半吊子译文」曾经让 __MISS 恒为 0。 */
+  if (v === s || /[\u3400-\u9FFF]/.test(v)) noteMiss(s);
+  return v;
+}
+var I18N = {
+  /* ---- 词典：中文原文 → 英文。key 禁含运行时数字（换个参数就漏），数字前后要拆开 ---- */
+  "半导体掺杂的类氢模型交互教学工具": "Hydrogenic Model of Semiconductor Doping — Interactive Toolkit",
+  "\n  把氢原子搬进晶体里：库仑势被 ": "\n  Move a hydrogen atom into a crystal: the Coulomb potential is weakened by the ",
+  "介电常数 ": "dielectric constant ",
+  " 削弱，惯性被换成 ": " and its inertia is replaced by the ",
+  "有效质量 ": "effective mass ",
+  "。\n  两次修正叠加，": ".\n  With the two corrections combined, ",
+  "深达 13.6 eV 的氢能级变成几十 meV 的浅能级": "the 13.6 eV-deep hydrogen level becomes a shallow level of a few tens of meV",
+  "0.53 Å 的玻尔半径胀到几十埃": " and the 0.53 Å Bohr radius swells to a few tens of ångströms",
+  "模块一": "Module 1",
+  "二维图像：杂质轨道与电离": "Two-dimensional view: the impurity orbit and ionisation",
+  "⚡ 电离：给载流子足够热能，挣脱轨道": "⚡ Ionise: give the carrier enough thermal energy to break out of its orbit",
+  "模块二": "Module 2",
+  "玻尔氢原子模型（真空：质子 ＋ 量子化圆轨道）｜类氢杂质在半导体中的浅能级": "The Bohr hydrogen atom (vacuum: proton + quantised circular orbits) | the shallow level of a hydrogenic impurity in a semiconductor",
+  "控制面板": "Control Panel",
+  "施主（电子）": "Donor (electron)",
+  "受主（空穴）": "Acceptor (hole)",
+  "材料预设（浅能级）": "Material presets (shallow levels)",
+  "原始参数": "Original parameters",
+  "有效质量比 ": "Effective-mass ratio ",
+  "相对介电常数 ": "Relative dielectric constant ",
+  "显示控制": "Display",
+  "原子标号与价键电子": "Atom labels and valence electrons",
+  "载流子运动动画": "Carrier-motion animation",
+  "模块三": "Module 3",
+  "数量级对比（对数标尺）": "Order-of-magnitude comparison (logarithmic scale)",
+  "材料参数表（": "Material parameter table (",
+  "施主": "donor",
+  "读数面板": "Readout Panel",
+  "束缚态：D": "Bound state: D",
+  " 电中性（+5 离子 ＋ 轨道上的电子）": " electrically neutral (+5 ion + the electron in its orbit)",
+  "　圈内 ≈ ": ", about ",
+  " 个原子": " atoms inside the circle",
+  "真空中的氢原子 · 玻尔模型": "Hydrogen atom in vacuum · the Bohr model",
+  " = 1（无介电屏蔽）　": " = 1 (no dielectric screening)　",
+  "（自由电子质量）": " (free-electron mass)",
+  "质子 ": "Proton ",
+  " 自由": " free",
+  "轨道半径按真实比例 ": "Orbit radii to true scale ",
+  "从 ": " from ",
+  " = 1 一路到 ": " = 1 all the way to ",
+  " → ∞（脱离质子）需要 13.61 eV": " → ∞ (escaping the proton) costs 13.61 eV",
+  "类氢杂质放进半导体（相对带边，meV）": "Hydrogenic impurity in a semiconductor (meV)",
+  "其余禁带（未按比例，共 ": "The rest of the gap (not to scale, ",
+  " eV）": " eV in all)",
+  " 导带底": " conduction-band minimum",
+  "导带底": "conduction-band minimum",
+  " 价带顶": " valence-band maximum",
+  "价带顶": "valence-band maximum",
+  "导带": "Conduction band",
+  "价带": "Valence band",
+  " = 3：按 1/": " = 3: following 1/",
+  " 紧贴带边": " hugging the band edge",
+  "受主能级在下方（切「受主」查看）": "The acceptor level lies below (switch to “acceptor” to see it)",
+  "真空氢 vs 半导体中的杂质：结合能小 526 倍　半径大 45 倍": "Vacuum hydrogen vs an impurity in a semiconductor: binding energy 526 times smaller, radius 45 times larger",
+  "电离能": "Ionisation",
+  "氢 ÷ 杂质": "hydrogen ÷ impurity",
+  "玻尔半径": "Bohr radius",
+  "杂质 ÷ 氢": "impurity ÷ hydrogen",
+  "尺度比": "Length ratio",
+  "杂质 ÷ 晶格": "impurity ÷ lattice",
+  "对数标尺（每格十倍）": "Logarithmic scale (one decade per division)",
+  "材料与参数": "Materials and parameters",
+  "材料（晶格常数 ": "Material (lattice constant ",
+  "杂质类型 / 有效质量 ": "Impurity type / effective mass ",
+  "室温电离（300 K，统计估算）": "Ionisation at room temperature (300 K, statistical estimate)",
+  "（带边有效态密度）": " (effective density of states at the band edge)",
+  "电离度（按模型 ": "Ionised fraction (from the model ",
+  "电离度（改用实测 ": "Ionised fraction (using the measured ",
+  "估算条件": "Assumptions",
+  "（示意量级，非简并）": " (order of magnitude, non-degenerate)",
+  "材料": "Material",
+  "模型 (meV)": "Model (meV)",
+  "实测 ": "Measured ",
+  " (meV) · 偏差": " (meV) · deviation",
+  "施主 · 电子有效质量": "Donor · electron effective mass",
+  "基质原子 +4（晶格常数 ": "Host atom +4 (lattice constant ",
+  "施主离子 +5（替位杂质，多一个价电子）": "Donor ion +5 (a substitutional impurity with one extra valence electron)",
+  "被束缚的电子（在轨道上绕行）": "The bound electron (circling in its orbit)",
+  "类氢轨道，半径 ": "Hydrogenic orbit, radius ",
+  "圆内数字是替位原子的": "The number inside a circle is the ",
+  "价电子数": "number of valence electrons",
+  "；与周围 4 条键配平后，离子实净电荷为 +1（施主），真正束缚载流子的就是它": "; once the four bonds to its neighbours are balanced, the ion core carries a net charge of +1 (a donor), and it is this charge that really binds the carrier",
+  "挣脱束缚需要电离能 ": "Breaking free costs an ionisation energy of ",
+  "（室温电离多少见读数面板）。": " (how much is ionised at room temperature: see the readout panel).",
+  "左边是真空中的氢原子": "On the left is the hydrogen atom in vacuum",
+  "（玻尔模型）：一个质子加一个电子，没有晶体、没有能带、没有介电屏蔽，": " (the Bohr model): one proton plus one electron, with no crystal, no band and no dielectric screening, and ",
+  "右边是把类氢杂质放进半导体": "On the right the hydrogenic impurity has been put into a semiconductor",
+  " 之后的样子：纵轴换成相对各自带边的 meV，所以 ": ": the vertical axis is now meV relative to the respective band edge, so the ",
+  " 那条杂质能级紧贴带边（这就是「浅」），电离能箭头对应的正是模块一里那个载流子「挣脱轨道」所需的能量。": " impurity level hugs the band edge (that is what “shallow” means), and the arrow of the ionisation energy is exactly the energy the carrier of module 1 needs to “break out of its orbit”.",
+  "当前「Si 施主」：": "For the present “Si donor”: ",
+  "，是晶格常数的 ": ", which is ",
+  " 倍。": " times the lattice constant.",
+  "当前调节 ": "You are now adjusting the ",
+  "电子": "electron",
+  "有效质量；材料原始值 ": " effective mass; the original value of this material is ",
+  "材料的 ": " of the material ",
+  " （平方 vs 一次，是最关键的不对称）。": " (square versus first power — the crucial asymmetry).",
+  "Si 原始参数": "Si original parameters",
+  "引导探究（点击展开，先自己试一试再看答案）": "Guided inquiry (click to expand — try it yourself before opening the answers)",
+  "挑战任务": "Challenges",
+  "显示答案": "Show answer",
+  "挑战一 · 氢原子 vs 类氢杂质：数量级": "Challenge 1 · Hydrogen atom vs hydrogenic impurity: orders of magnitude",
+  "保持默认的「Si 施主」。查一下下面的材料参数表：": "Keep the default “Si donor”. Look up in the material parameter table below: ",
+  " 是多少 meV？": " in meV? And what is ",
+  " 是多少 Å？再看模块二左半边真空里的玻尔氢原子（": " in Å? Then look at the Bohr hydrogen atom in vacuum on the left of module 2 (",
+  "），两者相差多少个数量级？": "): how many orders of magnitude apart are the two?",
+  "Si 施主：": "Si donor: ",
+  "（氢是它的 ": " (hydrogen is ",
+  " 倍": " times",
+  "），": "), and ",
+  "（是氢的 ": " (that is ",
+  "）。两次修正各贡献一份：介电屏蔽 ": "). The two corrections each contribute one factor: dielectric screening, ",
+  " 把库仑势削弱了 ": " weakens the Coulomb potential by ",
+  " 倍，而 ": ", whereas ",
+  "，带来 ": " brings a factor of ",
+  " 倍；有效质量 ": "; the effective mass ",
+  " 再带来 ": " brings a further ",
+  " 倍，合计 ": ", for a total of ",
+  " 倍。半径的变化方向整好相反（": ". The radius changes in exactly the opposite direction (",
+  "），于是胀大 ": "), so it swells by ",
+  " 倍——这也是为什么半导体里的电子大到必须用晶体来衡量。": " — which is why an electron in a semiconductor is so large that it must be measured in lattice constants.",
+  "挑战二 · 扫描有效质量 ": "Challenge 2 · Scanning the effective mass ",
+  "固定 ": "Fix ",
+  "，把 ": " and move ",
+  " 从 0.01 拉到 1.0：": " from 0.01 to 1.0: how do ",
+  " 与 ": " and ",
+  " 各自怎么变？它们的变化倍数是不是相同的数？": " each change? Are their factors of change the same number?",
+  " 增大 100 倍：": " increased by a factor of 100: ",
+  " 增到 ": " to ",
+  "（也正好增大 100 倍），": " (again exactly a factor of 100), while ",
+  " 缩到 ": " down to ",
+  "（缩小到 1/100）。两者严格互为倒数：": " (to 1/100). The two are exact reciprocals: ",
+  "。物理上也好理解：": ". Physically this is easy to understand: ",
+  " 越大，电子越「重」、动能越小，于是更容易被杂质离子实拽住，轨道收得更紧。": " the larger the effective mass, the “heavier” the electron and the smaller its kinetic energy, so the impurity ion core holds it more easily and the orbit contracts.",
+  "挑战三 · 扫描介电常数 ": "Challenge 3 · Scanning the dielectric constant ",
+  " 从 1 拉到 20：": " from 1 to 20: how do ",
+  " 怎么变？特别注意 ": " change? Note especially that when ",
+  " 加大一倍时，两者变化的倍数": " is doubled, the factors by which the two change are ",
+  "不一样": "not the same",
+  " 增大 20 倍：": " increased by a factor of 20: ",
+  " 掉到 ": " to ",
+  "，缩小了 ": ", smaller by ",
+  "（正好 ": " (exactly ",
+  "）；": "); ",
+  " 胀到 ": " to ",
+  "，只放大 ": ", enlarged by only ",
+  "平方与一次的不对称是这套标度关系的灵魂：": "The asymmetry between the square and the first power is the soul of these scaling relations: ",
+  " 既出现在势能里削弱库仑吸引（一次），又通过": " appears once in the potential, weakening the Coulomb attraction, and once again through ",
+  " 把轨道进一步摊开（再一次）。": ", spreading the orbit out further.",
+  " 时屏蔽消失，你得到的就是真空里的库仑势，电离能立刻回到 eV 量级。": " the screening vanishes, you recover the Coulomb potential of vacuum and the ionisation energy jumps back to the eV scale.",
+  "挑战四 · 三种材料横向对比": "Challenge 4 · Comparing the three materials side by side",
+  "依次点 Si、Ge、GaAs（施主），记录每个材料的 ": "Click Si, Ge and GaAs in turn (donor) and record for each material its ",
+  "（材料参数表已列好）。谁的结合能最大？谁最小？切到「受主」再比一遍，排序会不会反过来？": " (all listed in the material table). Which has the largest binding energy and which the smallest? Switch to “acceptor” and compare again — does the order reverse?",
+  "施主（按 ": "Donors (in order of decreasing ",
+  " 从大到小）：": "): ",
+  "。最大 ": ". Largest: ",
+  "，最小 ": ", smallest: ",
+  "，GaAs 的电子只有 ": "; the electron mass in GaAs is only ",
+  "，所以最小）。": ", hence the smallest).",
+  "切到受主后排序变成：": "Switching to acceptors the order becomes: ",
+  " —— 因为空穴有效质量大得多（GaAs 的空穴是 0.45，是电子的 6.7 倍），": " — because the hole effective mass is much larger (in GaAs the hole mass is 0.45, 6.7 times the electron mass), so ",
+  "受主总是比施主更深、更局域": "acceptors are always deeper and more localised than donors",
+  "。注意三种材料无论施主还是受主，": ". Note that for all three materials, donor or acceptor alike, ",
+  " 都在几十 meV、": " stays in the tens of meV and ",
+  " 都有好几个晶格常数宽 —— 这就是「浅能级」的定义，也正是类氢模型能成立的原因。": " spans several lattice constants — that is the definition of a “shallow level”, and the very reason why the hydrogenic model works.",
+  "挑战五 · 从真空氢原子到半导体里的浅能级": "Challenge 5 · From the vacuum hydrogen atom to a shallow level in a semiconductor",
+  "看模块二左半边的玻尔氢原子：": "Look at the Bohr hydrogen atom on the left of module 2: what are the ",
+  " 的轨道半径与电离能分别是多少？再看模块一的实空间图，同一个 ": " orbit radius and ionisation energy? Then look at the real-space picture of module 1: by how much is the same ",
+  " 的态在 Si 里被放大了多少倍、圈里包了多少个原子？最后点「⚡ 电离」，载流子逃逸后杂质处留下了什么？": " state magnified in Si, and how many atoms does the circle enclose? Finally click “⚡ Ionise”: what is left at the impurity once the carrier has escaped?",
+  "真空氢原子 ": "For the vacuum hydrogen atom with ",
+  "（比任何晶格常数都小一个量级），电离能 ": " (an order of magnitude smaller than any lattice constant) and an ionisation energy of ",
+  "，常温下的热扰动根本碰不动它。": "; thermal agitation at room temperature cannot touch it at all.",
+  "同一个 ": "Put the same ",
+  " 放到 Si 里：": " state into Si: ",
+  "，膨胀了 ": ", swollen by ",
+  "、是晶格常数的 ": " and equal to ",
+  "，一个轨道圈里就包着约 ": "; the orbit circle encloses about ",
+  " 个原子（三维波函数球内则有 ": " atoms (and the sphere of the three-dimensional wave function contains ",
+  " 个）；电离能只剩 ": " atoms); the ionisation energy is only ",
+  "，与室温热能同量级 —— 代入电离统计平衡算出来的电离度是 ": ", of the same order as the thermal energy at room temperature — the ionised fraction obtained from the ionisation statistics is ",
+  "（见读数面板，这里的描述统一以它为准）。": " (see the readout panel; the wording here always follows it).",
+  "点「电离」可以看到这个结局：载流子挣脱库仑束缚成为自由载流子（": "Clicking “Ionise” shows this outcome: the carrier breaks loose from the Coulomb binding and becomes a free carrier (",
+  "导电的就是它": "it is this carrier that conducts",
+  "），杂质处只留下固定不动的离子（它本身不导电，却是散射中心）。这就是整套类氢模型的要点：": "), and only a fixed ion is left at the impurity — it does not conduct, but it is a scattering centre. This is the whole point of the hydrogenic model: ",
+  "同一个库仑中心，屏蔽让它变松、有效质量让它变慢，于是又深又小的氢原子变成了又浅又大的杂质态。": "for one and the same Coulomb centre, screening makes it looser and the effective mass makes it slower, so the deep, small hydrogen atom becomes a shallow, extended impurity state.",
+  "，": ", ",
+  "。": ".",
+  "、": ", ",
+  "：": ": ",
+  "；": "; ",
+  "（": " (",
+  "）": ")",
+  "本工具是 EIT-SP（半导体物理交互式教学工具箱）的一部分（武汉大学物理学院《半导体物理》智慧课程），以 MIT 协议开源，可自由使用与二次开发；转载请保留出处。": "This tool is part of EIT-SP, the Educational Interactive Toolkit for Semiconductor Physics (School of Physics and Technology, Wuhan University). Released under the MIT licence: free to use, modify and redistribute, including commercially. Please keep this attribution.",
+  "反馈意见": " Feedback",
+  "↩ 复合：载流子被杂质重新俘获": "↩ Recombination: the carrier is recaptured by the impurity",
+  "已电离：D": "Ionised: D",
+  "（固定正电中心）＋自由电子": " (fixed positive centre) + free electron",
+  "自由电子（导带中游走）": "Free electron (moving through the conduction band)",
+  "载流子已挣脱库仑束缚，在晶体里": "The carrier has broken free of the Coulomb binding and moves ",
+  "自由运动": "freely through the crystal",
+  "（导带中的自由电子）；杂质处只留下固定不动的": " (a free electron in the conduction band); only the immobile ",
+  "施主离子 D": "donor ion D",
+  " —— 电离的杂质本身不导电，贡献载流子的是它释放（或俘获）的那个电子/空穴。点「复合」让载流子被重新俘获。": " — the ionised impurity itself does not conduct; the current is carried by the electron/hole it released (or captured). Press \"Recombine\" to have the carrier recaptured.",
+  "空穴": "hole",
+  "已电离：A": "Ionised: A",
+  "（固定负电中心）＋自由空穴": " (fixed negative centre) + free hole",
+  "受主": "acceptor",
+  "施主能级在上方（切「施主」查看）": "The donor level lies above (switch to \"donor\" to see it)",
+  "真空氢 vs 半导体中的杂质：结合能小 ": "Vacuum hydrogen vs an impurity in a semiconductor: binding energy ",
+  " 倍　半径大 ": " times smaller, radius ",
+  "倍　半径大 ": " times smaller, radius ",
+  "受主 · 空穴有效质量": "Acceptor · hole effective mass",
+  "受主离子 ": "Acceptor ion ",
+  "（替位杂质，少一个价电子）": " (substitutional impurity, one valence electron short)",
+  "自由空穴（价带中游走）": "Free hole (moving through the valence band)",
+  "；与周围 ": "; after balancing the ",
+  "条键配平后，离子实净电荷为 ": " bonds with its neighbours, the ion core is left with a net charge of ",
+  "（受主），真正束缚载流子的就是它": " (an acceptor), and this is what really binds the carrier",
+  "（价带中的自由空穴）；杂质处只留下固定不动的": " (a free hole in the valence band); only the immobile ",
+  "受主离子 A": "acceptor ion A",
+  "当前「Si 受主」：": "Current setting: \"Si acceptor\":",
+  "当前「GaAs 受主」：": "Current setting: \"GaAs acceptor\":",
+  "参数已自定义": "the parameters have been customised",
+  "当前参数（": "Current parameters (",
+  "已自定义": "customised",
+  "已手动改动": "changed by hand",
+  "→ 模型失效": "→ the model breaks down",
+  " —— 电离的杂质本身不导电，贡献载流子的是它释放（或俘获）的那个电子/空穴。点「复合」让载流子被重新俘获。注意：当前参数下轨道半径比晶格常数还小 —— 束缚塌在单个原子尺度上，这已经不是浅能级情形了，把参数调回材料原始值再继续。": " — the ionised impurity itself does not conduct; the current is carried by the electron/hole it released (or captured). Press \"Recombine\" to have the carrier recaptured. Note: with the present parameters the orbital radius is smaller than the lattice constant — the binding has collapsed onto a single atom, which is no longer a shallow level; restore the material defaults before carrying on.",
+  " —— 电离的杂质本身不导电，贡献载流子的是它释放（或俘获）的那个电子/空穴。点「复合」让载流子被重新俘获。注意：轨道半径只有一两个晶格常数 —— 处在浅能级边缘，真实的浅施主 / 浅受主（最小 ": " — the ionised impurity itself does not conduct; the current is carried by the electron/hole it released (or captured). Press \"Recombine\" to have the carrier recaptured. Note: the orbital radius is only one or two lattice constants — right at the edge of the shallow-level regime; real shallow donors / acceptors (at least ",
+  "倍）都比这宽。": "-fold) are all wider than this.",
+  "束缚态：A": "Bound state: A",
+  " 电中性（": " electrically neutral (",
+  "离子 ＋ 轨道上的空穴）": " ion + the hole on the orbital)",
+  "被束缚的空穴（在轨道上绕行）": "Bound hole (orbiting on the orbital)",
+  "红色 ": "Red ",
+  " 是受主杂质（如 Si 中的 B）：比周围的 ": " is an acceptor impurity (B in Si, for instance): compared with the surrounding ",
+  "原子少一个价电子，它从邻键抓来一个电子补上第 ": " atoms it has one valence electron fewer; it borrows an electron from a neighbouring bond to complete the ",
+  "条键，离子实": "th bond, so that the ion core ",
+  "净剩 ": "is left with a net ",
+  "、成为固定负电中心；带正电的": ", becoming a fixed negative centre; the positively charged ",
+  "被它束缚、在同一条轨道上绕行 —— 与施主正好是电荷镜像。挣脱束缚需要电离能 ": " is bound by it and orbits on the same orbital — an exact charge mirror image of the donor. Breaking free costs the ionisation energy ",
+  "（室温电离多少见读数面板）。注意：轨道半径只有一两个晶格常数 —— 处在浅能级边缘，真实的浅施主 / 浅受主（最小 ": " (see the readout panel for the fraction ionised at room temperature). Note: the orbital radius is only one or two lattice constants — right at the edge of the shallow-level regime; real shallow donors / acceptors (at least ",
+  "净 ": "Net ",
+  "当前「Ge 受主」：": "Current setting: \"Ge acceptor\":",
+  "当前「GaAs 施主」：": "Current GaAs donor:",
+  "当前「Ge 施主」：": "Current Ge donor:",
+};
+
+/* 注入点②：画布直写字符串。老工具直接调 g.fillText()，这里在原型上兜住。
+   measureText 必须一起挂钩，否则「量的宽度」和「量的文字」用的不是同一个串。 */
+(function () {
+  if (typeof CanvasRenderingContext2D === "undefined") return;
+  var ft = CanvasRenderingContext2D.prototype.fillText;
+  CanvasRenderingContext2D.prototype.fillText = function (s, x, y) {
+    if (typeof s === "string") arguments[0] = T(s);
+    return ft.apply(this, arguments);
+  };
+  var mt = CanvasRenderingContext2D.prototype.measureText;
+  CanvasRenderingContext2D.prototype.measureText = function (s) {
+    return mt.call(this, typeof s === "string" ? T(s) : s);
+  };
+})();
+
+/* 注入点④：逐字绘制的画布串。drawMath 一类把中文按单字拆成 token 再逐个 fillText，
+   T() 每次只见到一个汉字 ⇒ 整句词条永远命中不了。这里在整串进入分词之前先整体翻译，
+   于是画布标注也走「整句优先」，与 DOM 同一个口径。没有这些函数的工具自动跳过。
+   ⚠️ 签名坑：drawMath / measureMath 的第一个参数是 canvas context（对象），文本在第
+   二位；早期版本照着 arguments[0] 翻，等于把 context 送去 T()，补丁全程空转。
+   这里改为「找到第一个含中文的字符串参数」再翻，既躲开 context，也不会误伤
+   align / weight 之类以英文字符串传的选项。 */
+(function () {
+  ["drawMath", "drawMathHalo", "measureMath"].forEach(function (n) {
+    var f = window[n];
+    if (typeof f !== "function") return;
+    window[n] = function () {
+      for (var i = 0; i < arguments.length; i++) {
+        if (typeof arguments[i] === "string" && /[\u3400-\u9FFF]/.test(arguments[i])) {
+          arguments[i] = T(arguments[i]);
+          break;
+        }
+      }
+      return f.apply(this, arguments);
+    };
+  });
+})();
+
+
+/* ---- DOM 文本节点 ---- */
+function i18nNode(n) {
+  var el = n.parentElement;
+  if (!el) return;
+  var tag = el.tagName;
+  if (tag === "SCRIPT" || tag === "STYLE") return;
+  if (el.closest && el.closest("[data-noi18n]")) return;
+  var cur = n.nodeValue;
+  if (n.__orig === undefined || (cur !== n.__last && cur !== n.__orig)) n.__orig = cur;
+  var want = LANG === "en" ? T(n.__orig) : n.__orig;
+  if (want !== cur) n.nodeValue = want;
+  n.__last = want;
+}
+/* 属性（title / placeholder / optgroup label …）不是文本节点，MutationObserver 覆盖不到，
+   必须单独过一遍：否则悬停提示、下拉分组名会残留中文。原文缓存在元素 expando 上，
+   切回中文时原样写回。改属性不会触发 childList/characterData 观察器，不会递归。 */
+var I18N_ATTRS = ["title", "placeholder", "aria-label", "alt", "label"];
+function i18nAttrs(root) {
+  var els = [root], i, j;
+  if (root.querySelectorAll) els = els.concat(Array.prototype.slice.call(root.querySelectorAll("*")));
+  for (i = 0; i < els.length; i++) {
+    var el = els[i];
+    if (!el.getAttribute) continue;
+    if (el.closest && el.closest("[data-noi18n]")) continue;
+    for (j = 0; j < I18N_ATTRS.length; j++) {
+      var a = I18N_ATTRS[j];
+      if (!el.hasAttribute(a)) continue;
+      var key = "__a_" + a;
+      if (el[key] === undefined) el[key] = el.getAttribute(a);
+      var want = LANG === "en" ? T(el[key]) : el[key];
+      if (want !== el.getAttribute(a)) el.setAttribute(a, want);
+    }
+  }
+}
+/* 英文补空格（跨节点）：中文片段被行内标签切开时，各自翻成英文后直连会粘连。
+   判定用 DOM 结构而不是渲染矩形——折叠区（挑战答案）矩形为零，矩形法会漏。
+   两文本节点在文档序里紧邻（中间没有任何文本节点，包括空格节点）、
+   前段末尾与后段开头都是字母、双方词条都没自带空格、且不在上下标里 ⇒ 插一个空格。
+   空格节点记录在案，切回中文时移除。只动 i18n 注入层，不改业务文本。 */
+function fixGlue(root) {
+  var all = [];
+  var w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null, false), n;
+  while ((n = w.nextNode())) all.push(n);
+  function subbed(el) {
+    while (el) { var t = el.tagName; if (t === "SUB" || t === "SUP") return true; el = el.parentElement; }
+    return false;
+  }
+  for (var i = 0; i + 1 < all.length; i++) {
+    var a = all[i], b = all[i + 1];
+    if (!a.nodeValue || !b.nodeValue) continue;
+    if (/\s$/.test(a.nodeValue) || /^\s/.test(b.nodeValue)) continue;
+    if (!/[A-Za-z0-9]$/.test(a.nodeValue) || !/^[A-Za-z]/.test(b.nodeValue)) continue;
+    var pa = a.parentElement, pb = b.parentElement;
+    if (!pa || !pb || subbed(pa) || subbed(pb)) continue;
+    var sp = document.createTextNode(" ");
+    sp.__glue = 1;
+    (fixGlue._n = fixGlue._n || []).push(sp);
+    b.parentNode.insertBefore(sp, b);
+  }
+}
+function removeGlue() {
+  if (!fixGlue._n) return;
+  for (var i = 0; i < fixGlue._n.length; i++) { var g = fixGlue._n[i]; if (g.parentNode) g.parentNode.removeChild(g); }
+  fixGlue._n = [];
+}
+/* 全局防抖补空格：挑战答案这类「点击时才重建」的区域，observer 回调里对子树跑
+   fixGlue 的时机不全（答案重写、延迟渲染都会错过）。任何 DOM 变更后 60ms
+   对整页补一次；空格本身不触发新插入，收敛。 */
+var _glueTimer = null;
+function _glueKick() {
+  if (LANG !== "en") return;
+  if (_glueTimer) clearTimeout(_glueTimer);
+  _glueTimer = setTimeout(function () {
+    _glueTimer = null;
+    if (LANG === "en") fixGlue(document.body);
+  }, 60);
+}
+function i18nWalk(root) {
+  var w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null, false), n, c = 0;
+  while ((n = w.nextNode())) { i18nNode(n); c++; }
+  i18nAttrs(root);
+  if (LANG === "en") fixGlue(root === document ? document.body : root);
+  return c;
+}
+var _i18nBusy = false;
+function i18nWatch() {
+  if (typeof MutationObserver === "undefined") return;
+  var mo = new MutationObserver(function (ms) {
+    if (_i18nBusy) return;
+    _i18nBusy = true;
+    try {
+      for (var i = 0; i < ms.length; i++) {
+        var m = ms[i];
+        if (m.type === "childList") {
+          for (var j = 0; j < m.addedNodes.length; j++) {
+            var nd = m.addedNodes[j];
+            if (nd.nodeType === 3) i18nNode(nd);
+            else if (nd.nodeType === 1) i18nWalk(nd);
+          }
+        } else if (m.type === "characterData") i18nNode(m.target);
+      }
+    } finally { _i18nBusy = false; }
+    _glueKick();
+  });
+  mo.observe(document.body, { childList: true, subtree: true, characterData: true });
+}
+function setLang(l) {
+  LANG = l;
+  try { localStorage.setItem("opl_lang", l); } catch (e) { }
+  document.documentElement.lang = l === "en" ? "en" : "zh-CN";
+  var btn = document.getElementById("langBtn");
+  if (btn) btn.textContent = l === "en" ? "中文" : "EN";
+  document.title = l === "en" ? T(ORIG_TITLE) : ORIG_TITLE;
+  if (l !== "en") removeGlue();
+  i18nWalk(document.body);
+  _glueKick();
+  if (typeof syncInputs === "function") syncInputs();
+  if (typeof render === "function") render();
+}
+"use strict";
+
+
+
+
+/* ---------------- 直接 fillText / strokeText 的自动排版钩子 ----------------
+   有些标注不走 txt() 而是直接 g.fillText()（状态徽标、能带边等），
+   这里在原型层统一处理：含数学记法的字符串先按 LaTeX 规则拆段再绘制，
+   measureText 同步返回拆段总宽，白底框长度自动跟着变。 */
+const NEED_MATH_HM = /[\u2070-\u209C\u00B2\u00B3\u00B9]|_\{?[A-Za-z0-9\u0370-\u03ff]|\^\{?[\d(\-]|\d(\.\d+)?[eE][+\-]\d|\u221A/;
+/* 原生 measureText：mathSegsHM 内部量宽必须走这一条，
+   否则 measureText 被钩子接管后会 self-recursion（RangeError）。 */
+var _mRawHM = null;
+function measureRawHM(g, s) { return (_mRawHM ? _mRawHM : g.measureText).call(g, s).width; }
+function mathSegsHM(g, s) {
+  const f = String(g.font || "");
+  const mm = /(\d+(?:\.\d+)?)px/.exec(f);
+  const size = mm ? parseFloat(mm[1]) : 12;
+  const family = f.replace(/^(?:\s*(?:italic|oblique|bold|[1-9]00)\s*)*\d+(?:\.\d+)?px\s*/, "");
+  const style = /italic|oblique/.test(f) ? "italic " : (/bold|[6-9]00/.test(f) ? "bold " : "");
+  const parts = AUTO(s), laid = [];
+  let w = 0;
+  for (const p of parts) {
+    const small = !!(p.sup || p.sub);
+    const fs = style + (small ? (size * 0.74).toFixed(2) : size.toFixed(2)) + "px " + family;
+    g.font = fs;
+    const tw = measureRawHM(g, p.s);
+    laid.push({ s: p.s, w: tw, fs: fs, dy: small ? (p.sup ? -size * 0.40 : size * 0.22) : 0 });
+    w += tw;
+  }
+  return { laid: laid, w: w, family: family, style: style, size: size };
+}
+(function hookMathHM() {
+  if (window.__MATH_HOOK) return; window.__MATH_HOOK = 1;
+  const P = CanvasRenderingContext2D.prototype;
+  const _fill = P.fillText, _stroke = P.strokeText, _measure = P.measureText;
+  function draw(drawRaw, g, s, x, y, rest) {
+    const info = mathSegsHM(g, s);
+    const al = g.textAlign, bl = g.textBaseline;
+    const cx = al === "right" ? x - info.w : (al === "center" ? x - info.w / 2 : x);
+    g.textAlign = "left";
+    let px = cx;
+    for (const L of info.laid) {
+      g.font = L.fs;
+      drawRaw.call(g, L.s, px, y + L.dy, ...rest);
+      px += L.w;
+    }
+    g.textAlign = al; g.textBaseline = bl;
+    g.font = info.style + info.size.toFixed(2) + "px " + info.family;
+    return info;
+  }
+  P.fillText = function (s, x, y) {
+    if (typeof s !== "string" || !NEED_MATH_HM.test(s)) return _fill.apply(this, arguments);
+    draw(_fill, this, s, x, y, Array.prototype.slice.call(arguments, 3));
+  };
+  P.strokeText = function (s, x, y) {
+    if (typeof s !== "string" || !NEED_MATH_HM.test(s)) return _stroke.apply(this, arguments);
+    draw(_stroke, this, s, x, y, Array.prototype.slice.call(arguments, 3));
+  };
+  if (!_mRawHM) _mRawHM = _measure;
+  P.measureText = function (s) {
+    if (window.__HM_IN || typeof s !== "string" || !NEED_MATH_HM.test(s)) return _measure.call(this, s);
+    window.__HM_IN = 1;
+    const save = this.font;
+    let info;
+    try { info = mathSegsHM(this, s); } finally { window.__HM_IN = 0; }
+    this.font = save;
+    return { width: info.w, get actualBoundingBoxLeft() { return 0; }, get actualBoundingBoxRight() { return info.w; } };
+  };
+})();
+
+/* ---------------- HTML 侧自动 LaTeX 排版 ----------------
+   读数 / 说明 / 按钮名里由 JS 拼出来的 cm⁻³、E_c、2.5e+8，
+   在写进 innerHTML 之前转成真 <sup>/<sub>；标签与属性原样放过（title 不会被塞进尖括号）。
+   与画布侧 AUTO() 对偶，保证网页和画布按同一套规则排版。 */
+const AUTOH_SUP = { "⁰": "0", "¹": "1", "²": "2", "³": "3", "⁴": "4", "⁵": "5", "⁶": "6",
+  "⁷": "7", "⁸": "8", "⁹": "9", "⁺": "+", "⁻": "−", "⁼": "=", "⁽": "(", "⁾": ")", "ⁿ": "n", "ⁱ": "i" };
+const AUTOH_SUB = { "₀": "0", "₁": "1", "₂": "2", "₃": "3", "₄": "4", "₅": "5", "₆": "6",
+  "₇": "7", "₈": "8", "₉": "9", "₊": "+", "₋": "−", "₌": "=", "₍": "(", "₎": ")",
+  "ₐ": "a", "ₑ": "e", "ₒ": "o", "ₓ": "x", "ₔ": "ə", "ₕ": "h", "ₖ": "k", "ₗ": "l",
+  "ₘ": "m", "ₙ": "n", "ₚ": "p", "ₛ": "s", "ₜ": "t", "ᵣ": "r", "ᵤ": "u", "ᵥ": "v" };
+const TEXH_NEED = /[\u2070-\u209C\u00B2\u00B3\u00B9]|_\{?[A-Za-z0-9\u0370-\u03ff]|\^\{?[\d(\-]|\d(\.\d+)?[eE][+\-]\d|\u221A/;
+/* 从 i 处（必须是 '<'）扫出一个"完整元素"的结束下标（含嵌套），失败返回 -1 */
+function TEXH_elemEnd(h, i) {
+  if (h.charAt(i) !== "<") return -1;
+  let depth = 0, j = i, guard = 0;
+  while (j < h.length && guard++ < 4000) {
+    if (h.charAt(j) !== "<") { j++; continue; }
+    const e = TEXH_tagEnd(h, j);
+    if (e < 0) return -1;
+    const isClose = h.charAt(j + 1) === "/";
+    const selfClose = h.charAt(e - 2) === "/";
+    if (isClose) { depth--; j = e; if (depth <= 0) return j; }
+    else if (selfClose) { j = e; if (depth === 0) return j; }
+    else { depth++; j = e; }
+  }
+  return -1;
+}
+/* √ 后面直接跟一个元素：√<i>E</i> → √‾E（前两条规则只吃 √(A) 与 √字母串） */
+function TEXHsqrtElem(s) {
+  let out = "", i = 0, guard = 0;
+  while (guard++ < 400) {
+    const k = s.indexOf("\u221A", i);
+    if (k < 0) break;
+    out += s.slice(i, k);
+    /* 守卫：√ 后面已是闭标签 ⇒ 该 √ 已排版过（对整段 HTML 重复跑 TEXH 会把 </span> 当成被开方式，
+       层层包出空壳根号，视觉上变成 √−3 / √−E），原样输出不再包裹 */
+    if (s.charAt(k + 1) === "<" && s.charAt(k + 2) === "/") { out += "\u221A"; i = k + 1; continue; }
+    let rad = null, end = k + 1;
+    if (s.charAt(k + 1) === "(") {
+      /* √(…) ：被开方式里常有标签，括号本身不在同一个文本片段里，必须整串扫 */
+      let depth = 0, p = k + 1;
+      while (p < s.length) {
+        const c = s.charAt(p);
+        if (c === "(") depth++;
+        else if (c === ")") { depth--; if (depth === 0) { rad = s.slice(k + 2, p); end = p + 1; break; } }
+        p++;
+      }
+    } else {
+      const e = TEXH_elemEnd(s, k + 1);
+      if (e > 0 && e - k < 500) { rad = s.slice(k + 1, e); end = e; }
+    }
+    if (rad !== null && rad.length) {
+      out += "<span class=\"sqrt\"><span class=\"rd\">\u221A</span><span class=\"rdc\">" + rad + "</span></span>";
+      i = end;
+    } else { out += "\u221A"; i = k + 1; }
+  }
+  return out + s.slice(i);
+}
+function TEXHpart(t) {
+  let s = t;
+  /* 根号：√ 或 √(A) → <span class="sqrt">√<span class="rd"><span class="rdc">A</span></span></span>（A 内不含嵌套括号） */
+  s = s.replace(/<span class="(?:op|rm|fn|v|u)">\u221A<\/span>/g, "\u221A");
+  s = s.replace(/\u221A<span class="(?:op|rm)">\(<\/span>([^()]{1,120}?)<span class="(?:op|rm)">\)<\/span>/g, function (m, a) {
+    return "<span class=\"sqrt\"><span class=\"rd\">\u221A</span><span class=\"rdc\">" + a + "</span></span>";
+  });
+  s = s.replace(/\u221A\(([^()]{1,120})\)/g, function (m, a) {
+    return "<span class=\"sqrt\"><span class=\"rd\">\u221A</span><span class=\"rdc\">" + a + "</span></span>";
+  });
+  s = s.replace(/\u221A([A-Za-z0-9\u0370-\u03ff]{1,6})/g, function (m, a) {
+    return "<span class=\"sqrt\"><span class=\"rd\">\u221A</span><span class=\"rdc\">" + a + "</span></span>";
+  });
+  s = s.replace(/(\d(?:\.\d+)?)e([+-])(\d+)/g, function (m, a, sg, e) {
+    return a + "\u00d710<sup>" + (sg === "-" ? "\u2212" : "") + e + "</sup>";
+  });
+  s = s.replace(/([A-Za-z\u0370-\u03ff)\]])\^\{([^{}]{1,12})\}/g, "$1<sup>$2</sup>");
+  s = s.replace(/([A-Za-z\u0370-\u03ff)\]])\^(\d+(?:\.\d+)?)/g, "$1<sup>$2</sup>");
+  s = s.replace(/([A-Za-z\u0370-\u03ff])_\{([A-Za-z0-9\u0370-\u03ff+\-]{1,8})\}/g, "<span class='m'><i>$1</i><sub>$2</sub></span>");
+  s = s.replace(/([A-Za-z\u0370-\u03ff])_([A-Za-z0-9\u0370-\u03ff]{1,6})(?![A-Za-z0-9])/g, "<span class='m'><i>$1</i><sub>$2</sub></span>");
+  if (/[\u2070-\u209C\u00B2\u00B3\u00B9]/.test(s)) {
+    let out = "", i = 0;
+    while (i < s.length) {
+      const ch = s[i];
+      if (AUTOH_SUP[ch] !== undefined || AUTOH_SUB[ch] !== undefined) {
+        const isSup = AUTOH_SUP[ch] !== undefined, tab = isSup ? AUTOH_SUP : AUTOH_SUB;
+        let j = i, buf = "";
+        while (j < s.length && (isSup ? AUTOH_SUP[s[j]] !== undefined : AUTOH_SUB[s[j]] !== undefined)) {
+          buf += tab[s[j]]; j++;
+        }
+        out += "<" + (isSup ? "sup" : "sub") + ">" + buf + "</" + (isSup ? "sup" : "sub") + ">";
+        i = j;
+      } else { out += ch; i++; }
+    }
+    s = out;
+  }
+  return s.indexOf("\u221A") >= 0 ? TEXHsqrtElem(s) : s;
+}
+/* 只有真正的标签才整段跳过：正文里裸写的 '<'（如 "t₂ < 0"）必须当普通字符，
+   否则 indexOf('>') 会一路吞掉后面整段，E₂⁰ 这类记法就漏排了。 */
+function TEXH_tagEnd(h, i) {
+  if (h.charAt(i) !== "<") return -1;
+  const c = h.charAt(i + 1);
+  if (c === "!" || c === "/") { const j = h.indexOf(">", i); return (j >= 0 && j - i < 300) ? j + 1 : -1; }
+  if (!/[A-Za-z]/.test(c)) return -1;
+  let j = i + 1;
+  while (j < h.length && /[A-Za-z0-9]/.test(h.charAt(j))) j++;
+  if (j === i + 1) return -1;
+  if (h.charAt(j) === ">") return j + 1;
+  if (h.charAt(j) !== " " && h.charAt(j) !== "\n" && h.charAt(j) !== "\t") return -1;
+  const g = h.indexOf(">", j), nx = h.indexOf("<", j);
+  if (g < 0 || g - i > 300) return -1;
+  if (nx >= 0 && nx < g) return -1;
+  return g + 1;
+}
+function TEXH(h) {
+  if (typeof h !== "string" || !TEXH_NEED.test(h)) return h;
+  if (h.indexOf("\u221A") >= 0) h = h.replace(/<span class="(?:op|rm|fn|v|u)">\u221A<\/span>/g, "\u221A");
+  if (h.indexOf("<") < 0) return TEXHpart(h);
+  let out = "", i = 0, n = h.length, guard = 0;
+  while (i < n && guard++ < 40000) {
+    const e = TEXH_tagEnd(h, i);
+    if (e > 0) { out += h.slice(i, e); i = e; continue; }
+    let j = i;
+    while (j < n && TEXH_tagEnd(h, j) <= 0) j++;
+    out += TEXHpart(h.slice(i, j)); i = j;
+  }
+  const r = out + h.slice(i);
+  return r.indexOf("\u221A") >= 0 ? TEXHsqrtElem(r) : r;
+}
+(function hookHTML() {
+  if (window.__TEXH_HOOK) return; window.__TEXH_HOOK = 1;
+  const d = Object.getOwnPropertyDescriptor(Element.prototype, "innerHTML");
+  if (!d || !d.set) return;
+  Object.defineProperty(Element.prototype, "innerHTML", {
+    configurable: true, get: d.get,
+    set: function (v) { d.set.call(this, typeof v === "string" ? TEXH(v) : v); }
+  });
+  /* insertAdjacentHTML 也会被用到 */
+  const ia = Element.prototype.insertAdjacentHTML;
+  Element.prototype.insertAdjacentHTML = function (pos, v) {
+    return ia.call(this, pos, typeof v === "string" ? TEXH(v) : v);
+  };
+})();
+
+/* ---------------- 画布自动 LaTeX 排版 ----------------
+   老调用点 txt(g, "cm⁻³") / txt(g, "E_c") / txt(g, "2.5e+8") 一行都不用改，
+   只要在绘制前把字符串解析成分段零件即可。规则与网页侧一致：
+   物理量斜体、描述性下标与单位正体、幂次用真上标（不用 Unicode 伪字符）。 */
+const SUPMAP = { "⁰": "0", "¹": "1", "²": "2", "³": "3", "⁴": "4", "⁵": "5", "⁶": "6",
+  "⁷": "7", "⁸": "8", "⁹": "9", "⁺": "+", "⁻": "−", "⁼": "=", "⁽": "(", "⁾": ")", "ⁿ": "n", "ⁱ": "i" };
+const SUBMAP = { "₀": "0", "₁": "1", "₂": "2", "₃": "3", "₄": "4", "₅": "5", "₆": "6",
+  "₇": "7", "₈": "8", "₉": "9", "₊": "+", "₋": "−", "₌": "=", "₍": "(", "₎": ")",
+  "ₐ": "a", "ₑ": "e", "ₒ": "o", "ₓ": "x", "ₔ": "ə", "ₕ": "h", "ₖ": "k", "ₗ": "l",
+  "ₘ": "m", "ₙ": "n", "ₚ": "p", "ₛ": "s", "ₜ": "t", "ᵣ": "r", "ᵤ": "u", "ᵥ": "v" };
+const MATH_IDCH = /[A-Za-z\u0370-\u03ff]/;
+const NEED_MATH = /[\u2070-\u209C\u00B2\u00B3\u00B9]|_\{?[A-Za-z0-9\u0370-\u03ff]|\^\{?[\d(\-]|\d(\.\d+)?[eE][+\-]\d/;
+function AUTO(s) {
+  const out = [];
+  let buf = "", mode = 0;
+  const emit = (t, kind) => {
+    if (!t) return;
+    if (kind === 1) out.push({ s: t, sup: true });
+    else if (kind === -1) out.push({ s: t, sub: true });
+    else out.push({ s: t });
+  };
+  let i = 0, italicAll = false;
+  while (i < s.length) {
+    const ch = s[i];
+    if (SUPMAP[ch] !== undefined) { if (mode !== 1) { emit(buf, mode); buf = ""; mode = 1; } buf += SUPMAP[ch]; i++; continue; }
+    if (SUBMAP[ch] !== undefined) { if (mode !== -1) { emit(buf, mode); buf = ""; mode = -1; } buf += SUBMAP[ch]; i++; continue; }
+    if (mode) { emit(buf, mode); buf = ""; mode = 0; }
+    const rest = s.slice(i);
+    const sc = /^\d(\.\d+)?[eE][+\-]\d{1,3}/.exec(rest);       /* ASCII 伪科学计数 2.5e+8 */
+    if (sc) {
+      const parts = sc[0].split(/[eE]/);
+      emit(parts[0] + "\u00d710", 0); emit(String(+parts[1]).replace("-", "\u2212"), 1);
+      i += sc[0].length; continue;
+    }
+    if (MATH_IDCH.test(ch) && i + 1 < s.length && (s[i + 1] === "_" || s[i + 1] === "^")) {
+      const sup = s[i + 1] === "^";
+      let j = i + 2, grp = "";
+      if (s[j] === "{") { const e = s.indexOf("}", j); if (e > 0) { grp = s.slice(j + 1, e); j = e + 1; } }
+      else {
+        const RCJK = /[\u2E80-\u9FFF]/, RASC = /[A-Za-z0-9\u0370-\u03ff+\-]/;
+        if (RCJK.test(s[j])) { while (j < s.length && RCJK.test(s[j]) && j - i < 8) j++; }   /* 中文描述性下标：τ_直接、E_声子 */
+        else { while (j < s.length && RASC.test(s[j])) j++; }
+        grp = s.slice(i + 2, j);
+      }
+      if (grp) {
+        emit(ch, 0);
+        if (italicAll || /^[A-Za-z\u0370-\u03ff]$/.test(ch)) out[out.length - 1].i = true;
+        emit(sup ? grp.replace(/-/g, "\u2212") : grp, sup ? 1 : -1);
+        i = j; continue;
+      }
+    }
+    buf += ch; i++;
+  }
+  emit(buf, mode);
+  return out;
+}
+function fontInfo(font, dflt) {
+  const f = String(font || "");
+  const m = /(\d+(?:\.\d+)?)px/.exec(f);
+  return { fp: m ? parseFloat(m[1]) : (dflt || 12), bd: /bold|70\d|600/.test(f), it: /italic|oblique/.test(f) };
+}
+
+/* ---------------- HTML 字符串 → 画布零件（网页与画布共用同一份排版） ----------------
+   mtxt(g, TX(H_NA), x, y, col, fp) —— H_* 常量本来就在喂 innerHTML，
+   再喂给 TX() 就不会出现「网页斜体、画布正体」的两边不一致。
+   <i> 斜体、<sub> 下标、<sup> 上标；<span class="op|un|rm|sqrt|frac"> 只剥标签（保持正体）。 */
+const catA = (...a) => [].concat(...a);
+function TX(h) {
+  const t = String(h == null ? "" : h)
+    .replace(/<span\b[^>]*>/g, "").replace(/<\/span>/g, "")
+    .replace(/<i\b[^>]*>/g, "<i>").replace(/<b\b[^>]*>/g, "").replace(/<\/b>/g, "")
+    .replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&").replace(/&nbsp;/g, " ");
+  const out = [], re = /<i>([\s\S]*?)<\/i>|<sub>([\s\S]*?)<\/sub>|<sup>([\s\S]*?)<\/sup>|([^<]+)/g;
+  let m;
+  while ((m = re.exec(t))) {
+    const raw = s => s == null ? null : s.replace(/<[^>]*>/g, "");
+    if (m[1] != null) out.push({ s: raw(m[1]), i: true });
+    else if (m[2] != null) out.push({ s: raw(m[2]), sub: true });
+    else if (m[3] != null) out.push({ s: raw(m[3]), sup: true });
+    else if (m[4]) out.push({ s: m[4] });
+  }
+  return out;
+}
+function TXof(...a) { return catA(...a.map(TX)); }
+
+
+function PSci(v, n) {
+  if (!isFinite(v) || v === 0) return [{ s: "0" }];
+  const e = Math.floor(Math.log10(Math.abs(v)));
+  const m = (v / Math.pow(10, e)).toFixed(n === undefined ? 1 : n);
+  /* 1 ≦ |v| < 10 时直接写尾数，不再拖一个 ×10⁰（与 sciH 一致） */
+  if (e === 0) return [{ s: m }];
+  /* 指数负号用 U+2212 */
+  return [{ s: m + "×10" },
+          { s: String(e).replace("-", "−"), sup: true }];
+}
+
+/* ==================================================================
+   1. 常数、材料库、状态
+   ================================================================== */
+const E_H = 13.6057;      // 氢原子电离能（里德伯能量）eV
+const A_0 = 0.529;        // 氢原子玻尔半径 Å
+
+/* 材料参数（300 K 典型值）。me / mh 取电导有效质量，a 为晶格常数，Eg 为禁带宽度。
+   只收 Si / Ge / GaAs 三种 —— 它们是最典型、也最适合类氢模型（浅能级）的材料，
+   三种的浅施主 / 浅受主都能被很好地描述，便于横向对比而不必引入例外情形。
+
+   Nc / Nv：300 K 的导带 / 价带有效态密度（cm⁻³）。它们不出现在 E_i / a_B 公式里，
+   但决定了「同样深的能级，室温下到底电离了多少」（见 ionFrac）——Nc/Nv 比掺杂浓度高
+   三个数量级，正是教材敢在室温取 n ≈ N_D 的根据。
+
+   md / ma：该材料最常见的浅施主 / 浅受主的实测电离能（meV），取刘恩科《半导体物理学》
+   第二章杂质电离能表（Si:P 44、Si:B 45、Ge:P 12、Ge:B 10.4、GaAs:Se 5.79、GaAs:Mg 28.8）。
+   模型值只看 m* 与 εr（与杂质原子种类无关），实测值则随杂质原子而异 —— 两者之差就是
+   「中心胞修正」，也是衡量模型究竟准到什么程度的唯一标尺。 */
+const MATS = {
+  Si:   { me: 0.26,  mh: 0.39, eps: 11.7, a: 5.431,  Eg: 1.12, Nc: 2.8e19,  Nv: 1.04e19,
+          md: { E: 44,   el: "P"  }, ma: { E: 45,   el: "B"  } },
+  Ge:   { me: 0.12,  mh: 0.23, eps: 16.0, a: 5.658,  Eg: 0.66, Nc: 1.04e19, Nv: 6.0e18,
+          md: { E: 12.0, el: "P"  }, ma: { E: 10.4, el: "B"  } },
+  GaAs: { me: 0.067, mh: 0.45, eps: 12.9, a: 5.653,  Eg: 1.42, Nc: 4.7e17,  Nv: 7.0e18,
+          md: { E: 5.79, el: "Se" }, ma: { E: 28.8, el: "Mg" } }
+};
+const MKEYS = ["Si", "Ge", "GaAs"];
+/* 当前状态下，该材料对应类型的实测电离能 {E(meV), el} ；自定义参数时仍返回所属材料的实测值 */
+const measOf = (k, ty) => ty === "donor" ? MATS[k].md : MATS[k].ma;
+
+/* 量子态：只按主量子数 n 分档，不再区分 s / p / d，也不再引入角量子数 l。
+   三个 n 就够把「E ∝ 1/n²」和「r ∝ n²」这两条标度关系讲清楚。 */
+const STATES = [
+  { k: "n1", n: 1, col: "#1976d2" },
+  { k: "n2", n: 2, col: "#0f9b8e" },
+  { k: "n3", n: 3, col: "#7b3fa0" }
+];
+const COL_GRAY = "#9aa5b1";
+const COL_DON = "#7b3fa0";
+const COL_ACC = "#e2695f";
+
+const OPT = {
+  mat: "Si",
+  custom: false,          // 滑块被手动调过 ⇒ 不再是任何材料的真实参数
+  type: "donor",          // donor | acceptor
+  me: 0.26, mh: 0.39, eps: 11.7,
+  sel: "n1",
+  ionized: false,         // 实空间图：载流子已挣脱轨道（电离态）
+  showLab: true,          // 实空间图：原子标号与价键电子
+  anim: true              // 实空间图：载流子动画
+};
+
+const $ = id => document.getElementById(id);
+const MM = s => '<span class="m">' + s + "</span>";
+const curMat = () => MATS[OPT.mat];
+const mAct = () => OPT.type === "donor" ? OPT.me : OPT.mh;
+const setM = v => { if (OPT.type === "donor") OPT.me = v; else OPT.mh = v; };
+
+/* ---- 类氢模型的两条标度关系 ---- */
+const edOf  = (m, eps) => E_H * m / (eps * eps);          // 电离能 eV
+const abOf  = (m, eps) => A_0 * eps / m;                  // 玻尔半径 Å
+const EDd   = () => edOf(OPT.me, OPT.eps);                // 施主电离能 eV
+const EAa   = () => edOf(OPT.mh, OPT.eps);                // 受主电离能 eV
+const EDact = () => OPT.type === "donor" ? EDd() : EAa(); // 当前类型的电离能 eV
+const aB    = () => abOf(mAct(), OPT.eps);                // 当前类型的玻尔半径 Å
+const latA  = () => curMat().a;
+const Eg    = () => curMat().Eg;
+
+/* ===== 室温电离度：由电离统计平衡解出来，不是「E_i ≤ kT」的二值开关 =====
+   把 E_i 与 kT 比大小只是个数量级直觉，**不算判据**。真正决定电离多少的是杂质能级上的
+   占据统计（第三章内容）：非简并、只掺一种杂质时，
+
+     施主  n = N_D⁺ = N_D / [1 + g_D·(n/N_c)·e^{E_i/kT}]
+     受主  p = N_A⁻ = N_A / [1 + g_A·(p/N_v)·e^{E_i/kT}]
+
+   代入电中性后是关于 n（或 p）的一元二次方程
+
+     A·x² + x − N = 0，  A = g·e^{E_i/kT} / N_{c 或 v}
+
+   取正根（写成稳定的 2N/(1+√(1+4AN)) 形式）。g_D = 2、g_A = 4 是杂质能级基态的简并度因子。
+   关键点：分母里那个 N_c / N_v ≈ 10¹⁹ cm⁻³ 比典型掺杂浓度高三个数量级，它把「深达 1.7 kT
+   的能级」也稀释成 ~98% 电离 —— 这就是教材在室温直接写 n ≈ N_D 的根据。反过来，一旦把掺杂
+   提到 10¹⁸ cm⁻³ 或把 E_i 拉到几百 meV（拖滑块即可），同一个方程立刻给出部分电离。 */
+const KT300 = 0.025852;          // kT @ 300 K，eV（= 25.85 meV）
+const N_DOP = 1e16;              // 估算所用的杂质浓度 cm⁻³（示意量级，读数里写明）
+const G_DON = 2, G_ACC = 4;      // 施主 / 受主能级的基态简并度因子
+function ionFrac(EiV, N) {
+  const M = curMat(), isD = OPT.type === "donor";
+  const Ns = isD ? M.Nc : M.Nv, g = isD ? G_DON : G_ACC;
+  const Nt = (N === undefined ? N_DOP : N);
+  if (!(Ns > 0) || !(EiV >= 0) || !isFinite(EiV)) return 0;
+  const A = g * Math.exp(EiV / KT300) / Ns;
+  if (!(A > 0)) return 1;
+  const x = 2 * Nt / (1 + Math.sqrt(1 + 4 * A * Nt));
+  return Math.max(0, Math.min(1, x / Nt));
+}
+function ionPctStr(f) {
+  return f < 0.001 ? "＜0.1%" : (f * 100).toFixed(1) + "%";
+}
+/* ==================================================================
+   2. 格式化
+   ================================================================== */
+function fmtE(eV) {
+  const mev = eV * 1000;
+  if (Math.abs(ev2v(eV)) >= 1000) return eV.toFixed(3) + " eV";
+  if (mev >= 1) return mev.toFixed(2) + " meV";
+  if (mev >= 0.01) return mev.toFixed(3) + " meV";
+  return (mev * 1000).toFixed(1) + " µeV";
+}
+function ev2v(eV) { return eV * 1000; }
+function fmtNum(v, d) { return v.toFixed(d); }
+function fmtA(a) { return (Math.abs(a) >= 100 ? a.toFixed(0) : a.toFixed(2)) + " Å"; }
+function niceStep(x) {
+  if (!(x > 0)) return 1;
+  const p = Math.pow(10, Math.floor(Math.log10(x))), r = x / p;
+  return (r < 1.5 ? 1 : r < 3 ? 2 : r < 7 ? 5 : 10) * p;
+}
+
+/* ==================================================================
+   3. 杂项：轨道尺度换算
+   ================================================================== */
+/* 半径 r 的球内的原子数：三种材料均为金刚石/闪锌矿结构，惯用胞含 8 个原子 */
+const atomsIn = r => Math.round((4 * Math.PI / 3) * Math.pow(r / latA(), 3) * 8);
+const S = k => STATES.find(s => s.k === k);
+
+/* ==================================================================
+   4. 画布与画布内的 LaTeX 风格排版（纯原生，无外部库）
+   ================================================================== */
+const CV = {};
+function fitCanvas(id) {
+  const el = $(id);
+  const w = el.clientWidth || 600, h = +el.dataset.h;
+  const dpr = window.devicePixelRatio || 1;
+  el.width = Math.round(w * dpr); el.height = Math.round(h * dpr);
+  el.style.height = h + "px";
+  const g = el.getContext("2d");
+  g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  CV[id] = { g, W: w, H: h, el };
+  return CV[id];
+}
+function fitAll() { ["real", "lv", "cmp"].forEach(fitCanvas); }
+
+const FONT = "\"Microsoft YaHei\",\"PingFang SC\",sans-serif";
+const FONTM = "\"Cambria Math\",\"Times New Roman\",Times,serif";
+const SUBR = 0.74, SUBDY = 0.22, SUPDY = 0.40;
+function pFont(q, fp, bd) {
+  const sz = fp * ((q.sub || q.sup) ? SUBR : 1);
+  return (bd ? "bold " : "") + (q.i ? "italic " : "") + sz.toFixed(2) + "px " + FONTM;
+}
+/* i18n 注入点①：画布 token。带 i / sub / sup / un 标记的是物理量、下标与单位，一律不动；
+   没有这些标记的 token 才是自然语言，交给 T() —— 所以这里的判断只看标记，不看内容。 */
+function partsOf(parts) { return parts.map(q => {
+  const o = (typeof q === "string" ? { s: q } : q);
+  const natural = !(o.i || o.sub || o.sup || o.un);
+  if (LANG === "en" && natural && typeof o.s === "string" && /[\u4E00-\u9FFF]/.test(o.s)) {
+    const t = T(o.s);
+    return t === o.s ? o : Object.assign({}, o, { s: t });
+  }
+  return o;
+}); }
+function mMeasure(g, parts, fp, bd) {
+  let w = 0;
+  for (const q of partsOf(parts)) { g.font = pFont(q, fp, bd); w += g.measureText(q.s).width; }
+  return w;
+}
+function mRun(g, parts, x, y, fp, bd, align, stroke) {
+  const ps = partsOf(parts), w = mMeasure(g, ps, fp, bd);
+  let cx = align === "right" ? x - w : (align === "center" ? x - w / 2 : x);
+  g.textAlign = "left"; g.textBaseline = "middle"; g.lineJoin = "round";
+  for (const q of ps) {
+    g.font = pFont(q, fp, bd);
+    const dy = q.sub ? fp * SUBDY : (q.sup ? -fp * SUPDY : 0);
+    if (stroke) { g.lineWidth = (q.sub || q.sup) ? 2.4 : 3.2; g.strokeText(q.s, cx, y + dy); }
+    else { g.fillText(q.s, cx, y + dy); }
+    cx += g.measureText(q.s).width;
+  }
+}
+function mtxt(g, parts, x, y, col, fp, align, bd) {
+  g.fillStyle = col; mRun(g, parts, x, y, fp, bd, align, false);
+}
+function mtxtHalo(g, parts, x, y, col, fp, align, bd) {
+  g.strokeStyle = "rgba(255,255,255,0.94)";
+  mRun(g, parts, x, y, fp, bd, align, true);
+  mtxt(g, parts, x, y, col, fp, align, bd);
+}
+function txt(g, s, x, y, col, font, align, base) {
+  g.fillStyle = col; g.font = font || "12px " + FONT;
+  g.textAlign = align || "left"; g.textBaseline = base || "middle";
+  if (typeof s === "string" && NEED_MATH.test(s)) {
+    const fi = fontInfo(font, 12);
+    mRun(g, AUTO(s), x, y, fi.fp, fi.bd, align || "left", false);
+    return;
+  }
+  g.fillText(s, x, y);
+}
+function rrect(g, x, y, w, h, r) {
+  g.beginPath();
+  g.moveTo(x + r, y); g.lineTo(x + w - r, y); g.quadraticCurveTo(x + w, y, x + w, y + r);
+  g.lineTo(x + w, y + h - r); g.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  g.lineTo(x + r, y + h); g.quadraticCurveTo(x, y + h, x, y + h - r);
+  g.lineTo(x, y + r); g.quadraticCurveTo(x, y, x + r, y);
+  g.closePath();
+}
+/* 纵向避让：只在横向重叠的标签之间双向松弛；每个标签可带各自的许可区间
+   [lo,hi] 与横向范围 [x1,x2]（不传则用全局区间 / 视为始终横向重叠）。
+   全局钳位会把远处的标签硬拉过来陪绑（实测氢原子 n=1 的标签被从 -13.6 eV
+   拉到 -1.2 eV 处），故必须支持逐标签区间。 */
+function relaxY(list, lo, hi, gap) {
+  list.forEach(o => {
+    if (o.lo === undefined) o.lo = lo;
+    if (o.hi === undefined) o.hi = hi;
+  });
+  list.sort((a, b) => a.y - b.y);
+  for (let it = 0; it < 24; it++) {
+    let moved = false;
+    for (let i = 1; i < list.length; i++) {
+      const a = list[i - 1], b = list[i];
+      if (a.x2 !== undefined && b.x1 !== undefined && (b.x1 > a.x2 || a.x1 > b.x2)) continue;
+      const need = gap - (b.y - a.y);
+      if (need <= 0) continue;
+      a.y = Math.max(a.lo, a.y - need / 2 - 0.01);
+      b.y = Math.min(b.hi, b.y + need / 2 + 0.01);
+      moved = true;
+    }
+    if (!moved) break;
+  }
+  list.forEach(o => { o.y = Math.max(o.lo, Math.min(o.hi, o.y)); });
+}
+/* ==================================================================
+   5. 模块一 / 三：二维实空间——晶格、杂质离子、类氢轨道与电离
+   ================================================================== */
+/* 动画状态：轨道相位、自由载流子随机行走、时钟 */
+const RL = { ang: 0.9, free: null, last: 0 };
+
+/* 电离 ↔ 复合 */
+function setIonized(v) {
+  OPT.ionized = v;
+  RL.free = v ? { x: null, y: null, vx: 40, vy: -25, t: 0 } : null;
+  const b = $("btnIon");
+  b.textContent = v ? "↩ 复合：载流子被杂质重新俘获" : "⚡ 电离：给载流子足够热能，挣脱轨道";
+  requestDraw();
+}
+
+function drawReal() {
+  const c = fitCanvas("real"), g = c.g, W = c.W, H = c.H;
+  g.clearRect(0, 0, W, H);
+  const a = aB(), la = latA();
+  const isD = OPT.type === "donor";
+  const colAct = isD ? COL_DON : COL_ACC;
+
+  /* ---- 比例尺：晶格间距固定在可读范围，轨道按真实比例 a_B/a 缩放 ---- */
+  const x0 = W * 0.44, y0 = H * 0.52;
+  const rMaxPx = Math.min(x0, W - x0, y0, H - y0) - 16;
+  const s = Math.min(46 / la, rMaxPx / a);        // px / Å
+  const sp = la * s;                              // 晶格间距 px
+  const rPx = a * s;                              // 轨道半径 px
+  const gridX0 = x0 - Math.floor(x0 / sp) * sp;   // 让杂质正好落在一个格点上
+  const gridY0 = y0 - Math.floor(y0 / sp) * sp;
+
+  /* ---- 基质原子点阵（+4）与价键电子 ---- */
+  const atomR = Math.max(1.8, Math.min(7, sp * 0.17));
+  g.save();
+  g.fillStyle = "#e3e9f0"; g.strokeStyle = "#b9c3ce"; g.lineWidth = 1;
+  const nCol = Math.ceil(W / sp) + 1, nRow = Math.ceil(H / sp) + 1;
+  if (sp < 3) {
+    /* 轨道比晶格大几百倍：单个原子已不可分辨，铺一层均匀底色示意晶格 */
+    g.fillStyle = "rgba(207,214,222,0.55)";
+    g.fillRect(0, 0, W, H);
+  } else if (sp < 14) {
+    /* 太密：用 2×2 方块代替圆弧，保证流畅 */
+    g.fillStyle = "#cfd6de";
+    for (let i = 0; i <= nCol; i++) for (let j = 0; j <= nRow; j++) {
+      const x = gridX0 + i * sp, y = gridY0 + j * sp;
+      if (Math.hypot(x - x0, y - y0) < 16) continue;
+      g.fillRect(x - 1, y - 1, 2.4, 2.4);
+    }
+  } else {
+    for (let i = 0; i <= nCol; i++) for (let j = 0; j <= nRow; j++) {
+      const x = gridX0 + i * sp, y = gridY0 + j * sp;
+      if (Math.hypot(x - x0, y - y0) < Math.max(15, sp * 0.34)) continue;
+      g.beginPath(); g.arc(x, y, atomR, 0, 6.2832); g.fill(); g.stroke();
+    }
+    /* 价键电子：相邻原子连线的中点各画一对小点（PNG 的经典画法） */
+    if (OPT.showLab && sp >= 26) {
+      g.fillStyle = "#9aa5b1";
+      for (let i = 0; i <= nCol; i++) for (let j = 0; j <= nRow; j++) {
+        const x = gridX0 + i * sp, y = gridY0 + j * sp;
+        if (x + sp < W && Math.hypot(x + sp / 2 - x0, y - y0) > 18)
+          { g.beginPath(); g.arc(x + sp * 0.36, y, 1.3, 0, 6.2832); g.arc(x + sp * 0.64, y, 1.3, 0, 6.2832); g.fill(); }
+        if (y + sp < H && Math.hypot(x - x0, y + sp / 2 - y0) > 18)
+          { g.beginPath(); g.arc(x, y + sp * 0.36, 1.3, 0, 6.2832); g.arc(x, y + sp * 0.64, 1.3, 0, 6.2832); g.fill(); }
+      }
+    }
+  }
+  g.restore();
+
+  /* ---- 原子标号 +4 ---- */
+  if (OPT.showLab && sp >= 24) {
+    g.save(); g.font = "9.5px " + FONT; g.fillStyle = "#8a97a5"; g.textAlign = "center"; g.textBaseline = "middle";
+    for (let i = 0; i <= nCol; i++) for (let j = 0; j <= nRow; j++) {
+      const x = gridX0 + i * sp, y = gridY0 + j * sp;
+      if (Math.hypot(x - x0, y - y0) < Math.max(15, sp * 0.34)) continue;
+      g.fillText("+4", x, y);
+    }
+    g.restore();
+  }
+
+  /* ---- 类氢基态轨道（虚线圆；电离后调淡，仅作「逃逸前轨道」参照） ---- */
+  g.save();
+  g.strokeStyle = colAct; g.lineWidth = 2.2; g.setLineDash([8, 6]);
+  g.globalAlpha = OPT.ionized ? 0.35 : 0.9;
+  g.beginPath(); g.arc(x0, y0, rPx, 0, 6.2832); g.stroke();
+  g.restore();
+
+  /* ---- 半径箭头 + a_B 标注 ---- */
+  const th = -0.62;                                // 箭头方向（右上）
+  const ax1 = x0 + Math.cos(th) * rPx, ay1 = y0 + Math.sin(th) * rPx;
+  g.save(); g.strokeStyle = colAct; g.lineWidth = 1.4;
+  g.beginPath(); g.moveTo(x0, y0); g.lineTo(ax1, ay1); g.stroke();
+  const aht = th + Math.PI;
+  g.beginPath();
+  g.moveTo(ax1, ay1);
+  g.lineTo(ax1 + Math.cos(aht - 0.28) * 9, ay1 + Math.sin(aht - 0.28) * 9);
+  g.lineTo(ax1 + Math.cos(aht + 0.28) * 9, ay1 + Math.sin(aht + 0.28) * 9);
+  g.closePath(); g.fillStyle = colAct; g.fill();
+  g.restore();
+  mtxtHalo(g, [{ s: "a", i: 1 }, { s: "B", sub: 1 }, " = " + fmtA(a) + " = " + (a / la).toFixed(2) + " ", { s: "a", i: 1 }],
+    x0 + Math.cos(th) * rPx * 0.55, y0 + Math.sin(th) * rPx * 0.55 - 12, colAct, 12, "center", true);
+
+  /* ---- 杂质离子（实空间核心） ---- */
+  const coreR = Math.max(12, sp * 0.30);
+  g.save();
+  g.fillStyle = isD ? "#f7e26b" : "#f5b7ae";
+  g.strokeStyle = isD ? "#c9a816" : "#c94f42";
+  g.lineWidth = 2;
+  g.beginPath(); g.arc(x0, y0, coreR, 0, 6.2832); g.fill(); g.stroke();
+  g.fillStyle = "#4a3b00"; g.font = "bold 13px " + FONT; g.textAlign = "center"; g.textBaseline = "middle";
+  /* 标号口径与基质 +4 一致：写替位原子的价电子数（施主 +5 / 受主 +3） */
+  g.fillText(isD ? "+5" : "+3", x0, y0 + 0.5);
+  g.restore();
+
+  /* ---- 被束缚的载流子（轨道上转动） ---- */
+  if (!OPT.ionized) {
+    const ex = x0 + Math.cos(RL.ang) * rPx, ey = y0 + Math.sin(RL.ang) * rPx;
+    g.save();
+    if (isD) {
+      g.fillStyle = "#1f4e79";
+      g.beginPath(); g.arc(ex, ey, 5, 0, 6.2832); g.fill();
+    } else {
+      g.fillStyle = "#fff"; g.strokeStyle = COL_ACC; g.lineWidth = 2.4;
+      g.beginPath(); g.arc(ex, ey, 5.5, 0, 6.2832); g.fill(); g.stroke();
+    }
+    g.restore();
+    mtxtHalo(g, isD ? [{ s: "e", i: 1 }, { s: "−", sup: 1 }] : [{ s: "h", i: 1 }, { s: "+", sup: 1 }],
+      ex + 10, ey - 10, isD ? "#1f4e79" : COL_ACC, 12, "left", true);
+  }
+
+  /* ---- 自由载流子（电离后在晶体中游走） ---- */
+  if (OPT.ionized && RL.free) {
+    const f = RL.free;
+    if (f.x === null) { f.x = x0 + rPx * 1.1; f.y = y0 - rPx * 0.8; }
+    g.save();
+    if (isD) {
+      g.fillStyle = "#1f4e79";
+      g.beginPath(); g.arc(f.x, f.y, 5, 0, 6.2832); g.fill();
+    } else {
+      g.fillStyle = "#fff"; g.strokeStyle = COL_ACC; g.lineWidth = 2.4;
+      g.beginPath(); g.arc(f.x, f.y, 5.5, 0, 6.2832); g.fill(); g.stroke();
+    }
+    g.restore();
+    mtxtHalo(g, ["自由", isD ? "电子" : "空穴"], f.x + 10, f.y - 10, isD ? "#1f4e79" : COL_ACC, 11.5, "left", true);
+  }
+
+  /* ---- 晶格常数小标尺 ---- */
+  const rx = 18, ry = H - 16;
+  g.save(); g.strokeStyle = "#5b6b7c"; g.lineWidth = 1.4;
+  g.beginPath();
+  g.moveTo(rx, ry); g.lineTo(rx + sp, ry);
+  g.moveTo(rx, ry - 4); g.lineTo(rx, ry + 4);
+  g.moveTo(rx + sp, ry - 4); g.lineTo(rx + sp, ry + 4);
+  g.stroke(); g.restore();
+  mtxtHalo(g, [{ s: "a", i: 1 }, " = " + la.toFixed(2) + " Å"], rx + sp + 8, ry, "#5b6b7c", 11.5, "left", true);
+
+  /* ---- 状态徽标（左上） ---- */
+  const stTxt = OPT.ionized
+    ? (isD ? "已电离：D⁺（固定正电中心）＋自由电子" : "已电离：A⁻（固定负电中心）＋自由空穴")
+    : (isD ? "束缚态：D⁰ 电中性（+5 离子 ＋ 轨道上的电子）" : "束缚态：A⁰ 电中性（+3 离子 ＋ 轨道上的空穴）");
+  const bw1 = g.measureText(stTxt).width + 20;
+  g.save();
+  g.fillStyle = "rgba(255,255,255,0.95)";
+  g.strokeStyle = OPT.ionized ? "#d94a3d" : "#2e9e5b"; g.lineWidth = 1.2;
+  rrect(g, 12, 12, bw1, 22, 6); g.fill(); g.stroke();
+  g.fillStyle = OPT.ionized ? "#b23a2f" : "#22713f"; g.font = "bold 11.5px " + FONT;
+  g.textAlign = "left"; g.textBaseline = "middle";
+  g.fillText(stTxt, 22, 23.5);
+  g.restore();
+
+  /* ---- 比例徽标（右上）：a_B/a 与轨道圈内原子数 ---- */
+  const ratio = a / la;
+  const nIn = Math.max(1, Math.round(Math.PI * ratio * ratio));
+  const chip = [{ s: "a", i: 1 }, { s: "B", sub: 1 }, " / ", { s: "a", i: 1 }, " = " + ratio.toFixed(2) + "　圈内 ≈ " + nIn + " 个原子"];
+  const cw = mMeasure(g, chip, 12, true) + 16;
+  const ccOl = ratio >= 2.5 ? "#2e9e5b" : ratio >= 1 ? "#ef8c1a" : "#d94a3d";
+  g.save();
+  g.fillStyle = "rgba(255,255,255,0.95)"; g.strokeStyle = ccOl; g.lineWidth = 1.2;
+  rrect(g, W - cw - 12, 12, cw, 22, 6); g.fill(); g.stroke();
+  mtxt(g, chip, W - cw - 4, 23.5, ccOl, 12, "left", true);
+  g.restore();
+}
+
+/* 动画循环：只重画实空间画布（其余画布按需重绘） */
+function tick(ts) {
+  const dt = Math.min(0.05, (ts - RL.last) / 1000 || 0.016);
+  RL.last = ts;
+  if (OPT.anim) {
+    if (!OPT.ionized) RL.ang = (RL.ang + dt * 0.55) % (Math.PI * 2);
+    if (OPT.ionized && RL.free) {
+      const f = RL.free;
+      f.t += dt;
+      if (f.t > 0.4) {                         // 每 0.4 s 随机改变一次方向
+        f.t = 0;
+        const sp2 = 90, phi = Math.random() * Math.PI * 2;
+        f.vx = f.vx * 0.5 + Math.cos(phi) * sp2;
+        f.vy = f.vy * 0.5 + Math.sin(phi) * sp2;
+      }
+      const cv = CV.real;
+      if (cv && f.x !== null) {
+        f.x += f.vx * dt; f.y += f.vy * dt;
+        if (f.x < 14) { f.x = 14; f.vx = Math.abs(f.vx); }
+        if (f.x > cv.W - 14) { f.x = cv.W - 14; f.vx = -Math.abs(f.vx); }
+        if (f.y < 14) { f.y = 14; f.vy = Math.abs(f.vy); }
+        if (f.y > cv.H - 14) { f.y = cv.H - 14; f.vy = -Math.abs(f.vy); }
+      }
+    }
+    drawReal();
+  }
+  requestAnimationFrame(tick);
+}
+
+/* ==================================================================
+   6. 模块二：玻尔氢原子模型（真空）＋ 类氢杂质在半导体中的浅能级
+   左半边画的是【真空里】的氢原子 —— 一个质子加一个电子，没有晶体、没有能带，
+   也没有介电屏蔽和有效质量修正。轨道半径按玻尔模型的真实比例 r_n = n²a₀ 绘制，
+   能量同样取真实值 E_n = −13.6/n² eV。
+   右半边是把类氢杂质搬进半导体之后的浅能级（相对各自带边，meV）。
+   ================================================================== */
+const LVH = 330;                       // 模块二画布高度（固定）
+/* 杂质能级横线：未选中 = 细虚线（淡），选中 = 加粗实线（与左半边玻尔轨道同一套视觉语言） */
+function drawLvLine(g, x0, x1, y, col, on) {
+  g.save();
+  g.strokeStyle = col;
+  g.lineWidth = on ? 3.6 : 1.5;
+  g.globalAlpha = on ? 1 : 0.55;
+  g.setLineDash(on ? [] : [6, 4]);
+  g.lineCap = "butt";
+  g.beginPath(); g.moveTo(x0 + 4, y); g.lineTo(x1 - 4, y); g.stroke();
+  g.restore();
+}
+
+function drawLv() {
+  const c = fitCanvas("lv"), g = c.g, W = c.W, H = c.H;
+  g.clearRect(0, 0, W, H);
+  const T = 18, B = 44, H0 = LVH;
+  const split = Math.round(W * 0.44);
+  const xL0 = 10, xL1 = split - 16;           // 左：真空中的氢原子
+  const xR0 = split + 48, xR1 = W - 14;       // 右：半导体中的杂质
+  const nSel = S(OPT.sel).n;
+
+  /* ---------------- 左：真空中的氢原子（玻尔模型） ---------------- */
+  const topL = T + 40, botL = H0 - B;
+  g.save();
+  g.fillStyle = "rgba(233,241,249,0.9)";
+  rrect(g, xL0, topL - 14, xL1 - xL0, botL - topL + 22, 9); g.fill();
+  g.restore();
+  mtxt(g, ["真空中的氢原子 · 玻尔模型"], (xL0 + xL1) / 2, T + 4, "#2c3e50", 12.5, "center", true);
+  mtxt(g, [{ s: "ε", i: 1 }, { s: "r", sub: 1 }, " = 1（无介电屏蔽）　", { s: "m", i: 1 }, " = ", { s: "m", i: 1 }, { s: "0", sub: 1 }, "（自由电子质量）"],
+    (xL0 + xL1) / 2, T + 19, "#6b7a8c", 11, "center");
+
+  const yA0 = topL + 6, yA1 = botL - 30;
+  const cx = (xL0 + xL1) / 2, cy = (yA0 + yA1) / 2;
+  const NMAX = 3;
+  const R = Math.max(42, Math.min((xL1 - xL0) / 2 - 42, (yA1 - yA0) / 2 - 2));
+  const rPx = n => R * n * n / (NMAX * NMAX);              // 真实比例 r_n = n²a₀
+  const DOTANG = [0.95, 1.15, 2.05];                       // 电子一律画在下半区，给顶部标签让位
+
+  /* 最外层轨道之外 = 电离连续区 */
+  g.save();
+  g.fillStyle = "rgba(25,118,210,0.06)";
+  g.beginPath();
+  g.rect(xL0, topL - 14, xL1 - xL0, botL - topL + 22);
+  g.arc(cx, cy, R, 0, 6.2832);
+  g.fill("evenodd");
+  g.restore();
+
+  const bLab = [];
+  for (let n = 1; n <= NMAX; n++) {
+    const r = rPx(n), on = n === nSel;
+    g.save();
+    g.strokeStyle = on ? "#1976d2" : "#8ea3b8";
+    g.lineWidth = on ? 2.6 : 1.5;
+    g.setLineDash(on ? [] : [5, 5]);
+    g.beginPath(); g.arc(cx, cy, r, 0, 6.2832); g.stroke();
+    g.restore();
+    /* 轨道上的电子 */
+    const th = DOTANG[n - 1];
+    const ex = cx + Math.cos(th) * r, ey = cy + Math.sin(th) * r;
+    g.save();
+    g.fillStyle = on ? "#1976d2" : "#54718e";
+    g.beginPath(); g.arc(ex, ey, on ? 5 : 3.2, 0, 6.2832); g.fill();
+    g.restore();
+    if (on) mtxtHalo(g, [{ s: "e", i: 1 }, { s: "−", sup: 1 }], ex + 9, ey - 9, "#1976d2", 11.5, "left", true);
+    /* 每条轨道一行：n、真实半径、真实能量 */
+    const parts = [{ s: "n", i: 1 }, " = " + n + "："];
+    if (n === 1)
+      parts.push({ s: "r", i: 1 }, " = ", { s: "a", i: 1 }, { s: "0", sub: 1 }, " = 0.529 Å");
+    else
+      parts.push({ s: "r", i: 1 }, " = " + (n * n), { s: "a", i: 1 }, { s: "0", sub: 1 }, " = " + (A_0 * n * n).toFixed(2) + " Å");
+    parts.push("　", { s: "E", i: 1 }, { s: "n", sub: 1 }, " = −" + (E_H / (n * n)).toFixed(2) + " eV");
+    const ly = cy - r - 9;
+    bLab.push({
+      parts, x: cx, y: ly, col: on ? "#1976d2" : "#5b6b7c", align: "center", bd: on,
+      x1: cx - 92, x2: cx + 92,
+      lo: Math.max(topL - 10, ly - 22), hi: Math.min(botL - 34, ly + 22)
+    });
+  }
+  relaxY(bLab, topL - 10, botL - 34, 14);
+  bLab.forEach(o => mtxtHalo(g, o.parts, o.x, o.y, o.col, 11, o.align, o.bd));
+
+  /* 质子（原子核） */
+  const nr = Math.max(4, Math.min(6.5, rPx(1) * 0.55));
+  g.save();
+  g.fillStyle = "#d94a3d"; g.strokeStyle = "#a8352a"; g.lineWidth = 1.4;
+  g.beginPath(); g.arc(cx, cy, nr, 0, 6.2832); g.fill(); g.stroke();
+  g.fillStyle = "#fff"; g.font = "bold " + Math.max(8, Math.round(nr * 1.4)) + "px " + FONT;
+  g.textAlign = "center"; g.textBaseline = "middle";
+  g.fillText("+", cx, cy + 0.5);
+  g.restore();
+  mtxtHalo(g, ["质子 "], cx, cy + nr + 9, "#b5372a", 10.5, "center");
+
+  /* 电离：电子从最外轨道上被彻底拉走（文字说明见底部注解） */
+  const th0 = -0.55;
+  const ix0 = cx + Math.cos(th0) * R, iy0 = cy + Math.sin(th0) * R;
+  const ix1 = cx + Math.cos(th0) * (R + 22), iy1 = cy + Math.sin(th0) * (R + 22);
+  g.save(); g.strokeStyle = "#d94a3d"; g.lineWidth = 1.6;
+  g.beginPath(); g.moveTo(ix0, iy0); g.lineTo(ix1, iy1); g.stroke();
+  const ah = th0 + Math.PI;
+  g.beginPath();
+  g.moveTo(ix1, iy1);
+  g.lineTo(ix1 + Math.cos(ah - 0.3) * 9, iy1 + Math.sin(ah - 0.3) * 9);
+  g.lineTo(ix1 + Math.cos(ah + 0.3) * 9, iy1 + Math.sin(ah + 0.3) * 9);
+  g.closePath(); g.fillStyle = "#d94a3d"; g.fill();
+  g.restore();
+  mtxtHalo(g, [{ s: "e", i: 1 }, { s: "−", sup: 1 }, " 自由"], ix1 + 10, iy1 - 6, "#b5372a", 10.5, "left", true);
+
+  /* 底部注解 */
+  mtxt(g, ["轨道半径按真实比例 ", { s: "r", i: 1 }, { s: "n", sub: 1 }, " = ", { s: "n", i: 1 }, { s: "2", sup: 1 },
+    { s: "a", i: 1 }, { s: "0", sub: 1 }, "，", { s: "E", i: 1 }, { s: "n", sub: 1 }, " = −13.6/", { s: "n", i: 1 }, { s: "2", sup: 1 }, " eV"],
+    (xL0 + xL1) / 2, botL - 15, "#5b6b7c", 11, "center");
+  mtxt(g, ["从 ", { s: "n", i: 1 }, " = 1 一路到 ", { s: "n", i: 1 }, " → ∞（脱离质子）需要 13.61 eV"],
+    (xL0 + xL1) / 2, botL - 1, "#5b6b7c", 11, "center");
+
+  /* ---------------- 右：半导体中的浅能级（相对带边，meV） ---------------- */
+  const top = T, bot = H0 - B, midGAP = 30;
+  const isD = OPT.type === "donor";
+  const Eact = EDact() * 1000;                            // meV
+  const yC = top + 40, yV = bot - 30;
+  const secH = (yV - yC - midGAP) / 2;
+  /* meV 量程：随电离能自适应。取 ≈ 1.6·E_act 使 n=1 恒定落在这一格的 ~62% 高度，
+     n=1 / n=2 / n=3 三条线始终拉得开（约 39 px 与 7 px），否则固定量程会把浅能级压成一线。
+     量程按 2 / 5 / 10 meV 取整，配合 niceStep() 保证刻度是整数。 */
+  const Xr = (() => {
+    const raw = Eact * 1.6;
+    const u = raw < 20 ? 2 : raw < 50 ? 5 : 10;
+    return Math.max(2, Math.ceil(raw / u) * u);
+  })();
+  const yD = v => yC + Math.min(1.6, v / Xr) * secH;         // 施主：E_c 以下 v meV
+  const yA = v => yV - Math.min(1.6, v / Xr) * secH;         // 受主：E_v 以上 v meV
+  const colAct = isD ? COL_DON : COL_ACC;
+
+  mtxt(g, ["类氢杂质放进半导体（相对带边，meV）"], (xR0 + xR1) / 2, top - 2, "#2c3e50", 12.5, "center", true);
+  mtxt(g, [(isD ? "施主" : "受主"), "：", { s: "m", i: 1 }, { s: "*", sup: 1 }, " = " + mAct().toFixed(3) + " ", { s: "m", i: 1 }, { s: "0", sub: 1 },
+    "，", { s: "ε", i: 1 }, { s: "r", sub: 1 }, " = " + OPT.eps.toFixed(1)],
+    (xR0 + xR1) / 2, top + 13, "#6b7a8c", 11, "center");
+
+  /* 背景：导带 / 禁带 / 价带 */
+  g.fillStyle = "rgba(15,155,142,0.13)"; g.fillRect(xR0, yC - 24, xR1 - xR0, 24);
+  g.fillStyle = "rgba(120,130,145,0.16)"; g.fillRect(xR0, yC, xR1 - xR0, secH);
+  g.fillRect(xR0, yV - secH, xR1 - xR0, secH);
+  g.fillStyle = "rgba(239,140,26,0.13)"; g.fillRect(xR0, yV, xR1 - xR0, 24);
+  /* 断开区（其余禁带，未按比例） */
+  const brTop = yC + secH, brBot = yV - secH;
+  g.fillStyle = "#eef2f7"; g.fillRect(xR0, brTop, xR1 - xR0, midGAP);
+  g.save(); g.strokeStyle = "#fff"; g.lineWidth = 3;
+  [0.42, 0.58].forEach(f => {
+    const x = xR0 + (xR1 - xR0) * f;
+    g.beginPath(); g.moveTo(x - 7, brBot); g.lineTo(x + 7, brTop); g.stroke();
+  });
+  g.restore();
+  mtxt(g, ["其余禁带（未按比例，共 ", { s: "E", i: 1 }, { s: "g", sub: 1 }, " = " + Eg().toFixed(2) + " eV）"],
+    (xR0 + xR1) / 2, (brTop + brBot) / 2, "#6b7a8c", 11.5, "center");
+
+  /* 带边线 */
+  g.save(); g.lineWidth = 2.2;
+  g.strokeStyle = "#0f9b8e"; g.beginPath(); g.moveTo(xR0, yC); g.lineTo(xR1, yC); g.stroke();
+  g.strokeStyle = "#ef8c1a"; g.beginPath(); g.moveTo(xR0, yV); g.lineTo(xR1, yV); g.stroke();
+  g.restore();
+  mtxt(g, [{ s: "E", i: 1 }, { s: "c", sub: 1 }, " 导带底"], xR0 + 6, yC - 10, "#0b7d72", 12, "left", true);
+  mtxt(g, [{ s: "E", i: 1 }, { s: "v", sub: 1 }, " 价带顶"], xR0 + 6, yV + 11, "#b07a12", 12, "left", true);
+  mtxt(g, ["导带"], xR1 - 4, yC - 12, "#0b7d72", 11, "right");
+  mtxt(g, ["价带"], xR1 - 4, yV + 13, "#b07a12", 11, "right");
+
+  /* meV 刻度（两侧各自从自己的带边算起） */
+  g.save(); g.font = "10.5px " + FONT; g.fillStyle = "#93a0ae"; g.textAlign = "right";
+  const stp = niceStep(Xr / 4);
+  for (let v = 0; v <= Xr + 1e-9; v += stp) {
+    g.strokeStyle = "#e8eef5"; g.lineWidth = 1;
+    [yD(v), yA(v)].forEach(y => { g.beginPath(); g.moveTo(xR0 - 26, y); g.lineTo(xR1, y); g.stroke(); });
+    g.fillText(String(Math.round(v)), xR0 - 32, yD(v));
+    g.fillText(String(Math.round(v)), xR0 - 32, yA(v));
+  }
+  g.restore();
+  mtxt(g, ["meV"], xR0 - 32, yC - 12, "#93a0ae", 10.5, "right");
+  mtxt(g, ["meV"], xR0 - 32, yV + 12, "#93a0ae", 10.5, "right");
+
+  /* 杂质能级：n=1、2、3 三条（能量按类氢模型 E_n ∝ 1/n²）
+     画法与左半边玻尔模型一致：未选中的能级画细虚线，选中的那条用加粗实线、标签同步高亮 */
+  const baseY = isD ? yC : yV;
+  const lvLab = [];
+  /* 第一遍：未选中的能级一律画虚线（与左半边玻尔模型保持一致） */
+  for (let n = 1; n <= NMAX; n++) {
+    const v = Eact / (n * n);
+    if (v > Xr * 1.6) break;
+    const y = isD ? yD(v) : yA(v);
+    const on = n === nSel;
+    if (on) continue;
+    drawLvLine(g, xR0, xR1, y, colAct, false);
+    pushLvLab(n, v, y, false);
+  }
+  /* 第二遍：选中的那条用加粗实线，压在虚线之上 */
+  for (let n = 1; n <= NMAX; n++) {
+    const v = Eact / (n * n);
+    if (v > Xr * 1.6) break;
+    const y = isD ? yD(v) : yA(v);
+    if (n === nSel) { drawLvLine(g, xR0, xR1, y, colAct, true); pushLvLab(n, v, y, true); }
+  }
+  function pushLvLab(n, v, y, on) {
+    /* 只标 n=1、2：n=2 与 n=3 只隔几个像素，三条全标会互相遮住彼此的线 */
+    if (n > 2) return;
+    const ly = y + (isD ? 11 : -11);
+    lvLab.push({
+      parts: [{ s: "n", i: 1 }, " = " + n + "：", { s: "E", i: 1 }, { s: isD ? "D" : "A", sub: 1 },
+        { s: " / " + (n * n) + " = " + v.toFixed(2) + " meV" }],
+      x: xR0 + 44, y: ly, want: ly, col: on ? colAct : "#6b7a8c", align: "left", bd: on,
+      lo: isD ? yC + 8 : yV - secH + 8, hi: isD ? yC + secH - 8 : yV - 8
+    });
+  }
+  relaxY(lvLab, isD ? yC + 8 : yV - secH + 8, isD ? yC + secH - 8 : yV - 8, 14);
+  lvLab.forEach(o => mtxtHalo(g, o.parts, o.x, o.y, o.col, 11.5, o.align, !!o.bd));
+  mtxt(g, [{ s: "n", i: 1 }, " = 3：按 1/", { s: "n", i: 1 }, { s: "2", sup: 1 }, " 紧贴带边"],
+    xR1 - 8, isD ? yC + secH - 12 : yV - secH + 12, "#8a97a5", 10.5, "right");
+
+  /* 电离能箭头 */
+  const yE = isD ? yD(Eact) : yA(Eact);
+  const ax2 = xR0 + 22;
+  g.save(); g.strokeStyle = colAct; g.lineWidth = 1.3;
+  g.beginPath(); g.moveTo(ax2, baseY); g.lineTo(ax2, yE); g.stroke();
+  [[baseY, isD ? 1 : -1], [yE, isD ? -1 : 1]].forEach(([y, d]) => {
+    g.beginPath(); g.moveTo(ax2, y); g.lineTo(ax2 - 3, y + 4 * d); g.lineTo(ax2 + 3, y + 4 * d);
+    g.closePath(); g.fillStyle = colAct; g.fill();
+  });
+  g.restore();
+  mtxtHalo(g, [{ s: "E", i: 1 }, { s: isD ? "D" : "A", sub: 1 }, " = " + Eact.toFixed(2) + " meV"],
+    xR1 - 8, (baseY + yE) / 2, colAct, 11.5, "right");
+
+  /* 未激活的一侧给个提示 */
+  mtxt(g, isD ? ["受主能级在下方（切「受主」查看）"] : ["施主能级在上方（切「施主」查看）"],
+    (xR0 + xR1) / 2, isD ? (yV - secH / 2) : (yC + secH / 2), "#9aa5b1", 11.5, "center");
+
+  /* 两半数量级对照徽标 */
+  const rE = E_H / EDact(), rA = aB() / A_0;
+  const line1 = ["真空氢 vs 半导体中的杂质：结合能小 " + Math.round(rE) + " 倍　半径大 " + Math.round(rA) + " 倍"];
+  const bw = mMeasure(g, line1, 12, true) + 18;
+  g.save();
+  g.fillStyle = "rgba(255,255,255,0.95)"; g.strokeStyle = "#dde4ec"; g.lineWidth = 1;
+  rrect(g, W / 2 - bw / 2, H0 - 30, bw, 22, 6); g.fill(); g.stroke();
+  mtxt(g, line1, W / 2, H0 - 19, "#2c3e50", 12, "center", true);
+  g.restore();
+}
+
+/* ==================================================================
+   7. 模块三：数量级对比（对数条）
+   ================================================================== */
+function drawCmp() {
+  const c = fitCanvas("cmp"), g = c.g, W = c.W, H = c.H;
+  g.clearRect(0, 0, W, H);
+  const L = 124, Rr = 54, T = 22, B = 30;
+  const X = v => L + (Math.log10(Math.max(1, v)) / LA) * (W - L - Rr);
+  const vals = [E_H / EDact(), aB() / A_0, aB() / latA()];
+  const vmax = Math.max.apply(null, vals);
+  const LA = Math.max(2, Math.log10(vmax) + 0.35);      // 对数轴上限（10^LA）
+  const rows = [
+    { t: "电离能", m: [{ s: "E", i: 1 }, { s: "H", sub: 1 }, " / ", { s: "E", i: 1 }, { s: "i", sub: 1 }], v: vals[0], col: "#1976d2", note: "氢 ÷ 杂质" },
+    { t: "玻尔半径", m: [{ s: "a", i: 1 }, { s: "B", sub: 1 }, " / ", { s: "a", i: 1 }, { s: "0", sub: 1 }], v: vals[1], col: "#7b3fa0", note: "杂质 ÷ 氢" },
+    { t: "尺度比", m: [{ s: "a", i: 1 }, { s: "B", sub: 1 }, " / ", { s: "a", i: 1 }], v: vals[2], col: "#6b7a8c", note: "杂质 ÷ 晶格" }
+  ];
+  const rowH = (H - T - B) / rows.length;
+
+  /* 对数刻度 */
+  g.save(); g.font = "10.5px " + FONT; g.fillStyle = "#93a0ae"; g.textAlign = "center";
+  for (let p = 0; p <= Math.floor(LA); p++) {
+    const x = X(Math.pow(10, p));
+    g.strokeStyle = "#eef2f7"; g.lineWidth = 1;
+    g.beginPath(); g.moveTo(x, T - 4); g.lineTo(x, H - B + 2); g.stroke();
+    g.fillText(p === 0 ? "1" : "10" + String(p).replace(/\d/g, d => "⁰¹²³⁴⁵⁶⁷⁸⁹"[+d]), x, H - B + 14);
+    if (p > 0) {
+      for (let k = 2; k < 10; k++) {
+        const xx = X(Math.pow(10, p) * k);
+        g.strokeStyle = "#f4f7fa";
+        g.beginPath(); g.moveTo(xx, T - 4); g.lineTo(xx, H - B + 2); g.stroke();
+      }
+    }
+  }
+  g.restore();
+  g.save(); g.strokeStyle = "#c8d2dd"; g.lineWidth = 1.2;
+  g.beginPath(); g.moveTo(L, T - 4); g.lineTo(L, H - B + 2); g.stroke(); g.restore();
+
+  rows.forEach((r, i) => {
+    const y = T + rowH * i + rowH / 2;
+    const bh = Math.min(20, rowH - 10);
+    const over = r.v < 1;
+    g.save();
+    g.fillStyle = r.col; g.globalAlpha = 0.85;
+    rrect(g, L + 1, y - bh / 2, Math.max(3, X(r.v) - L - 1), bh, 4); g.fill();
+    g.restore();
+    /* 数值标签 */
+    const vs = r.v >= 100 ? String(Math.round(r.v)) : r.v >= 10 ? r.v.toFixed(1) : r.v.toFixed(2);
+    mtxt(g, [vs + " ×"], X(r.v) + 6, y, "#2c3e50", 12, "left", true);
+    /* 行名：中文（黑体系）＋ 数学式（mtxt），同一行右对齐 */
+    const mw = mMeasure(g, r.m, 11.5);
+    mtxt(g, r.m, L - 8, y - 5, "#2c3e50", 11.5, "right");
+    g.save(); g.font = "11.5px " + FONT; g.fillStyle = "#2c3e50"; g.textAlign = "right"; g.textBaseline = "middle";
+    g.fillText(r.t, L - 8 - mw - 7, y - 5);
+    g.fillStyle = "#93a0ae"; g.font = "10.5px " + FONT;
+    g.fillText(r.note, L - 8, y + 8);
+    g.restore();
+    if (over) mtxt(g, ["＜1 → 模型失效"], L - 8, y, "#d94a3d", 11, "right", true);
+  });
+  mtxt(g, ["对数标尺（每格十倍）"], W - Rr, H - 8, "#93a0ae", 10.5, "right");
+}
+
+/* ==================================================================
+   8. 读数面板 / 材料表 / 提示
+   ================================================================== */
+function row(k, v) { return '<div class="row"><span class="k">' + k + '</span><span class="v">' + v + '</span></div>'; }
+function hd(t) { return '<div class="hd">' + t + "</div>"; }
+
+function updatePanels() {
+  const a = aB(), la = latA();
+  let h = hd("材料与参数");
+  h += row(MM("材料（晶格常数 <i>a</i>）"), "<b>" + OPT.mat + "</b>　" + MM("<i>a</i><span class=\"op\">=</span>" + la.toFixed(3) + "<span class=\"un\">Å</span>") + "　" + (OPT.custom ? "<span class='m'><i>参数已自定义</i></span>" : "<span style='color:#93a0ae'>原始参数</span>"));
+  h += row(MM("杂质类型 / 有效质量 <i>m</i><sup>*</sup>"), "<b>" + (OPT.type === "donor" ? "施主（电子）" : "受主（空穴）") + "</b>　" + MM("<i>m</i><sup>*</sup><span class=\"op\">=</span>" + mAct().toFixed(3) + "&#8201;<i>m</i><sub>0</sub>"));
+  h += row(MM("相对介电常数 <i>ε</i><sub>r</sub>"), "<b>" + OPT.eps.toFixed(2) + "</b>");
+  /* 三个比值（E_H/E_i、a_B/a_0、a_B/a）只在模块三的对数条与模块二底部徽标里给出，
+     读数面板不再复述一遍 —— 图上读得到的东西不必再列成文字。 */
+
+  /* 室温电离度：解电离统计平衡的二次方程（ionFrac），不是「E_i ≤ kT」的二值开关 */
+  const msC = measOf(OPT.mat, OPT.type);
+  const NsC = OPT.type === "donor" ? MATS[OPT.mat].Nc : MATS[OPT.mat].Nv;
+  const fMd = ionFrac(EDact()), fMs = ionFrac(msC.E / 1000);
+  h += hd("室温电离（300 K，统计估算）");
+  h += row(MM("<i>E</i><sub>i</sub><span class=\"sl\">/</span><i>k</i><span class=\"op\">·</span><i>T</i>"), "<b>" + (EDact() * 1000 / (KT300 * 1000)).toFixed(2) + "</b>");
+  h += row(MM("<i>N</i><sub>c,v</sub>（带边有效态密度）"), (NsC / 1e19).toFixed(2) + "<span class=\"op\">×</span>10<sup>19</sup> cm<sup><span class=\"op\">−</span>3</sup>");
+  h += row(MM("电离度（按模型 <i>E</i><sub>i</sub>）"), "<b>" + ionPctStr(fMd) + "</b>");
+  h += row(MM("电离度（改用实测 <i>E</i><sub>i</sub>）"), ionPctStr(fMs) + "　<span style='color:#93a0ae'>" + msC.el + "：" + msC.E.toFixed(msC.E < 10 ? 2 : 1) + " meV</span>");
+  h += row("估算条件", MM("<i>N</i><sub>t</sub><span class=\"op\">=</span>10<sup>16</sup>") + " cm<sup><span class=\"op\">−</span>3</sup>（示意量级，非简并）");
+  /* 2026-10-18 简化：原「A·N_t ≪ 1」那一行整条删除。
+     电离多少由上面两行「电离度」直接给出，不必再摆一行判据。 */
+  $("readout").innerHTML = h;
+
+  /* 材料表 */
+  const isD = OPT.type === "donor";
+  let t = "<tr><th>材料</th><th><span class='m'><i>m</i><sup>*</sup><span class=\"sl\">/</span><i>m</i><sub>0</sub></span></th><th><span class='m'><i>ε</i><sub>r</sub></span></th><th><span class='m'><i>E</i><sub>i</sub></span><br>模型 (meV)</th><th><span class='m'><i>a</i><sub>B</sub></span><br>(Å)</th><th><span class='m'><i>a</i><sub>B</sub><span class=\"sl\">/</span><i>a</i></span></th><th>实测 <span class='m'><i>E</i><sub>i</sub></span><br>(meV) · 偏差</th></tr>";
+  MKEYS.forEach(k => {
+    const M = MATS[k], m = isD ? M.me : M.mh, E = edOf(m, M.eps) * 1000, bb = abOf(m, M.eps);
+    const ms = measOf(k, OPT.type), dv = (E - ms.E) / ms.E * 100;
+    const col = Math.abs(dv) < 10 ? "#22713f" : Math.abs(dv) < 30 ? "#b8860b" : "#c0392b";
+    t += '<tr class="' + (k === OPT.mat && !OPT.custom ? "sel" : "") + '"><td>' + k + "</td><td>" + m.toFixed(3) + "</td><td>" + M.eps.toFixed(1) +
+      "</td><td>" + E.toFixed(1) + "</td><td>" + bb.toFixed(1) + "</td><td>" + (bb / M.a).toFixed(2) +
+      "</td><td>" + ms.E.toFixed(ms.E < 10 ? 2 : 1) + "（" + ms.el + "）<br><span style='color:" + col + "'>" +
+      (dv >= 0 ? "+" : "\u2212") + Math.abs(dv).toFixed(0) + "%</span></td></tr>";
+  });
+  $("matTbl").innerHTML = t;
+  $("tblType").textContent = isD ? "施主 · 电子有效质量" : "受主 · 空穴有效质量";
+  /* 2026-10-17 简化：材料表下方的表注整块删除，连它那段「现算反例」的辅助代码一并清空
+     （不留 dead data）。「模型准不准」交给表格最右列（实测 E_i · 偏差）自己说明。 */
+  /* 图例（实空间图） */
+  const isD2 = OPT.type === "donor";
+  let lg = '<span><i class="swatch" style="color:#b9c3ce;background:#e3e9f0"></i>基质原子 +4（晶格常数 ' + MM("<i>a</i><span class=\"op\">=</span>" + la.toFixed(2) + "<span class=\"un\">Å</span>") + "）</span>";
+  lg += isD2
+    ? '<span><i class="swatch" style="color:#c9a816;background:#f7e26b"></i>施主离子 +5（替位杂质，多一个价电子）</span>'
+    : '<span><i class="swatch" style="color:#c94f42;background:#f5b7ae"></i>受主离子 +3（替位杂质，少一个价电子）</span>';
+  lg += OPT.ionized
+    ? (isD2
+      ? '<span><i class="swatch" style="color:#1f4e79;background:#1f4e79"></i>自由电子（导带中游走）</span>'
+      : '<span><i class="swatch" style="color:#e2695f;background:#fff"></i>自由空穴（价带中游走）</span>')
+    : (isD2
+      ? '<span><i class="swatch" style="color:#1f4e79;background:#1f4e79"></i>被束缚的电子（在轨道上绕行）</span>'
+      : '<span><i class="swatch" style="color:#e2695f;background:#fff"></i>被束缚的空穴（在轨道上绕行）</span>');
+  lg += '<span><i class="swatch dash" style="color:' + (isD2 ? "#7b3fa0" : "#e2695f") + '"></i>类氢轨道，半径 ' + MM("<i>a</i><sub>B</sub><span class=\"op\">=</span>" + a.toFixed(1) + "<span class=\"un\">Å</span>") + "</span>";
+  lg += '<span>圆内数字是替位原子的<b>价电子数</b>；与周围 4 条键配平后，离子实净电荷为 ' +
+    (isD2 ? "+1（施主）" : "−1（受主）") + '，真正束缚载流子的就是它</span>';
+  $("realLegend").innerHTML = lg;
+
+  updateHints();
+}
+
+function updateHints() {
+  const a = aB(), la = latA();
+  const isD = OPT.type === "donor";
+  const ratio = a / la;
+  const Ei = (EDact() * 1000).toFixed(1);
+  let h;
+  if (OPT.ionized) {
+    h = "载流子已挣脱库仑束缚，在晶体里<b>自由运动</b>（" + (isD ? "导带中的自由电子" : "价带中的自由空穴") +
+      "）；杂质处只留下固定不动的<b>" + (isD ? "+5 施主离子 D⁺" : "+3 受主离子 A⁻") + "</b> —— 电离的杂质本身不导电，贡献载流子的是它释放（或俘获）的那个电子/空穴。点「复合」让载流子被重新俘获。";
+  } else {
+    h = isD ? "" : "红色 <b>+3</b> 是受主杂质（如 Si 中的 B）：比周围的 +4 原子少一个价电子，它从邻键抓来一个电子补上第 4 条键，离子实<b>净剩 −1</b>、成为固定负电中心；带正电的<b>空穴</b>被它束缚、在同一条轨道上绕行 —— 与施主正好是电荷镜像。";
+    h += "挣脱束缚需要电离能 " + MM("<i>E</i><sub>i</sub><span class=\"op\">=</span>" + Ei + "<span class=\"un\">meV</span>") +
+      "（室温电离多少见读数面板）。";
+  }
+  if (ratio < 1) h += "注意：当前参数下轨道半径比晶格常数还小 —— 束缚塌在单个原子尺度上，这已经不是浅能级情形了，把参数调回材料原始值再继续。";
+  else if (ratio < 2.5) h += "注意：轨道半径只有一两个晶格常数 —— 处在浅能级边缘，真实的浅施主 / 浅受主（最小 2.5 倍）都比这宽。";
+  $("realHint").innerHTML = h;
+  $("lvHint").innerHTML =
+    "<b>左边是真空中的氢原子</b>（玻尔模型）：一个质子加一个电子，没有晶体、没有能带、没有介电屏蔽，" +
+    MM("<i>ε</i><sub>r</sub><span class=\"op\">=</span>1") + "、" + MM("<i>m</i><span class=\"op\">=</span><i>m</i><sub>0</sub>") + "。<br>" +
+    "<b>右边是把类氢杂质放进半导体</b>之后的样子：纵轴换成相对各自带边的 meV，所以 " + MM("<i>n</i><span class=\"op\">=</span>1") + " 那条杂质能级紧贴带边（这就是「浅」），" +
+    "电离能箭头对应的正是模块一里那个载流子「挣脱轨道」所需的能量。";
+
+  /* 副标题下这一行是「把公式里的数字代进去」的实例，四个数必须全部取自当前状态：
+     m*、ε_r 与右上角滑块读数同源（vM 用 toFixed(3)、vE 用 toFixed(2)），E_i、a_B 由同一组
+     (m*, ε_r) 走 EDact()/aB() 现算。曾有一半跟当前状态、一半写死 MATS.Si 的版本 ——
+     切到 Ge 后会变成「默认『Si 施主』… ⇒ E_D = 6.4 meV、a_B = 23.8 Å」，
+     标签与量值各自为政，还顶着 Si 的名义给出 Ge 的数（Si 实为 25.8 meV）。
+     另外这里用中性记号 E_i 而非 E_D：受主档也应成立，且与页首公式、材料表、读数面板口径一致。 */
+  const eiNow = EDact(), abNow = aB();
+  $("noteLine").innerHTML = (OPT.custom
+    ? "当前参数（<b>已自定义</b>）"
+    : "当前「" + OPT.mat + " " + (OPT.type === "donor" ? "施主" : "受主") + "」") +
+    "：" + MM("<i>m</i><sup>*</sup><span class=\"op\">=</span>" + mAct().toFixed(3) + "&#8201;<i>m</i><sub>0</sub>") + "、" +
+    MM("<i>ε</i><sub>r</sub><span class=\"op\">=</span>" + OPT.eps.toFixed(2)) +
+    " ⇒ " + MM("<i>E</i><sub>i</sub><span class=\"op\">=</span>" + (eiNow * 1000).toFixed(1) + "<span class=\"un\">meV</span>") + "、" +
+    MM("<i>a</i><sub>B</sub><span class=\"op\">=</span>" + abNow.toFixed(1) + "<span class=\"un\">Å</span>") +
+    "，是晶格常数的 " + (abNow / latA()).toFixed(1) + " 倍。";
+
+  $("subM").innerHTML = "当前调节 <b>" + (OPT.type === "donor" ? "电子" : "空穴") + "</b>有效质量；材料原始值 " + (OPT.type === "donor" ? curMat().me : curMat().mh).toFixed(3) +
+    "。" + MM("<i>E</i><span class=\"op\">∝</span><i>m</i><sup>*</sup>") + "，" + MM("<i>a</i><sub>B</sub><span class=\"op\">∝</span>1<span class=\"sl\">/</span><i>m</i><sup>*</sup>") + "。";
+  $("subE").innerHTML = "材料的 " + MM("<i>ε</i><sub>r</sub><span class=\"op\">=</span>" + curMat().eps) + "。" + MM("<i>E</i><span class=\"op\">∝</span>1<span class=\"sl\">/</span><i>ε</i><sub>r</sub><sup>2</sup>") + "，" + MM("<i>a</i><sub>B</sub><span class=\"op\">∝</span><i>ε</i><sub>r</sub>") + "（平方 vs 一次，是最关键的不对称）。";
+}
+
+/* ==================================================================
+   9. 渲染循环
+   ================================================================== */
+let rafId = 0;
+function requestDraw() { if (!rafId) rafId = requestAnimationFrame(() => { rafId = 0; render(); }); }
+function render() {
+  drawReal(); drawLv(); drawCmp(); updatePanels(); syncLabels();
+}
+
+/* ==================================================================
+   10. 交互
+   ================================================================== */
+function syncLabels() {
+  $("vM").textContent = mAct().toFixed(3);
+  $("vE").textContent = OPT.eps.toFixed(2);
+  $("typeRow").querySelectorAll("button").forEach(b => {
+    const on = b.dataset.t === OPT.type;
+    b.classList.toggle("active", on);
+    b.classList.toggle("a", on && OPT.type === "acceptor");
+  });
+  $("matRow").querySelectorAll("button").forEach(b => b.classList.toggle("sel", b.dataset.m === OPT.mat && !OPT.custom));
+  $("matNote").innerHTML = OPT.custom
+    ? '<span class="m"><i>已手动改动</i></span>'
+    : (OPT.mat + " 原始参数");
+  $("matNote").style.color = OPT.custom ? "#ef8c1a" : "";
+  $("stateRow").querySelectorAll("button").forEach(b => {
+    const on = b.dataset.s === OPT.sel, col = b.dataset.col;
+    b.classList.toggle("sel", on);
+    /* 选中态用自身颜色做底、白字；不能用 .sel 的默认蓝底——
+       内联 color 会压过 CSS 的 color:#fff，蓝底蓝字会"隐身" */
+    b.style.background = on ? col : "";
+    b.style.borderColor = col;
+    b.style.color = on ? "#fff" : col;
+  });
+  ($("sM")).value = mAct();
+  ($("sE")).value = OPT.eps;
+  ($("vM")).className = OPT.type === "acceptor" ? "val a" : "val";
+}
+function applyMat(k) {
+  OPT.mat = k; OPT.custom = false;
+  OPT.me = MATS[k].me; OPT.mh = MATS[k].mh; OPT.eps = MATS[k].eps;
+  requestDraw();
+}
+
+function init() {
+  /* 材料预设 */
+  const mr = $("matRow");
+  MKEYS.forEach(k => {
+    const b = document.createElement("button");
+    b.dataset.m = k; b.textContent = k;
+    b.onclick = () => { applyMat(k); };
+    mr.appendChild(b);
+  });
+  /* 量子态按钮 */
+  const sr = $("stateRow");
+  STATES.forEach(s => {
+    const b = document.createElement("button");
+    b.dataset.s = s.k; b.dataset.col = s.col;
+    b.innerHTML = '<span class="m"><i>n</i><span class="op">=</span>' + s.n + "</span>";
+    b.style.borderColor = s.col; b.style.color = s.col;
+    b.onclick = () => { OPT.sel = s.k; requestDraw(); };
+    sr.appendChild(b);
+  });
+  /* 杂质类型 */
+  $("typeRow").querySelectorAll("button").forEach(b => {
+    b.onclick = () => { OPT.type = b.dataset.t; requestDraw(); };
+  });
+  /* 滑块 */
+  $("sM").oninput = e => { setM(+e.target.value); OPT.custom = true; requestDraw(); };
+  $("sE").oninput = e => { OPT.eps = +e.target.value; OPT.custom = true; requestDraw(); };
+  /* 2026-10-17 简化：删掉「回到该材料的原始参数」按钮 —— 点上面任一材料预设（applyMat）
+     就已经把 me/mh/eps 还原成该材料原始值并清掉 custom 标记，功能完全重叠。 */
+  /* 复选框 */
+  const bind = (id, fn) => { $(id).onchange = e => { fn(e.target.checked); requestDraw(); }; };
+  bind("ckLab", v => OPT.showLab = v);
+  bind("ckAnim", v => OPT.anim = v);
+  /* 电离 / 复合 */
+  $("btnIon").onclick = () => setIonized(!OPT.ionized);
+
+  window.addEventListener("resize", () => { fitAll(); requestDraw(); });
+  if (window.ResizeObserver) {
+    const ro = new ResizeObserver(() => requestDraw());
+    ["real", "lv", "cmp"].forEach(id => ro.observe($(id)));
+  }
+  buildChals();
+  render();
+  requestAnimationFrame(tick);        // 实空间图动画循环（只重画 real 画布）
+}
+
+/* ==================================================================
+   11. 挑战任务（答案中的数值全部由公式实时算出，不会过期）
+   ================================================================== */
+function TBL(mat, type) {
+  const M = MATS[mat], m = type === "donor" ? M.me : M.mh;
+  return { m, eps: M.eps, E: edOf(m, M.eps), A: abOf(m, M.eps), a: M.a, mat };
+}
+const CHALS = [
+  {
+    t: "挑战一 · 氢原子 vs 类氢杂质：数量级",
+    q: "保持默认的「Si 施主」。查一下下面的材料参数表：<span class='m'><i>E</i><sub>i</sub></span> 是多少 meV？<span class='m'><i>a</i><sub>B</sub></span> 是多少 Å？再看模块二左半边真空里的玻尔氢原子（<span class='m'>13.61<span class=\"un\">eV</span></span> / <span class='m'>0.529<span class=\"un\">Å</span></span>），两者相差多少个数量级？",
+    a: () => {
+      const T = TBL("Si", "donor");
+      return "Si 施主：<span class='m'><i>E</i><sub>D</sub><span class=\"op\">=</span>" + fmtE(T.E) + "</span>（氢是它的 <b>" + Math.round(E_H / T.E) + " 倍</b>），<span class='m'><i>a</i><sub>B</sub><span class=\"op\">=</span>" + T.A.toFixed(1) + "<span class=\"un\">Å</span></span>（是氢的 <b>" + (T.A / A_0).toFixed(0) + " 倍</b>）。" +
+        "两次修正各贡献一份：介电屏蔽 <span class=\'m\'><i>ε</i><sub>r</sub><span class=\"op\">=</span>" + T.eps.toFixed(1) + "</span> 把库仑势削弱了 " + T.eps.toFixed(1) + " 倍，而 <span class=\'m\'><i>E</i><span class=\"op\">∝</span>1<span class=\"sl\">/</span><i>ε</i><sub>r</sub><sup>2</sup></span>，带来 " + (T.eps * T.eps).toFixed(0) + " 倍；有效质量 <span class=\'m\'><i>m</i><sup>*</sup><span class=\"op\">=</span>" + T.m + "<i>m</i><sub>0</sub></span> 再带来 " + (1 / T.m).toFixed(1) + " 倍，合计 " + Math.round(E_H / T.E) + " 倍。半径的变化方向整好相反（<span class=\'m\'><i>a</i><sub>B</sub><span class=\"op\">∝</span><i>ε</i><sub>r</sub><span class=\"sl\">/</span><i>m</i><sup>*</sup></span>），于是胀大 " + (T.A / A_0).toFixed(0) + " 倍——这也是为什么半导体里的电子大到必须用晶体来衡量。";
+    }
+  },
+  {
+    t: "挑战二 · 扫描有效质量 <span class='m'><i>m</i><sup>*</sup></span>",
+    q: "固定 <span class='m'><i>ε</i><sub>r</sub><span class=\"op\">=</span>11.7</span>，把 <span class='m'><i>m</i><sup>*</sup><span class=\"sl\">/</span><i>m</i><sub>0</sub></span> 从 0.01 拉到 1.0：<span class='m'><i>E</i><sub>D</sub></span> 与 <span class='m'><i>a</i><sub>B</sub></span> 各自怎么变？它们的变化倍数是不是相同的数？",
+    a: () => {
+      const e1 = edOf(0.01, 11.7), e2 = edOf(1.0, 11.7), a1 = abOf(0.01, 11.7), a2 = abOf(1.0, 11.7);
+      return "<span class='m'><i>m</i><sup>*</sup></span> 增大 100 倍：<span class='m'><i>E</i><sub>D</sub></span> 从 " + fmtE(e1) + " 增到 " + fmtE(e2) + "（也正好增大 100 倍），<span class='m'><i>a</i><sub>B</sub></span> 从 " + a1.toFixed(0) + " Å 缩到 " + a2.toFixed(2) + " Å（缩小到 1/100）。两者严格互为倒数：<span class='m'><i>E</i><span class=\"op\">∝</span><i>m</i><sup>*</sup></span>，<span class='m'><i>a</i><sub>B</sub><span class=\"op\">∝</span>1<span class=\"sl\">/</span><i>m</i><sup>*</sup></span>。物理上也好理解：<span class='m'><i>m</i><sup>*</sup></span> 越大，电子越「重」、动能越小，于是更容易被杂质离子实拽住，轨道收得更紧。";
+    }
+  },
+  {
+    t: "挑战三 · 扫描介电常数 <span class='m'><i>ε</i><sub>r</sub></span>",
+    q: "固定 <span class='m'><i>m</i><sup>*</sup><span class=\"sl\">/</span><i>m</i><sub>0</sub><span class=\"op\">=</span>0.26</span>，把 <span class='m'><i>ε</i><sub>r</sub></span> 从 1 拉到 20：<span class='m'><i>E</i><sub>D</sub></span> 与 <span class='m'><i>a</i><sub>B</sub></span> 怎么变？特别注意 <span class='m'><i>ε</i><sub>r</sub></span> 加大一倍时，两者变化的倍数<em>不一样</em>。",
+    a: () => {
+      const m = 0.26, e1 = edOf(m, 1), e2 = edOf(m, 20), a1 = abOf(m, 1), a2 = abOf(m, 20);
+      return "<span class='m'><i>ε</i><sub>r</sub></span> 增大 20 倍：<span class='m'><i>E</i><sub>D</sub></span> 从 " + fmtE(e1) + " 掉到 " + fmtE(e2) + "，缩小了 <b>" + (e1 / e2).toFixed(0) + " 倍</b>（正好 <span class='m'>20<sup>2</sup></span>）；<span class='m'><i>a</i><sub>B</sub></span> 从 " + a1.toFixed(2) + " Å 胀到 " + a2.toFixed(0) + " Å，只放大 <b>20 倍</b>。平方与一次的不对称是这套标度关系的灵魂：<span class='m'><i>ε</i><sub>r</sub></span> 既出现在势能里削弱库仑吸引（一次），又通过<span class='m'><i>a</i><sub>B</sub></span> 把轨道进一步摊开（再一次）。<span class='m'><i>ε</i><sub>r</sub><span class=\"op\">=</span>1</span> 时屏蔽消失，你得到的就是真空里的库仑势，电离能立刻回到 eV 量级。";
+    }
+  },
+  {
+    t: "挑战四 · 三种材料横向对比",
+    q: "依次点 Si、Ge、GaAs（施主），记录每个材料的 <span class='m'><i>m</i><sup>*</sup></span>、<span class='m'><i>ε</i><sub>r</sub></span>、<span class='m'><i>E</i><sub>D</sub></span>、<span class='m'><i>a</i><sub>B</sub></span> 与 <span class='m'><i>a</i><sub>B</sub><span class=\"sl\">/</span><i>a</i></span>（材料参数表已列好）。谁的结合能最大？谁最小？切到「受主」再比一遍，排序会不会反过来？",
+    a: () => {
+      const rows = MKEYS.map(k => TBL(k, "donor")).sort((x, y) => y.E - x.E);
+      const rowsA = MKEYS.map(k => TBL(k, "acceptor")).sort((x, y) => y.E - x.E);
+      let s = "施主（按 <span class='m'><i>E</i><sub>D</sub></span> 从大到小）：" + rows.map(r =>
+        r.mat + " " + (r.E * 1000).toFixed(1) + " meV / " + r.A.toFixed(0) + " Å / " + (r.A / r.a).toFixed(1) + "a").join("　→　");
+      s += "。最大 " + rows[0].mat + "，最小 " + rows[rows.length - 1].mat + "（<span class='m'><i>E</i><span class=\"op\">∝</span><i>m</i><sup>*</sup><span class=\"sl\">/</span><i>ε</i><sub>r</sub><sup>2</sup></span>，GaAs 的电子只有 " + MATS.GaAs.me + "，所以最小）。";
+      s += "切到受主后排序变成：" + rowsA.map(r => r.mat + " " + (r.E * 1000).toFixed(1)).join("　→　") +
+        " —— 因为空穴有效质量大得多（GaAs 的空穴是 0.45，是电子的 6.7 倍），<b>受主总是比施主更深、更局域</b>。注意三种材料无论施主还是受主，" +
+        MM("<i>E</i><sub>i</sub>") + " 都在几十 meV、" + MM("<i>a</i><sub>B</sub>") + " 都有好几个晶格常数宽 —— 这就是「浅能级」的定义，也正是类氢模型能成立的原因。";
+      return s;
+    }
+  },
+  {
+    t: "挑战五 · 从真空氢原子到半导体里的浅能级",
+    q: "看模块二左半边的玻尔氢原子：<span class='m'><i>n</i><span class=\"op\">=</span>1</span> 的轨道半径与电离能分别是多少？再看模块一的实空间图，同一个 <span class='m'><i>n</i><span class=\"op\">=</span>1</span> 的态在 Si 里被放大了多少倍、圈里包了多少个原子？最后点「⚡ 电离」，载流子逃逸后杂质处留下了什么？",
+    a: () => {
+      const T = TBL("Si", "donor");
+      const nPlan = Math.round(Math.PI * Math.pow(T.A / T.a, 2));
+      return "真空氢原子 <span class='m'><i>n</i><span class=\"op\">=</span>1</span>：" + MM("<i>r</i><span class=\"op\">=</span><i>a</i><sub>0</sub><span class=\"op\">=</span>0.529<span class=\"un\">Å</span>") +
+        "（比任何晶格常数都小一个量级），电离能 <b>13.61 eV</b>，常温下的热扰动根本碰不动它。" +
+        "同一个 " + MM("<i>n</i><span class=\"op\">=</span>1") + " 放到 Si 里：" + MM("<i>a</i><sub>B</sub><span class=\"op\">=</span>" + T.A.toFixed(0) + "<span class=\"un\">Å</span>") +
+        "，膨胀了 <b>" + (T.A / A_0).toFixed(0) + " 倍</b>、是晶格常数的 <b>" + (T.A / T.a).toFixed(1) + " 倍</b>，一个轨道圈里就包着约 <b>" + nPlan.toLocaleString("en-US") +
+        "</b> 个原子（三维波函数球内则有 " + atomsIn(T.A).toLocaleString("en-US") + " 个）；电离能只剩 " + MM("<i>E</i><sub>D</sub><span class=\"op\">=</span>" + fmtE(T.E)) +
+        "，与室温热能同量级 —— 代入电离统计平衡算出来的电离度是 <b>" + ionPctStr(ionFrac(T.E)) + "</b>（见读数面板，这里的描述统一以它为准）。" +
+        "点「电离」可以看到这个结局：载流子挣脱库仑束缚成为自由载流子（<b>导电的就是它</b>），杂质处只留下固定不动的离子（它本身不导电，却是散射中心）。" +
+        "这就是整套类氢模型的要点：<b>同一个库仑中心，屏蔽让它变松、有效质量让它变慢，于是又深又小的氢原子变成了又浅又大的杂质态。</b>";
+    }
+  }
+];
+function buildChals() {
+  const grid = $("chalGrid");
+  grid.innerHTML = "";
+  CHALS.forEach(c => {
+    const d = document.createElement("div");
+    d.className = "chal";
+    d.innerHTML =
+      '<div class="chal-head"><b>' + c.t + '</b><span class="chev">▶</span></div>' +
+      '<div class="chal-body"><div class="q">' + c.q + '</div>' +
+      '<div class="btn-row"><button class="primary">显示答案</button></div>' +
+      '<div class="ans"></div></div>';
+    d.querySelector(".chal-head").onclick = () => d.classList.toggle("open");
+    d.querySelector(".btn-row button").onclick = () => {
+      const box = d.querySelector(".ans");
+      if (!box.classList.contains("show")) box.innerHTML = typeof c.a === "function" ? c.a() : c.a;
+      box.classList.toggle("show");
+    };
+    grid.appendChild(d);
+  });
+}
+
+if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
+else init();
+/* i18n 启动必须在 init() 之后：setLang() 会重跑 syncInputs()/render()，
+   放到 init() 之前会在 fitAll() 之前触发绘制，一旦抛异常整个 init() 就跑不到（挑战与画布会空）。 */
+(function () {
+  try {
+    i18nWatch();
+    ORIG_TITLE = ORIG_TITLE || document.title;
+    var btn = document.getElementById("langBtn");
+    if (btn) btn.onclick = function () { setLang(LANG === "en" ? "zh" : "en"); };
+    if (LANG === "en") setLang("en"); else { document.title = ORIG_TITLE; i18nWalk(document.body); }
+  } catch (e) { }
+})();
+</script>
+<div class="site-foot">本工具是 EIT-SP（半导体物理交互式教学工具箱）的一部分（武汉大学物理学院《半导体物理》智慧课程），以 MIT 协议开源，可自由使用与二次开发；转载请保留出处。反馈意见 <a href="mailto:doctorwanghao@qq.com">doctorwanghao@qq.com</a></div>
+</body>
+</html>

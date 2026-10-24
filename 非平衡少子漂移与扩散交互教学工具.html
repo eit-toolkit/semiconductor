@@ -1,0 +1,2666 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<!-- SPDX-License-Identifier: MIT -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>非平衡少子漂移与扩散交互教学工具</title>
+<style>
+
+  :root {
+    --bg: #f7f9fb;
+    --panel: #ffffff;
+    --border: #dde4ec;
+    --text: #2c3e50;
+    --text-sub: #6b7a8c;
+    --blue: #1976d2;
+    --blue-light: #e3f0fb;
+    --orange: #ef8c1a;
+    --red: #d94a3d;
+    --teal: #0f9b8e;
+    --green: #2e9e5b;
+    --purple: #7b3fa0;
+    --gray-ref: #9aa5b1;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Microsoft YaHei", "PingFang SC", "Segoe UI", sans-serif;
+    background: var(--bg); color: var(--text); padding: 14px;
+  }
+  header { position: relative; display: flex; align-items: baseline; justify-content: center; gap: 14px; flex-wrap: wrap; text-align: center; margin-bottom: 2px; }
+  .lang-btn { position: absolute; right: 0; top: 0; border: 1px solid var(--border); background: #fff;
+    color: var(--text-sub); padding: 3px 10px; border-radius: 7px; cursor: pointer; font-size: 12px; font-weight: 600; }
+  .lang-btn:hover { border-color: var(--blue); color: var(--blue); }
+  header h1 { font-size: 20px; }
+  header .formula { font-size: 14.5px; color: var(--text-sub); }
+  .sub-note { text-align: center; font-size: 12.5px; color: var(--text-sub); margin-bottom: 12px; line-height: 1.75; }
+  .sub-note b { color: var(--blue); }
+
+  .layout { display: flex; gap: 14px; align-items: flex-start; max-width: 1500px; margin: 0 auto; }
+  .viz { flex: 0 0 64%; min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+  .side { flex: 1; min-width: 310px; display: flex; flex-direction: column; gap: 12px; }
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; }
+  .sec-title { font-size: 13.5px; font-weight: 700; margin: 2px 0 6px; }
+  /* 模块编号徽标：只有教学内容模块才带编号；控制面板等辅助面板不是模块，不加 */
+  .sec-title .mtag {
+    display: inline-block; background: var(--blue); color: #fff;
+    font-size: 11px; font-weight: 700; padding: 1.5px 7px;
+    border-radius: 5px; margin-right: 6px; vertical-align: 1.5px; letter-spacing: .3px;
+  }
+  canvas { display: block; width: 100%; border-radius: 6px; touch-action: none; }
+  canvas:focus { outline: 2px solid rgba(25,118,210,.45); outline-offset: 1px; }
+  .chart-wrap { position: relative; }
+  .hint { font-size: 12px; color: var(--text-sub); margin-top: 6px; line-height: 1.6; }
+  .ctrl { margin-bottom: 10px; }
+  .ctrl:last-child { margin-bottom: 0; }
+  .ctrl-head { display: flex; justify-content: space-between; align-items: baseline; font-size: 13px; font-weight: 600; margin-bottom: 2px; gap: 8px; }
+  .ctrl-head .val { color: var(--blue); font-variant-numeric: tabular-nums; font-weight: 700; white-space: nowrap; }
+  .ctrl input[type=range] { width: 100%; accent-color: var(--blue); }
+  .ctrl .sub { font-size: 11.5px; color: var(--text-sub); margin-top: 1px; line-height: 1.5; }
+  .btn-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+  .btn-row button {
+    border: 1px solid var(--border); background: #fff; color: var(--text);
+    padding: 5px 11px; border-radius: 7px; cursor: pointer; font-size: 12.5px;
+  }
+  .btn-row button:hover { border-color: var(--blue); color: var(--blue); }
+  .btn-row.tight button { padding: 4px 9px; font-size: 12px; }
+  .btn-row button.sel { background: var(--blue); border-color: var(--blue); color: #fff; font-weight: 600; }
+  .btn-row button.primary { background: var(--blue-light); border-color: var(--blue); color: var(--blue); font-weight: 600; }
+  .mode-switch { display: flex; gap: 6px; }
+  .mode-switch button {
+    flex: 1; border: 1px solid var(--border); background: #fff; color: var(--text-sub);
+    padding: 6px 10px; border-radius: 8px; cursor: pointer; font-size: 12.5px; font-weight: 600;
+  }
+  .mode-switch button.active { background: var(--blue); border-color: var(--blue); color: #fff; }
+  .chk-row { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12.5px; color: var(--text-sub); margin-top: 4px; }
+  .chk-row label { display: inline-flex; align-items: center; gap: 5px; cursor: pointer; }
+  .chk-row input[type=checkbox] { accent-color: var(--blue); }
+  .legend { display: flex; gap: 6px 14px; flex-wrap: wrap; align-items: center; font-size: 12px; color: var(--text-sub); margin-top: 6px; }
+  .swatch { display: inline-block; vertical-align: middle; width: 20px; height: 0; border-top: 3px solid currentColor; border-radius: 2px; margin-right: 6px; }
+  .swatch.dash { border-top-style: dashed; }
+  .swatch.dot { width: 11px; height: 11px; border: none; border-radius: 50%; }
+  .swatch.sq { width: 11px; height: 11px; border: none; border-radius: 3px; }
+  /* ---- LaTeX 风格数学排版（纯 CSS，无外部库） ---- */
+  .m { font-family: "Cambria Math", "STIX Two Math", "Latin Modern Math", "Times New Roman", Times, serif;
+       font-size: 1.05em; font-style: normal; white-space: nowrap; letter-spacing: .01em; }
+  .m i, .m var { font-style: italic; }
+  .m .rm { font-style: normal; }
+  .m sub, .m sup { font-size: .70em; font-style: normal; line-height: 1; }
+  .m sub { vertical-align: -.28em; }
+  .m sup { vertical-align: .50em; }
+.m .m { font-size: 1em; }   /* 嵌套容器（TEXH 下标转换叠加）不再放大字号 */
+  .m sub i, .m sup i { font-style: italic; }
+  .m .op { font-style: normal; padding: 0 .24em; }
+  .m .sl { font-style: normal; padding: 0 .05em; }
+  .m .un { font-style: normal; padding-left: .16em; }
+  .frac { display: inline-block; vertical-align: -0.52em; text-align: center; margin: 0 .16em; font-size: .86em; line-height: 1.18; }
+  .frac > .num { display: block; padding: 0 .34em; border-bottom: 1px solid currentColor; }
+  .frac > .den { display: block; padding: 0 .34em; }
+  /* ---- 读数区 ---- */
+  .kv { display: grid; grid-template-columns: 1fr; gap: 2px 22px; font-size: 12.5px; }
+  .kv .row { display: flex; justify-content: space-between; gap: 8px; border-bottom: 1px dotted #eef2f7; padding: 2px 0; }
+  .kv .k { color: var(--text-sub); white-space: nowrap; }
+  .kv .v { font-variant-numeric: tabular-nums; text-align: right; }
+  .kv .v b { color: var(--blue); }
+  .kv .hd { grid-column: 1 / -1; font-weight: 700; color: var(--text); font-size: 12px; margin: 6px 0 2px; }
+  .kv .hd:first-child { margin-top: 0; }
+  /* 折叠组件（.fold）：独立类名，不复用 .chal-head/.chev，避免污染挑战区回归计数 */
+  .fold { margin-top: 7px; border-top: 1px dotted var(--border); padding-top: 5px; }
+  .fold-head { display: flex; align-items: center; gap: 6px; cursor: pointer;
+    font-size: 12px; font-weight: 600; color: var(--text-sub); user-select: none; }
+  .fold-head:hover { color: var(--blue); }
+  .fold-head .chev { font-size: 11px; transition: transform .15s; display: inline-block; }
+  .fold.open .fold-head .chev { transform: rotate(90deg); }
+  .fold-body { display: none; margin-top: 4px; }
+  .fold.open .fold-body { display: block; }
+  .unit-note { font-size: 11.5px; color: var(--text-sub); line-height: 1.55; margin-top: 6px; }
+  /* ---- 引导探究 ---- */
+  .chal-wrap { max-width: 1500px; margin: 14px auto 0; }
+  .chal-bar { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+  .chal-bar b { font-size: 14.5px; }
+  .chal-bar span { font-size: 12px; color: var(--text-sub); }
+  .chal-grid { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+  .chal { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 8px 12px; }
+  .chal-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; cursor: pointer; }
+  .chal-head b { font-size: 13.5px; }
+  .chal-head .chev { color: var(--text-sub); font-size: 12px; transition: transform .15s; display: inline-block; }
+  .chal.open .chal-head .chev { transform: rotate(90deg); }
+  .chal.open { border-color: var(--blue); }
+  .chal-body { display: none; margin-top: 6px; font-size: 12.5px; color: var(--text-sub); line-height: 1.75; }
+  .chal.open .chal-body { display: block; }
+  .chal-body .ans { display: none; margin-top: 6px; padding: 7px 10px; background: var(--blue-light); border-radius: 6px; color: var(--text); }
+  .chal-body .ans.show { display: block; }
+  .chal-body .ans b { color: var(--blue); }
+  .chal-body .btn-row { margin-top: 8px; }
+  @media (max-width: 1100px) {
+    .layout { flex-direction: column; }
+    .viz { flex: 1 1 auto; width: 100%; }
+  }
+  /* ---- 课程页脚 ---- */
+  .site-foot { max-width: 1500px; margin: 18px auto 0; padding: 12px 16px 24px;
+    border-top: 1px solid var(--border); color: var(--text-sub);
+    font-size: 12.5px; line-height: 1.8; text-align: center; }
+  .site-foot a { color: var(--blue, #1976d2); text-decoration: none; }
+  .site-foot a:hover { text-decoration: underline; }
+
+  .sub2 { font-size: 11.5px; color: var(--text-sub); margin-top: 3px; line-height: 1.5; }
+  .grp { border-top: 1px dotted #e6ecf3; padding-top: 8px; margin-top: 8px; }
+  .grp:first-child { border-top: 0; padding-top: 0; margin-top: 0; }
+  .sqrt > .rdc, .sqrt .rdc { display: inline-block; position: static; font-size: 1em;
+             border-top: .055em solid currentColor; padding: .06em .12em 0 .10em; margin: 0;
+             /* 行高锁死为 1：否则横线的高度会随外层 line-height 的半行距漂移（1.15→1.75 行高时
+                横线会从 1.02em 抬到 1.24em，明显偏高）。锁死后横线固定压在 ≈0.90em（√ 字顶）。 */
+             line-height: 1; }
+  /* 被开方式里带幂次（如 σ₀²+2Dt）：上标顶到 ≈0.97em，横线要再抬一档 */
+  .sqrt .rdc:has(sup) { padding-top: .18em; }
+
+  /* 公式排版：分式 / 根式 —— 全站统一为「回旋共振 v06」写法（置于末尾，覆盖本文件早期变体） */
+  .frac { display: inline-block; vertical-align: -0.52em; text-align: center; font-size: .78em; margin: 0 .12em; }
+  .frac > .num, .frac .num { display: block; padding: 0 .22em; border-bottom: .055em solid currentColor; line-height: inherit; }
+  .frac > .den, .frac .den { display: block; padding: 0 .22em; line-height: inherit; }
+  .sqrt { display: inline-block; white-space: nowrap; vertical-align: baseline; margin: 0; font-size: 1em; }
+  .sqrt > .rd, .sqrt .rd { display: inline-block; position: static; font-size: 1em; line-height: inherit; padding: 0 .02em 0 0; margin: 0; }
+  .sqrt > .rdc, .sqrt .rdc { display: inline-block; position: static; font-size: 1em; line-height: 1;
+             border-top: .055em solid currentColor; padding: .06em .12em 0 .10em; margin: 0; }
+  .sqrt .rdc:has(sup) { padding-top: .18em; }
+</style>
+</head>
+<body>
+
+<header>
+  <button id="langBtn" class="lang-btn" data-noi18n title="中文 / English">EN</button>
+  <h1>非平衡少子漂移与扩散交互教学工具</h1>
+  <div class="formula"><span class="m"><span class="frac"><span class="num"><span class="op">∂</span><i>p</i></span><span class="den"><span class="op">∂</span><i>t</i></span></span><span class="op">=</span><i>D</i><span class="frac"><span class="num"><span class="op">∂</span><sup>2</sup><i>p</i></span><span class="den"><span class="op">∂</span><i>x</i><sup>2</sup></span></span><span class="op">−</span><i>v</i><sub>d</sub><span class="frac"><span class="num"><span class="op">∂</span><i>p</i></span><span class="den"><span class="op">∂</span><i>x</i></span></span><span class="op">−</span><span class="frac"><span class="num"><i>p</i><span class="op">−</span><i>p</i><sub>0</sub></span><span class="den"><i>τ</i></span></span></span>　·　<span class="m"><i>L</i><span class="op">=</span><span class='sqrt'><span class='rd'>√</span><span class='rdc'><i>D</i><i>τ</i></span></span></span>　·　<span class="m"><i>L</i><sub>drift</sub><span class="op">=</span><i>μ</i><i>E</i><i>τ</i></span>　·　<span class="m"><i>D</i><span class="op">=</span><span class="frac"><span class="num"><i>μ</i><i>kT</i></span><span class="den"><i>q</i></span></span></span></div>
+</header>
+<div class="sub-note">
+  用一束短脉冲激光在半导体表面附近注入一批<b>非平衡少子</b>，然后看它们怎么走：<b>扩散</b>让分布<b>原地展宽</b>（宽度按 <span class="m"><span class='sqrt'><span class='rd'>√</span><span class='rdc'><i>t</i></span></span></span> 长大、峰值按 <span class="m"><span class="frac"><span class="num">1</span><span class="den"><span class='sqrt'><span class='rd'>√</span><span class='rdc'><i>t</i></span></span></span></span></span> 下降，中心<b>不动</b>）；<b>漂移</b>让分布<b>整体平移</b>（形状不变，速度 <span class="m"><i>v</i><sub>d</sub><span class="op">=</span><i>μ</i><i>E</i></span>）。两者同时存在时，分布一边平移一边展宽；只要还在样品内部，它仍严格保持高斯、左右对称 —— 真正的不对称来自边界（见挑战三）。少子在复合前能扩散多远、能漂移多远，就是<b>扩散长度</b> <span class="m"><i>L</i><span class="op">=</span><span class='sqrt'><span class='rd'>√</span><span class='rdc'><i>D</i><i>τ</i></span></span></span> 与<b>漂移长度</b> <span class="m"><i>L</i><sub>drift</sub><span class="op">=</span><i>μ</i><i>E</i><i>τ</i></span> —— 本工具让你亲手把它们量出来。
+  <div class="sub2">上式只解<b>少子</b>这一支，它隐含两条前提：<b>低注入</b>（<span class="m">Δ<i>p</i><span class="op">≪</span></span> 多子浓度，寿命 <span class="m"><i>τ</i></span> 才与注入无关）与<b>准电中性</b>（多子靠介电弛豫 <span class="m"><i>τ</i><sub>d</sub><span class="op">=</span><i>ε</i><span class="sl">/</span><i>σ</i><span class="op">≈</span>10<sup>−13</sup> s</span> 瞬间跟随，比本工具最短寿命还小约 6 个数量级，故不必联立泊松方程）。两条前提的数值核对见右侧读数面板底部的「适用条件」。</div>
+</div>
+
+<div class="layout">
+  <div class="viz">
+    <div class="card">
+      <div class="sec-title"><span class="mtag">模块一</span>少子浓度 <span class="m"><i><span id="symA">p</span></i>(<i>x</i>,<i>t</i>)</span> 的时空演化（核心图像）</div>
+      <div class="chart-wrap"><canvas id="dist" data-h="300" tabindex="0"></canvas></div>
+      <div class="legend" id="legDist"></div>
+    </div>
+
+    <div class="card">
+      <div class="sec-title"><span class="mtag">模块二</span>特征量随时间的演化：把 <span class="m"><span class='sqrt'><span class='rd'>√</span><span class='rdc'><i>t</i></span></span></span>、<span class="m"><i>t</i></span>、<span class="m"><span class="rm">e</span><sup><span class="op">−</span><i>t</i><span class="sl">/</span><i>τ</i></sup></span> 量出来</div>
+      <div class="chart-wrap"><canvas id="evo" data-h="248" tabindex="0"></canvas></div>
+      <div class="btn-row tight" id="qBtns"></div>
+      <div class="legend" id="legEvo"></div>
+      <div class="hint">点上面的按钮切换纵轴：<b>峰值</b> <span class="m" id="hintDpm">Δ<i>p</i><sub>max</sub></span>（纯扩散时按 <span class="m"><span class="frac"><span class="num">1</span><span class="den"><span class='sqrt'><span class='rd'>√</span><span class='rdc'><i>t</i></span></span></span></span></span> 衰减）、<b>峰位</b> <span class="m"><i>x</i><sub>max</sub></span>（漂移时按 <span class="m"><i>v</i><sub>d</sub><i>t</i></span> 线性移动）、<b>总量</b> <span class="m"><i>N</i></span>（按 <span class="m"><span class="rm">e</span><sup><span class="op">−</span><i>t</i><span class="sl">/</span><i>τ</i></sup></span> 衰减）。灰虚线是<b>解析参考</b>（理想情况：反射边界、只考虑体复合），数值解（蓝实线）与它重合说明一维有限差分求解是对的；若边界会吞掉载流子（欧姆接触、表面复合），蓝线会掉得更快一些。</div>
+    </div>
+
+    <div class="card">
+      <div class="sec-title"><span class="mtag">模块三</span>扩散长度 vs 漂移长度 vs 稳态衰减长度</div>
+      <div class="chart-wrap"><canvas id="len" data-h="254" tabindex="0"></canvas></div>
+      <div class="legend" id="legLen"></div>
+      <div class="hint">三条长度尺的单位都是 µm，可以直接比大小：<span class="m"><i>L</i><span class="op">=</span><span class='sqrt'><span class='rd'>√</span><span class='rdc'><i>Dτ</i></span></span></span> 是<b>复合前能扩散多远</b>，<span class="m"><i>L</i><sub>drift</sub><span class="op">=</span><span class="op">|</span><i>v</i><sub>d</sub><span class="op">|</span><i>τ</i></span> 是<b>复合前能漂移多远</b>，两者之比 <span class="m"><span class="frac"><span class="num"><i>L</i><sub>drift</sub></span><span class="den"><i>L</i></span></span><span class="op">=</span><span class="frac"><span class="num"><i>qEL</i></span><span class="den"><i>kT</i></span></span></span> 决定<b>谁主导</b>；<span class="m"><i>L</i><sub>eff</sub></span> 是漂移与扩散同时作用时<b>稳态光照分布</b> <span class="m">Δ<i>p</i><span class="op">∝</span><span class="rm">e</span><sup><span class="op">−</span><i>x</i><span class="sl">/</span><i>L</i><sub>eff</sub></sup></span> 的衰减长度（电场把少子往体内推时它变长，往表面推时它变短）。下面的尺子是样品长度，用来判断这些长度相对样品有多大。</div>
+    </div>
+  </div>
+
+  <div class="side">
+    <div class="card">
+      <div class="sec-title">控制面板</div>
+
+      <div class="ctrl grp">
+        <div class="ctrl-head"><span>情境预设</span><span class="val" id="preVal">纯扩散</span></div>
+        <div class="btn-row tight" id="preBtns"></div>
+        <div class="sub" id="preNote"></div>
+      </div>
+
+      <div class="ctrl grp">
+        <div class="ctrl-head"><span>少子类型</span><span class="val" id="carVal">空穴</span></div>
+        <div class="btn-row tight" id="carBtns"></div>
+        <div class="sub" id="carNote"></div>
+      </div>
+
+      <div class="ctrl grp">
+        <div class="ctrl-head"><span>少子寿命 <span class="m"><i>τ</i></span>（<span class="m"><i>T</i></span>、<span class="m"><i>μ</i></span> 固定，见读数面板）</span><span class="val" id="tauVal">10.0 µs</span></div>
+        <input type="range" id="tauSlider" min="0" max="100" step="1" value="64">
+        <div class="sub" id="tauSub"></div>
+      </div>
+
+      <div class="ctrl grp">
+        <div class="ctrl-head"><span>电场 <span class="m"><i>E</i></span>（带符号：正向指向 <span class="m"><span class="op">+</span><i>x</i></span>）</span><span class="val" id="eVal">0 V/cm</span></div>
+        <input type="range" id="eSlider" min="-30" max="30" step="0.5" value="0">
+        <div class="sub" id="eSub"></div>
+      </div>
+
+      <div class="ctrl grp">
+        <div class="ctrl-head"><span>边界与初始条件</span><span class="val"><span id="icVal">脉冲</span> · <span id="bndVal">欧姆接触</span></span></div>
+        <div class="btn-row tight" id="icBtns"></div>
+        <div class="btn-row tight" id="bndBtns"></div>
+        <div class="sub" id="icNote"></div>
+        <div class="sub" id="bndNote"></div>
+      </div>
+
+      <div class="ctrl grp">
+        <div class="ctrl-head"><span>时间</span><span class="val" id="tmVal">0.00 µs</span></div>
+        <input type="range" id="tmSlider" min="0" max="1000" step="1" value="0">
+        <div class="btn-row tight">
+          <button id="btnPlay" class="primary">▶ 播放</button>
+          <button id="btnReset">⟲ 重置</button>
+        </div>
+        <div class="ctrl-head" style="margin-top:6px;"><span>动画速度</span><span class="val" id="spVal">1.00×</span></div>
+        <input type="range" id="spSlider" min="25" max="400" step="5" value="100">
+        <div class="sub" id="tmSub"></div>
+      </div>
+
+      <div class="ctrl grp">
+        <div class="ctrl-head"><span>显示项目</span></div>
+        <div class="chk-row">
+          <label><input type="checkbox" id="ckInit" checked> 初始分布</label>
+          <label><input type="checkbox" id="ckP0" checked> <span id="ckP0Lab">平衡浓度 p<sub>0</sub></span></label>
+          <label><input type="checkbox" id="ckLen" checked> 特征长度标注</label>
+          <label><input type="checkbox" id="ckArr" checked> 电场与漂移箭头</label>
+          <label><input type="checkbox" id="ckTh" checked> 解析参考线</label>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="sec-title">读数面板</div>
+      <div class="kv" id="readout"></div>
+      <div class="fold" id="foldRo">
+        <div class="fold-head"><span class="chev">▶</span><span>更多读数（材料与输运参数、分布其余量与适用条件）</span></div>
+        <div class="fold-body">
+          <div class="kv" id="readoutMore"></div>
+          <div class="unit-note" id="condNote"></div>
+        </div>
+      </div>
+      <div class="unit-note">内部单位约定：长度 µm、时间 µs、浓度 cm<sup>−3</sup>；<span class="m"><i>D</i></span> 由<b>爱因斯坦关系</b> <span class="m"><i>D</i><span class="op">=</span><span class="frac"><span class="num"><i>μ</i><i>kT</i></span><span class="den"><i>q</i></span></span></span> 给出。</div>
+    </div>
+  </div>
+</div>
+
+<div class="chal-wrap">
+  <div class="card">
+    <div class="chal-bar">
+      <b>引导探究（点击展开，先自己试一试再看答案）</b>
+      <span>挑战任务</span>
+    </div>
+    <div class="chal-grid" id="chalGrid"></div>
+  </div>
+</div>
+
+<div class="site-foot">本工具是 EIT-SP（半导体物理交互式教学工具箱）的一部分（武汉大学物理学院《半导体物理》智慧课程），以 MIT 协议开源，可自由使用与二次开发；转载请保留出处。反馈意见 <a href="mailto:doctorwanghao@qq.com">doctorwanghao@qq.com</a></div>
+
+<script>
+/* ==================================================================
+   i18n（C1 单文件双语：物理代码仍然只有一份）
+   LANG 取值优先级：URL ?lang=en / ?lang=zh  >  localStorage('opl_lang')  >  默认中文。
+   不做 location 跳转——保住「单文件拷走也能用」。
+   三个注入点，**业务字符串一个都不改**：
+     ① partsOf()   画布 token：带 i/sub/sup/un 标记的是物理量、下标与单位，跳过
+     ② fillText/measureText 原型挂钩：兜住直接写进画布的中文串
+     ③ DOM 文本节点：静态 HTML 与 JS 写进来的 innerHTML，用 MutationObserver 兜住新增节点
+   T() 先查整句词典，未命中再按「最长优先」做短语替换，因此拼接串也能翻。
+   漏翻会被记进 window.__MISS，可导出核对。 */
+var LANG = (function () {
+  var m = /[?&]lang=([a-zA-Z]+)/.exec(location.search);
+  var q = m ? m[1].toLowerCase() : "";
+  if (q === "en" || q === "zh") return q;
+  var s = "";
+  try { s = localStorage.getItem("opl_lang") || ""; } catch (e) { }
+  return (s === "en" || s === "zh") ? s : "zh";
+})();
+var ORIG_TITLE = document.title;
+var __MISS = [];
+try { window.__MISS = __MISS; } catch (e) { }
+function noteMiss(s) { if (__MISS.indexOf(s) < 0) __MISS.push(s); }
+function TSoft(s) {
+  if (!T._K) T._K = Object.keys(I18N).sort(function (a, b) { return b.length - a.length; });
+  var out = s, i, k, orig = s;
+  /* 两遍：第一遍只吃长度 ≥ 2 的短语，第二遍才让单字 key 上场。
+     否则「下」会先被翻掉，把「留不下净电荷」「1 T 下输出」这类整句切碎。 */
+  for (var pass = 0; pass < 2; pass++) {
+    for (i = 0; i < T._K.length; i++) {
+      k = T._K[i];
+      if (k.length < 2 && (pass === 0 || orig !== k)) continue;
+      if (out.indexOf(k) < 0) continue;
+      /* 中文片段之间没有空格：前一片段已翻成英文时，本片段英文直连进去会粘连
+         （「更深」「或」「更浅」逐段替换成 deeper、or、shallower 会拼出 deeperor），
+         所以替换时看上下文：key 以中文开头、前一字符已是英文 ⇒ 前面补一个空格。 */
+      out = out.replace(new RegExp(k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "g"), function (m, off, str) {
+        var v = I18N[k];
+        var pre = off > 0 ? str.charAt(off - 1) : "";
+        if (/[A-Za-z0-9]/.test(pre) && /^[A-Za-z0-9(]/.test(v) && /[\u3400-\u9FFF]/.test(k.charAt(0))) v = " " + v;
+        return v;
+      });
+    }
+  }
+  return out;
+}
+/* 同一句被 DOM 切成好几个文本节点时，首尾空格会随机落在 data 里；
+   所以除了「整句命中」，再试一次「去空格后命中」并原样补回首尾空白。 */
+function trimMap() {
+  if (T._TM) return T._TM;
+  var m = {};
+  for (var k in I18N) if (Object.prototype.hasOwnProperty.call(I18N, k)) {
+    var t = k.replace(/^\s+|\s+$/g, "");
+    if (t && m[t] === undefined) m[t] = I18N[k];
+  }
+  T._TM = m;
+  return m;
+}
+/* eslint-disable no-use-before-define */
+function T(s) {
+  if (LANG !== "en" || typeof s !== "string" || !s) return s;
+  if (!/[一-鿿]/.test(s)) return s;
+  if (Object.prototype.hasOwnProperty.call(I18N, s)) return I18N[s];
+  var tm = trimMap(), core = s.replace(/^\s+|\s+$/g, "");
+  if (core && tm[core] !== undefined) {
+    var lead = s.slice(0, s.length - s.replace(/^\s+/, "").length);
+    var tail = s.slice(s.replace(/\s+$/, "").length);
+    return lead + tm[core] + tail;
+  }
+  var v = TSoft(s);
+  if (v === s) noteMiss(s);
+  return v;
+}
+var I18N = {
+  /* ---- 词典：中文原文 → 英文。key 禁含运行时数字（换个参数就漏），数字前后要拆开 ---- */
+  "格": "cells",
+  "模块一": "Module 1",
+  "模块二": "Module 2",
+  "控制面板": "Control Panel",
+  "模块三": "Module 3",
+  "挑战任务": "Challenges",
+  "？": "?",
+  "，": ", ",
+  "、": ", ",
+  "：": ": ",
+  "；": "; ",
+  "（": " (",
+  "）": ")",
+  "本工具是 EIT-SP（半导体物理交互式教学工具箱）的一部分（武汉大学物理学院《半导体物理》智慧课程），以 MIT 协议开源，可自由使用与二次开发；转载请保留出处。": "This tool is part of EIT-SP, the Educational Interactive Toolkit for Semiconductor Physics (School of Physics and Technology, Wuhan University). Released under the MIT licence: free to use, modify and redistribute, including commercially. Please keep this attribution.",
+  "反馈意见": " Feedback",
+  "材料": "Material",
+  "读数面板": "Readout Panel",
+  "%）": "%)",
+  "空": "empty",
+  "取": "Take ",
+  " 个 ": " ",
+  "更低": "lower than in the infinite well",
+  "看答案": "Show answer",
+  "：当前 ": ": at present ",
+  "了 ": " ",
+  "从 ": " from ",
+  "），": "), and ",
+  "固定 ": "Fix ",
+  "动画": "Animation",
+  "示意": "schematic",
+  "）：": "): ",
+  "。把": ". Turning on the ",
+  "垂直": "perpendicular",
+  " ⇒ ": " ⇒ ",
+  "几乎": "almost ",
+  "预设": "Preset",
+  "显示": "Display",
+  " 方向": " direction",
+  "温度 ": "Temperature ",
+  " / ": " / ",
+  " 只是": " given by this tool is only",
+  "有 ": " ",
+  "直接": "direct",
+  " 的": " ",
+  "注意 ": "Note that ",
+  " 与": " and ",
+  "长 ": "length ",
+  "怎么变？": " of the charge piled up on the walls change?",
+  "宽度": "width",
+  "消失": "disappears",
+  "。注意": ". Note that the ",
+  "本工具是 EIT-SP（半导体物理交互式教学工具箱）的一部分（武汉大学物理学院《半导体物理》智慧课程），以 MIT 协议开源，可自由使用与二次开发；转载请保留出处。反馈意见": "This tool is part of EIT-SP, the Educational Interactive Toolkit for Semiconductor Physics (School of Physics and Technology, Wuhan University). Released under the MIT licence: free to use, modify and redistribute, including commercially. Please keep this attribution. Feedback",
+  "本工具是": "This tool is part of",
+  "（半导体物理交互式教学工具箱）的一部分（武汉大学物理学院《半导体物理》智慧课程），以": ", the Educational Interactive Toolkit for Semiconductor Physics (School of Physics and Technology, Wuhan University). Released under the",
+  "协议开源，可自由使用与二次开发；转载请保留出处。反馈意见": "licence: free to use, modify and redistribute, including commercially. Please keep this attribution. Feedback",
+  "协议开源，可自由使用与二次开发；转载请保留出处。": "licence: free to use, modify and redistribute, including commercially. Please keep this attribution.",
+  "无关": "independent",
+  "只是": "are just",
+  "参考": "reference",
+  "极端": "Extreme",
+  "）。注意": "). Note",
+  "视窗": "the window",
+  "▶ 播放": "▶ Play",
+  "播放": "Play",
+  "。当前": ". Current",
+  "，所以": ", so",
+  "固定": "fixed",
+  "方向": "direction",
+  "曲线": "curve",
+  "温度": "temperature",
+  "注意": "note",
+  "参数": "parameters",
+  "相对": "relative",
+  "只由": "only by",
+  "＋": " + ",
+  "×": " × ",
+  "到": "to",
+  "（当前 ": " (currently ",
+  "不改变": "without changing",
+  "；而": "; whereas ",
+  "少子寿命": "the minority-carrier lifetime",
+  "大于": "greater than",
+  "开": "on",
+  "中心": "centre",
+  "关": "Off",
+  "匀速": "uniform drift",
+  "恒": "always",
+  "弛豫时间 ": "Relaxation time ",
+  "平移": "Shift",
+  "展宽": "broadening",
+  "虚线": "Dashed line",
+  "平衡": "equilibrium",
+  "只有": "only",
+  "实线": "Solid line",
+  "情境预设": "Scenario preset",
+  "强电场": "strong field",
+  "（当前": " (currently",
+  "降到": "falls to",
+  "大。": " larger.",
+  "箭头": "arrow",
+  "右侧": "right side",
+  "是": "is",
+  "整体平移": "a rigid shift",
+  "速度": "a velocity",
+  "比": "than",
+  " 从 ": " from ",
+  "不变": "constant",
+  "固定取": "fixed at",
+  "随": "varies with",
+  "（与": " (with",
+  "无关）": " in this simplification)",
+  " 下降": " towards both sides",
+  "平方": "square",
+  "同时": "at the same time",
+  "，是": ", which is",
+  "线性": "linearly",
+  "切到": "Switch to",
+  "这就是": "this undulating band edge is the potential field that scatters the carriers — that is",
+  "（本工具固定": " (fixed in this tool",
+  "，按": ", scaled by",
+  "幅度": "Amplitude",
+  "⟲ 重置": "⟲ Reset",
+  "重置": "Reset",
+  "：当前": ": current",
+  "，当前": ", currently",
+  "大、": "larger,",
+  "决定": "set by",
+  "理想": "ideal",
+  "峰": "peak",
+  "时": "when",
+  "浓度": "concentration",
+  "。再把": ". Then drag",
+  "面积": "area",
+  "本征": "Intrinsic",
+  "载流子": "carrier",
+  "增长。": " grows.",
+  "）的": ") has the largest",
+  "切换": "Switch between",
+  "挑战": "Challenge",
+  "和": " and ",
+  "或": "or",
+  " 给出": " gives it",
+  "谁主导": "Who dominates",
+  "直线": "straight",
+  "，不是": ", not the measured value for",
+  "材料（本工具固定）": "Material (fixed in this tool)",
+  "电荷": "charge",
+  "本身": "itself",
+  "变大": "grows",
+  "动画速度": "Animation speed",
+  "，而": ", while",
+  "上升": "rises",
+  "，当": ", when",
+  "保持": "keeps",
+  "下降": "falls",
+  " 用": " uses",
+  "大": "larger",
+  "平方根": "square root",
+  "差": "differ by",
+  " 个数量级）": " orders of magnitude)",
+  "能": "Energy",
+  "量": " ",
+  "原": "origin",
+  "点": "",
+  "导": "conduction",
+  "底": "bottom",
+  "子": "quantum",
+  "几": "almost",
+  "乎": " ",
+  "全": "",
+  "没": "no ",
+  "的": "",
+  "占": "Occupation",
+  "据": " ",
+  "率": "probability",
+  "距": "distance to the ",
+  "符号": "sign",
+  " 会": " would ",
+  "）。": "at room temperature).",
+  "，漂移": ", drift",
+  "情境": "Scenario",
+  "漂移": "Drift",
+  "漂移＋扩散": "Drift + diffusion",
+  "空穴（": "Holes (",
+  "两者之比": "Ratio of the two",
+  "浓度梯度": "Concentration gradient",
+  "扩散": "+ diffusion",
+  "纯扩散": "Pure diffusion",
+  "看得见": "visible",
+  "数值解": "Numerical solution",
+  "整体": "as a whole",
+  "高斯": "Gaussian",
+  "均匀": "uniform",
+  "初始分布": "initial distribution",
+  "一动不动": "stay put",
+  "（宽度按 ": " (the width grows as ",
+  "爱因斯坦关系": "the Einstein relation",
+  "倍": " times",
+  "增长": "growth",
+  "另外": "Also",
+  "下": "lower",
+  "少子浓度 p (": "Minority concentration p (",
+  "少子浓度": "Minority-carrier concentration",
+  " = 0　（纯扩散，只展宽不平移）": " = 0　 (pure diffusion: it only spreads out, it never shifts)",
+  "　（纯扩散，只展宽不平移）": "　 (pure diffusion: it only spreads out, it never shifts)",
+  "表面 ": "Surface ",
+  "表面": "Surface",
+  "背面 ": "Back ",
+  "背面": "Back",
+  " (µs)　〔全程 ": " (µs)　 [full run ",
+  "　〔全程": "　 [full run",
+  "峰值 Δ": "Peak Δ",
+  "峰值": "Peak",
+  "解析参考": "Analytic reference",
+  "三种特征长度（µm）": "Three characteristic lengths (µm)",
+  "扩散长度 ": "Diffusion length ",
+  "扩散长度": "Diffusion length",
+  "复合前能扩散多远": "how far it can diffuse before recombining",
+  "漂移长度 ": "Drift length ",
+  "漂移长度": "Drift length",
+  "复合前能漂移多远": "how far it can drift before recombining",
+  "稳态衰减长度 ": "Steady-state decay length ",
+  "稳态衰减长度": "Steady-state decay length",
+  "稳态光照 Δp ∝ e^(−x/) 的衰减常数": "the decay constant of the steady-illumination profile Δp ∝ e^(−x/L)",
+  "稳态光照": "Steady illumination",
+  "的衰减常数": " its decay constant",
+  "样品长度尺（同一比例看少子能走多远）": "Sample length scale (one common scale for how far the minority carriers get)",
+  "（背面 ": " (back ",
+  "（背面": " (back",
+  "扩散主导（浓度梯度说了算）": "Diffusion-dominated (the concentration gradient decides)",
+  ")：电场把少子往体内推时变长，往表面推时变短。": "): a field pushing the carriers into the bulk lengthens it, one pushing them to the surface shortens it.",
+  "：电场把少子往体内推时变长，往表面推时变短。": ": a field pushing the carriers into the bulk lengthens it, one pushing them to the surface shortens it.",
+  "非平衡少子漂移与扩散交互教学工具": "Nonequilibrium Minority Carriers: Drift and Diffusion — Interactive Toolkit",
+  "\n  用一束短脉冲激光在半导体表面附近注入一批": "\n  A short laser pulse injects a batch of ",
+  "非平衡少子": "nonequilibrium minority carriers",
+  "，然后看它们怎么走：": " near the semiconductor surface, and we then watch how they move: ",
+  "让分布": " makes the distribution ",
+  "原地展宽": "spread out in place",
+  " 长大、峰值按 ": " grow and its peak fall as ",
+  "不动": "stay put",
+  "（形状不变，速度 ": " (the shape never changes and it moves at ",
+  "）。两者同时存在时，分布一边平移一边展宽；只要还在样品内部，它仍严格保持高斯、左右对称 —— 真正的不对称来自边界（见挑战三）。少子在复合前能扩散多远、能漂移多远，就是": "). When both act at once the distribution shifts and spreads simultaneously; as long as it stays inside the sample it remains strictly Gaussian and left–right symmetric — the asymmetry comes from the boundary (see challenge 3). How far a minority carrier can diffuse or drift before recombining is exactly what ",
+  " —— 本工具让你亲手把它们量出来。\n  ": " measures — this tool lets you measure them by hand.\n  ",
+  "上式只解": "The equation above solves only the ",
+  "少子": "minority-carrier",
+  "这一支，它隐含两条前提：": " branch alone, and it rests on two assumptions: ",
+  "低注入": "low injection",
+  " 多子浓度，寿命 ": " against the majority concentration, so the lifetime ",
+  " 才与注入无关）与": " does not depend on injection) and ",
+  "准电中性": "quasi-neutrality",
+  "（多子靠介电弛豫 ": " (the majority carriers follow within a dielectric relaxation time ",
+  " 瞬间跟随，比本工具最短寿命还小约 6 个数量级，故不必联立泊松方程）。两条前提的数值核对见右侧读数面板底部的「适用条件」。": ", about six orders of magnitude shorter than the shortest lifetime used here, so Poisson's equation need not be solved alongside). The numbers behind both assumptions are checked in 'Applicability' at the bottom of the readout panel.",
+  "少子浓度 ": "Minority-carrier concentration ",
+  " 的时空演化（核心图像）": " in space and time (the core picture)",
+  "当前分布 ": "Present distribution ",
+  "（示意基线）": " (schematic baseline)",
+  "电场 ": "Electric field ",
+  "特征量随时间的演化：把 ": "Evolution of the characteristic quantities: reading off ",
+  " 量出来": " off the plot",
+  "峰值 ": "Peak ",
+  "峰位 ": "Peak position ",
+  "总量 ": "Total ",
+  "数值解（有限差分）": "Numerical solution (finite differences)",
+  "当前时刻 ": "Present time ",
+  "点上面的按钮切换纵轴：": "Use the buttons above to switch the vertical axis: ",
+  "（纯扩散时按 ": " (falling as ",
+  " 衰减）、": " under pure diffusion), ",
+  "峰位": "peak position",
+  "（漂移时按 ": " (moving linearly as ",
+  " 线性移动）、": " when drifting), ",
+  "总量": "total amount",
+  "（按 ": " (decaying as ",
+  " 衰减）。灰虚线是": "). The grey dashed curve is the ",
+  "（理想情况：反射边界、只考虑体复合），数值解（蓝实线）与它重合说明一维有限差分求解是对的；若边界会吞掉载流子（欧姆接触、表面复合），蓝线会掉得更快一些。": " (the ideal case: reflecting boundary, bulk recombination only); the numerical solution (solid blue) sitting right on top of it proves the one-dimensional finite-difference solver is correct. If a boundary swallows carriers (ohmic contact or surface recombination) the blue curve falls somewhat faster.",
+  "扩散长度 vs 漂移长度 vs 稳态衰减长度": "Diffusion length vs drift length vs steady-state decay length",
+  "三条长度尺的单位都是 µm，可以直接比大小：": "All three length scales are in µm and can be compared directly: ",
+  " 是漂移与扩散同时作用时": " is the decay length of the ",
+  "稳态光照分布": "steady-state illumination profile",
+  " 的衰减长度（电场把少子往体内推时它变长，往表面推时它变短）。下面的尺子是样品长度，用来判断这些长度相对样品有多大。": " when drift and diffusion act together (a field pushing carriers into the bulk lengthens it, one pushing them to the surface shortens it). The ruler below is the sample length, there so you can judge how large these lengths are relative to the sample.",
+  "漂移主导": "Drift-dominated",
+  "表面复合": "Surface recombination",
+  "：分布只会原地展宽、峰值下降，中心不动。用模块二看 ": ": the distribution only spreads in place, the peak falls and the centre never moves. Watch in module 2 how ",
+  "少子类型": "Minority-carrier type",
+  "空穴": "Holes",
+  "电子": "Electrons",
+  "硅 300 K 典型值：": "Typical Si values at 300 K: ",
+  " 固定，见读数面板）": " (fixed, see the readout panel)",
+  " µm；时间窗 = ": " µm; the time window is ",
+  "（带符号：正向指向 ": " (signed: positive points towards ",
+  "，只有展宽没有平移。": ", so it only spreads and never shifts.",
+  "初始条件": "Initial condition",
+  "脉冲": "Pulse",
+  "阶跃": "Step",
+  "高斯分布：短脉冲激光在 ": "Gaussian profile: a short laser pulse injects a small cloud of minority carriers at ",
+  " 处注入一小团少子。": ".",
+  "表面（边界）条件": "Surface (boundary) condition",
+  "欧姆接触": "Ohmic contact",
+  "有限 S": "Finite S",
+  "抽取": "Extracting",
+  "反射": "Reflecting",
+  "∞（欧姆）": "∞ (ohmic)",
+  "）：到达表面的少子立刻被抽走。 两端（": "): carriers reaching the surface are removed at once. Both ends (",
+  "）采用同一条件。": ") use the same condition.",
+  "时间": "Time",
+  "时间窗 = ": "Time window = ",
+  "，可拖动到任意时刻（数值解会从头重算）。": ", draggable to any instant (the numerical solution is recomputed from scratch).",
+  "显示项目": "Display items",
+  " 特征长度标注": " characteristic-length labels",
+  " 电场与漂移箭头": " field and drift arrows",
+  " 解析参考线": " analytic reference curve",
+  "材料与输运参数": "Material and transport parameters",
+  "材料（本工具固定） / 少子类型": "Material (fixed in this tool) / minority-carrier type",
+  "迁移率 ": "Mobility ",
+  "扩散系数 ": "Diffusion coefficient ",
+  "表面复合速度 ": "Surface recombination velocity ",
+  "三种特征长度": "Three characteristic lengths",
+  "　扩散主导": "　diffusion-dominated",
+  "样品长度（视窗固定） ": "Sample length (fixed window) ",
+  " 个扩散长度": " diffusion lengths",
+  "当前分布（数值解）": "Present distribution (numerical solution)",
+  "时刻 ": "Time ",
+  "峰值过剩浓度 Δ": "Peak excess concentration Δ",
+  "质心 ": "Centre of mass ",
+  "表面浓度 ": "Surface concentration ",
+  "初始宽度 ": "Initial width ",
+  " 当前 ": " at present ",
+  " 增量 = ": " increment = ",
+  "适用条件（低注入 · 准电中性）": "Applicability (low injection · quasi-neutrality)",
+  "边界与初始条件": "Boundary and initial conditions",
+  "三种特征长度（谁说了算）": "Three characteristic lengths (which one wins)",
+  "当前分布（其余）": "Current distribution (rest)",
+  "更多读数（材料与输运参数、分布其余量与适用条件）": "More readings (material and transport parameters, the rest of the distribution, and validity conditions)",
+  "（本页作图基线）": " (the plotting baseline of this page)",
+  "示意取值": "Value used for plotting",
+  "真实 ": "Actual ",
+  "注入水平 ": "Injection level ",
+  "　低注入 ✓（判据 ≪ 100 %）": "　low injection ✓ (criterion ≪ 100 %)",
+  "介电弛豫时间 ": "Dielectric relaxation time ",
+  "、多子 ": ", majority ",
+  " 当前寿命 ": " present lifetime ",
+  "（小 ": " (small ",
+  "：本页只解": ": this page solves only the ",
+  "这一支，是因为多子靠": " branch, because the majority carriers are rearranged by ",
+  "介电弛豫": "dielectric relaxation",
+  " s 就把电荷重新排好了（比本工具最短寿命 ": " s — about six orders of magnitude shorter than the shortest lifetime here — so Poisson's equation need not be solved alongside. Only ",
+  "本征／高阻样品": "intrinsic or high-resistivity samples",
+  " 小 ⇒ ": " is small ⇒ ",
+  "皮秒超快瞬态": "picosecond ultrafast transients",
+  "才需要 —— 那属于《PN 结电势、电场与电荷分布》工具，那里真在解泊松方程。② ": " really need it — that belongs to the 'PN Junction Potential, Field and Charge Distribution' tool, which does solve Poisson's equation. ② ",
+  "：寿命 ": ": the lifetime ",
+  " 才与注入无关、复合项 ": " is independent of injection and the recombination term ",
+  " 才对 Δp 线性（本工具注入幅度固定 ": " linear in Δp (this tool fixes the injection amplitude at ",
+  " 不到 0.1 %，余量三个数量级）。真到": ", i.e. below 0.1 %, leaving three orders of magnitude of margin). Only at ",
+  "高注入": "high injection",
+  " 会随注入上升、多子也被扰动，必须联立两种载流子的方程 —— 那时本页这条方程不再适用。③ 本页 ": " does it rise with injection and disturb the majority carriers too, forcing both carrier equations to be solved together — at that point the equation on this page no longer applies. ③ The ",
+  " 只是一条": " here is only a ",
+  "作图基线": "plotting baseline",
+  "（方程对 Δp 线性，它取多少都不影响任何动态）：硅 300 K 的少子浓度恒 ≤ ": " (the equation is linear in Δp, so its value affects no dynamics at all): at 300 K the minority-carrier concentration of Si is always ≤ ",
+  "，按上面的 ": ", and reading backwards with the ",
+  " 反推只有 ": " above gives only ",
+  "内部单位约定：长度 µm、时间 µs、浓度 cm": "Internal unit convention: length in µm, time in µs, concentration in cm",
+  " 由": " set by",
+  "引导探究（点击展开，先自己试一试再看答案）": "Guided inquiry (click to expand — try it yourself before reading the answers)",
+  "1. 点「纯扩散」预设，看模块一。峰值怎么变？宽度怎么变？": "1. Pick the 'Pure diffusion' preset and watch module 1. What happens to the peak? To the width? Does the ",
+  "中心动了吗": "centre move at all",
+  "？再盯住读数面板里的宽度 ": "? Now follow the width ",
+  "，看它是不是按 ": " in the readout panel and see whether it goes as ",
+  " —— 这是扩散与漂移最本质的区别。峰值按 ": " — that is the most essential difference between diffusion and drift. The peak falls as ",
+  " 下降（面积要守恒），宽度按 ": " (the area must be conserved) while the width grows as ",
+  " 已从 ": " has grown from ",
+  "（理论 ": " (theoretical value ",
+  " 而不是 ": " rather than ",
+  "无规行走": "random walk",
+  "，走 4 倍的时间只能多走 2 倍的距离。还有一条：宽度涨到 ": ": four times the time buys only twice the distance. One more thing: once the width has grown to ",
+  " 这么大时，少子基本上也就复合完了 —— 这就是扩散长度的物理意义。": " the minority carriers have essentially recombined — that is the physical meaning of the diffusion length.",
+  "看看答案": "Show the answer",
+  "2. 点「漂移主导」预设（强电场 + 欧姆接触）。峰位 ": "2. Pick the 'Drift-dominated' preset (strong field + ohmic contact). How does the peak position ",
+  " 怎么走？宽度 ": " move? Does the width ",
+  " 真的不变吗？在模块二切到「峰位 ": " really stay put? Switch module 2 to 'Peak position ",
+  "」验证 ": "' and verify ",
+  "，同时盯住读数面板里的 ": ", while watching the ",
+  " 看它是不是也在按 ": " in the readout panel to see whether it too grows as ",
+  " 长。": ".",
+  "前进：": "Advancing: ",
+  "，当前已移动约 ": ", and at present it has moved about ",
+  " 正是它一生的行程（漂移长度）。": " — exactly its journey for life (the drift length).",
+  "但宽度同样在长": "But the width is growing just as well",
+  " = 40.0 µm），和「纯扩散」预设按": "), following the very same law as the 'Pure diffusion' preset — ",
+  "完全相同的规律": "an identical law",
+  "展宽 —— 因为扩散从来没被关掉过。之所以叫“漂移主导”，是此刻 ": " because diffusion is never switched off. It is called 'drift-dominated' because right now ",
+  "，平移距离压倒性地大于展宽量，视觉上像是整齐列队的行军。把电场调成负值，整团少子": ", the drift distance overwhelmingly exceeds the spreading, so it looks like a column marching in formation. Reverse the field and the whole cloud ",
+  "掉头往回走": "turns round and walks back",
+  "；而无论正负，展宽都照旧。": "; either way the spreading goes on unchanged.",
+  "3. 点「漂移＋扩散」预设，再回头点「漂移主导」，两者的展宽快慢有差别吗？电场大小会改变展宽速率吗？另外：既然两者都有扩散，这两个预设到底在区分什么？": "3. Pick 'Drift + diffusion', then go back to 'Drift-dominated': is there any difference in how fast they spread? Does the field strength change the spreading rate? And since both include diffusion, what exactly do the two presets distinguish?",
+  "增长一模一样": "They grow exactly identically",
+  "（在读数面板里逐时刻对照即可）：两者 ": " (compare them moment by moment in the readout panel): they share the same ",
+  " 相同（同一个 ": " (set by the same ",
+  "、同一个 ": " and the same ",
+  " 决定，跟电场": ", and nothing whatever to do with the field",
+  "毫无关系": "at all",
+  "。电场只决定整团": ". The field only decides how fast the whole cloud ",
+  "平移多快": "translates",
+  "。所以两个预设真正区分的是 ": ". So what the two presets really distinguish is the ",
+  " 这个": " — the ",
+  "比值": "ratio",
+  "）：>1 平移看得赢展宽，<1 一眼只看得见铺开。换句话说，漂移与扩散不是“二选一”，而是": "): above 1 the drift wins over the spreading, below 1 you only see things spreading out. In other words, drift and diffusion are not an 'either/or' but ",
+  "永远同时到场": "always present together",
+  "，我们只是在比谁的效果更显眼。": ", and we are only comparing whose effect is more conspicuous.",
+  "再回答“什么时候明显不对称”：在样品": "As for 'when is it clearly asymmetric': in the sample ",
+  "内部": "interior",
+  "仍严格保持高斯、左右对称": " the profile remains strictly Gaussian and left-right symmetric",
+  " —— 漂移只做平移、扩散只做对称展宽，叠加不改变对称性（可对照灰虚线的解析参考）。真正的不对称来自": " — drift only translates while diffusion only spreads symmetrically, so superposing them cannot break the symmetry (check against the grey dashed analytic curve). The real asymmetry comes from the ",
+  "边界": "boundaries",
+  "：当这团少子漂到背面欧姆接触附近，": ": when the cloud drifts close to the ohmic contact at the back, ",
+  "前沿被接触“吃掉”": "the contact 'eats' the leading edge",
+  "，前沿就比后沿陡了。当前峰位 ": ", so the leading edge becomes steeper than the trailing one. Present peak position ",
+  "、样品长 ": ", sample length ",
+  "、漂移长度 ": ", drift length ",
+  " —— 把样品调短或把电场调大，就能看到前沿被削平。所以“漂移+扩散必然不对称”是个常见误解：": " — shorten the sample or raise the field and you will see the leading edge flattened off. So 'drift + diffusion must be asymmetric' is a common misconception: ",
+  "不对称的根源是边界，不是漂移本身": "the asymmetry comes from the boundary, not from drift itself",
+  "4. 点「稳态光照」预设。分布动不动？在模块一上找出过剩浓度 ": "4. Pick the 'Steady illumination' preset. Does the distribution move? On module 1 find the point where the excess concentration ",
+  " 降到表面值 ": " has fallen to the surface value ",
+  " 的位置，与读数面板里的 ": " and compare that position with the ",
+  " 比一比。再把寿命 ": " in the readout panel. Then increase the lifetime ",
+  " 调大 4 倍，衰减长度变几倍？": " fourfold — by what factor does the decay length change?",
+  "分布": "The distribution",
+  "稳稳不动": "sits perfectly still",
+  "（左端在持续注入，体复合在持续消耗，达到动态平衡），形状就是 ": " (the left edge keeps injecting while bulk recombination keeps consuming, so a dynamic balance is reached), and its shape is exactly ",
+  "，也就是说从表面往里走 ": ", which means that going inwards from the surface by ",
+  "，浓度就掉到 ": " the concentration falls to ",
+  "%（再走一个 ": "% (one more ",
+  " 掉到 ": " takes it down to ",
+  " 调大 4 倍，": " increased fourfold, ",
+  " 只变 ": " changes only by ",
+  " —— 平方根关系是扩散长度的标志（这也是实验上测少子寿命的依据）。加个电场试试：": " — the square-root dependence is the signature of a diffusion length (and is how minority-carrier lifetimes are measured experimentally). Try adding a field: ",
+  "把少子往体内推": "pushing carriers into the bulk",
+  "会让衰减长度变长（当前 ": " lengthens the decay length (at present ",
+  "往表面推": "pushing them to the surface",
+  "会让它变短。": " shortens it.",
+  "5. 点「表面复合」预设（均匀注入 + 有限 ": "5. Pick the 'Surface recombination' preset (uniform injection + finite ",
+  "），再依次把边界条件切到": "), then switch the boundary condition in turn to ",
+  "与": " and ",
+  "。三种情况下表面浓度分别是多少？靠表面那段曲线的形状各有什么特点？": ". What is the surface concentration in the three cases? What distinguishes the shape of the curve near the surface?",
+  "（反射）时表面通量为零，": " (reflecting), the surface flux is zero, so ",
+  "表面浓度 = 体内浓度": "the surface concentration equals the bulk concentration",
+  "，曲线在 ": ", and the curve is ",
+  " 处是": " at ",
+  "平的": "flat there",
+  "（欧姆接触）时表面浓度被钉在 ": " (ohmic contact), the surface concentration is pinned at ",
+  "，复合极快，曲线在表面附近": ", recombination is extremely fast and the curve near the surface is ",
+  "陡得几乎垂直": "so steep it is almost vertical",
+  "。中等 ": ". With a moderate ",
+  "）时，表面浓度介于两者之间，靠表面 ": "), the surface concentration lies between the two, and within a layer of thickness ",
+  " 这么厚的一层里浓度被“压低”：当前 ": " next to the surface the concentration is 'pushed down': at present ",
+  "（与扩散长度 ": " (compare this with the diffusion length ",
+  " 说明表面复合只是薄薄一层，": " means surface recombination is only a thin layer, whereas ",
+  " 说明整根样品都被表面拖累）。当前表面浓度 ": " means the whole sample is dragged down by the surface). Present surface concentration ",
+  "。钝化工艺要做的，就是把 ": ". What passivation has to do is push ",
+  " 往 0 的方向压。": " towards zero.",
+  "E=0：分布只会原地展宽、峰值下降，中心不动。用模块二看 σ∝√t 与 Δp_max∝1/√t。": "E = 0: the distribution only spreads in place, the peak falls and the centre never moves. Module 2 shows σ ∝ √t and Δp_max ∝ 1/√t.",
+  "强电场（15 V/cm）+ 欧姆接触：扩散并没有消失 —— 1 个 τ 内包宽 σ 照样从 40 长到 165 µm，只是 L_drift/L≈6.6，平移（约 740 µm）远比展宽快，眼睛看到的是“整团行军”。": "Strong field (15 V/cm) + ohmic contact: diffusion has not disappeared — within one τ the packet width σ still grows from 40 to 165 µm; it is just that L_drift/L ≈ 6.6, so the drift (about 740 µm) far outruns the spreading and the eye sees 'the whole column marching'.",
+  "中等电场（8 V/cm）：同样是两者并存，L_drift/L≈3.5 —— 平移约 395 µm、同时 σ 由 40 长到 165 µm，平移与展宽都一眼可见。预设之间不是“有无扩散”之别，而是“谁更强”。": "Moderate field (8 V/cm): both mechanisms coexist again, L_drift/L ≈ 3.5 — a drift of about 395 µm while σ grows from 40 to 165 µm, so both drift and spreading are plainly visible. The presets are not about 'diffusion present or absent' but about 'which one wins'.",
+  "左端固定注入通量、背面欧姆接触：分布稳稳停在指数衰减上，从曲线上量 1/e 位置就是扩散长度（背面只影响末端约一个扩散长度）。": "Fixed injection flux at the left end, ohmic contact at the back: the distribution settles on an exponential decay, and reading the 1/e point off the curve gives the diffusion length (the back contact matters only over roughly the last diffusion length).",
+  "均匀注入 + 有限 S（固定 10^3 cm/s）：表面附近被“吃掉”一块，切到「欧姆接触」对比，表面浓度更低、分布更陡。": "Uniform injection + finite S (fixed at 10³ cm/s): a chunk is 'eaten' near the surface; compared with the 'Ohmic contact' case the surface concentration is lower and the profile steeper.",
+  "高斯分布：短脉冲激光在 x_0 处注入一小团少子。": "Gaussian profile: a short laser pulse injects a small cloud of minority carriers at x₀.",
+  "x<x_s 区域均匀注入：突然开灯或突然加偏压。": "Uniform injection for x < x_s: light suddenly switched on, or a bias suddenly applied.",
+  "左端改为固定注入通量，初值直接取当前背面边界下的精确稳态解（背面反射用 cosh 型、背面欧姆用 sinh 型），所以分布应当一动不动。": "The left end is switched to a fixed injection flux and the initial value is taken directly from the exact steady-state solution for the present back boundary (a cosh form for a reflecting back, a sinh form for an ohmic one), so the distribution should not budge at all.",
+  "整根样品均匀注入：主要用来观察表面复合与体复合的差别。": "Uniform injection along the whole sample: mainly used to see the difference between surface and bulk recombination.",
+  "p=p_0（金属接触，相当于 S→∞）：到达表面的少子立刻被抽走。": "p = p₀ (metal contact, equivalent to S → ∞): minority carriers reaching the surface are removed at once.",
+  "D∂p/∂x=S(p−p_0)：真实表面，S 越大表面浓度越低（本工具固定取 10^3 cm/s）。": "D ∂p/∂x = S(p − p₀): a real surface; the larger S is, the lower the surface concentration (fixed at 10³ cm/s in this tool).",
+  "p=0（理想抽取接触）：比欧姆接触更极端，表面浓度为 0。": "p = 0 (ideal extracting contact): more extreme than an ohmic contact, with zero surface concentration.",
+  "零净通量（理想钝化表面，S=0）：载流子出不去，总量只被体复合消耗。": "Zero net flux (ideally passivated surface, S = 0): carriers cannot escape, so the total is consumed only by bulk recombination.",
+  " µm 长到 ": " µm to ",
+  " 长到 ": " to ",
+  " µm 比一比：": " µm — compare them: ",
+  "（金属接触，相当于 ": " (metal contact, equivalent to ",
+  " 还小约 6 个数量级），所以不必联立泊松方程；只有": " by about six orders of magnitude, so Poisson's equation need not be solved alongside; only ",
+  "强电场（": "Strong field (",
+  " V/cm）+ 欧姆接触：扩散并没有消失 —— ": " V/cm) + ohmic contact: diffusion has not disappeared — within ",
+  " 个 τ 内包宽 σ 照样从 ": " τ the packet width σ still grows from ",
+  " µm，只是 L": " µm; it is just that L",
+  " 平移（约 ": ", so the drift (about ",
+  " µm）远比展宽快，眼睛看到的是“整团行军”。": " µm) far outruns the spreading, and the eye sees 'the whole column marching'.",
+  "中等电场（": "Moderate field (",
+  " V/cm）：同样是两者并存，L": " V/cm): both mechanisms coexist again, L",
+  " 平移约 ": ", a drift of about ",
+  " µm、同时 σ 由 ": " µm while σ goes from ",
+  " µm，平移与展宽都一眼可见。预设之间不是“有无扩散”之别，而是“谁更强”。": " µm, so both drift and spreading are plainly visible. The presets are not about 'diffusion present or absent' but about 'which wins'.",
+  "左端固定注入通量、背面欧姆接触：分布稳稳停在指数衰减上，从曲线上量 ": "Fixed injection flux at the left end, ohmic contact at the back: the distribution settles onto an exponential decay; reading the ",
+  " 位置就是扩散长度（背面只影响末端约一个扩散长度）。": " point off the curve gives the diffusion length (the back matters only over the last diffusion length or so).",
+  "均匀注入 + 有限 S（固定 ": "Uniform injection + finite S (fixed at ",
+  " cm/s）：表面附近被“吃掉”一块，切到「欧姆接触」对比，表面浓度更低、分布更陡。": " cm/s): a chunk is 'eaten' near the surface; compared with 'Ohmic contact' the surface concentration is lower and the profile steeper.",
+  "左端改为固定注入通量，初值直接取": "The left end becomes a fixed injection flux and the initial value is taken directly from ",
+  "当前背面边界下的精确稳态解": "the exact steady-state solution under the present back boundary",
+  "（背面反射用 cosh ": " (cosh ",
+  " 型，背面欧姆用 sinh ": " form for a reflecting back, sinh ",
+  " 型），所以分布应当一动不动。": " form for an ohmic one), so the distribution should not budge.",
+  "注：稳态光照时左端改为固定注入通量。": "Note: under steady illumination the left end is switched to a fixed injection flux.",
+  "手动调节参数组合（预设之外的组合会显示为「自定义」）。": "Manually adjusted parameter set (any combination outside the presets is labelled 'Custom').",
+  "：真实表面，": ": a real surface; ",
+  " 越大表面浓度越低（本工具固定取 ": " the larger S, the lower the surface concentration (fixed at ",
+  " cm/s）。两端（": " cm/s). Both ends (",
+  " 比较）。": " compare them).",
+  " 才对 Δn 线性（本工具注入幅度固定": " linear in Δn (this tool fixes the injection amplitude at",
+  "（方程对 Δn 线性，它取多少都不影响任何动态）：硅 300 K 的少子浓度恒 ≤": " (the equation is linear in Δn, so its value affects no dynamics): at 300 K the minority concentration of Si is always ≤",
+  " 区域均匀注入：突然开灯或突然加偏压。": " uniform injection: light suddenly switched on, or a bias suddenly applied.",
+  "（理想抽取接触）：比欧姆接触更极端，表面浓度为 0。两端（": " (ideal extracting contact): more extreme than an ohmic contact, the surface concentration being 0. Both ends (",
+  "零净通量（理想钝化表面，": "Zero net flux (ideally passivated surface, ",
+  "）：载流子出不去，总量只被体复合消耗。两端（": "): carriers cannot escape, so the total is consumed only by bulk recombination. Both ends (",
+  " µm），和「纯扩散」预设按": " µm), following exactly the same law as the 'Pure diffusion' preset — ",
+  " drift/L≈": " drift/L ≈ ",
+  "（本组合无简单解析解，仅显示数值解）": " (this combination has no simple analytic solution; only the numerical solution is shown)",
+  "漂移主导（电场把少子推向一边）": "Drift-dominated (the field pushes minority carriers to one side)",
+  " 内包宽 ": " packet width ",
+  "光照注入": "light injection",
+  " = 0 (光照注入)": " = 0 (light injection)",
+  "自定义": "Custom",
+  "⏸ 暂停": "⏸ Pause",
+  "逆着": "against",
+  "，逆着 ": ", against ",
+  "超出": "outside",
+  " (超出": " (outside ",
+  "注入通量": "injection flux",
+  " 与 ": " and ",
+  "强电场（15 V/cm）+ 欧姆接触：扩散并没有消失 —— 1 个 ": "Strong field (15 V/cm) + ohmic contact: diffusion has not disappeared — within 1 ",
+  " 照样从 40 长到 165 µm，只是 ": " still grows from 40 to 165 µm; it is just that ",
+  "，平移（约 740 µm）远比展宽快，眼睛看到的是“整团行军”。": ", so the drift (about 740 µm) far outruns the spreading, and the eye sees 'the whole column marching'.",
+  "中等电场（8 V/cm）：同样是两者并存，": "Moderate field (8 V/cm): both mechanisms coexist again, ",
+  " —— 平移约 395 µm、同时 ": " — a drift of about 395 µm while ",
+  " 由 40 长到 165 µm，平移与展宽都一眼可见。预设之间不是“有无扩散”之别，而是“谁更强”。": " goes from 40 to 165 µm, so drift and spreading are both plainly visible. The presets are not about 'diffusion present or absent' but about 'which wins'.",
+  "（背面反射用 ": " (a reflecting back uses ",
+  " 型、背面欧姆用 ": " form, an ohmic back uses ",
+  "）：到达表面的少子立刻被抽走。": "): carriers reaching the surface are removed at once.",
+  " cm/s）。": " cm/s).",
+  "）：载流子出不去，总量只被体复合消耗。": "): carriers cannot get out, so the total is consumed only by bulk recombination.",
+  " 两端（": " Both ends (",
+  "两端（": "Both ends (",
+  "注意：稳态光照时左端改为固定注入通量。": "Note: under steady illumination the left end is switched to a fixed injection flux.",
+  "手动调节的参数组合（预设之外的组合会显示为「": "Manually adjusted parameter set (any combination outside the presets is labelled '",
+  "」）。": "').",
+  "（理想抽取接触）：比欧姆接触更极端，表面浓度为 0。": " (ideal extracting contact): more extreme than an ohmic contact, with a surface concentration of 0.",
+  "表面复合速度固定取 ": "Surface recombination velocity fixed at ",
+  "（与 ": " (compare with ",
+  "，占 ": ", accounting for ",
+  "）时 ": ") does ",
+  " 倍": " times",
+  "）或": ") or ",
+  "扩散是": "diffusion is",
+  "时，曲线": ", the profile",
+};
+
+/* 注入点②：画布直写字符串。老工具直接调 g.fillText()（描边文字走 g.strokeText()），这里在原型上兜住。
+   measureText 必须一起挂钩，否则「量的宽度」和「量的文字」用的不是同一个串。 */
+(function () {
+  if (typeof CanvasRenderingContext2D === "undefined") return;
+  var ft = CanvasRenderingContext2D.prototype.fillText;
+  CanvasRenderingContext2D.prototype.fillText = function (s, x, y) {
+    if (typeof s === "string") arguments[0] = T(s);
+    return ft.apply(this, arguments);
+  };
+  /* 描边文字（白边包字）走 strokeText，同样要过 T()，否则画布标签漏翻 */
+  var stx = CanvasRenderingContext2D.prototype.strokeText;
+  CanvasRenderingContext2D.prototype.strokeText = function (s, x, y) {
+    if (typeof s === "string") arguments[0] = T(s);
+    return stx.apply(this, arguments);
+  };
+  var mt = CanvasRenderingContext2D.prototype.measureText;
+  CanvasRenderingContext2D.prototype.measureText = function (s) {
+    return mt.call(this, typeof s === "string" ? T(s) : s);
+  };
+})();
+
+/* 注入点④：逐字绘制的画布串。drawMath 一类把中文按单字拆成 token 再逐个 fillText，
+   T() 每次只见到一个汉字 ⇒ 整句词条永远命中不了。这里在整串进入分词之前先整体翻译，
+   于是画布标注也走「整句优先」，与 DOM 同一个口径。没有这些函数的工具自动跳过。
+   ⚠️ 签名坑：drawMath / measureMath 的第一个参数是 canvas context（对象），文本在第
+   二位；早期版本照着 arguments[0] 翻，等于把 context 送去 T()，补丁全程空转。
+   这里改为「找到第一个含中文的字符串参数」再翻，既躲开 context，也不会误伤
+   align / weight 之类以英文字符串传的选项。 */
+(function () {
+  ["drawMath", "drawMathHalo", "measureMath"].forEach(function (n) {
+    var f = window[n];
+    if (typeof f !== "function") return;
+    window[n] = function () {
+      for (var i = 0; i < arguments.length; i++) {
+        if (typeof arguments[i] === "string" && /[\u3400-\u9FFF]/.test(arguments[i])) {
+          arguments[i] = T(arguments[i]);
+          break;
+        }
+      }
+      return f.apply(this, arguments);
+    };
+  });
+})();
+
+/* ---- DOM 文本节点 ---- */
+function i18nNode(n) {
+  var el = n.parentElement;
+  if (!el) return;
+  var tag = el.tagName;
+  if (tag === "SCRIPT" || tag === "STYLE") return;
+  if (el.closest && el.closest("[data-noi18n]")) return;
+  var cur = n.nodeValue;
+  if (n.__orig === undefined || (cur !== n.__last && cur !== n.__orig)) n.__orig = cur;
+  var want = LANG === "en" ? T(n.__orig) : n.__orig;
+  if (want !== cur) n.nodeValue = want;
+  n.__last = want;
+}
+/* 属性（title / placeholder / optgroup label …）不是文本节点，MutationObserver 覆盖不到，
+   必须单独过一遍：否则悬停提示、下拉分组名会残留中文。原文缓存在元素 expando 上，
+   切回中文时原样写回。改属性不会触发 childList/characterData 观察器，不会递归。 */
+var I18N_ATTRS = ["title", "placeholder", "aria-label", "alt", "label"];
+function i18nAttrs(root) {
+  var els = [root], i, j;
+  if (root.querySelectorAll) els = els.concat(Array.prototype.slice.call(root.querySelectorAll("*")));
+  for (i = 0; i < els.length; i++) {
+    var el = els[i];
+    if (!el.getAttribute) continue;
+    if (el.closest && el.closest("[data-noi18n]")) continue;
+    for (j = 0; j < I18N_ATTRS.length; j++) {
+      var a = I18N_ATTRS[j];
+      if (!el.hasAttribute(a)) continue;
+      var key = "__a_" + a;
+      if (el[key] === undefined) el[key] = el.getAttribute(a);
+      var want = LANG === "en" ? T(el[key]) : el[key];
+      if (want !== el.getAttribute(a)) el.setAttribute(a, want);
+    }
+  }
+}
+/* 英文补空格（跨节点）：中文片段被行内标签切开时，各自翻成英文后直连会粘连。
+   判定用 DOM 结构而不是渲染矩形——折叠区（挑战答案）矩形为零，矩形法会漏。
+   两文本节点在文档序里紧邻（中间没有任何文本节点，包括空格节点）、
+   前段末尾与后段开头都是字母、双方词条都没自带空格、且不在上下标里 ⇒ 插一个空格。
+   空格节点记录在案，切回中文时移除。只动 i18n 注入层，不改业务文本。 */
+function fixGlue(root) {
+  var all = [];
+  var w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null, false), n;
+  while ((n = w.nextNode())) all.push(n);
+  function subbed(el) {
+    while (el) { var t = el.tagName; if (t === "SUB" || t === "SUP") return true; el = el.parentElement; }
+    return false;
+  }
+  for (var i = 0; i + 1 < all.length; i++) {
+    var a = all[i], b = all[i + 1];
+    if (!a.nodeValue || !b.nodeValue) continue;
+    if (/\s$/.test(a.nodeValue) || /^\s/.test(b.nodeValue)) continue;
+    if (!/[A-Za-z0-9]$/.test(a.nodeValue) || !/^[A-Za-z]/.test(b.nodeValue)) continue;
+    var pa = a.parentElement, pb = b.parentElement;
+    if (!pa || !pb || subbed(pa) || subbed(pb)) continue;
+    var sp = document.createTextNode(" ");
+    sp.__glue = 1;
+    (fixGlue._n = fixGlue._n || []).push(sp);
+    b.parentNode.insertBefore(sp, b);
+  }
+}
+function removeGlue() {
+  if (!fixGlue._n) return;
+  for (var i = 0; i < fixGlue._n.length; i++) { var g = fixGlue._n[i]; if (g.parentNode) g.parentNode.removeChild(g); }
+  fixGlue._n = [];
+}
+/* 全局防抖补空格：挑战答案这类「点击时才重建」的区域，observer 回调里对子树跑
+   fixGlue 的时机不全（答案重写、延迟渲染都会错过）。任何 DOM 变更后 60ms
+   对整页补一次；空格本身不触发新插入，收敛。 */
+var _glueTimer = null;
+function _glueKick() {
+  if (LANG !== "en") return;
+  if (_glueTimer) clearTimeout(_glueTimer);
+  _glueTimer = setTimeout(function () {
+    _glueTimer = null;
+    if (LANG === "en") fixGlue(document.body);
+  }, 60);
+}
+function i18nWalk(root) {
+  var w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null, false), n, c = 0;
+  while ((n = w.nextNode())) { i18nNode(n); c++; }
+  i18nAttrs(root);
+  if (LANG === "en") fixGlue(root === document ? document.body : root);
+  return c;
+}
+var _i18nBusy = false;
+function i18nWatch() {
+  if (typeof MutationObserver === "undefined") return;
+  var mo = new MutationObserver(function (ms) {
+    if (_i18nBusy) return;
+    _i18nBusy = true;
+    try {
+      for (var i = 0; i < ms.length; i++) {
+        var m = ms[i];
+        if (m.type === "childList") {
+          for (var j = 0; j < m.addedNodes.length; j++) {
+            var nd = m.addedNodes[j];
+            if (nd.nodeType === 3) i18nNode(nd);
+            else if (nd.nodeType === 1) i18nWalk(nd);
+          }
+        } else if (m.type === "characterData") i18nNode(m.target);
+      }
+    } finally { _i18nBusy = false; }
+    _glueKick();
+  });
+  mo.observe(document.body, { childList: true, subtree: true, characterData: true });
+}
+function setLang(l) {
+  LANG = l;
+  try { localStorage.setItem("opl_lang", l); } catch (e) { }
+  document.documentElement.lang = l === "en" ? "en" : "zh-CN";
+  var btn = document.getElementById("langBtn");
+  if (btn) btn.textContent = l === "en" ? "中文" : "EN";
+  document.title = l === "en" ? T(ORIG_TITLE) : ORIG_TITLE;
+  if (l !== "en") removeGlue();
+  i18nWalk(document.body);
+  _glueKick();
+  if (typeof syncInputs === "function") syncInputs();
+  if (typeof render === "function") render();
+}
+
+
+
+
+
+/* ---------------- 直接 fillText / strokeText 的自动排版钩子 ----------------
+   有些标注不走 txt() 而是直接 g.fillText()（状态徽标、能带边等），
+   这里在原型层统一处理：含数学记法的字符串先按 LaTeX 规则拆段再绘制，
+   measureText 同步返回拆段总宽，白底框长度自动跟着变。 */
+const NEED_MATH_HM = /[\u2070-\u209C\u00B2\u00B3\u00B9]|_\{?[A-Za-z0-9\u0370-\u03ff]|\^\{?[\d(\-]|\d(\.\d+)?[eE][+\-]\d|\u221A/;
+/* 原生 measureText：mathSegsHM 内部量宽必须走这一条，
+   否则 measureText 被钩子接管后会 self-recursion（RangeError）。 */
+var _mRawHM = null;
+function measureRawHM(g, s) { return (_mRawHM ? _mRawHM : g.measureText).call(g, s).width; }
+function mathSegsHM(g, s) {
+  const f = String(g.font || "");
+  const mm = /(\d+(?:\.\d+)?)px/.exec(f);
+  const size = mm ? parseFloat(mm[1]) : 12;
+  const family = f.replace(/^(?:\s*(?:italic|oblique|bold|[1-9]00)\s*)*\d+(?:\.\d+)?px\s*/, "");
+  const style = /italic|oblique/.test(f) ? "italic " : (/bold|[6-9]00/.test(f) ? "bold " : "");
+  const parts = AUTO(s), laid = [];
+  let w = 0;
+  for (const p of parts) {
+    const small = !!(p.sup || p.sub);
+    const fs = style + (small ? (size * 0.74).toFixed(2) : size.toFixed(2)) + "px " + family;
+    g.font = fs;
+    const tw = measureRawHM(g, p.s);
+    laid.push({ s: p.s, w: tw, fs: fs, dy: small ? (p.sup ? -size * 0.40 : size * 0.22) : 0 });
+    w += tw;
+  }
+  return { laid: laid, w: w, family: family, style: style, size: size };
+}
+(function hookMathHM() {
+  if (window.__MATH_HOOK) return; window.__MATH_HOOK = 1;
+  const P = CanvasRenderingContext2D.prototype;
+  const _fill = P.fillText, _stroke = P.strokeText, _measure = P.measureText;
+  function draw(drawRaw, g, s, x, y, rest) {
+    const info = mathSegsHM(g, s);
+    const al = g.textAlign, bl = g.textBaseline;
+    const cx = al === "right" ? x - info.w : (al === "center" ? x - info.w / 2 : x);
+    g.textAlign = "left";
+    let px = cx;
+    for (const L of info.laid) {
+      g.font = L.fs;
+      drawRaw.call(g, L.s, px, y + L.dy, ...rest);
+      px += L.w;
+    }
+    g.textAlign = al; g.textBaseline = bl;
+    g.font = info.style + info.size.toFixed(2) + "px " + info.family;
+    return info;
+  }
+  /* __HM_SQRT：根号例程 mDrawSqrt 正在画 √ 字形，它是根号的一部分
+     （紧接着会补一条压住被开方式的横线），不能再被自动排版钩子接管，
+     否则会被误判成「裸 √」而重新排版（放大/错位）。 */
+  P.fillText = function (s, x, y) {
+    if (window.__HM_SQRT || typeof s !== "string" || !NEED_MATH_HM.test(s)) return _fill.apply(this, arguments);
+    draw(_fill, this, s, x, y, Array.prototype.slice.call(arguments, 3));
+  };
+  P.strokeText = function (s, x, y) {
+    if (window.__HM_SQRT || typeof s !== "string" || !NEED_MATH_HM.test(s)) return _stroke.apply(this, arguments);
+    draw(_stroke, this, s, x, y, Array.prototype.slice.call(arguments, 3));
+  };
+  if (!_mRawHM) _mRawHM = _measure;
+  P.measureText = function (s) {
+    if (window.__HM_IN || typeof s !== "string" || !NEED_MATH_HM.test(s)) return _measure.call(this, s);
+    window.__HM_IN = 1;
+    const save = this.font;
+    let info;
+    try { info = mathSegsHM(this, s); } finally { window.__HM_IN = 0; }
+    this.font = save;
+    return { width: info.w, get actualBoundingBoxLeft() { return 0; }, get actualBoundingBoxRight() { return info.w; } };
+  };
+})();
+
+/* ---------------- HTML 侧自动 LaTeX 排版 ----------------
+   读数 / 说明 / 按钮名里由 JS 拼出来的 cm⁻³、E_c、2.5e+8，
+   在写进 innerHTML 之前转成真 <sup>/<sub>；标签与属性原样放过（title 不会被塞进尖括号）。
+   与画布侧 AUTO() 对偶，保证网页和画布按同一套规则排版。 */
+const AUTOH_SUP = { "⁰": "0", "¹": "1", "²": "2", "³": "3", "⁴": "4", "⁵": "5", "⁶": "6",
+  "⁷": "7", "⁸": "8", "⁹": "9", "⁺": "+", "⁻": "−", "⁼": "=", "⁽": "(", "⁾": ")", "ⁿ": "n", "ⁱ": "i" };
+const AUTOH_SUB = { "₀": "0", "₁": "1", "₂": "2", "₃": "3", "₄": "4", "₅": "5", "₆": "6",
+  "₇": "7", "₈": "8", "₉": "9", "₊": "+", "₋": "−", "₌": "=", "₍": "(", "₎": ")",
+  "ₐ": "a", "ₑ": "e", "ₒ": "o", "ₓ": "x", "ₔ": "ə", "ₕ": "h", "ₖ": "k", "ₗ": "l",
+  "ₘ": "m", "ₙ": "n", "ₚ": "p", "ₛ": "s", "ₜ": "t", "ᵣ": "r", "ᵤ": "u", "ᵥ": "v" };
+const TEXH_NEED = /[\u2070-\u209C\u00B2\u00B3\u00B9]|_\{?[A-Za-z0-9\u0370-\u03ff]|\^\{?[\d(\-]|\d(\.\d+)?[eE][+\-]\d|\u221A/;
+/* 从 i 处（必须是 '<'）扫出一个"完整元素"的结束下标（含嵌套），失败返回 -1 */
+function TEXH_elemEnd(h, i) {
+  if (h.charAt(i) !== "<") return -1;
+  let depth = 0, j = i, guard = 0;
+  while (j < h.length && guard++ < 4000) {
+    if (h.charAt(j) !== "<") { j++; continue; }
+    const e = TEXH_tagEnd(h, j);
+    if (e < 0) return -1;
+    const isClose = h.charAt(j + 1) === "/";
+    const selfClose = h.charAt(e - 2) === "/";
+    if (isClose) { depth--; j = e; if (depth <= 0) return j; }
+    else if (selfClose) { j = e; if (depth === 0) return j; }
+    else { depth++; j = e; }
+  }
+  return -1;
+}
+/* √ 后面直接跟一个元素：√<i>E</i> → √‾E（前两条规则只吃 √(A) 与 √字母串） */
+function TEXHsqrtElem(s) {
+  let out = "", i = 0, guard = 0;
+  while (guard++ < 400) {
+    const k = s.indexOf("\u221A", i);
+    if (k < 0) break;
+    out += s.slice(i, k);
+    /* 守卫：√ 后面已是闭标签 ⇒ 该 √ 已排版过（对整段 HTML 重复跑 TEXH 会把 </span> 当成被开方式，
+       层层包出空壳根号，视觉上变成 √−3 / √−E），原样输出不再包裹 */
+    if (s.charAt(k + 1) === "<" && s.charAt(k + 2) === "/") { out += "\u221A"; i = k + 1; continue; }
+    let rad = null, end = k + 1;
+    if (s.charAt(k + 1) === "(") {
+      /* √(…) ：被开方式里常有标签，括号本身不在同一个文本片段里，必须整串扫 */
+      let depth = 0, p = k + 1;
+      while (p < s.length) {
+        const c = s.charAt(p);
+        if (c === "(") depth++;
+        else if (c === ")") { depth--; if (depth === 0) { rad = s.slice(k + 2, p); end = p + 1; break; } }
+        p++;
+      }
+    } else {
+      const e = TEXH_elemEnd(s, k + 1);
+      if (e > 0 && e - k < 500) { rad = s.slice(k + 1, e); end = e; }
+    }
+    if (rad !== null && rad.length) {
+      out += "<span class=\"sqrt\"><span class=\"rd\">\u221A</span><span class=\"rdc\">" + rad + "</span></span>";
+      i = end;
+    } else { out += "\u221A"; i = k + 1; }
+  }
+  return out + s.slice(i);
+}
+function TEXHpart(t) {
+  let s = t;
+  /* 根号：√ 或 √(A) → <span class="sqrt">√<span class="rd"><span class="rdc">A</span></span></span>（A 内不含嵌套括号） */
+  s = s.replace(/<span class="(?:op|rm|fn|v|u)">\u221A<\/span>/g, "\u221A");
+  s = s.replace(/\u221A<span class="(?:op|rm)">\(<\/span>([^()]{1,120}?)<span class="(?:op|rm)">\)<\/span>/g, function (m, a) {
+    return "<span class=\"sqrt\"><span class=\"rd\">\u221A</span><span class=\"rdc\">" + a + "</span></span>";
+  });
+  s = s.replace(/\u221A\(([^()]{1,120})\)/g, function (m, a) {
+    return "<span class=\"sqrt\"><span class=\"rd\">\u221A</span><span class=\"rdc\">" + a + "</span></span>";
+  });
+  s = s.replace(/\u221A([A-Za-z0-9\u0370-\u03ff]{1,6})/g, function (m, a) {
+    return "<span class=\"sqrt\"><span class=\"rd\">\u221A</span><span class=\"rdc\">" + a + "</span></span>";
+  });
+  s = s.replace(/(\d(?:\.\d+)?)e([+-])(\d+)/g, function (m, a, sg, e) {
+    return a + "\u00d710<sup>" + (sg === "-" ? "\u2212" : "") + e + "</sup>";
+  });
+  s = s.replace(/([A-Za-z\u0370-\u03ff)\]])\^\{([^{}]{1,12})\}/g, "$1<sup>$2</sup>");
+  s = s.replace(/([A-Za-z\u0370-\u03ff)\]])\^(\d+(?:\.\d+)?)/g, "$1<sup>$2</sup>");
+  s = s.replace(/([A-Za-z\u0370-\u03ff])_\{([A-Za-z0-9\u0370-\u03ff+\-]{1,8})\}/g, "<span class='m'><i>$1</i><sub>$2</sub></span>");
+  s = s.replace(/([A-Za-z\u0370-\u03ff])_([A-Za-z0-9\u0370-\u03ff]{1,6})(?![A-Za-z0-9])/g, "<span class='m'><i>$1</i><sub>$2</sub></span>");
+  if (/[\u2070-\u209C\u00B2\u00B3\u00B9]/.test(s)) {
+    let out = "", i = 0;
+    while (i < s.length) {
+      const ch = s[i];
+      if (AUTOH_SUP[ch] !== undefined || AUTOH_SUB[ch] !== undefined) {
+        const isSup = AUTOH_SUP[ch] !== undefined, tab = isSup ? AUTOH_SUP : AUTOH_SUB;
+        let j = i, buf = "";
+        while (j < s.length && (isSup ? AUTOH_SUP[s[j]] !== undefined : AUTOH_SUB[s[j]] !== undefined)) {
+          buf += tab[s[j]]; j++;
+        }
+        out += "<" + (isSup ? "sup" : "sub") + ">" + buf + "</" + (isSup ? "sup" : "sub") + ">";
+        i = j;
+      } else { out += ch; i++; }
+    }
+    s = out;
+  }
+  return s.indexOf("\u221A") >= 0 ? TEXHsqrtElem(s) : s;
+}
+/* 只有真正的标签才整段跳过：正文里裸写的 '<'（如 "t₂ < 0"）必须当普通字符，
+   否则 indexOf('>') 会一路吞掉后面整段，E₂⁰ 这类记法就漏排了。 */
+function TEXH_tagEnd(h, i) {
+  if (h.charAt(i) !== "<") return -1;
+  const c = h.charAt(i + 1);
+  if (c === "!" || c === "/") { const j = h.indexOf(">", i); return (j >= 0 && j - i < 300) ? j + 1 : -1; }
+  if (!/[A-Za-z]/.test(c)) return -1;
+  let j = i + 1;
+  while (j < h.length && /[A-Za-z0-9]/.test(h.charAt(j))) j++;
+  if (j === i + 1) return -1;
+  if (h.charAt(j) === ">") return j + 1;
+  if (h.charAt(j) !== " " && h.charAt(j) !== "\n" && h.charAt(j) !== "\t") return -1;
+  const g = h.indexOf(">", j), nx = h.indexOf("<", j);
+  if (g < 0 || g - i > 300) return -1;
+  if (nx >= 0 && nx < g) return -1;
+  return g + 1;
+}
+function TEXH(h) {
+  if (typeof h !== "string" || !TEXH_NEED.test(h)) return h;
+  if (h.indexOf("\u221A") >= 0) h = h.replace(/<span class="(?:op|rm|fn|v|u)">\u221A<\/span>/g, "\u221A");
+  if (h.indexOf("<") < 0) return TEXHpart(h);
+  let out = "", i = 0, n = h.length, guard = 0;
+  while (i < n && guard++ < 40000) {
+    const e = TEXH_tagEnd(h, i);
+    if (e > 0) { out += h.slice(i, e); i = e; continue; }
+    let j = i;
+    while (j < n && TEXH_tagEnd(h, j) <= 0) j++;
+    out += TEXHpart(h.slice(i, j)); i = j;
+  }
+  const r = out + h.slice(i);
+  return r.indexOf("\u221A") >= 0 ? TEXHsqrtElem(r) : r;
+}
+(function hookHTML() {
+  if (window.__TEXH_HOOK) return; window.__TEXH_HOOK = 1;
+  const d = Object.getOwnPropertyDescriptor(Element.prototype, "innerHTML");
+  if (!d || !d.set) return;
+  Object.defineProperty(Element.prototype, "innerHTML", {
+    configurable: true, get: d.get,
+    set: function (v) { d.set.call(this, typeof v === "string" ? TEXH(v) : v); }
+  });
+  /* insertAdjacentHTML 也会被用到 */
+  const ia = Element.prototype.insertAdjacentHTML;
+  Element.prototype.insertAdjacentHTML = function (pos, v) {
+    return ia.call(this, pos, typeof v === "string" ? TEXH(v) : v);
+  };
+})();
+
+/* ---------------- 画布自动 LaTeX 排版 ----------------
+   老调用点 txt(g, "cm⁻³") / txt(g, "E_c") / txt(g, "2.5e+8") 一行都不用改，
+   只要在绘制前把字符串解析成分段零件即可。规则与网页侧一致：
+   物理量斜体、描述性下标与单位正体、幂次用真上标（不用 Unicode 伪字符）。 */
+const AUTO_SUP = { "⁰": "0", "¹": "1", "²": "2", "³": "3", "⁴": "4", "⁵": "5", "⁶": "6",
+  "⁷": "7", "⁸": "8", "⁹": "9", "⁺": "+", "⁻": "−", "⁼": "=", "⁽": "(", "⁾": ")", "ⁿ": "n", "ⁱ": "i" };
+const AUTO_SUB = { "₀": "0", "₁": "1", "₂": "2", "₃": "3", "₄": "4", "₅": "5", "₆": "6",
+  "₇": "7", "₈": "8", "₉": "9", "₊": "+", "₋": "−", "₌": "=", "₍": "(", "₎": ")",
+  "ₐ": "a", "ₑ": "e", "ₒ": "o", "ₓ": "x", "ₔ": "ə", "ₕ": "h", "ₖ": "k", "ₗ": "l",
+  "ₘ": "m", "ₙ": "n", "ₚ": "p", "ₛ": "s", "ₜ": "t", "ᵣ": "r", "ᵤ": "u", "ᵥ": "v" };
+const MATH_IDCH = /[A-Za-z\u0370-\u03ff]/;
+const NEED_MATH = /[\u2070-\u209C\u00B2\u00B3\u00B9]|_\{?[A-Za-z0-9\u0370-\u03ff]|\^\{?[\d(\-]|\d(\.\d+)?[eE][+\-]\d/;
+function AUTO(s) {
+  const out = [];
+  let buf = "", mode = 0;
+  const emit = (t, kind) => {
+    if (!t) return;
+    if (kind === 1) out.push({ s: t, sup: true });
+    else if (kind === -1) out.push({ s: t, sub: true });
+    else out.push({ s: t });
+  };
+  let i = 0, italicAll = false;
+  while (i < s.length) {
+    const ch = s[i];
+    if (AUTO_SUP[ch] !== undefined) { if (mode !== 1) { emit(buf, mode); buf = ""; mode = 1; } buf += AUTO_SUP[ch]; i++; continue; }
+    if (AUTO_SUB[ch] !== undefined) { if (mode !== -1) { emit(buf, mode); buf = ""; mode = -1; } buf += AUTO_SUB[ch]; i++; continue; }
+    if (mode) { emit(buf, mode); buf = ""; mode = 0; }
+    const rest = s.slice(i);
+    const sc = /^\d(\.\d+)?[eE][+\-]\d{1,3}/.exec(rest);       /* ASCII 伪科学计数 2.5e+8 */
+    if (sc) {
+      const parts = sc[0].split(/[eE]/);
+      emit(parts[0] + "\u00d710", 0); emit(String(+parts[1]).replace("-", "\u2212"), 1);
+      i += sc[0].length; continue;
+    }
+    if (MATH_IDCH.test(ch) && i + 1 < s.length && (s[i + 1] === "_" || s[i + 1] === "^")) {
+      const sup = s[i + 1] === "^";
+      let j = i + 2, grp = "";
+      if (s[j] === "{") { const e = s.indexOf("}", j); if (e > 0) { grp = s.slice(j + 1, e); j = e + 1; } }
+      else {
+        const RCJK = /[\u2E80-\u9FFF]/, RASC = /[A-Za-z0-9\u0370-\u03ff+\-]/;
+        if (RCJK.test(s[j])) { while (j < s.length && RCJK.test(s[j]) && j - i < 8) j++; }   /* 中文描述性下标：τ_直接、E_声子 */
+        else { while (j < s.length && RASC.test(s[j])) j++; }
+        grp = s.slice(i + 2, j);
+      }
+      if (grp) {
+        emit(ch, 0);
+        if (italicAll || /^[A-Za-z\u0370-\u03ff]$/.test(ch)) out[out.length - 1].i = true;
+        emit(sup ? grp.replace(/-/g, "\u2212") : grp, sup ? 1 : -1);
+        i = j; continue;
+      }
+    }
+    buf += ch; i++;
+  }
+  emit(buf, mode);
+  return out;
+}
+function fontInfo(font, dflt) {
+  const f = String(font || "");
+  const m = /(\d+(?:\.\d+)?)px/.exec(f);
+  return { fp: m ? parseFloat(m[1]) : (dflt || 12), bd: /bold|70\d|600/.test(f), it: /italic|oblique/.test(f) };
+}
+
+/* ---------------- HTML 字符串 → 画布零件（网页与画布共用同一份排版） ----------------
+   mtxt(g, TX(H_NA), x, y, col, fp) —— H_* 常量本来就在喂 innerHTML，
+   再喂给 TX() 就不会出现「网页斜体、画布正体」的两边不一致。
+   <i> 斜体、<sub> 下标、<sup> 上标；<span class="op|un|rm|sqrt|frac"> 只剥标签（保持正体）。 */
+const catA = (...a) => [].concat(...a);
+function TX(h) {
+  const t = String(h == null ? "" : h)
+    .replace(/<span\b[^>]*>/g, "").replace(/<\/span>/g, "")
+    .replace(/<i\b[^>]*>/g, "<i>").replace(/<b\b[^>]*>/g, "").replace(/<\/b>/g, "")
+    .replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&").replace(/&nbsp;/g, " ");
+  const out = [], re = /<i>([\s\S]*?)<\/i>|<sub>([\s\S]*?)<\/sub>|<sup>([\s\S]*?)<\/sup>|([^<]+)/g;
+  let m;
+  while ((m = re.exec(t))) {
+    const raw = s => s == null ? null : s.replace(/<[^>]*>/g, "");
+    if (m[1] != null) out.push({ s: raw(m[1]), i: true });
+    else if (m[2] != null) out.push({ s: raw(m[2]), sub: true });
+    else if (m[3] != null) out.push({ s: raw(m[3]), sup: true });
+    else if (m[4]) out.push({ s: m[4] });
+  }
+  return out;
+}
+function TXof(...a) { return catA(...a.map(TX)); }
+
+
+function PSci(v, n) {
+  if (!isFinite(v) || v === 0) return [{ s: "0" }];
+  const e = Math.floor(Math.log10(Math.abs(v)));
+  const m = (v / Math.pow(10, e)).toFixed(n === undefined ? 1 : n);
+  /* 1 ≦ |v| < 10 时直接写尾数，不再拖一个 ×10⁰（与 sciH 一致） */
+  if (e === 0) return [{ s: m }];
+  /* 指数负号用 U+2212 */
+  return [{ s: m + "×10" },
+          { s: String(e).replace("-", "−"), sup: true }];
+}
+
+/* ---------------- 0. 小工具 ---------------- */
+const $ = id => document.getElementById(id);
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const fmt = (v, n) => (isFinite(v) ? v.toFixed(n === undefined ? 2 : n) : "—");
+const MM = h => '<span class="m">' + h + "</span>";
+/* 原生 title 只吃纯文本：必须把 <span class="m">…</span> 剥成纯文本，否则悬停看到的是标签源码。
+   用临时 span 的 textContent（&lt; 这类实体会被正确还原），不能用 replace(/<[^>]+>/g)。 */
+function stripTags(h) {
+  /* 原生 title tooltip 只吃纯文本，所以先把排版还原成可读的线性写法：
+     frac → A/B、sub → _x、sup → ^x，最后用临时 span 的 textContent 剥标签
+     （不能用正则剥：< 这类实体会原样留下）。 */
+  var s0 = String(h === undefined || h === null ? "" : h)
+    .replace(/<span class=[^>]*sqrt[^>]*>\s*<span class=[^>]*rd[^>]*>√<\/span><span class=[^>]*rdc[^>]*>([\s\S]*?)<\/span><\/span>/g, "√$1")
+    .replace(/<span class=[^>]*frac[^>]*>\s*<span class=[^>]*num[^>]*>([\s\S]*?)<\/span><span class=[^>]*den[^>]*>([\s\S]*?)<\/span><\/span>/g, "$1/$2")
+    .replace(/([\u2070\u00B9\u00B2\u00B3\u2074-\u2079\u207A\u207B\u207D\u207E\u2071\u207F]+)/g, function (m) { return "^" + m.replace(/[\u2070-\u209C\u00B2\u00B3\u00B9]/g, function (c) { return AUTOH_SUP[c] || c; }); })
+    .replace(/([\u2080-\u2089\u208A\u208B\u208C\u208D\u208E\u2090-\u209C]+)/g, function (m) { return "_" + m.replace(/[\u2070-\u209C]/g, function (c) { return AUTOH_SUB[c] || c; }); })
+    .replace(/<sub>([\s\S]*?)<\/sub>/g, "_$1")
+    .replace(/<sup>([\s\S]*?)<\/sup>/g, "^$1");
+  var t = document.createElement("span"); t.innerHTML = s0;
+  return t.textContent.replace(/\s+/g, " ").trim();
+}
+const FRAC_H = (num, den) => '<span class="frac"><span class="num">' + num + '</span><span class="den">' + den + "</span></span>";
+
+/* ---------------- 3. 画布与画布内排版 ---------------- */
+const CV = {};
+function fitCanvas(id) {
+  const el = $(id);
+  if (!el || !el.clientWidth) return null;
+  const w = el.clientWidth, h = +el.dataset.h;
+  const dpr = window.devicePixelRatio || 1;
+  el.width = Math.round(w * dpr); el.height = Math.round(h * dpr);
+  el.style.height = h + "px";
+  const g = el.getContext("2d");
+  g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  CV[id] = { g: g, W: w, H: h, el: el };
+  return CV[id];
+}
+function fitAll() { ["chain", "disp", "zoom"].forEach(fitCanvas); }
+
+const FONT = "\"Microsoft YaHei\",\"PingFang SC\",sans-serif";
+const FONTM = "\"Cambria Math\",\"Times New Roman\",Times,serif";
+const SUBR = 0.74, SUBDY = 0.22, SUPDY = 0.40;
+const C_AC = "#1976d2", C_OP = "#d94a3d";
+const C_HEAVY = "#2f4a6b", C_LIGHT = "#7fb2e3";
+const C_ARROW = "#ef8c1a", C_SUB = "#6b7a8c", C_GRID = "#e7edf4", C_REF = "#9aa5b1";
+
+function txt(g, s, x, y, col, font, align, base) {
+  g.fillStyle = col; g.font = font || "12px " + FONT;
+  g.textAlign = align || "left"; g.textBaseline = base || "middle";
+  if (typeof s === "string" && NEED_MATH.test(s)) {
+    const fi = fontInfo(font, 12);
+    mRun(g, AUTO(s), x, y, fi.fp, fi.bd, align || "left", false);
+    return;
+  }
+  g.fillText(s, x, y);
+}
+function txtHalo(g, s, x, y, col, font, align, base) {
+  g.font = font || "12px " + FONT;  g.textAlign = align || "left"; g.textBaseline = base || "middle";
+  g.lineJoin = "round"; g.strokeStyle = "rgba(255,255,255,0.94)"; g.lineWidth = 3.2;
+  if (typeof s === "string" && NEED_MATH.test(s)) {
+    const fi = fontInfo(font, 12), parts = AUTO(s);
+    g.lineJoin = "round";
+    mRun(g, parts, x, y, fi.fp, fi.bd, align || "left", true);
+    g.fillStyle = col;
+    mRun(g, parts, x, y, fi.fp, fi.bd, align || "left", false);
+    return;
+  }
+  g.strokeText(s, x, y); g.fillStyle = col; g.fillText(s, x, y);
+}
+function isCJKch(ch) {
+  const c = ch.codePointAt(0);
+  return (c >= 0x2E80 && c <= 0x9FFF) || (c >= 0xF900 && c <= 0xFAFF) ||
+    (c >= 0xFF00 && c <= 0xFF60) || c === 0x2014 || c === 0x2015 || c === 0x2026;
+}
+function segRuns(s) {
+  const out = []; let cur = "", curC = null;
+  for (const ch of s) {
+    const c = isCJKch(ch);
+    if (curC === null) { cur = ch; curC = c; }
+    else if (c === curC) cur += ch;
+    else { out.push({ s: cur, cjk: curC }); cur = ch; curC = c; }
+  }
+  if (cur) out.push({ s: cur, cjk: curC });
+  return out;
+}
+function pFont(q, fp, bd, cjk) {
+  const sz = fp * ((q.sub || q.sup) ? SUBR : 1);
+  return (bd ? "bold " : "") + (!cjk && q.i ? "italic " : "") + sz.toFixed(2) + "px " + (cjk ? FONT : FONTM);
+}
+/* 允许整体传字符串（"0"、"0.5" 这类纯文本），不必到处写 [{s:…}] */
+/* i18n 注入点①：画布 token。带 i / sub / sup / un 标记的是物理量、下标与单位，一律不动；
+   没有这些标记的 token 才是自然语言，交给 T() —— 所以这里的判断只看标记，不看内容。 */
+const partsOf = p => (typeof p === "string" ? [{ s: p }] : p).map(q => {
+  const o = (typeof q === "string" ? { s: q } : q);
+  const natural = !(o.i || o.sub || o.sup || o.un);
+  if (LANG === "en" && natural && typeof o.s === "string" && /[\u4E00-\u9FFF]/.test(o.s)) {
+    const t = T(o.s);
+    return t === o.s ? o : Object.assign({}, o, { s: t });
+  }
+  return o;
+});
+/* 根号的竖向/字号策略：
+   横线高度 need = 至少压住被开方式（见 mInkTop）再留 0.10fp 空隙，常规情况取 0.50fp；
+   √ 字号随之放大到能"够得着"横线（字顶 ≈ 0.50×字号），不然横线会悬空。 */
+function mSqrtNeed(sub, fp, bd) { return Math.max(fp * 0.50, mInkTop(sub, fp, bd) + fp * 0.10); }
+function mSqrtFs(sub, fp, bd) { return Math.max(fp * 1.20, mSqrtNeed(sub, fp, bd) / 0.50); }
+/* √ 字形宽度 */
+function mSqrtW(g, sub, fp, bd) {
+  const sv = g.font;
+  g.font = mSqrtFs(sub, fp, bd).toFixed(2) + "px " + FONTM;
+  const w = g.measureText("\u221A").width;
+  g.font = sv;
+  return w;
+}
+function mMeasure(g, parts, fp, bd) {
+  let w = 0;
+  for (const q of partsOf(parts)) {
+    /* {sqrt:[…]}：√ 符号 + 一条压住被开方式的横线（canvas 版 \sqrt{}） */
+    if (q.sqrt) { w += mSqrtW(g, q.sqrt, fp, bd) + 2 + mMeasure(g, q.sqrt, fp, bd) + 2; continue; }
+    for (const sg of segRuns(q.s)) { g.font = pFont(q, fp, bd, sg.cjk); w += g.measureText(sg.s).width; }
+  }
+  return w;
+}
+/* 被开方式的墨迹高度（相对排版中线向上为正）。幂次会把字顶抬得很高，
+   根号横线必须抬到它上面去压，否则会横穿 v_d² 的上标。 */
+function mInkTop(parts, fp, bd) {
+  let top = 0;
+  for (const q of partsOf(parts)) {
+    /* 嵌套根号：内层横线还会再顶高一层 */
+    if (q.sqrt) { top = Math.max(top, mInkTop(q.sqrt, fp, bd) + fp * 0.14); continue; }
+    const sz = fp * ((q.sub || q.sup) ? SUBR : 1);
+    const up = q.sup ? fp * SUPDY : (q.sub ? -fp * SUBDY : 0);
+    top = Math.max(top, up + sz * 0.44);
+  }
+  return top;
+}
+function mDrawSqrt(g, sub, cx, y, fp, bd, stroke) {
+  const sv = g.font, col = stroke ? g.strokeStyle : g.fillStyle;
+  const sq = "\u221A";
+  const need = mSqrtNeed(sub, fp, bd);
+  g.font = mSqrtFs(sub, fp, bd).toFixed(2) + "px " + FONTM;
+  /* √ 是根号的一部分（下面马上补横线），不让自动排版钩子插手 */
+  window.__HM_SQRT = 1;
+  try { if (stroke) g.strokeText(sq, cx, y + fp * 0.04); else g.fillText(sq, cx, y + fp * 0.04); }
+  finally { window.__HM_SQRT = 0; }
+  cx += g.measureText(sq).width + 1;
+  const sw = mMeasure(g, sub, fp, bd);
+  mRun(g, sub, cx, y, fp, bd, "left", stroke);
+  line(g, cx - 1, y - need, cx + sw + 1, y - need, col, 1);
+  g.font = sv;
+  return cx + sw + 2;
+}
+function mRun(g, parts, x, y, fp, bd, align, stroke) {
+  const ps = partsOf(parts), w = mMeasure(g, ps, fp, bd);
+  let cx = align === "right" ? x - w : (align === "center" ? x - w / 2 : x);
+  g.textAlign = "left"; g.textBaseline = "middle"; g.lineJoin = "round";
+  for (const q of ps) {
+    if (q.sqrt) { cx = mDrawSqrt(g, q.sqrt, cx, y, fp, bd, stroke); continue; }
+    const dy = q.sub ? fp * SUBDY : (q.sup ? -fp * SUPDY : 0);
+    for (const sg of segRuns(q.s)) {
+      g.font = pFont(q, fp, bd, sg.cjk);
+      if (stroke) { g.lineWidth = (q.sub || q.sup) ? 2.4 : 3.2; g.strokeText(sg.s, cx, y + dy); }
+      else g.fillText(sg.s, cx, y + dy);
+      cx += g.measureText(sg.s).width;
+    }
+  }
+}
+function mtxt(g, parts, x, y, col, fp, align, bd) {
+  g.fillStyle = col; mRun(g, parts, x, y, fp, bd || false, align, false);
+}
+function mtxtHalo(g, parts, x, y, col, fp, align, bd) {
+  g.strokeStyle = "rgba(255,255,255,0.94)";
+  mRun(g, parts, x, y, fp, bd || false, align, true);
+  mtxt(g, parts, x, y, col, fp, align, bd);
+}
+function line(g, x1, y1, x2, y2, col, lw, dash) {
+  g.save();
+  g.strokeStyle = col; g.lineWidth = lw || 1;
+  if (dash) g.setLineDash(dash);
+  g.beginPath(); g.moveTo(x1, y1); g.lineTo(x2, y2); g.stroke();
+  g.restore();
+}
+function arrowHead(g, x, y, ang, sz, col) {
+  g.save(); g.translate(x, y); g.rotate(ang);
+  g.beginPath(); g.moveTo(0, 0); g.lineTo(-sz, sz * 0.42); g.lineTo(-sz, -sz * 0.42);
+  g.closePath(); g.fillStyle = col; g.fill(); g.restore();
+}
+function arrow(g, x1, y1, x2, y2, col, lw, sz) {
+  const dx = x2 - x1, dy = y2 - y1, L = Math.hypot(dx, dy);
+  if (L < 0.5) return;
+  line(g, x1, y1, x2, y2, col, lw || 1.4);
+  arrowHead(g, x2, y2, Math.atan2(dy, dx), sz || 6, col);
+}
+function chip(g, s, x, y, col, font, align) {
+  g.font = font || "11px " + FONT;
+  const w = g.measureText(s).width, al = align || "left";
+  const bx = al === "right" ? x - w : (al === "center" ? x - w / 2 : x);
+  g.fillStyle = "rgba(255,255,255,0.92)";
+  g.fillRect(bx - 4, y - 8, w + 8, 16);
+  txt(g, s, bx, y, col, font, "left", "middle");
+}
+/* 数学排版版 chip：白底 + token 文本 + 画布钳位 */
+function chipM(g, parts, x, y, col, fp, align, W) {
+  const ps = partsOf(parts), w = mMeasure(g, ps, fp, false);
+  const al = align || "left";
+  let bx = al === "right" ? x - w : (al === "center" ? x - w / 2 : x);
+  if (W) bx = clamp(bx, 4, Math.max(4, W - w - 4));
+  g.fillStyle = "rgba(255,255,255,0.93)";
+  g.fillRect(bx - 4, y - 8, w + 8, 16);
+  mtxt(g, ps, bx, y, col, fp, "left", false);
+}
+/* 常用符号 token */
+const T_X = { s: "x", i: 1 };
+const T_P = q => ({ s: q || "p", i: 1 });
+
+
+"use strict";
+/* ==================================================================
+   非平衡少子漂移与扩散交互教学工具 —— 物理内核与数值求解
+   内部单位： 长度 µm    时间 µs    浓度 cm⁻³
+      D [µm²/µs] = 100 × D[cm²/s]
+      v [µm/µs]  = 0.01 × μ[cm²/(V·s)] × E[V/cm]        （1 cm/s = 0.01 µm/µs）
+      S [µm/µs]  = 0.01 × S[cm/s]
+   控制方程（一维连续性方程 + 漂移扩散电流）：
+      ∂p/∂t = D ∂²p/∂x² − v ∂p/∂x − (p − p0)/τ
+   边界（通量形式，S 为表面复合速度）：
+      左端 x=0：−(v p − D ∂p/∂x) = S (p − p0)   ⇒  p0cell = (g·p1 + S·p0)/(g + v + S),  g = D/Δx
+      右端 x=L：  (v p − D ∂p/∂x) = S (p − p0)   ⇒  pNcell = (g·pN−1 + S·p0)/(g − v + S)
+      S = 0 退化为反射（零净通量），S → ∞ 退化为欧姆接触（p = p0）
+   稳态光照：左端改为固定注入通量 F = D·Δp_inj/L；稳态解随背面条件取精确形式
+      （反射背面 cosh((L−x)/L)/sinh(L/L)，欧姆背面 sinh((L−x)/L)/cosh(L/L)），
+      样品远长于扩散长度时两者都退化为 Δp = Δp_inj e^(−x/L)
+   稳态衰减长度（漂移 + 扩散）：λ = (−v + √(v² + 4D/τ))/(2D)，L_eff = 1/λ
+   ================================================================== */
+
+/* ---------------- 1. 常数与状态 ---------------- */
+const QE = 1.602176634e-19;
+const KB = 1.380649e-23;
+
+/* 材料固定为硅（本工具不做材料对比）：mn/mp 为 300 K 典型迁移率，仅用于「少子类型」切换时给出参考值 */
+const MATS = [
+  { name: "Si", mn: 1350, mp: 480, note: "硅：μn = 1350、μp = 480 cm²/(V·s)（300 K 典型值）。" }
+];
+
+const CARS = [
+  { name: "空穴", sym: "p", sgn: 1, note: "" },
+  { name: "电子", sym: "n", sgn: -1, note: "" }
+];
+
+const ICS = [
+  { name: "脉冲", note: "高斯分布：短脉冲激光在 " + MM("<i>x</i><sub>0</sub>") + " 处注入一小团少子。" },
+  { name: "阶跃", note: MM("<i>x</i><span class=\"op\">&lt;</span><i>x</i><sub>s</sub>") + " 区域均匀注入：突然开灯或突然加偏压。" },
+  { name: "稳态光照", note: "左端改为固定注入通量，初值直接取<b>当前背面边界下的精确稳态解</b>（背面反射用 " +
+      MM("<span class=\"rm\">cosh</span>") + " 型、背面欧姆用 " + MM("<span class=\"rm\">sinh</span>") +
+      " 型），所以分布应当一动不动。" },
+  { name: "均匀", note: "整根样品均匀注入：主要用来观察表面复合与体复合的差别。" }
+];
+
+/* 边界条件：按钮顺序 = 数组顺序。反射排在最后 —— 它只是「理想钝化表面」这个参照系，
+   四个预设都不用它（金属电极才是常规设定）。
+   ⚠ 下面所有分支一律用常量名比较，绝不写死数字索引：否则调整按钮顺序会静默改物理。 */
+const B_OHMIC = 0, B_S = 1, B_EXTRACT = 2, B_REFL = 3;
+const BNDS = [
+  { name: "欧姆接触", note: MM("<i>p</i><span class=\"op\">=</span><i>p</i><sub>0</sub>") + "（金属接触，相当于 " + MM("<i>S</i><span class=\"op\">→</span><span class=\"op\">∞</span>") + "）：到达表面的少子立刻被抽走。" },
+  { name: "有限 S", note: MM("<i>D</i><span class=\"frac\"><span class=\"num\"><span class=\"op\">∂</span><i>p</i></span><span class=\"den\"><span class=\"op\">∂</span><i>x</i></span></span><span class=\"op\">=</span><i>S</i><span class=\"op\">(</span><i>p</i><span class=\"op\">−</span><i>p</i><sub>0</sub><span class=\"op\">)</span>") + "：真实表面，" + MM("<i>S</i>") + " 越大表面浓度越低（本工具固定取 10<sup>3</sup> cm/s）。" },
+  { name: "抽取", note: MM("<i>p</i><span class=\"op\">=</span>0") + "（理想抽取接触）：比欧姆接触更极端，表面浓度为 0。" },
+  { name: "反射", note: "零净通量（理想钝化表面，" + MM("<i>S</i><span class=\"op\">=</span>0") + "）：载流子出不去，总量只被体复合消耗。" }
+];
+
+/* 预设：E 带符号（V/cm）；L 单位 µm；τ 单位 µs */
+const PRESETS = [
+  { name: "纯扩散", E: 0, tau: 10, ic: 0, bnd: B_OHMIC, x0f: 64, s0: 40, Ss: 40,
+    note: MM("<i>E</i><span class=\"op\">=</span>0") + "：分布只会原地展宽、峰值下降，中心不动。用模块二看 " +
+      MM("<i>σ</i><span class=\"op\">∝</span><span class='sqrt'><span class='rd'>√</span><span class='rdc'><i>t</i></span></span>") + " 与 " +
+      MM("Δ<i>p</i><sub>max</sub><span class=\"op\">∝</span>" + FRAC_H("1", "<span class='sqrt'><span class='rd'>√</span><span class='rdc'><span class='m'><i>t</i></span></span></span>")) + "。" },
+  { name: "漂移主导", E: 15, tau: 10, ic: 0, bnd: B_OHMIC, x0f: 10, s0: 40, Ss: 40,
+    note: "强电场（15 V/cm）+ 欧姆接触：扩散并没有消失 —— 1 个 " + MM("<i>τ</i>") + " 内包宽 " +
+      MM("<i>σ</i>") + " 照样从 40 长到 165 µm，只是 " + MM("<i>L</i><sub>drift</sub><span class=\"sl\">/</span><i>L</i><span class=\"op\">≈</span>6.6") +
+      "，平移（约 740 µm）远比展宽快，眼睛看到的是“整团行军”。" },
+  { name: "漂移＋扩散", E: 8, tau: 10, ic: 0, bnd: B_OHMIC, x0f: 20, s0: 40, Ss: 40,
+    note: "中等电场（8 V/cm）：同样是两者并存，" + MM("<i>L</i><sub>drift</sub><span class=\"sl\">/</span><i>L</i><span class=\"op\">≈</span>3.5") +
+      " —— 平移约 395 µm、同时 " + MM("<i>σ</i>") + " 由 40 长到 165 µm，平移与展宽都一眼可见。预设之间不是“有无扩散”之别，而是“谁更强”。" },
+  { name: "稳态光照", E: 0, tau: 10, ic: 2, bnd: B_OHMIC, x0f: 25, s0: 40, Ss: 40,
+    note: "左端固定注入通量、背面欧姆接触：分布稳稳停在指数衰减上，从曲线上量 " +
+      MM(FRAC_H("1", "<span class='rm'>e</span>")) + " 位置就是扩散长度（背面只影响末端约一个扩散长度）。" },
+  { name: "表面复合", E: 0, tau: 10, ic: 3, bnd: B_S, x0f: 25, s0: 40, Ss: 40,
+    note: "均匀注入 + 有限 S（固定 10<sup>3</sup> cm/s）：表面附近被“吃掉”一块，切到「欧姆接触」对比，表面浓度更低、分布更陡。" }
+];
+
+const TFIX = 300;                     // 温度固定 300 K（本工具不做温度依赖）
+const LFIX = 1200;                    // 样品长度（视窗）固定 1200 µm：约 10.8 个扩散长度，
+                                      // 既容得下漂移档约 740 µm/τ 的平移，也容得下稳态光照的指数尾巴
+const OPT = {
+  preset: 0, mat: 0, car: 0,
+  tauS: 64,
+  E: 0, L: LFIX,
+  ic: 0, dpS: 50, x0f: 64, s0: 40, xsf: 35,
+  bnd: B_OHMIC, Ss: 40,
+  speed: 1, tFrac: 0, playing: false, q: 0,
+  ckInit: true, ckP0: true, ckLen: true, ckArr: true, ckTh: true
+};
+
+const NX = 320;                       // 空间格点数
+const P0C = 1e13;                     // 平衡少子浓度：本工具取作「作图基线」（示意取值，cm⁻³）
+/* 下面四个量【不进入任何动态方程】，只用于核算本页方程的两条适用前提（低注入 / 准电中性）。
+   单载流子连续性方程隐含这两条前提，页面必须把它们连同数字一起写出来，
+   否则学生不知道 τ 与方程什么时候失效（2026-10-16 评审 23-1 / 23-2）。
+   ⚠ p₀ = 1e13 大于硅 300 K 的本征浓度 n_i = 1e10，所以它不可能是某块真实硅片的平衡少子浓度
+     （少子浓度恒 ≤ n_i）；它纯粹是一条作图基线 —— 方程对 Δp 线性，p₀ 取多少都不影响动态。 */
+const NI_SI = 1.0e10;                 // 硅 300 K 本征载流子浓度，cm⁻³
+const EPS_SI = 11.7 * 8.8541878128e-14;   // 硅介电常数，F/cm（ε₀ = 8.854e-14 F/cm）
+const NMAJ = 1e17;                    // 假定的多子（掺杂）浓度，cm⁻³：n 型记 N_D、p 型记 N_A
+const TAU_MIN = Math.pow(10, -1.3) * 1e-6;   // 寿命滑块最小值 0.05 µs，换算成秒做量级对比
+let P = new Float64Array(NX);         // 当前分布
+let PIN = new Float64Array(NX);       // 初始分布
+let TNOW = 0;                         // 当前仿真时间（µs）
+let YMAX = 1e14;                      // 纵轴上限
+let HIST = { t: [], pm: [], xm: [], sg: [], nn: [] };
+let HOVER = null;                     // 模块一悬停位置 {px, py}
+
+/* ---------------- 2. 参数映射 ---------------- */
+/* 迁移率固定：随「少子类型」取 Si 300 K 典型值（空穴 480、电子 1350 cm²/(V·s)）。
+   它只通过爱因斯坦关系进 D、通过 v_d = μE 进漂移；给滑块会让人以为 D 与 v_d 能各自独立调，
+   其实三者被 μ 锁死 —— 按「非核心量固定而非隐藏」处理，滑块删除。 */
+const muNow = () => (OPT.car === 0 ? MATS[0].mp : MATS[0].mn);
+/* 多子（与「少子类型」相反的那支）：只用于核算介电弛豫时间与低注入判据，不参与分布演化。
+   少子是空穴 ⇒ n 型硅（多子电子 N_D、μ_n = 1350）；少子是电子 ⇒ p 型硅（多子空穴 N_A、μ_p = 480）。 */
+const isNType = () => OPT.car === 0;
+const majLabel = () => (isNType() ? "<span class='m'><i>N</i><sub>D</sub></span>" : "<i>N</i><sub>A</sub>");
+const muMaj = () => (isNType() ? MATS[0].mn : MATS[0].mp);
+const sigmaMaj = () => QE * muMaj() * NMAJ;          // S/cm
+const tauDiel = () => EPS_SI / sigmaMaj();           // s —— 介电弛豫时间 τ_d = ε/σ
+const p0Real = () => NI_SI * NI_SI / NMAJ;           // 真实平衡少子浓度 n_i²/N，cm⁻³（= 1×10³）
+const tauNow = () => Math.pow(10, -1.3 + OPT.tauS / 100 * 3.6);     // 0.05 ~ 100 µs
+const dpNow = () => Math.pow(10, 12 + OPT.dpS / 100 * 4);           // 1e12 ~ 1e16 cm⁻³
+const SNow = () => Math.pow(10, 1 + OPT.Ss / 100 * 5);              // 10 ~ 1e6 cm/s
+const domLen = () => OPT.L;
+const x0Now = () => (0.05 + 0.7 * OPT.x0f / 100) * domLen();
+const xsNow = () => (0.05 + 0.9 * OPT.xsf / 100) * domLen();
+const TSPAN = () => 2.5 * tauNow();
+const dxNow = () => domLen() / (NX - 1);
+
+/* ---------------- 3. 派生物理量 ---------------- */
+function der() {
+  const mu = muNow(), Tk = TFIX, tau = tauNow();
+  const kTq = KB * Tk / QE;                       // V
+  const Dcm = mu * kTq;                           // cm²/s
+  const D = Dcm * 100;                            // µm²/µs
+  const sgn = CARS[OPT.car].sgn;
+  const vcm = sgn * mu * OPT.E;                   // cm/s（带符号）
+  const v = vcm * 0.01;                           // µm/µs（带符号）
+  const Lp = Math.sqrt(D * tau);
+  const Ld = Math.abs(v) * tau;
+  const ratio = Lp > 0 ? Ld / Lp : 0;
+  const lam = (-v + Math.sqrt(v * v + 4 * D / tau)) / (2 * D);
+  const Leff = lam > 0 ? 1 / lam : 0;
+  const isLight = OPT.ic === 2;
+  return {
+    mu: mu, T: Tk, kTq: kTq, Dcm: Dcm, D: D, tau: tau, E: OPT.E,
+    vcm: vcm, v: v, sgn: sgn, L: domLen(), Lp: Lp, Ld: Ld, ratio: ratio,
+    Leff: Leff, lam: lam, p0: P0C, dp: dpNow(), S: SNow(),
+    Nmaj: NMAJ, muMaj: muMaj(), sgMaj: sigmaMaj(), tauD: tauDiel(), p0Real: p0Real(),
+    isLight: isLight, span: TSPAN(), dx: dxNow()
+  };
+}
+
+/* ---------------- 4. 初始条件 ---------------- */
+function setInitial() {
+  const d = der(), L = d.L, dx = d.dx, dp = d.dp;
+  for (let i = 0; i < NX; i++) {
+    const x = i * dx;
+    let v;
+    if (OPT.ic === 0) {                     // 脉冲（高斯）
+      const s = OPT.s0;
+      v = P0C + dp * Math.exp(-((x - x0Now()) * (x - x0Now())) / (2 * s * s));
+    } else if (OPT.ic === 1) {               // 阶跃
+      v = P0C + (x < xsNow() ? dp : 0);
+    } else if (OPT.ic === 2) {               // 稳态光照：初值取「当前背面边界」下的精确稳态解
+      /* 左端固定注入通量 F = D·Δp_inj/L ⇒ 离散形式 Δp_0 − Δp_1 = Δp_inj·u（u = Δx/L）。
+         稳态方程 D(Δp_{i−1} − 2Δp_i + Δp_{i+1})/Δx² = Δp_i/τ 的特征根为 r^±1，
+         其中 r + 1/r = 2 + u²（记 κ = ln r）。以 j = (NX−1) − i 记「距背面格点数」，则
+           背面欧姆（Δp = 0） ⇒ Δp_j = A·sh(j)
+           背面反射（零通量） ⇒ Δp_j = A·[ch(j) − tanh(κ/2)·sh(j)]
+         sh/ch 为离散双曲函数 (r^±j ∓ r^∓j)/2，A 由左端通量定出。
+         这样取初值，数值解在整个时间窗内严格不动（差别仅来自浮点舍入）。
+         样品远长于扩散长度时两种形式都退化为 exp(−x/L)，差别只在紧贴背面约一个扩散长度内。 */
+      const u = dx / d.Lp, q = 2 + u * u;
+      const r = (q + Math.sqrt(q * q - 4)) / 2, kp = Math.log(r);
+      const m = NX - 1, j = m - i;
+      const ej = Math.pow(r, j), shj = (ej - 1 / ej) / 2, chj = (ej + 1 / ej) / 2;
+      const em = Math.pow(r, m), em1 = em / r;
+      const shm = (em - 1 / em) / 2, shm1 = (em1 - 1 / em1) / 2;
+      if (OPT.bnd === B_OHMIC) v = P0C + dp * u * shj / (shm - shm1);
+      else if (OPT.bnd === B_REFL) {
+        const chm = (em + 1 / em) / 2, chm1 = (em1 + 1 / em1) / 2, tk = Math.tanh(kp / 2);
+        v = P0C + dp * u * (chj - tk * shj) / ((chm - chm1) - tk * (shm - shm1));
+      } else v = P0C + dp * Math.exp(-x / d.Lp);
+    } else {                                 // 均匀
+      v = P0C + dp;
+    }
+    P[i] = v; PIN[i] = v;
+  }
+  TNOW = 0;
+  HIST = { t: [], pm: [], xm: [], sg: [], nn: [] };
+  let mx = 0;
+  for (let i = 0; i < NX; i++) mx = Math.max(mx, P[i]);
+  YMAX = 1.18 * Math.max(mx, P0C * 1.2);
+  record(0);
+}
+
+/* ---------------- 5. 特征量 ---------------- */
+function features() {
+  const dx = dxNow();
+  let N = 0, s1 = 0, pm = -Infinity, xm = 0;
+  for (let i = 0; i < NX; i++) {
+    const u = Math.max(P[i] - P0C, 0), x = i * dx;
+    N += u * dx; s1 += u * x * dx;
+    if (P[i] > pm) { pm = P[i]; xm = x; }
+  }
+  let xb = 0, sg = 0;
+  if (N > 1e-30) {
+    xb = s1 / N;
+    let s2 = 0;
+    for (let i = 0; i < NX; i++) {
+      const u = Math.max(P[i] - P0C, 0), x = i * dx;
+      s2 += u * (x - xb) * (x - xb) * dx;
+    }
+    sg = Math.sqrt(Math.max(s2 / N, 0));
+  }
+  for (let i = 0; i < NX; i++) if (!isFinite(P[i])) return { N: 0, pm: 0, xm: 0, xb: 0, sg: 0, ps: P0C, bad: true };
+  return { N: N, pm: Math.max(pm - P0C, 0), xm: xm, xb: xb, sg: sg, ps: P[0], bad: false };
+}
+
+function record(t) {
+  const f = features();
+  HIST.t.push(t); HIST.pm.push(f.pm); HIST.xm.push(f.xm); HIST.sg.push(f.sg); HIST.nn.push(f.N);
+  if (HIST.t.length > 4000) { HIST.t.shift(); HIST.pm.shift(); HIST.xm.shift(); HIST.sg.shift(); HIST.nn.shift(); }
+}
+
+/* ---------------- 6. 隐式（向后欧拉）有限差分推进 ---------------- */
+const NS = NX - 2;
+const SC_A = new Float64Array(NS), SC_B = new Float64Array(NS), SC_C = new Float64Array(NS), SC_R = new Float64Array(NS);
+const SC_CP = new Float64Array(NS), SC_DP = new Float64Array(NS), SC_X = new Float64Array(NS);
+
+function stepOnce(dt) {
+  const d = der(), D = d.D, v = d.v, tau = d.tau, dx = d.dx, L = d.L;
+  const a = D / (dx * dx), c = 1 / tau, r0 = 1 / dt;
+  const av = Math.abs(v);
+  const Pe = av * dx / D;
+  const central = Pe <= 2;                       // 佩克莱数小 → 中心差分（无色散、数值扩散小）
+  const cv = v / (2 * dx);
+  const bP = Math.max(v, 0) / dx, bM = Math.max(-v, 0) / dx;
+  const n = NX - 2;
+  const A = SC_A, B = SC_B, C = SC_C, R = SC_R;
+  for (let k = 0; k < n; k++) {
+    const i = k + 1;
+    if (central) { A[k] = -(a + cv); B[k] = r0 + 2 * a + c; C[k] = -(a - cv); }
+    else { A[k] = -(a + bP); B[k] = r0 + 2 * a + bP + bM + c; C[k] = -(a + bM); }
+    R[k] = r0 * P[i] + c * P0C;
+  }
+  /* ---- 边界系数：p_edge = aE·p_neighbor + bE ---- */
+  const g = D / dx;
+  let aL, bL, aR, bR;
+  const gL = Math.max(g, 1e-9);
+  if (d.isLight) {                                 // 左端：固定注入通量 F = D·Δp/L
+    const F = D * d.dp / d.Lp;
+    const den = Math.max(gL + v, 0.25 * gL);
+    aL = g / den; bL = F / den;
+  } else if (OPT.bnd === B_REFL) {                      // 反射：零净通量
+    const den = Math.max(gL + v, 0.25 * gL);
+    aL = g / den; bL = 0;
+  } else if (OPT.bnd === B_OHMIC) {                      // 欧姆接触
+    aL = 0; bL = P0C;
+  } else if (OPT.bnd === B_S) {                      // 有限表面复合
+    const S = SNow() * 0.01;
+    const den = Math.max(gL + v + S, 0.25 * gL + S);
+    aL = g / den; bL = S * P0C / den;
+  } else {                                         // 抽取
+    aL = 0; bL = 0;
+  }
+  if (OPT.bnd === B_REFL) {
+    const den = Math.max(gL - v, 0.25 * gL);
+    aR = g / den; bR = 0;
+  } else if (OPT.bnd === B_OHMIC) {
+    aR = 0; bR = P0C;
+  } else if (OPT.bnd === B_S) {
+    const S = SNow() * 0.01;
+    const den = Math.max(gL - v + S, 0.25 * gL + S);
+    aR = g / den; bR = S * P0C / den;
+  } else {
+    aR = 0; bR = 0;
+  }
+  /* 把边界折进首尾两行 */
+  B[0] += A[0] * aL; R[0] -= A[0] * bL;
+  B[n - 1] += C[n - 1] * aR; R[n - 1] -= C[n - 1] * bR;
+  /* ---- Thomas 追赶法 ---- */
+  const cp = SC_CP, dpv = SC_DP;
+  cp[0] = C[0] / B[0]; dpv[0] = R[0] / B[0];
+  for (let k = 1; k < n; k++) {
+    const m = B[k] - A[k] * cp[k - 1];
+    cp[k] = C[k] / m;
+    dpv[k] = (R[k] - A[k] * dpv[k - 1]) / m;
+  }
+  const X = SC_X;
+  X[n - 1] = dpv[n - 1];
+  for (let k = n - 2; k >= 0; k--) X[k] = dpv[k] - cp[k] * X[k + 1];
+  const old0 = P[0], old1 = P[NX - 1];
+  for (let k = 0; k < n; k++) P[k + 1] = X[k];
+  P[0] = aL * P[1] + bL;
+  P[NX - 1] = aR * P[NX - 2] + bR;
+  if (!isFinite(P[0])) P[0] = old0;
+  if (!isFinite(P[NX - 1])) P[NX - 1] = old1;
+  for (let i = 0; i < NX; i++) if (P[i] < 0) P[i] = 0;
+}
+
+/* 推进到指定时刻（从当前状态继续） */
+function advanceTo(tTarget) {
+  const dt = tauNow() / 200;
+  let guard = 0;
+  while (TNOW < tTarget - 1e-12 && guard < 6000) {
+    const step = Math.min(dt, tTarget - TNOW);
+    stepOnce(step);
+    TNOW += step;
+    record(TNOW);
+    guard++;
+  }
+}
+
+/* 从头重算到指定时刻（改参数 / 拖时间滑块时用） */
+function recompute(tTarget) {
+  setInitial();
+  if (tTarget > 0) advanceTo(tTarget);
+}
+
+/* ---------------- 7. 解析参考曲线 ---------------- */
+function theoryAt(t) {
+  const d = der();
+  if (OPT.ic === 0) {                                  // 脉冲：高斯保持高斯
+    const s = Math.sqrt(OPT.s0 * OPT.s0 + 2 * d.D * t);
+    const decay = Math.exp(-t / d.tau);
+    const pm = d.dp * (OPT.s0 / s) * decay;
+    return { sg: s, xm: x0Now() + d.v * t, pm: pm, nn: null };
+  }
+  return { sg: null, xm: null, pm: null, nn: null };
+}
+/* 总量：反射边界、无表面复合时 N(t) = N(0) e^(−t/τ) */
+function theoryN(t, N0) { return N0 * Math.exp(-t / tauNow()); }
+
+/* ---------------- 8. 数值小工具 ---------------- */
+const SUPMAP = { "-": "⁻", "0": "⁰", "1": "¹", "2": "²", "3": "³", "4": "⁴", "5": "⁵", "6": "⁶", "7": "⁷", "8": "⁸", "9": "⁹" };
+/* 科学计数法（DOM 版）统一用 sciH —— 幂次必须是真 <sup>，不要再走 Unicode 上标的老 sci()。 */
+/* 画布用的科学计数法：返回「零件」而不是含 Unicode 上标的字符串 —— 幂次必须是真上标零件，
+   否则 mRun 会把 10¹³ 当普通文本画过去（既不随字号缩放，也无法与网页侧的 <sup> 对齐）。 */
+function SciP(v, nd) {
+  if (!isFinite(v)) return [{ s: "—" }];
+  if (v === 0) return [{ s: "0" }];
+  const a = Math.abs(v), e = Math.floor(Math.log10(a)), out = [];
+  const mt = (a / Math.pow(10, e)).toFixed(nd === undefined ? 2 : nd);
+  if (v < 0) out.push({ s: "−" });
+  /* 1 ≦ |v| < 10 时只写尾数，不再拖一个 ×10⁰（与 PSci / sciH 一致） */
+  if (e === 0) { out.push({ s: mt }); return out; }
+  out.push({ s: mt + "×10" });
+  out.push({ s: String(e).replace("-", "\u2212"), sup: true });
+  return out;
+}
+/* 单位字符串（"cm⁻³" / "µm"）→ 正体零件；前导空格由调用点负责 */
+function PUnit(u) { return AUTO(String(u)); }
+function sciH(v, nd) {
+  if (!isFinite(v)) return "—";
+  if (v === 0) return "0";
+  const sg = v < 0 ? "−" : "", a = Math.abs(v);
+  const e = Math.floor(Math.log10(a));
+  const m = (a / Math.pow(10, e)).toFixed(nd === undefined ? 2 : nd);
+  /* 1 ≦ |v| < 10 时只写尾数，不再拖一个 ×10⁰（与 PSci 一致） */
+  if (e === 0) return sg + m;
+  /* 指数里的负号用 U+2212（LaTeX 减号），不用 ASCII 连字符 */
+  return sg + m + "×10<sup>" + String(e).replace("-", "\u2212") + "</sup>";
+}
+function fitAll() { ["dist", "evo", "len"].forEach(fitCanvas); }
+
+/* ---------------- 9. 模块一：少子浓度分布 p(x,t) ---------------- */
+let PLOT = null;
+
+function drawDist() {
+  const c = CV.dist || fitCanvas("dist"); if (!c) return;
+  const g = c.g, W = c.W, H = c.H, d = der(), L = d.L;
+  const sy = CARS[OPT.car].sym;
+  g.clearRect(0, 0, W, H);
+  g.fillStyle = "#fff"; g.fillRect(0, 0, W, H);
+
+  const ml = 60, mr = 20, mt = 38, mb = 42;
+  const xa = ml, xb = W - mr, ya = mt, yb = H - mb;
+  if (xb - xa < 40 || yb - ya < 40) return;
+
+  let mx = 0, im = 0;
+  for (let i = 0; i < NX; i++) { if (P[i] > mx) mx = P[i]; if (PIN[i] > im) im = PIN[i]; }
+  const YM = 1.18 * Math.max(mx, im, P0C * 1.5);
+  const X = x => xa + (clamp(x, 0, L) / L) * (xb - xa);
+  const Y = v => yb - (clamp(v, 0, YM) / YM) * (yb - ya);
+  PLOT = { xa: xa, xb: xb, ya: ya, yb: yb, L: L, YM: YM, X: X, Y: Y };
+
+  /* ---- 网格与坐标 ---- */
+  const ex = Math.floor(Math.log10(YM)), un = Math.pow(10, ex);
+  for (let i = 0; i <= 4; i++) {
+    const yy = ya + (yb - ya) * i / 4;
+    line(g, xa, yy, xb, yy, i === 4 ? "#c9d4e0" : C_GRID, 1);
+    txt(g, fmt((YM * (1 - i / 4)) / un, 2), xa - 7, yy, C_SUB, "10px " + FONT, "right");
+  }
+  for (let i = 0; i <= 4; i++) {
+    const xx = xa + (xb - xa) * i / 4;
+    line(g, xx, ya, xx, yb, C_GRID, 1);
+    txt(g, fmt(L * i / 4, 0), xx, yb + 13, C_SUB, "10px " + FONT, "center");
+  }
+  line(g, xa, yb, xb, yb, "#b9c5d2", 1.2);
+  line(g, xa, ya, xa, yb, "#b9c5d2", 1.2);
+  mtxt(g, [{ s: "x", i: 1 }, " (µm)"], (xa + xb) / 2, yb + 28, C_SUB, 11, "center");
+  mtxt(g, ["少子浓度 " + sy + " (×10", { s: String(ex), sup: 1 }, " cm", { s: "−3", sup: 1 }, ")"],
+    xa - 52, ya - 16, C_SUB, 10.5, "left");
+
+  /* ---- 初始分布 ---- */
+  if (OPT.ckInit) {
+    g.save(); g.setLineDash([5, 4]);
+    g.beginPath();
+    for (let i = 0; i < NX; i++) {
+      const xx = X(i * d.dx), yy = Y(PIN[i]);
+      i === 0 ? g.moveTo(xx, yy) : g.lineTo(xx, yy);
+    }
+    g.strokeStyle = "#9aa5b1"; g.lineWidth = 1.6; g.stroke();
+    g.restore();
+  }
+
+  /* ---- 当前分布（填充 + 实线） ---- */
+  g.beginPath();
+  g.moveTo(X(0), yb);
+  for (let i = 0; i < NX; i++) g.lineTo(X(i * d.dx), Y(P[i]));
+  g.lineTo(X(L), yb); g.closePath();
+  g.fillStyle = "rgba(25,118,210,0.13)"; g.fill();
+  g.beginPath();
+  for (let i = 0; i < NX; i++) {
+    const xx = X(i * d.dx), yy = Y(P[i]);
+    i === 0 ? g.moveTo(xx, yy) : g.lineTo(xx, yy);
+  }
+  g.strokeStyle = C_AC; g.lineWidth = 2.2; g.lineJoin = "round"; g.stroke();
+
+  /* ---- 平衡浓度 p₀ ---- */
+  if (OPT.ckP0) {
+    line(g, xa, Y(P0C), xb, Y(P0C), "#6b7a8c", 1.2, [6, 4]);
+    mtxt(g, catA([{ s: sy, i: 1 }, { s: "0", sub: 1 }, { s: " = " }], SciP(P0C, 0)), xb - 4, Y(P0C) - 9, "#6b7a8c", 10, "right");
+  }
+
+  /* ---- 电场与漂移方向箭头 ---- */
+  if (OPT.ckArr) {
+    const cx = (xa + xb) / 2, ln = Math.min(120, (xb - xa) * 0.26);
+    const yE = ya + 12, yV = ya + 30;
+    if (Math.abs(d.E) > 1e-9) {
+      const sE = d.E > 0 ? 1 : -1;
+      arrow(g, cx - sE * ln / 2, yE, cx + sE * ln / 2, yE, C_OP, 2, 7);
+      mtxt(g, [{ s: "E", i: 1 }, " = " + fmt(d.E, 1) + " V/cm"],
+        cx + sE * (ln / 2 + 10), yE, C_OP, 10.5, sE > 0 ? "left" : "right", true);
+    } else {
+      mtxt(g, [{ s: "E", i: 1 }, " = 0　（纯扩散，只展宽不平移）"], cx, yE, "#6b7a8c", 10.5, "center");
+    }
+    if (Math.abs(d.v) > 1e-9) {
+      const sV = d.v > 0 ? 1 : -1;
+      arrow(g, cx - sV * ln / 2, yV, cx + sV * ln / 2, yV, "#2e9e5b", 2, 7);
+      mtxt(g, [{ s: "v", i: 1 }, { s: "d", sub: 1 }, " = " + fmt(d.vcm, 0) + " cm/s" + (d.sgn < 0 ? "（电子，逆着 E）" : "")],
+        cx + sV * (ln / 2 + 10), yV, "#2e9e5b", 10.5, sV > 0 ? "left" : "right", true);
+    } else {
+      mtxt(g, [{ s: "v", i: 1 }, { s: "d", sub: 1 }, " = 0"], cx, yV, "#6b7a8c", 10.5, "center");
+    }
+  }
+
+  /* ---- 特征长度标注 ---- */
+  if (OPT.ckLen) {
+    bracket(g, X(0), X(Math.min(d.Lp, L)), yb - 12, C_AC,
+      [{ s: "L", i: 1 }, { s: " = " }, { sqrt: [{ s: "D", i: 1 }, { s: "τ", i: 1 }] }, { s: " = " + fmt(d.Lp, 0) + " µm" }],
+      d.Lp > L, W);
+    if (Math.abs(d.v) > 1e-9)
+      bracket(g, X(0), X(Math.min(d.Ld, L)), yb - 27, C_OP,
+        [{ s: "L", i: 1 }, { s: "drift", sub: 1 }, { s: " = |" }, { s: "v", i: 1 }, { s: "d", sub: 1 },
+          { s: "|" }, { s: "τ", i: 1 }, { s: " = " + fmt(d.Ld, 0) + " µm" }], d.Ld > L, W);
+  }
+
+  /* ---- 表面标记 ---- */
+  mtxt(g, ["表面 ", { s: "x", i: 1 }, " = 0" + (d.isLight ? "（光照注入）" : "")], xa + 4, yb - 4, "#6b7a8c", 10, "left");
+  mtxt(g, ["背面 ", { s: "x", i: 1 }, " = ", { s: "L", i: 1 }], xb - 4, yb - 4, "#6b7a8c", 10, "right");
+
+  /* ---- 当前时刻 ---- */
+  const f = features();
+  mtxt(g, catA([{ s: "t", i: 1 }, { s: " = " + fmt(TNOW, 2) + " µs（= " + fmt(TNOW / d.tau, 2) + " " }, { s: "τ", i: 1 },
+    { s: "）　Δ" }, { s: sy, i: 1 }, { s: "max", sub: 1 }, { s: " = " }], SciP(f.pm, 2),
+    [{ s: " cm", un: true }, { s: "−3", sup: true, un: true }]),
+    xb, ya - 16, "#2c3e50", 11, "right", true);
+
+  /* ---- 悬停读数 ---- */
+  if (HOVER && HOVER.px >= xa && HOVER.px <= xb && HOVER.py >= ya && HOVER.py <= yb) {
+    const xq = clamp((HOVER.px - xa) / (xb - xa), 0, 1) * L;
+    const idx = clamp(Math.round(xq / d.dx), 0, NX - 1);
+    const pv = P[idx];
+    line(g, X(idx * d.dx), ya, X(idx * d.dx), yb, "rgba(25,118,210,.55)", 1, [4, 3]);
+    g.beginPath(); g.arc(X(idx * d.dx), Y(pv), 4.2, 0, 6.2832);
+    g.fillStyle = C_OP; g.fill(); g.strokeStyle = "#fff"; g.lineWidth = 1.4; g.stroke();
+    const tk = catA([{ s: "x", i: 1 }],
+      [{ s: " = " + fmt(idx * d.dx, 1) + " µm，" }, { s: sy, i: 1 }, { s: " = " }], SciP(pv, 2),
+      [{ s: " cm", un: true }, { s: "−3", sup: true, un: true }, { s: "，Δ" }, { s: sy, i: 1 }, { s: " = " }],
+      SciP(Math.max(pv - P0C, 0), 2),
+      [{ s: " cm", un: true }, { s: "−3", sup: true, un: true }]);
+    const w = mMeasure(g, tk, 10.5, false);
+    let hx = X(idx * d.dx) + 10;
+    if (hx + w + 8 > xb) hx = X(idx * d.dx) - w - 18;
+    chipM(g, tk, hx, Y(pv) - 16, "#2c3e50", 10.5, "left", W);
+  }
+}
+
+/* 双向标注尺 */
+function bracket(g, x1, x2, y, col, parts, clipped, W) {
+  if (Math.abs(x2 - x1) < 2) return;
+  line(g, x1, y, x2, y, col, 1.4);
+  line(g, x1, y - 4, x1, y + 4, col, 1.4);
+  if (clipped) {
+    line(g, x2, y - 5, x2, y + 5, col, 2);
+    line(g, x2 + 5, y - 5, x2 + 5, y + 5, col, 2);
+  } else {
+    line(g, x2, y - 4, x2, y + 4, col, 1.4);
+    arrowHead(g, x2, y, 0, 5.5, col);
+    arrowHead(g, x1, y, Math.PI, 5.5, col);
+  }
+  chipM(g, parts.concat(clipped ? ["（超出视窗）"] : []), (x1 + x2) / 2, y - 11, col, 10, "center", W);
+}
+
+/* ---------------- 10. 模块二：特征量随时间的演化 ---------------- */
+const QS = [
+  { name: "峰值 Δp_max", unit: "cm⁻³", key: "pm",
+    lab: sy => "峰值 " + MM("Δ<i>" + sy + "</i><sub>max</sub>"),
+    tok: sy => ["峰值 Δ", { s: sy, i: 1 }, { s: "max", sub: 1 }] },
+  { name: "峰位 x_max", unit: "µm", key: "xm",
+    lab: () => "峰位 " + MM("<i>x</i><sub>max</sub>"),
+    tok: () => ["峰位 ", { s: "x", i: 1 }, { s: "max", sub: 1 }] },
+  { name: "总量 N", unit: "cm⁻²", key: "nn",
+    lab: () => "总量 " + MM("<i>N</i>"),
+    tok: () => ["总量 ", { s: "N", i: 1 }] }
+];
+
+function drawEvo() {
+  const c = CV.evo || fitCanvas("evo"); if (!c) return;
+  const g = c.g, W = c.W, H = c.H, d = der(), q = QS[OPT.q] || QS[0], key = q.key;
+  const sy = CARS[OPT.car].sym;
+  g.clearRect(0, 0, W, H);
+  g.fillStyle = "#fff"; g.fillRect(0, 0, W, H);
+
+  const ml = 62, mr = 20, mt = 34, mb = 38;
+  const xa = ml, xb = W - mr, ya = mt, yb = H - mb;
+  if (xb - xa < 40 || yb - ya < 30) return;
+
+  const ts = HIST.t, vs = HIST[key];
+  const T = Math.max(d.span, 1e-9);
+  const X = t => xa + (clamp(t, 0, T) / T) * (xb - xa);
+
+  /* 纵轴范围 */
+  let vmax = 0;
+  for (let i = 0; i < vs.length; i++) if (isFinite(vs[i])) vmax = Math.max(vmax, vs[i]);
+  const th = thCurve(key, T, d);
+  if (th) for (let i = 0; i < th.length; i++) if (isFinite(th[i].v)) vmax = Math.max(vmax, th[i].v);
+  if (vmax <= 0) vmax = 1;
+  const YM = vmax * 1.12;
+  const ex = Math.floor(Math.log10(YM)), un = Math.pow(10, ex);
+  const Y = v => yb - (clamp(v, 0, YM) / YM) * (yb - ya);
+
+  for (let i = 0; i <= 4; i++) {
+    const yy = ya + (yb - ya) * i / 4;
+    line(g, xa, yy, xb, yy, i === 4 ? "#c9d4e0" : C_GRID, 1);
+    txt(g, fmt((YM * (1 - i / 4)) / un, 2), xa - 7, yy, C_SUB, "10px " + FONT, "right");
+  }
+  for (let i = 0; i <= 5; i++) {
+    const xx = xa + (xb - xa) * i / 5;
+    line(g, xx, ya, xx, yb, C_GRID, 1);
+    txt(g, fmt(T * i / 5, 1), xx, yb + 13, C_SUB, "10px " + FONT, "center");
+  }
+  line(g, xa, yb, xb, yb, "#b9c5d2", 1.2);
+  line(g, xa, ya, xa, yb, "#b9c5d2", 1.2);
+  mtxt(g, [{ s: "t", i: 1 }, " (µs)　〔全程 = " + fmt(T, 1) + " µs = 2.5 ", { s: "τ", i: 1 }, "〕"],
+    (xa + xb) / 2, yb + 28, C_SUB, 11, "center");
+  mtxt(g, q.tok(sy).concat(["  (×10", { s: String(ex), sup: 1 }, " " + q.unit + ")"]),
+    xa - 54, ya - 16, "#2c3e50", 11, "left", true);
+
+  /* 解析参考 */
+  if (th && OPT.ckTh) {
+    g.save(); g.setLineDash([5, 4]);
+    g.beginPath();
+    for (let i = 0; i < th.length; i++) {
+      const xx = X(th[i].t), yy = Y(th[i].v);
+      i === 0 ? g.moveTo(xx, yy) : g.lineTo(xx, yy);
+    }
+    g.strokeStyle = "#9aa5b1"; g.lineWidth = 1.6; g.stroke();
+    g.restore();
+    txt(g, "解析参考", xb - 4, ya + 10, "#9aa5b1", "10px " + FONT, "right");
+  } else if (!th) {
+    txt(g, "（本组合无简单解析解，仅显示数值解）", xb - 4, ya + 10, "#9aa5b1", "10px " + FONT, "right");
+  }
+
+  /* 数值解 */
+  g.beginPath();
+  for (let i = 0; i < vs.length; i++) {
+    const xx = X(ts[i]), yy = Y(vs[i]);
+    i === 0 ? g.moveTo(xx, yy) : g.lineTo(xx, yy);
+  }
+  g.strokeStyle = C_AC; g.lineWidth = 2.2; g.lineJoin = "round"; g.stroke();
+
+  /* 当前时刻竖线 */
+  const cur = clamp(TNOW, 0, T);
+  const cv = vs.length ? vs[vs.length - 1] : 0;
+  line(g, X(cur), ya, X(cur), yb, "rgba(217,74,61,.6)", 1.2, [4, 3]);
+  g.beginPath(); g.arc(X(cur), Y(cv), 4.6, 0, 6.2832);
+  g.fillStyle = C_OP; g.fill(); g.strokeStyle = "#fff"; g.lineWidth = 1.4; g.stroke();
+  const tk = catA([{ s: "t", i: 1 }, { s: " = " + fmt(cur, 2) + " µs：" }],
+    q.tok(sy), [{ s: " = " }], SciP(cv, 2), PUnit(" " + q.unit));
+  const hw = mMeasure(g, tk, 10.5, false);
+  chipM(g, tk, X(cur) + 8 + hw > xb ? X(cur) - hw - 16 : X(cur) + 8, Y(cv) - 15, "#2c3e50", 10.5, "left", W);
+}
+
+/* 解析参考曲线（返回 [{t,v}] 或 null） */
+function thCurve(key, T, d) {
+  const ok = (key === "nn") ? (OPT.bnd === B_REFL && !d.isLight) : (OPT.ic === 0);
+  if (!ok) return null;
+  const out = [];
+  const N0 = HIST.nn.length ? HIST.nn[0] : 0;
+  for (let i = 0; i <= 120; i++) {
+    const t = T * i / 120;
+    let v = null;
+    if (key === "nn") v = theoryN(t, N0);
+    else { const th = theoryAt(t); v = th[key]; }
+    if (v !== null && isFinite(v)) out.push({ t: t, v: v });
+  }
+  return out.length ? out : null;
+}
+
+/* ---------------- 11. 模块三：三种特征长度 ---------------- */
+function drawLen() {
+  const c = CV.len || fitCanvas("len"); if (!c) return;
+  const g = c.g, W = c.W, H = c.H, d = der();
+  g.clearRect(0, 0, W, H);
+  g.fillStyle = "#fff"; g.fillRect(0, 0, W, H);
+
+  const rows = [
+    { tok: ["扩散长度 ", { s: "L", i: 1 }, { s: " = " }, { sqrt: [{ s: "D", i: 1 }, { s: "τ", i: 1 }] }],
+      v: d.Lp, col: C_AC, tip: "复合前能扩散多远" },
+    { tok: ["漂移长度 ", { s: "L", i: 1 }, { s: "drift", sub: 1 }, { s: " = |" }, { s: "v", i: 1 }, { s: "d", sub: 1 }, { s: "|" }, { s: "τ", i: 1 }],
+      v: d.Ld, col: C_OP, tip: "复合前能漂移多远" },
+    { tok: ["稳态衰减长度 ", { s: "L", i: 1 }, { s: "eff", sub: 1 }],
+      v: d.Leff, col: "#2e9e5b", tip: "稳态光照 Δp ∝ e^(−x/L_eff) 的衰减常数" }
+  ];
+  const xa = 168, xb = W - 118;
+  let mv = 0;
+  rows.forEach(r => mv = Math.max(mv, r.v));
+  if (mv <= 0) mv = 1;
+
+  txt(g, "三种特征长度（µm）", 12, 16, "#2c3e50", "bold 12px " + FONT, "left");
+  const ROW0 = 30, ROWH = 28;
+  rows.forEach((r, i) => {
+    const y = ROW0 + i * ROWH;
+    mtxt(g, r.tok, xa - 10, y + 8, C_SUB, 11, "right");
+    g.fillStyle = "#eef2f7"; g.fillRect(xa, y, Math.max(2, xb - xa), 18);
+    const w = clamp(r.v / mv, 0, 1) * (xb - xa);
+    g.fillStyle = r.col; g.fillRect(xa, y, Math.max(r.v > 0 ? 3 : 0, w), 18);
+    txt(g, fmt(r.v, 0) + " µm", xb + 8, y + 9, r.col, "bold 11px " + FONT, "left");
+    txt(g, r.tip, xa + 4, y + 9, r.v / mv > 0.55 ? "#fff" : "#6b7a8c", "10px " + FONT, "left");
+  });
+
+  /* 样品长度尺：整块按画布高度锚定（以后改 data-h 也不会互相压字） */
+  const sy = H - 80, capY = sy - 58, LANE = [sy - 16, sy - 29, sy - 42];
+  txt(g, "样品长度尺（同一比例看少子能走多远）", 12, capY, "#2c3e50", "bold 11.5px " + FONT, "left");
+  line(g, xa, sy, xb, sy, "#b9c5d2", 1.4);
+  line(g, xa, sy - 5, xa, sy + 5, "#b9c5d2", 1.4);
+  line(g, xb, sy - 5, xb, sy + 5, "#b9c5d2", 1.4);
+  txt(g, "0", xa, sy + 15, C_SUB, "10px " + FONT, "center");
+  mtxt(g, [fmt(d.L, 0) + " µm（背面 ", { s: "x", i: 1 }, " = ", { s: "L", i: 1 }, "）"], xb, sy + 15, C_SUB, 10, "center");
+  const XS = v => xa + (clamp(v, 0, d.L) / d.L) * (xb - xa);
+  /* 标签先量宽、按中心 x 排序，再贪心分道：同一道内前后两个标签至少留 6px 净距 */
+  const marks = [[d.Lp, C_AC, [{ s: "L", i: 1 }]],
+   [d.Ld, C_OP, [{ s: "L", i: 1 }, { s: "drift", sub: 1 }]],
+   [d.Leff, "#2e9e5b", [{ s: "L", i: 1 }, { s: "eff", sub: 1 }]]]
+    .map(m => {
+      const over = m[0] > d.L, xx = XS(m[0]);
+      const parts = partsOf(over ? m[2].concat([" ≫ ", { s: "L", i: 1 }]) : m[2]);
+      return {
+        xx: xx, cx: clamp(xx, xa + 14, xb - 14), col: m[1], parts: parts,
+        w: mMeasure(g, parts, 10, false), lane: LANE.length - 1
+      };
+    })
+    .sort((a, b) => a.cx - b.cx);
+  const laneEnd = LANE.map(() => -1e9);
+  marks.forEach(m => {
+    for (let k = 0; k < LANE.length; k++) {
+      if (m.cx - m.w / 2 > laneEnd[k] + 6) { m.lane = k; laneEnd[k] = m.cx + m.w / 2; return; }
+    }
+    laneEnd[LANE.length - 1] = Math.max(laneEnd[LANE.length - 1], m.cx + m.w / 2);
+  });
+  marks.forEach(m => {
+    line(g, m.xx, sy - 4, m.xx, sy + 4, m.col, 1.6);
+    if (m.lane > 0) line(g, m.xx, LANE[m.lane] + 7, m.xx, sy - 5, m.col, 1, [2, 2]);
+    g.beginPath(); g.arc(m.xx, sy, 3.6, 0, 6.2832); g.fillStyle = m.col; g.fill();
+    mtxt(g, m.parts, m.cx, LANE[m.lane], m.col, 10, "center", true);
+  });
+
+  /* 判据 */
+  const ratio = d.ratio;
+  const verdict = ratio > 1.5 ? "漂移主导（电场把少子推向一边）" : (ratio < 0.7 ? "扩散主导（浓度梯度说了算）" : "两者相当（平移与展宽同时可见）");
+  const vcol = ratio > 1.5 ? C_OP : (ratio < 0.7 ? C_AC : "#2e9e5b");
+  mtxt(g, [{ s: "L", i: 1 }, { s: "drift", sub: 1 }, { s: " / " }, { s: "L", i: 1 }, { s: " = " },
+    { s: "qEL", i: 1 }, { s: " / " }, { s: "kT", i: 1 }, { s: " = " + fmt(ratio, 3) }],
+    12, H - 40, "#2c3e50", 12, "left", true);
+  txt(g, verdict, 12, H - 22, vcol, "bold 12px " + FONT, "left");
+  mtxt(g, [{ s: "L", i: 1 }, { s: "eff", sub: 1 }, { s: " = 2" }, { s: "D", i: 1 }, { s: " / (−" },
+    { s: "v", i: 1 }, { s: "d", sub: 1 }, { s: " + " }, { sqrt: [{ s: "v", i: 1 }, { s: "d", sub: 1 }, { s: "2", sup: 1 }, { s: " + 4" }, { s: "D", i: 1 }, { s: "/" }, { s: "τ", i: 1 }] },
+    { s: ")：电场把少子往体内推时变长，往表面推时变短。" }],
+    W - 12, H - 22, C_SUB, 10.5, "right");
+}
+
+/* ---------------- 12. 读数面板 ---------------- */
+function kvHd(s) { return '<div class="hd">' + s + "</div>"; }
+function kvRow(k, v) { return '<div class="row"><span class="k">' + k + '</span><span class="v">' + v + "</span></div>"; }
+
+function updateReadout() {
+  const d = der(), f = features(), sy = CARS[OPT.car].sym;
+  /* ---- 核心区：三种特征长度 → 当前分布 ---- */
+  let h = "";
+  h += kvHd("三种特征长度（谁说了算）");
+  h += kvRow(MM("扩散长度 <i>L</i><span class=\"op\">=</span><span class='sqrt'><span class='rd'>√</span><span class='rdc'><i>D</i><i>τ</i></span></span>"), "<b>" + fmt(d.Lp, 1) + "</b> µm");
+  h += kvRow(MM("漂移长度 <i>L</i><sub>drift</sub><span class=\"op\">=</span><span class=\"op\">|</span><i>v</i><sub>d</sub><span class=\"op\">|</span><i>τ</i>"), "<b>" + fmt(d.Ld, 1) + "</b> µm");
+  h += kvRow(MM("<i>L</i><sub>drift</sub><span class=\"sl\">/</span><i>L</i><span class=\"op\">=</span>" + FRAC_H("<span class='m'><i>qEL</i></span>", "<i>kT</i>")),
+    "<b>" + fmt(d.ratio, 3) + "</b>　" + (d.ratio > 1.5 ? "漂移主导" : (d.ratio < 0.7 ? "扩散主导" : "两者相当")));
+  h += kvRow(MM("稳态衰减长度 <i>L</i><sub>eff</sub>"), "<b>" + fmt(d.Leff, 1) + "</b> µm");
+
+  h += kvHd("当前分布（数值解）");
+  h += kvRow(MM("峰值过剩浓度 Δ<i>" + sy + "</i><sub>max</sub>"),
+    "<b>" + sciH(f.pm, 2) + "</b> cm<sup>−3</sup>（总量 <i>N</i> = " + sciH(f.N, 2) + " cm<sup>−2</sup>）");
+  h += kvRow(MM("峰位 <i>x</i><sub>max</sub>"), "<b>" + fmt(f.xm, 1) + "</b> µm");
+  h += kvRow(MM("初始宽度 <i>σ</i><sub>0</sub> <span class=\"sl\">/</span> 当前 <i>σ</i>"),
+    fmt(OPT.s0, 0) + " / " + fmt(f.sg, 1) + " µm" + (OPT.ic === 0
+      ? "（" + MM("<span class='sqrt'><span class='rd'>√</span><span class='rdc'>2<i>Dt</i></span></span>") + " 增量 = " + fmt(Math.sqrt(Math.max(2 * d.D * TNOW, 0)), 1) + "）" : ""));
+
+  /* ---- 折叠区：材料与输运参数 / 分布其余量 / 适用条件 ---- */
+  let hm = "";
+  hm += kvHd("材料与输运参数");
+  hm += kvRow("材料（本工具固定） / 少子类型", "<b>" + MATS[0].name + "</b> / " + CARS[OPT.car].name + "（" + MM("<i>" + sy + "</i>") + "）");
+  hm += kvRow(MM("温度 <i>T</i>（固定） <span class=\"sl\">/</span> <i>kT</i><span class=\"sl\">/</span><i>q</i>"), TFIX + " K / " + fmt(d.kTq, 4) + " V");
+  hm += kvRow(MM("迁移率 <i>μ</i>（固定）"), "<b>" + fmt(d.mu, 0) + "</b> cm<sup>2</sup>/(V·s)");
+  hm += kvRow(MM("扩散系数 <i>D</i><span class=\"op\">=</span>" + FRAC_H("<span class='m'><i>μ</i></span><span class='m'><i>kT</i></span>", "<i>q</i>")),
+    "<b>" + fmt(d.Dcm, 2) + "</b> cm<sup>2</sup>/s（= " + fmt(d.D, 0) + " µm<sup>2</sup>/µs）");
+  hm += kvRow(MM("少子寿命 <i>τ</i>"), "<b>" + fmt(d.tau, 2) + "</b> µs");
+  hm += kvRow(MM("电场 <i>E</i>"), "<b>" + fmt(d.E, 1) + "</b> V/cm");
+  hm += kvRow(MM("漂移速度 <i>v</i><sub>d</sub><span class=\"op\">=</span><i>μE</i>"),
+    "<b>" + fmt(d.vcm, 0) + "</b> cm/s（" + fmt(d.v, 1) + " µm/µs）");
+  hm += kvRow(MM("表面复合速度 <i>S</i>"), OPT.bnd === B_S ? "<b>" + sciH(d.S, 1) + "</b> cm/s（固定）"
+    : (OPT.bnd === B_REFL ? "0（反射）" : (OPT.bnd === B_OHMIC ? "∞（欧姆）" : "∞（抽取）")));
+  hm += kvRow(MM("样品长度（视窗固定） <span class=\"sl\">/</span> <i>L</i>"), fmt(d.L, 0) + " µm = " + fmt(d.L / Math.max(d.Lp, 1e-9), 2) + " 个扩散长度");
+
+  hm += kvHd("当前分布（其余）");
+  hm += kvRow(MM("时刻 <i>t</i>"), "<b>" + fmt(TNOW, 2) + "</b> µs（= " + fmt(TNOW / d.tau, 2) + " " + MM("<i>τ</i>") + "）");
+  hm += kvRow(MM("质心 <i>x̄</i> <span class=\"sl\">/</span> 宽度 <i>σ</i>"), fmt(f.xb, 1) + " / <b>" + fmt(f.sg, 1) + "</b> µm");
+  hm += kvRow(MM("表面浓度 <i>" + sy + "</i><span class=\"op\">(</span><span class='m'><i>x</i></span><span class=\"op\">=</span>0<span class=\"op\">)</span>"),
+    "<b>" + sciH(f.ps, 2) + "</b> cm<sup>−3</sup>（" + MM("Δ<i>" + sy + "</i>") + " = " + sciH(Math.max(f.ps - P0C, 0), 2) + "）");
+
+  hm += kvHd("适用条件（低注入 · 准电中性）");
+  hm += kvRow(MM("平衡浓度 <i>" + sy + "</i><sub>0</sub>（本页作图基线）"),
+    "<b>" + sciH(P0C, 1) + "</b> cm<sup>−3</sup>（<b>示意取值</b>）");
+  hm += kvRow(MM("真实 <i>" + sy + "</i><sub>0</sub><span class=\"op\">=</span>" +
+      FRAC_H("<span class='m'><i>n</i><sub>i</sub><sup>2</sup></span>", majLabel())),
+    sciH(d.p0Real, 1) + " cm<sup>−3</sup>（" + MM("<i>n</i><sub>i</sub>") + " = " + sciH(NI_SI, 1) +
+    "、" + MM(majLabel()) + " = " + sciH(NMAJ, 1) + "）");
+  /* 注入水平 = 当前峰值 Δp 与多子浓度之比。本工具注入幅度固定 Δp(0) = 1×10¹⁴（面板上没有滑块），
+     所以这一档恒为 0.1% 上下、余量 3 个数量级 —— 也就是说固定 τ 在本工具全程合法。
+     ⚠ 不要给它挂「越界变色警告」：没有任何可达状态能触发，那是死分支。 */
+  const injPct = f.pm / NMAJ * 100;
+  hm += kvRow(MM("注入水平 " + FRAC_H("Δ<i>" + sy + "</i><sub>max</sub>", majLabel())),
+    "<b>" + fmt(injPct, injPct < 1 ? 2 : 1) + " %</b>　低注入 ✓（判据 ≪ 100 %）");
+  hm += kvRow(MM("介电弛豫时间 <i>τ</i><sub>d</sub><span class=\"op\">=</span>" + FRAC_H("<span class='m'><i>ε</i></span>", "<i>σ</i>")),
+    "<b>" + sciH(d.tauD, 2) + "</b> s（" + MM("<i>σ</i>") + " = " + fmt(d.sgMaj, 1) +
+    " S/cm、多子 " + MM("<i>μ</i>") + " = " + fmt(d.muMaj, 0) + "）");
+  hm += kvRow(MM("<i>τ</i><sub>d</sub> <span class=\"sl\">/</span> 当前寿命 <i>τ</i>"),
+    sciH(d.tauD / (d.tau * 1e-6), 1) + "（小 <b>" + fmt(Math.log10(d.tau * 1e-6 / d.tauD), 1) + "</b> 个数量级）");
+  $("readoutMore").innerHTML = hm;
+
+  $("readout").innerHTML = h;
+
+  $("condNote").innerHTML =
+    "① <b>准电中性</b>：本页只解<b>少子</b>这一支，是因为多子靠<b>介电弛豫</b> " +
+    MM("<i>τ</i><sub>d</sub><span class='op'>=</span><i>ε</i><span class='sl'>/</span><i>σ</i>") +
+    " ≈ 10<sup>−13</sup> s 就把电荷重新排好了（比本工具最短寿命 0.05 µs 还小约 6 个数量级），" +
+    "所以不必联立泊松方程；只有<b>本征／高阻样品</b>（" + MM("<i>σ</i>") + " 小 ⇒ " + MM("<i>τ</i><sub>d</sub>") +
+    " 变大）或<b>皮秒超快瞬态</b>才需要 —— 那属于《PN 结电势、电场与电荷分布》工具，那里真在解泊松方程。" +
+    "② <b>低注入</b> " + MM("Δ<i>" + sy + "</i><span class='op'>≪</span>" + majLabel()) + "：寿命 " +
+    MM("<i>τ</i>") + " 才与注入无关、复合项 " +
+    MM("<span class='frac'><span class='num'><i>" + sy + "</i><span class='op'>−</span><i>" + sy + "</i><sub>0</sub></span><span class='den'><span class='m'><i>τ</i></span></span></span>") +
+    " 才对 Δ" + sy + " 线性（本工具注入幅度固定 " + MM("Δ<i>" + sy + "</i><span class='op'>(</span>0<span class='op'>)</span><span class='op'>=</span>" + sciH(d.dp, 1)) +
+    "，占 " + MM(majLabel()) + " 不到 0.1 %，余量三个数量级）。真到<b>高注入</b>（" +
+    MM("Δ<i>" + sy + "</i><span class='op'>~</span>" + majLabel()) + "）时 " + MM("<i>τ</i>") +
+    " 会随注入上升、多子也被扰动，必须联立两种载流子的方程 —— 那时本页这条方程不再适用。" +
+    "③ 本页 " + MM("<i>" + sy + "</i><sub>0</sub><span class='op'>=</span>" + sciH(P0C, 1)) +
+    " 只是一条<b>作图基线</b>（方程对 Δ" + sy + " 线性，它取多少都不影响任何动态）：硅 300 K 的少子浓度恒 ≤ " +
+    MM("<i>n</i><sub>i</sub><span class='op'>=</span>" + sciH(NI_SI, 1)) + "，按上面的 " + MM(majLabel()) +
+    " 反推只有 " + sciH(d.p0Real, 1) + " cm<sup>−3</sup>。";
+}
+
+/* ---------------- 13. 图例 ---------------- */
+function buildLegends() {
+  const sy = CARS[OPT.car].sym;
+  const M_PXT = "<i>" + sy + "</i>(<span class='m'><i>x</i></span>,<span class='m'><i>t</i></span>)", M_PX0 = "<i>" + sy + "</i>(<span class='m'><i>x</i></span>,0)";
+  $("legDist").innerHTML = [
+    '<span><span class="swatch" style="border-color:' + C_AC + '"></span>当前分布 ' + MM(M_PXT) + '</span>',
+    '<span><span class="swatch dash" style="border-color:#9aa5b1"></span>初始分布 ' + MM(M_PX0) + '</span>',
+    '<span><span class="swatch dash" style="border-color:#6b7a8c"></span>平衡浓度 ' + MM("<i>" + sy + "</i><sub>0</sub>") + '（示意基线）</span>',
+    '<span><span class="swatch" style="border-color:' + C_AC + '"></span>扩散长度 ' + MM("<i>L</i><span class=\"op\">=</span><span class='sqrt'><span class='rd'>√</span><span class='rdc'><i>D</i><i>τ</i></span></span>") + '</span>',
+    '<span><span class="swatch" style="border-color:' + C_OP + '"></span>漂移长度 ' + MM("<i>L</i><sub>drift</sub>") + '</span>',
+    '<span><span class="swatch" style="border-color:' + C_OP + '"></span>电场 ' + MM("<i>E</i>") + ' 方向</span>',
+    '<span><span class="swatch" style="border-color:#2e9e5b"></span>漂移速度 ' + MM("<i>v</i><sub>d</sub>") + ' 方向</span>'
+  ].join("");
+  $("legEvo").innerHTML = [
+    '<span><span class="swatch" style="border-color:' + C_AC + '"></span>数值解（有限差分）</span>',
+    '<span><span class="swatch dash" style="border-color:#9aa5b1"></span>解析参考</span>',
+    '<span><span class="swatch sq" style="background:' + C_OP + '"></span>当前时刻 ' + MM("<i>t</i>") + '</span>'
+  ].join("");
+  $("legLen").innerHTML = [
+    '<span><span class="swatch sq" style="background:' + C_AC + '"></span>扩散长度 ' + MM("<i>L</i><span class=\"op\">=</span><span class='sqrt'><span class='rd'>√</span><span class='rdc'><i>D</i><i>τ</i></span></span>") + '</span>',
+    '<span><span class="swatch sq" style="background:' + C_OP + '"></span>漂移长度 ' + MM("<i>L</i><sub>drift</sub><span class=\"op\">=</span><span class=\"op\">|</span><i>v</i><sub>d</sub><span class=\"op\">|</span><i>τ</i>") + '</span>',
+    '<span><span class="swatch sq" style="background:#2e9e5b"></span>稳态衰减长度 ' + MM("<i>L</i><sub>eff</sub>") + '</span>'
+  ].join("");
+}
+
+/* ---------------- 14. 引导探究 ---------------- */
+const CHAL = [
+  {
+    q: "点「纯扩散」预设，看模块一。峰值怎么变？宽度怎么变？<b>中心动了吗</b>？再盯住读数面板里的宽度 <span class=\"m\"><i>σ</i></span>，看它是不是按 <span class=\"m\"><span class='sqrt'><span class='rd'>√</span><span class='rdc'><i>σ</i><sub>0</sub><sup>2</sup><span class=\"op\">+</span>2<i>Dt</i></span></span></span> 增长。",
+    a: () => {
+      const d = der(), f = features();
+      return "中心<b>一动不动</b> —— 这是扩散与漂移最本质的区别。峰值按 <span class=\"m\"><span class=\"frac\"><span class=\"num\">1</span><span class=\"den\"><span class='sqrt'><span class='rd'>√</span><span class='rdc'><i>t</i></span></span></span></span></span> 下降（面积要守恒），宽度按 <span class=\"m\"><i>σ</i><span class=\"op\">=</span><span class='sqrt'><span class='rd'>√</span><span class='rdc'><i>σ</i><sub>0</sub><sup>2</sup><span class=\"op\">+</span>2<i>Dt</i></span></span></span> 增长：当前 <span class=\"m\"><i>t</i></span> = " +
+        fmt(TNOW, 2) + " µs，<span class='m'><i>σ</i></span> 已从 " + fmt(OPT.s0, 0) + " µm 长到 <b>" + fmt(f.sg, 1) + " µm</b>（理论 " +
+        fmt(Math.sqrt(OPT.s0 * OPT.s0 + 2 * d.D * TNOW), 1) + " µm）。注意 <span class=\"m\"><i>σ</i><span class=\"op\">∝</span><span class='sqrt'><span class='rd'>√</span><span class='rdc'><i>t</i></span></span></span> 而不是 <span class=\"m\"><span class=\"op\">∝</span><i>t</i></span>：扩散是<b>无规行走</b>，走 4 倍的时间只能多走 2 倍的距离。还有一条：宽度涨到 <span class=\"m\"><i>L</i><span class=\"op\">=</span><span class='sqrt'><span class='rd'>√</span><span class='rdc'><i>D</i><i>τ</i></span></span><span class=\"op\">=</span>" +
+        fmt(d.Lp, 0) + " µm</span> 这么大时，少子基本上也就复合完了 —— 这就是扩散长度的物理意义。";
+    }
+  },
+  {
+    q: "点「漂移主导」预设（强电场 + 欧姆接触）。峰位 <span class=\"m\"><i>x</i><sub>max</sub></span> 怎么走？宽度 <span class=\"m\"><i>σ</i></span> 真的不变吗？在模块二切到「峰位 <span class=\"m\"><i>x</i><sub>max</sub></span>」验证 <span class=\"m\"><i>x</i><sub>max</sub><span class=\"op\">=</span><i>x</i><sub>0</sub><span class=\"op\">+</span><i>v</i><sub>d</sub><i>t</i></span>，同时盯住读数面板里的 <span class=\"m\"><i>σ</i></span> 看它是不是也在按 <span class=\"m\"><span class='sqrt'><span class='rd'>√</span><span class='rdc'><i>t</i></span></span></span> 长。",
+    a: () => {
+      const d = der(), f = features();
+      const sgTh = Math.sqrt(OPT.s0 * OPT.s0 + 2 * d.D * TNOW);
+      return "峰位<b>匀速直线</b>前进：<span class='m'><i>x</i><sub>max</sub><span class='op'>=</span><i>x</i><sub>0</sub><span class='op'>+</span><i>v</i><sub>d</sub><i>t</i></span>，当前已移动约 <b>" + fmt(Math.max(f.xm - x0Now(), 0), 0) +
+        " µm</b>，而 <span class='m'><i>v</i><sub>d</sub><i>τ</i><span class='op'>=</span></span> <b>" + fmt(d.Ld, 0) + " µm</b> 正是它一生的行程（漂移长度）。<b>但宽度同样在长</b>：<span class='m'><i>σ</i></span> 从 " +
+        fmt(OPT.s0, 0) + " µm 长到 <b>" + fmt(f.sg, 1) + " µm</b>（理论 <span class='m'><span class='sqrt'><span class='rd'>√</span><span class='rdc'><i>σ</i><sub>0</sub><sup>2</sup><span class='op'>+</span>2<i>Dt</i></span></span></span> = " +
+        fmt(sgTh, 1) + " µm），和「纯扩散」预设按<b>完全相同的规律</b>展宽 —— 因为扩散从来没被关掉过。之所以叫“漂移主导”，是此刻 <span class='m'><span class='frac'><span class='num'><i>L</i><sub>drift</sub></span><span class='den'><i>L</i></span></span><span class='op'>=</span>" +
+        fmt(d.ratio, 1) + "</span>，平移距离压倒性地大于展宽量，视觉上像是整齐列队的行军。把电场调成负值，整团少子<b>掉头往回走</b>；而无论正负，展宽都照旧。";
+    }
+  },
+  {
+    q: "点「漂移＋扩散」预设，再回头点「漂移主导」，两者的展宽快慢有差别吗？电场大小会改变展宽速率吗？另外：既然两者都有扩散，这两个预设到底在区分什么？",
+    a: () => {
+      const d = der(), f = features();
+      return "宽度 <span class=\"m\"><i>σ</i></span> 的<b>增长一模一样</b>（在读数面板里逐时刻对照即可）：两者 <span class=\"m\"><i>D</i></span> 相同（同一个 <span class=\"m\"><i>μ</i></span>、同一个 <span class=\"m\"><i>T</i></span>），展宽只由 <span class=\"m\">2<i>Dt</i></span> 决定，跟电场<b>毫无关系</b>。电场只决定整团<b>平移多快</b>。所以两个预设真正区分的是 <span class=\"m\"><span class=\"frac\"><span class=\"num\"><i>L</i><sub>drift</sub></span><span class=\"den\"><i>L</i></span></span></span> 这个<b>比值</b>（当前 " +
+        fmt(d.ratio, 2) + "）：&gt;1 平移看得赢展宽，&lt;1 一眼只看得见铺开。换句话说，漂移与扩散不是“二选一”，而是<b>永远同时到场</b>，我们只是在比谁的效果更显眼。<br><br>再回答“什么时候明显不对称”：在样品<b>内部</b>时，曲线<b>仍严格保持高斯、左右对称</b> —— 漂移只做平移、扩散只做对称展宽，叠加不改变对称性（可对照灰虚线的解析参考）。真正的不对称来自<b>边界</b>：当这团少子漂到背面欧姆接触附近，<b>前沿被接触“吃掉”</b>，前沿就比后沿陡了。当前峰位 " +
+        fmt(f.xm, 0) + " µm、样品长 " + fmt(d.L, 0) + " µm、漂移长度 " + fmt(d.Ld, 0) +
+        " µm —— 把样品调短或把电场调大，就能看到前沿被削平。所以“漂移+扩散必然不对称”是个常见误解：<b>不对称的根源是边界，不是漂移本身</b>。";
+    }
+  },
+  {
+    q: "点「稳态光照」预设。分布动不动？在模块一上找出过剩浓度 <span class=\"m\">Δ<i>p</i><span class=\"op\">=</span><i>p</i><span class=\"op\">−</span><i>p</i><sub>0</sub></span> 降到表面值 <span class=\"m\">1<span class=\"op\">/</span><span class='rm'>e</span></span> 的位置，与读数面板里的 <span class=\"m\"><i>L</i></span> 比一比。再把寿命 <span class=\"m\"><i>τ</i></span> 调大 4 倍，衰减长度变几倍？",
+    a: () => {
+      const d = der();
+      return "分布<b>稳稳不动</b>（左端在持续注入，体复合在持续消耗，达到动态平衡），形状就是 <span class=\"m\">Δ<i>p</i><span class=\"op\">(</span><i>x</i><span class=\"op\">)</span><span class=\"op\">=</span>Δ<i>p</i><span class=\"op\">(</span>0<span class=\"op\">)</span><span class=\"rm\">e</span><sup><span class=\"op\">−</span><i>x</i><span class=\"sl\">/</span><i>L</i></sup></span>：当前 <span class=\"m\"><i>L</i><span class=\"op\">=</span><span class='sqrt'><span class='rd'>√</span><span class='rdc'><i>D</i><i>τ</i></span></span><span class=\"op\">=</span></span> <b>" +
+        fmt(d.Lp, 1) + " µm</b>，也就是说从表面往里走 " + fmt(d.Lp, 0) + " µm，浓度就掉到 <span class=\"m\"><span class=\"frac\"><span class=\"num\">1</span><span class=\"den\"><i>e</i></span></span><span class=\"op\">≈</span></span> 37%（再走一个 <span class=\"m\"><i>L</i></span> 掉到 13%）。<span class=\"m\"><i>τ</i></span> 调大 4 倍，<span class=\"m\"><i>L</i><span class=\"op\">=</span><span class='sqrt'><span class='rd'>√</span><span class='rdc'><i>D</i><i>τ</i></span></span></span> 只变 <b>2 倍</b> —— 平方根关系是扩散长度的标志（这也是实验上测少子寿命的依据）。加个电场试试：<b>把少子往体内推</b>会让衰减长度变长（当前 <span class=\"m\"><i>L</i><sub>eff</sub><span class=\"op\">=</span></span> " +
+        fmt(d.Leff, 1) + " µm），<b>往表面推</b>会让它变短。";
+    }
+  },
+  {
+    q: "点「表面复合」预设（均匀注入 + 有限 <span class=\"m\"><i>S</i></span>），再依次把边界条件切到<b>反射</b>与<b>欧姆接触</b>。三种情况下表面浓度分别是多少？靠表面那段曲线的形状各有什么特点？",
+    a: () => {
+      const d = der(), f = features(), S = SNow();
+      return "<span class=\"m\"><i>S</i><span class=\"op\">=</span>0</span>（反射）时表面通量为零，<b>表面浓度 = 体内浓度</b>，曲线在 <span class=\"m\"><i>x</i><span class=\"op\">=</span>0</span> 处是<b>平的</b>（<span class=\"m\"><span class=\"frac\"><span class=\"num\"><span class=\"op\">∂</span><i>p</i></span><span class=\"den\"><span class=\"op\">∂</span><i>x</i></span></span><span class=\"op\">=</span>0</span>）。<span class=\"m\"><i>S</i><span class=\"op\">→</span><span class=\"op\">∞</span></span>（欧姆接触）时表面浓度被钉在 <b><span class=\"m\"><i>p</i><sub>0</sub></span></b>，复合极快，曲线在表面附近<b>陡得几乎垂直</b>。中等 <span class=\"m\"><i>S</i></span>（本工具固定 10<sup>3</sup> cm/s）时，表面浓度介于两者之间，靠表面 <span class=\"m\"><span class=\"frac\"><span class=\"num\"><i>D</i></span><span class=\"den\"><i>S</i></span></span></span> 这么厚的一层里浓度被“压低”：当前 <span class=\"m\"><i>S</i><span class=\"op\">=</span></span> " +
+        sciH(S, 1) + " cm/s ⇒ <span class=\"m\"><span class=\"frac\"><span class=\"num\"><i>D</i></span><span class=\"den\"><i>S</i></span></span><span class=\"op\">=</span></span> <b>" + fmt(d.Dcm * 100 / (S * 0.01), 0) + " µm</b>（与扩散长度 " + fmt(d.Lp, 0) +
+        " µm 比一比：<span class=\"m\"><span class=\"frac\"><span class=\"num\"><i>D</i></span><span class=\"den\"><i>S</i></span></span><span class=\"op\">≪</span><i>L</i></span> 说明表面复合只是薄薄一层，<span class=\"m\"><span class=\"frac\"><span class=\"num\"><i>D</i></span><span class=\"den\"><i>S</i></span></span><span class=\"op\">≫</span><i>L</i></span> 说明整根样品都被表面拖累）。当前表面浓度 " + sciH(f.ps, 2) + " cm<sup>−3</sup>。钝化工艺要做的，就是把 <span class=\"m\"><i>S</i></span> 往 0 的方向压。";
+    }
+  }
+];
+
+let ANS_EL = [];
+function buildChal() {
+  const grid = $("chalGrid");
+  grid.innerHTML = ""; ANS_EL = [];
+  CHAL.forEach((c, i) => {
+    const el = document.createElement("div");
+    el.className = "chal";
+    el.innerHTML = '<div class="chal-head"><b>' + (i + 1) + ". " + c.q + '</b><span class="chev">▶</span></div>' +
+      '<div class="chal-body"><div class="ans"></div><div class="btn-row"><button>看看答案</button></div></div>';
+    grid.appendChild(el);
+    el.querySelector(".chal-head").onclick = () => el.classList.toggle("open");
+    const ans = el.querySelector(".ans");
+    ANS_EL.push(ans);
+    el.querySelector(".btn-row button").onclick = e => { e.stopPropagation(); ans.classList.toggle("show"); };
+  });
+}
+function refreshAnswers() { ANS_EL.forEach((el, i) => { el.innerHTML = CHAL[i].a(); }); }
+
+/* ---------------- 15. 同步与渲染 ---------------- */
+function markActive() {
+  const set = (id, idx) => Array.prototype.forEach.call($(id).children, b => b.classList.toggle("sel", +b.dataset.i === idx));
+  set("preBtns", OPT.preset); set("carBtns", OPT.car);
+  set("icBtns", OPT.ic); set("bndBtns", OPT.bnd); set("qBtns", OPT.q);
+}
+
+function syncInputs() {
+  const d = der();
+  $("tauSlider").value = OPT.tauS;
+  $("eSlider").value = OPT.E;
+  $("tmSlider").value = Math.round(OPT.tFrac * 1000); $("spSlider").value = Math.round(OPT.speed * 100);
+  $("ckInit").checked = OPT.ckInit; $("ckP0").checked = OPT.ckP0; $("ckLen").checked = OPT.ckLen;
+  $("ckArr").checked = OPT.ckArr; $("ckTh").checked = OPT.ckTh;
+
+  $("preVal").textContent = PRESETS[OPT.preset] ? PRESETS[OPT.preset].name : "自定义";
+  $("preNote").innerHTML = PRESETS[OPT.preset] ? PRESETS[OPT.preset].note : "手动调节的参数组合（预设之外的组合会显示为「自定义」）。";
+  $("carVal").textContent = CARS[OPT.car].name;
+  $("carNote").innerHTML = (CARS[OPT.car].note ? CARS[OPT.car].note + " " : "") + "硅 300 K 典型值：" +
+    MM("<i>μ</i><sub>" + CARS[OPT.car].sym + "</sub>") + " = " +
+    (OPT.car === 0 ? MATS[0].mp : MATS[0].mn) + " cm<sup>2</sup>/(V·s)。";
+  $("tauVal").textContent = fmt(d.tau, 2) + " µs";
+  $("tauSub").innerHTML = "扩散长度 " + MM("<i>L</i><span class=\"op\">=</span><span class='sqrt'><span class='rd'>√</span><span class='rdc'><i>D</i><i>τ</i></span></span>") +
+    " = <b>" + fmt(d.Lp, 1) + "</b> µm；时间窗 = 2.5 " + MM("<i>τ</i>") + " = " + fmt(d.span, 1) + " µs。";
+  $("eVal").textContent = fmt(OPT.E, 1) + " V/cm";
+  $("eSub").innerHTML = Math.abs(OPT.E) < 1e-9
+    ? MM("<i>E</i><span class=\"op\">=</span>0") + "：<b>纯扩散</b>，只有展宽没有平移。"
+    : MM("<i>v</i><sub>d</sub>") + " = " + fmt(d.vcm, 0) + " cm/s；漂移长度 " +
+      MM("<span class=\"op\">|</span><i>v</i><sub>d</sub><span class=\"op\">|</span><i>τ</i>") + " = <b>" + fmt(d.Ld, 1) +
+      "</b> µm；" + MM("<i>L</i><sub>drift</sub><span class=\"sl\">/</span><i>L</i>") + " = " + fmt(d.ratio, 3) +
+      "（" + (d.ratio > 1.5 ? "漂移主导" : (d.ratio < 0.7 ? "扩散主导" : "两者相当")) + "）。";
+  $("icVal").textContent = ICS[OPT.ic].name;
+  $("icNote").innerHTML = ICS[OPT.ic].note;
+  $("bndVal").textContent = BNDS[OPT.bnd].name;
+  $("bndNote").innerHTML = BNDS[OPT.bnd].note + " 两端（" + MM("<i>x</i><span class=\"op\">=</span>0") +
+    " 与 " + MM("<i>x</i><span class=\"op\">=</span><i>L</i>") + "）采用同一条件。" +
+    (OPT.bnd === B_S ? " 表面复合速度固定取 <span class='m'><i>S</i><span class='op'>=</span>" + sciH(d.S, 1) +
+      " cm<span class='sl'>/</span>s</span> ⇒ <span class='m'><i>D</i><span class='sl'>/</span><i>S</i><span class='op'>=</span>" +
+      fmt(d.Dcm * 100 / (d.S * 0.01), 0) + " µm</span>（与 <span class='m'><i>L</i><span class='op'>=</span>" +
+      fmt(d.Lp, 0) + " µm</span> 比较）。" : "") +
+    (d.isLight ? " <b>注意：稳态光照时左端改为固定注入通量。</b>" : "");
+  $("tmVal").textContent = fmt(TNOW, 2) + " µs（= " + fmt(TNOW / d.tau, 2) + " τ）";
+  $("spVal").textContent = fmt(OPT.speed, 2) + "×";
+  $("tmSub").innerHTML = "时间窗 = 2.5 " + MM("<i>τ</i>") + " = " + fmt(d.span, 1) +
+    " µs，可拖动到任意时刻（数值解会从头重算）。";
+  $("btnPlay").textContent = OPT.playing ? "⏸ 暂停" : "▶ 播放";
+  $("symA").textContent = CARS[OPT.car].sym;
+  $("ckP0Lab").innerHTML = "平衡浓度 " + MM("<i>" + CARS[OPT.car].sym + "</i><sub>0</sub>");
+  $("hintDpm").innerHTML = "Δ<i>" + CARS[OPT.car].sym + "</i><sub>max</sub>";
+  Array.prototype.forEach.call($("qBtns").children, (b, i) => {
+    if (QS[i] && QS[i].lab) b.innerHTML = QS[i].lab(CARS[OPT.car].sym);
+  });
+  markActive();
+}
+
+function render() {
+  buildLegends(); drawDist(); drawEvo(); drawLen(); updateReadout(); refreshAnswers();
+}
+
+/* 改参数后保持同一时间比例重算 */
+function applyChange() {
+  recompute(OPT.tFrac * TSPAN());
+  syncInputs(); render();
+}
+function applyPreset(i) {
+  const p = PRESETS[i];
+  OPT.preset = i; OPT.E = p.E; OPT.tauS = Math.round((Math.log10(p.tau) + 1.3) / 3.6 * 100);
+  OPT.ic = p.ic; OPT.bnd = p.bnd; OPT.x0f = p.x0f; OPT.s0 = p.s0; OPT.Ss = p.Ss;
+  OPT.tFrac = 0; OPT.playing = false;
+  applyChange();
+}
+/* ---------------- 16. 交互绑定 ---------------- */
+function init() {
+  buildLegends(); buildChal();
+
+  const mkBtns = (id, arr, fn) => {
+    const box = $(id); box.innerHTML = "";
+    arr.forEach((o, i) => {
+      const b = document.createElement("button");
+      b.innerHTML = o.html || o.name; b.dataset.i = i; b.title = stripTags(o.note || "");
+      b.onclick = () => fn(i);
+      box.appendChild(b);
+    });
+  };
+  mkBtns("preBtns", PRESETS, applyPreset);
+  mkBtns("carBtns", CARS, i => { OPT.car = i; OPT.preset = -1; applyChange(); });
+  mkBtns("icBtns", ICS, i => { OPT.ic = i; OPT.preset = -1; OPT.tFrac = 0; applyChange(); });
+  mkBtns("bndBtns", BNDS, i => { OPT.bnd = i; OPT.preset = -1; applyChange(); });
+  mkBtns("qBtns", QS, i => { OPT.q = i; syncInputs(); drawEvo(); });
+
+  const sl = (id, fn) => { $(id).addEventListener("input", e => { fn(+e.target.value); }); };
+  sl("tauSlider", v => { OPT.tauS = v; OPT.preset = -1; applyChange(); });
+  sl("eSlider", v => { OPT.E = v; OPT.preset = -1; applyChange(); });
+  sl("spSlider", v => { OPT.speed = v / 100; syncInputs(); });
+  sl("tmSlider", v => { OPT.tFrac = v / 1000; OPT.playing = false; recompute(OPT.tFrac * TSPAN()); syncInputs(); render(); });
+
+  [["ckInit", "ckInit"], ["ckP0", "ckP0"], ["ckLen", "ckLen"], ["ckArr", "ckArr"], ["ckTh", "ckTh"]]
+    .forEach(p => $(p[0]).addEventListener("change", e => { OPT[p[1]] = e.target.checked; render(); }));
+
+  $("btnPlay").onclick = () => {
+    if (OPT.playing) OPT.playing = false;
+    else { if (OPT.tFrac > 0.999) { OPT.tFrac = 0; recompute(0); } OPT.playing = true; }
+    syncInputs(); render();
+  };
+  $("btnReset").onclick = () => { OPT.playing = false; OPT.tFrac = 0; recompute(0); syncInputs(); render(); };
+
+  const cv = $("dist");
+  cv.addEventListener("mousemove", e => {
+    const r = cv.getBoundingClientRect();
+    HOVER = { px: e.clientX - r.left, py: e.clientY - r.top };
+    drawDist();
+  });
+  cv.addEventListener("mouseleave", () => { HOVER = null; drawDist(); });
+  cv.addEventListener("keydown", e => {
+    if (e.key === "ArrowRight" || e.key === "ArrowLeft") {
+      const step = e.key === "ArrowRight" ? 0.02 : -0.02;
+      OPT.tFrac = clamp(OPT.tFrac + step, 0, 1);
+      OPT.playing = false; recompute(OPT.tFrac * TSPAN()); syncInputs(); render();
+      e.preventDefault();
+    }
+  });
+
+  /* 折叠区（.fold）：事件委托，与挑战区完全独立 */
+  document.addEventListener("click", e => {
+    const h = e.target.closest ? e.target.closest(".fold-head") : null;
+    if (!h) return;
+    const f = h.parentNode;
+    if (f && f.classList && f.classList.contains("fold")) f.classList.toggle("open");
+  });
+  window.addEventListener("resize", () => { fitAll(); render(); });
+  /* 必须先把默认预设的初始分布算出来（P / HIST / YMAX），
+     否则刷新后 P 还是空的，模块一没有曲线，播放是从「零分布」往上抬。 */
+  fitAll(); applyChange();
+  requestAnimationFrame(loop);
+}
+
+/* ---------------- 17. 动画循环 ---------------- */
+let lastT = 0;
+function loop(ts) {
+  if (!lastT) lastT = ts;
+  const dt = Math.min(0.05, (ts - lastT) / 1000);
+  lastT = ts;
+  if (OPT.playing) {
+    const span = TSPAN();
+    let nt = TNOW + dt * OPT.speed * (span / 6);
+    let stop = false;
+    if (nt >= span) { nt = span; stop = true; }
+    advanceTo(nt);
+    OPT.tFrac = span > 0 ? nt / span : 0;
+    if (stop) OPT.playing = false;
+    drawDist(); drawEvo(); drawLen(); updateReadout();
+    if (stop) syncInputs(); else { $("tmVal").textContent = fmt(TNOW, 2) + " µs（= " + fmt(TNOW / der().tau, 2) + " τ）"; $("tmSlider").value = Math.round(OPT.tFrac * 1000); }
+  }
+  requestAnimationFrame(loop);
+}
+
+init();
+
+/* i18n 启动必须在 init() 之后：setLang() 会重跑 syncInputs()/render()，
+   放到 init() 之前会在 fitAll() 之前触发绘制，一旦抛异常整个 init() 就跑不到（挑战与画布会空）。 */
+(function () {
+  try {
+    i18nWatch();
+    ORIG_TITLE = ORIG_TITLE || document.title;
+    var btn = document.getElementById("langBtn");
+    if (btn) btn.onclick = function () { setLang(LANG === "en" ? "zh" : "en"); };
+    if (LANG === "en") setLang("en"); else { document.title = ORIG_TITLE; i18nWalk(document.body); }
+  } catch (e) { }
+})();
+</script>
+</body>
+</html>

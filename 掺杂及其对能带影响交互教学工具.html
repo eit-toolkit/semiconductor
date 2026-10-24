@@ -1,0 +1,2204 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<!-- SPDX-License-Identifier: MIT -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>掺杂及其对能带影响交互教学工具</title>
+<style>
+  :root {
+    --bg: #f7f9fb;
+    --panel: #ffffff;
+    --border: #dde4ec;
+    --text: #2c3e50;
+    --text-sub: #6b7a8c;
+    --blue: #1976d2;
+    --blue-light: #e3f0fb;
+    --red: #d94a3d;
+    --red-light: #fdeae8;
+    --donor: #7b3fa0;
+    --acceptor: #e2695f;
+    --teal: #0f9b8e;
+    --green: #2e9e5b;
+    --purple: #8e5bd0;
+    --orange: #ef8c1a;
+    --gray-ref: #9aa5b1;
+    --fermi: #f2b705;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Microsoft YaHei", "PingFang SC", "Segoe UI", sans-serif;
+    background: var(--bg); color: var(--text); padding: 14px;
+  }
+  header { position: relative;
+    display: flex; align-items: baseline; justify-content: center;
+    gap: 14px; flex-wrap: wrap; text-align: center; margin-bottom: 2px;
+  }
+  .lang-btn { position: absolute; right: 0; top: 0; border: 1px solid var(--border); background: #fff;
+    color: var(--text-sub); padding: 3px 10px; border-radius: 7px; cursor: pointer; font-size: 12px; font-weight: 600; }
+  .lang-btn:hover { border-color: var(--blue); color: var(--blue); }
+  header h1 { font-size: 20px; }
+  header .formula { font-size: 14.5px; color: var(--text-sub); }
+  .sub-note { text-align: center; font-size: 12px; color: var(--text-sub); margin-bottom: 10px; line-height: 1.7; }
+  .sub-note b { color: var(--blue); }
+  .layout { display: flex; gap: 14px; align-items: flex-start; max-width: 1500px; margin: 0 auto; }
+  .viz { flex: 0 0 68%; min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+  .side { flex: 1; min-width: 300px; display: flex; flex-direction: column; gap: 12px; }
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; }
+  .sec-title { font-size: 13.5px; font-weight: 700; margin: 2px 0 6px; }
+  /* 模块编号徽标：只有教学内容模块才带编号；控制面板等辅助面板不是模块，不加 */
+  .sec-title .mtag {
+    display: inline-block; background: var(--blue); color: #fff;
+    font-size: 11px; font-weight: 700; padding: 1.5px 7px;
+    border-radius: 5px; margin-right: 6px; vertical-align: 1.5px; letter-spacing: .3px;
+  }
+  canvas { display: block; width: 100%; border-radius: 6px; touch-action: none; }
+  .hint { font-size: 12px; color: var(--text-sub); margin-top: 6px; line-height: 1.6; }
+  .ctrl-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
+  .ctrl-head { display: flex; justify-content: space-between; align-items: baseline; font-size: 13px; font-weight: 600; margin-bottom: 2px; }
+  .ctrl-head .val { color: var(--blue); font-variant-numeric: tabular-nums; font-weight: 700; }
+  .ctrl input[type=range] { width: 100%; accent-color: var(--blue); }
+  .ctrl .sub { font-size: 11.5px; color: var(--text-sub); margin-top: 1px; }
+  .btn-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+  .btn-row button {
+    border: 1px solid var(--border); background: #fff; color: var(--text);
+    padding: 5px 11px; border-radius: 7px; cursor: pointer; font-size: 12.5px;
+  }
+  .btn-row button:hover { border-color: var(--blue); color: var(--blue); }
+  .btn-row button.sel { background: var(--blue); border-color: var(--blue); color: #fff; font-weight: 600; }
+  .btn-row button.primary { background: var(--blue-light); border-color: var(--blue); color: var(--blue); font-weight: 600; }
+  .chk-row { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12.5px; color: var(--text-sub); margin-top: 8px; }
+  .chk-row label { display: inline-flex; align-items: center; gap: 5px; cursor: pointer; }
+  .chk-row input[type=checkbox] { accent-color: var(--blue); }
+  .legend { display: flex; gap: 6px 14px; flex-wrap: wrap; align-items: center; font-size: 12px; color: var(--text-sub); margin-top: 6px; }
+  .swatch {
+    display: inline-block; vertical-align: middle; width: 20px; height: 0;
+    border-top: 3px solid currentColor; border-radius: 2px; margin-right: 6px;
+  }
+  .swatch.band { height: 11px; border: 1px solid rgba(25,118,210,.35); background: rgba(25,118,210,.12); }
+  .swatch.dot { width: 11px; height: 11px; border-radius: 50%; background: currentColor; border-top: 0; }
+  /* ---- LaTeX 风格数学排版（纯 CSS，无外部库） ----
+     惯例：$V_0$ → 变量斜体、数字下标直立、变量下标斜体；
+     单位与多字母函数名直立；二元运算符两侧留空；量纲符号用正体并加薄空格。 */
+  .m {
+    font-family: "Cambria Math", "STIX Two Math", "Latin Modern Math", "Times New Roman", Times, serif;
+    font-size: 1.05em; font-style: normal; white-space: nowrap; letter-spacing: .01em;
+  }
+  .m i, .m var { font-style: italic; }
+  .m .rm { font-style: normal; }
+  .m sub, .m sup { font-size: .70em; font-style: normal; line-height: 1; }
+  .m sub { vertical-align: -.28em; }
+  .m sup { vertical-align: .50em; }
+.m .m { font-size: 1em; }   /* 嵌套容器（TEXH 下标转换叠加）不再放大字号 */
+  .m sub i, .m sup i { font-style: italic; }
+  .m .op { font-style: normal; padding: 0 .24em; }
+  .m .op.t { padding: 0; }
+  .m .fn { font-style: normal; padding-right: .08em; }
+  .m .un { font-style: normal; padding-left: .16em; }
+  .frac {
+    display: inline-block; vertical-align: -0.52em; text-align: center;
+    margin: 0 .16em; font-size: .86em; line-height: 1.18;
+  }
+  .frac > .num { display: block; padding: 0 .34em; border-bottom: 1px solid currentColor; }
+  .frac > .den { display: block; padding: 0 .34em; }
+  .sqrt { display: inline-block; white-space: nowrap; }
+  .sqrt > .body { border-top: 1px solid currentColor; padding: 0 .14em; margin-left: -.08em; }
+  /* ---- 对照区 ---- */
+  .cmp { display: flex; flex-direction: column; gap: 10px; }
+  .cmp-row { display: grid; grid-template-columns: 40% 60%; gap: 10px; align-items: start; }
+  .cmp-row > div { min-width: 0; }
+  .side .kv { grid-template-columns: 1fr; }
+  .rowlab {
+    display: inline-block; padding: 1px 8px; border-radius: 20px;
+    font-size: 11.5px; font-weight: 700; margin-right: 6px;
+  }
+  .rowlab.a { background: #e3f0fb; color: var(--blue); }
+  .rowlab.b { background: #f2e9f9; color: var(--donor); }
+  .rowlab.c { background: #fdeae8; color: #c9483c; }
+  @media (max-width: 1024px) {
+    .layout { flex-direction: column; }
+    .viz { flex: 1 1 auto; width: 100%; }
+    .cmp-row { grid-template-columns: 1fr; }
+  }
+  /* ---- 读数表 ---- */
+  .kv { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 2px 22px; font-size: 12.5px; }
+  .kv .row { display: flex; justify-content: space-between; gap: 8px; border-bottom: 1px dotted #eef2f7; padding: 2px 0; }
+  .kv .k { color: var(--text-sub); white-space: nowrap; }
+  .kv .v { font-variant-numeric: tabular-nums; }
+  .kv .v b { color: var(--blue); }
+  /* ⚠️ 必须是直接子代 `>`：值列里的 <i> 被复用为灰色注释，
+     若写成 `.kv .v i`（后代选择器，特异性 0-2-1）会一路压过排版层的
+     `.m i`（0-2-0），把 .m 里的**物理量符号也强制成正体并染红**。 */
+  .kv .v > i { color: var(--red); font-style: normal; }
+  .kv .v u { color: var(--donor); text-decoration: none; }
+  .kv .v em { color: var(--acceptor); font-style: normal; }
+  .kv .hd { grid-column: 1 / -1; font-weight: 700; color: var(--text); font-size: 12px; margin: 6px 0 2px; }
+  .kv .hd:first-child { margin-top: 0; }
+  /* ---- 挑战卡 ---- */
+  .chal-wrap { max-width: 1500px; margin: 14px auto 0; }
+  .chal-bar { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+  .chal-bar b { font-size: 14.5px; }
+  .chal-bar span { font-size: 12px; color: var(--text-sub); }
+  .chal-grid { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+  .chal { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 8px 12px; }
+  .chal-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; cursor: pointer; }
+  .chal-head b { font-size: 13.5px; }
+  .chal-head .chev { color: var(--text-sub); font-size: 12px; transition: transform .15s; }
+  .chal.open .chal-head .chev { transform: rotate(90deg); display: inline-block; }
+  .chal.open { border-color: var(--blue); }
+  .chal-body { display: none; margin-top: 6px; font-size: 12.5px; color: var(--text-sub); line-height: 1.75; }
+  .chal.open .chal-body { display: block; }
+  .chal-body .ans { display: none; margin-top: 6px; padding: 7px 10px; background: var(--blue-light); border-radius: 6px; color: var(--text); }
+  .chal-body .ans.show { display: block; }
+  .chal-body .ans b { color: var(--blue); }
+  .chal .q { color: var(--text); }
+  .chal-body .btn-row { margin-top: 8px; }
+  .tag-d { color: var(--donor); font-weight: 700; }
+  .tag-a { color: var(--acceptor); font-weight: 700; }
+  /* ---- 课程页脚 ---- */
+  .site-foot { max-width: 1500px; margin: 18px auto 0; padding: 12px 16px 24px;
+    border-top: 1px solid var(--border); color: var(--text-sub);
+    font-size: 12.5px; line-height: 1.8; text-align: center; }
+  .site-foot a { color: var(--blue, #1976d2); text-decoration: none; }
+  .site-foot a:hover { text-decoration: underline; }
+  .sqrt > .rdc, .sqrt .rdc { display: inline-block; position: static; font-size: 1em;
+             border-top: .055em solid currentColor; padding: .06em .12em 0 .10em; margin: 0; line-height: 1; }
+
+  /* 公式排版：分式 / 根式 —— 全站统一为「回旋共振 v06」写法（置于末尾，覆盖本文件早期变体） */
+  .frac { display: inline-block; vertical-align: -0.52em; text-align: center; font-size: .78em; margin: 0 .12em; }
+  .frac > .num, .frac .num { display: block; padding: 0 .22em; border-bottom: .055em solid currentColor; line-height: inherit; }
+  .frac > .den, .frac .den { display: block; padding: 0 .22em; line-height: inherit; }
+  .sqrt { display: inline-block; white-space: nowrap; vertical-align: baseline; margin: 0; font-size: 1em; }
+  .sqrt > .rd, .sqrt .rd { display: inline-block; position: static; font-size: 1em; line-height: inherit; padding: 0 .02em 0 0; margin: 0; }
+  .sqrt > .rdc, .sqrt .rdc { display: inline-block; position: static; font-size: 1em;
+             border-top: .055em solid currentColor; padding: .06em .12em 0 .10em; margin: 0; line-height: 1; }
+  .sqrt .rdc:has(sup) { padding-top: .18em; }
+</style>
+</head>
+<body>
+
+<header>
+  <button id="langBtn" class="lang-btn" data-noi18n title="中文 / English">EN</button>
+  <h1>掺杂及其对能带影响交互教学工具</h1>
+</header>
+<div class="sub-note">
+  <b><span class="m"><i>N</i></span> 个相同的屏蔽库仑势阱 → 能带</b>；把其中一个（或几个）换成<b>更深</b>或<b>更浅</b>的势阱 → 带外杂质能级（施主 / 受主）；杂质不止一个时，这些能级劈裂成<b>杂质子带</b>。<br>
+  所有能级与波函数都由<b>数值求解一维薛定谔方程</b>得到，不依赖任何解析公式。
+</div>
+<div class="layout">
+  <!-- ================= 左列：可视化 ================= -->
+  <div class="viz">
+
+    <!-- 三情形对照 -->
+    <div class="card">
+      <div class="sec-title"><span class="mtag">模块一</span>三情形对照：势阱深浅 → 杂质能级（每行左边为势阱、右边为能级）</div>
+      <div class="cmp">
+        <!-- (a) -->
+        <div class="cmp-row">
+          <div>
+            <div class="sec-title"><span class="rowlab a">(a)</span>均匀：<span class="m"><i>N</i></span> 个完全相同的屏蔽库仑势阱</div>
+            <canvas id="potA" data-h="150"></canvas>
+          </div>
+          <div>
+            <div class="sec-title">能级：<span class="m"><i>N</i></span> 个靠得很近的能级 → 能带</div>
+            <canvas id="lvA" data-h="150"></canvas>
+          </div>
+        </div>
+        <!-- (b) -->
+        <div class="cmp-row">
+          <div>
+            <div class="sec-title"><span class="rowlab b">(b)</span><b>更深</b>的势阱（施主）</div>
+            <canvas id="potB" data-h="150"></canvas>
+          </div>
+          <div>
+            <div class="sec-title">能级：能带下方出现杂质能级 → 施主能级 <span class="m"><i>E</i><sub>D</sub></span></div>
+            <canvas id="lvB" data-h="150"></canvas>
+          </div>
+        </div>
+        <!-- (c) -->
+        <div class="cmp-row">
+          <div>
+            <div class="sec-title"><span class="rowlab c">(c)</span><b>更浅</b>的势阱（受主）</div>
+            <canvas id="potC" data-h="150"></canvas>
+          </div>
+          <div>
+            <div class="sec-title">能级：能带上方出现杂质能级 → 受主能级 <span class="m"><i>E</i><sub>A</sub></span></div>
+            <canvas id="lvC" data-h="150"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 波函数 -->
+    <div class="card">
+      <div class="sec-title"><span class="mtag">模块二</span>波函数：杂质态是局域态，能带态是扩展态</div>
+      <canvas id="psi" data-h="215"></canvas>
+      <div class="legend" id="psiLegend"></div>
+      <div class="hint">点击上方任意一条能级即可选中该态：已在图中的曲线加粗，未画出的态以深灰曲线补上，与蓝色的能带态对照——能带态贯穿整条链、处处振荡；杂质态只在杂质附近几个 Å 内有幅度，向外迅速衰减到零。竖虚线为杂质位置（随选中的行切换），浅灰曲线为该行的 <span class="m"><i>V</i>(<i>x</i>)</span>。</div>
+    </div>
+  </div>
+
+  <!-- ================= 右列：控制与读数 ================= -->
+  <div class="side">
+    <div class="card">
+      <div class="sec-title">控制面板</div>
+      <div class="ctrl-grid">
+        <div class="ctrl">
+          <div class="ctrl-head"><span>杂质势阱强度差 <span class="m">Δ<i>f</i></span></span><span class="val" id="vDF">0.20</span></div>
+          <input type="range" id="sDF" min="0.1" max="0.6" step="0.01" value="0.20">
+          <div class="sub">行(b) 取 <span class="m"><i>V</i><sub>0</sub>(1<span class="op">+</span>Δ<i>f</i>)</span> 更深；行(c) 取 <span class="m"><i>V</i><sub>0</sub>(1<span class="op">−</span>Δ<i>f</i>)</span> 更浅。<b>行(c) 的杂质阱同时还更窄</b>：<span class="m"><i>λ</i><span class="op">=</span>1.40<span class="un">Å</span></span>（行(b) 与主体同为 2.00 Å）—— 阱窄会把受主能级再推高一截，见挑战二</div>
+        </div>
+        <div class="ctrl">
+          <div class="ctrl-head"><span>杂质个数</span><span class="val" id="vNI">1</span></div>
+          <input type="range" id="sNI" min="1" max="6" step="1" value="1">
+          <div class="sub">每个杂质贡献一条能级；杂质 ≥ 2 个时劈裂成<b>杂质子带</b></div>
+        </div>
+        <div class="ctrl">
+          <div class="ctrl-head"><span>杂质间距 <span class="m"><i>d</i></span></span><span class="val" id="vSP">2 a</span></div>
+          <input type="range" id="sSP" min="1" max="6" step="1" value="2">
+          <div class="sub">≥ 2 个杂质时起作用；<span class="m"><i>d</i></span> 越小 = 浓度越高 → 杂质子带越宽</div>
+        </div>
+      </div>
+      <div class="chk-row">
+        <label><input type="checkbox" id="ckDens" checked> 概率密度 <span class="m">|<i>ψ</i>|<sup>2</sup></span></label>
+        <label><input type="checkbox" id="ckFermi" checked> 费米能级 <span class="m"><i>E</i><sub>F</sub></span>（简化示意）</label>
+        <label><input type="checkbox" id="ckVbg" checked> 波函数图叠加 <span class="m"><i>V</i>(<i>x</i>)</span></label>
+      </div>
+      <div class="btn-row" id="presetRow">
+        <button data-p="shallow">较浅杂质阱</button>
+        <button data-p="deep">较深杂质阱</button>
+        <button data-p="impsub">杂质子带</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="sec-title">读数面板</div>
+      <div class="kv" id="kvBox"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= 挑战 ================= -->
+<div class="chal-wrap">
+  <div class="card">
+    <div class="chal-bar"><b>引导探究（点击展开，先自己试一试再看答案）</b><span>挑战任务</span></div>
+    <div class="chal-grid" id="chalGrid"></div>
+  </div>
+</div>
+
+<script>
+/* ==================================================================
+   i18n（C1 单文件双语：物理代码仍然只有一份）
+   LANG 取值优先级：URL ?lang=en / ?lang=zh  >  localStorage('opl_lang')  >  默认中文。
+   不做 location 跳转——保住「单文件拷走也能用」。
+   三个注入点，**业务字符串一个都不改**：
+     ① partsOf()   画布 token：带 i/sub/sup/un 标记的是物理量、下标与单位，跳过
+     ② fillText/measureText 原型挂钩：兜住直接写进画布的中文串
+     ③ DOM 文本节点：静态 HTML 与 JS 写进来的 innerHTML，用 MutationObserver 兜住新增节点
+   T() 先查整句词典，未命中再按「最长优先」做短语替换，因此拼接串也能翻。
+   漏翻会被记进 window.__MISS，可导出核对。 */
+var LANG = (function () {
+  var m = /[?&]lang=([a-zA-Z]+)/.exec(location.search);
+  var q = m ? m[1].toLowerCase() : "";
+  if (q === "en" || q === "zh") return q;
+  var s = "";
+  try { s = localStorage.getItem("opl_lang") || ""; } catch (e) { }
+  return (s === "en" || s === "zh") ? s : "zh";
+})();
+var ORIG_TITLE = document.title;
+var __MISS = [];
+try { window.__MISS = __MISS; } catch (e) { }
+function noteMiss(s) { if (__MISS.indexOf(s) < 0) __MISS.push(s); }
+function TSoft(s) {
+  if (!T._K) T._K = Object.keys(I18N).sort(function (a, b) { return b.length - a.length; });
+  var out = s, i, k, orig = s;
+  /* 两遍：第一遍只吃长度 ≥ 2 的短语；第二遍的单字 key 只在「传进来的串
+     恰好就是这一个字」时才上场——画布逐字排版会拿单字去 measureText，那一
+     路必须翻。反过来，绝不让单字 key 去切更长的句子：否则「导」「子」「原」
+     会把「半导体」「电子数」「泡利原理」切成半 conduction 体、电 quantum 数、
+     泡利 origin 理这类中英混排。同一条理由也适用于「下」：整句不该被切碎。 */
+  for (var pass = 0; pass < 2; pass++) {
+    for (i = 0; i < T._K.length; i++) {
+      k = T._K[i];
+      if (k.length < 2 && (pass === 0 || orig !== k)) continue;
+      if (out.indexOf(k) < 0) continue;
+      /* 中文片段之间没有空格：前一片段已翻成英文时，本片段英文直连进去会粘连
+         （「更深」「或」「更浅」逐段替换成 deeper、or、shallower 会拼出 deeperor），
+         所以替换时看上下文：key 以中文开头、前一字符已是英文 ⇒ 前面补一个空格。 */
+      out = out.replace(new RegExp(k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "g"), function (m, off, str) {
+        var v = I18N[k];
+        var pre = off > 0 ? str.charAt(off - 1) : "";
+        if (/[A-Za-z0-9]/.test(pre) && /^[A-Za-z0-9(]/.test(v) && /[\u3400-\u9FFF]/.test(k.charAt(0))) v = " " + v;
+        return v;
+      });
+    }
+  }
+  return out;
+}
+/* 同一句被 DOM 切成好几个文本节点时，首尾空格会随机落在 data 里；
+   所以除了「整句命中」，再试一次「去空格后命中」并原样补回首尾空白。 */
+function trimMap() {
+  if (T._TM) return T._TM;
+  var m = {};
+  for (var k in I18N) if (Object.prototype.hasOwnProperty.call(I18N, k)) {
+    var t = k.replace(/^\s+|\s+$/g, "");
+    if (t && m[t] === undefined) m[t] = I18N[k];
+  }
+  T._TM = m;
+  return m;
+}
+/* eslint-disable no-use-before-define */
+function T(s) {
+  if (LANG !== "en" || typeof s !== "string" || !s) return s;
+  /* 闸门含中文标点：悬停气泡按 token 绘制，「，」这类纯标点 token 也要能查词典 */
+  if (!/[一-鿿，。；：（）]/.test(s)) return s;
+  if (Object.prototype.hasOwnProperty.call(I18N, s)) return I18N[s];
+  var tm = trimMap(), core = s.replace(/^\s+|\s+$/g, "");
+  if (core && tm[core] !== undefined) {
+    var lead = s.slice(0, s.length - s.replace(/^\s+/, "").length);
+    var tail = s.slice(s.replace(/\s+$/, "").length);
+    return lead + tm[core] + tail;
+  }
+  var v = TSoft(s);
+  /* 译完还剩汉字也算漏翻：只翻掉一半的「半吊子译文」曾经让 __MISS 恒为 0。 */
+  if (v === s || /[\u3400-\u9FFF]/.test(v)) noteMiss(s);
+  return v;
+}
+var I18N = {
+  /* ---- 词典：中文原文 → 英文。key 禁含运行时数字（换个参数就漏），数字前后要拆开 ---- */
+  "掺杂及其对能带影响交互教学工具": "Doping and Its Effect on Energy Bands — Interactive Toolkit",
+  " 个相同的屏蔽库仑势阱 → 能带": " identical screened Coulomb wells → a band",
+  "；把其中一个（或几个）换成": "; replacing one (or a few) of them by a",
+  "更深": "deeper",
+  "更深 ": "deeper ",
+  "或": "or",
+  "更浅": "shallower",
+  "更浅 ": "shallower ",
+  "的势阱 → 带外杂质能级（施主 / 受主）；杂质不止一个时，这些能级劈裂成": " well gives an impurity level outside the band (donor / acceptor); with more than one impurity these levels split into an",
+  "杂质子带": "impurity sub-band",
+  "\n  所有能级与波函数都由": "\n  Every level and wave function comes from",
+  "数值求解一维薛定谔方程": "solving the one-dimensional Schrödinger equation numerically",
+  "得到，不依赖任何解析公式。\n": ", with no analytic formula involved.\n",
+  "模块一": "Module 1",
+  "三情形对照：势阱深浅 → 杂质能级（每行左边为势阱、右边为能级）": "Three cases compared: well depth → impurity levels (left of each row: the wells; right: the levels)",
+  "均匀：": "Uniform: ",
+  " 个完全相同的屏蔽库仑势阱": " identical screened Coulomb wells",
+  "能级：": "Levels: ",
+  " 个靠得很近的能级 → 能带": " closely spaced levels → a band",
+  "的势阱（施主）": " well (donor)",
+  "能级：能带下方出现杂质能级 → 施主能级 ": "Levels: an impurity level appears below the band → the donor level ",
+  "的势阱（受主）": " well (acceptor)",
+  "能级：能带上方出现杂质能级 → 受主能级 ": "Levels: an impurity level appears above the band → the acceptor level ",
+  "模块二": "Module 2",
+  "波函数：杂质态是局域态，能带态是扩展态": "Wave functions: impurity states are localised, band states are extended",
+  "点击上方任意一条能级即可选中该态：已在图中的曲线加粗，未画出的态以深灰曲线补上，与蓝色的能带态对照——能带态贯穿整条链、处处振荡；杂质态只在杂质附近几个 Å 内有幅度，向外迅速衰减到零。竖虚线为杂质位置（随选中的行切换），浅灰曲线为该行的 ": "Click any level above to select that state: the curve already plotted is drawn thick, and states not plotted are added as dark-grey curves for comparison with the blue band state — a band state runs right across the chain and oscillates everywhere, while an impurity state has amplitude only within a few Å of the impurity and decays rapidly to zero away from it. The vertical dashed line marks the impurity position (it follows the selected row), and the light-grey curve is the ",
+  "控制面板": "Control Panel",
+  "杂质势阱强度差 ": "Impurity well strength difference ",
+  "行(b) 取 ": "Row (b) takes ",
+  " 更深；行(c) 取 ": " (deeper); row (c) takes ",
+  " 更浅。": " (shallower).",
+  "行(c) 的杂质阱同时还更窄": "The row (c) impurity well is at the same time narrower",
+  "（行(b) 与主体同为 2.00 Å）—— 阱窄会把受主能级再推高一截，见挑战二": " (row (b) and the host are both 2.00 Å) — a narrower well pushes the acceptor level up by a further notch, see challenge 2",
+  "杂质个数": "Number of impurities",
+  "每个杂质贡献一条能级；杂质 ≥ 2 个时劈裂成": "Each impurity contributes one level; with ≥ 2 impurities they split into an",
+  "杂质间距 ": "Impurity spacing ",
+  "≥ 2 个杂质时起作用；": "Effective only with ≥ 2 impurities; ",
+  " 越小 = 浓度越高 → 杂质子带越宽": " smaller = higher concentration → a wider impurity sub-band",
+  " 概率密度 ": " probability density ",
+  " 费米能级 ": " Fermi level ",
+  "（简化示意）": " (simplified sketch)",
+  " 波函数图叠加 ": " overlay the potential on the wave-function plot",
+  "较浅杂质阱": "Shallower impurity well",
+  "较深杂质阱": "Deeper impurity well",
+  "读数面板": "Readout Panel",
+  "能带 16 条能级": "band: 16 levels",
+  "能级": "Level",
+  "能带态（扩展）": "Band state (extended)",
+  "施主态（局域）": "Donor state (localised)",
+  "受主态（局域）": "Acceptor state (localised)",
+  "杂质位置（": "Impurity position (",
+  " 行）": " row)",
+  "主体势阱与单势阱参照": "Host wells and the single-well reference",
+  "势阱个数 ": "Number of wells ",
+  " / ": " / ",
+  "间距 ": "Spacing ",
+  " 个 / ": " / ",
+  "势阱强度 ": "Well strength ",
+  "屏蔽长度 ": "Screening length ",
+  "杂质阱屏蔽长度 ": "Impurity-well screening length ",
+  "（施主 / 受主）": " (donor / acceptor)",
+  " Å（主体 ": " Å (host ",
+  /* ---- 悬停气泡 token（画布直写，V/λ 数值是运行时拼的） ---- */
+  "（最近势阱 ": "(nearest well: ",
+  "杂质": "impurity",
+  "主体": "host",
+  "，": ", ",
+  "）": ")",
+  "。": ". ",
+  "：": ": ",
+  " Å；": " Å; ",
+  "受主阱更窄": "acceptor well is narrower",
+  " ⇒ 受主能级被再推高一截）": ")",
+  /* 「受主阱更窄 ⇒ 能级再被推高」的完整解释在挑战二答案里（a narrower well pushes
+     the acceptor level up by a further notch, see challenge 2），读数行不再复述。 */
+  "单势阱束缚能 ": "Single-well binding energy ",
+  "主体能带（行 a，数值解）": "Host band (row a, numerical solution)",
+  "带底 / 带顶": "Band bottom / top",
+  "能带宽度 ": "Band width ",
+  " eV（": " eV (",
+  " 条能级）": " levels)",
+  "能带中心（带底+带顶）/2": "Band centre (bottom+top)/2",
+  "中心 − 单势阱 ": "Centre − single-well ",
+  "（残差）": " (residual)",
+  " eV（相对 ": " eV (relative to ",
+  "）＝ 近似为零但": ") ≈ zero but",
+  "非恒等": "not an identity",
+  "（有限链的链端效应）": " (the end effect of a finite chain)",
+  "杂质能级（一维机制演示模型，不是真实半导体数据）": "Impurity levels (a one-dimensional mechanism demo, not real semiconductor data)",
+  "施主能级 ": "Donor level ",
+  "电离能 Δ": "Ionisation energy Δ",
+  "带底": "band bottom",
+  "带底 ": "band bottom ",
+  "受主能级 ": "Acceptor level ",
+  "带顶": "band top",
+  "带顶 ": "band top ",
+  "费米能级 ": "Fermi level ",
+  "行(b) 施主": "Row (b) donor",
+  "行(c) 受主": "Row (c) acceptor",
+  "（": " (",
+  " 型）": " type)",
+  "下方": "below",
+  "上方": "above",
+  " 间隙的 ": " gap: ",
+  "% 处，从带边算起）": "% of the way, counted from the band edge)",
+  "数值求解信息": "Numerical-solution details",
+  "网格点数 ": "Grid points ",
+  "步长 Δ": "Step Δ",
+  "三行求解耗时": "Solve time for the three rows",
+  "能带态（蓝，扩展）": "Band state (blue, extended)",
+  "施主态（紫，局域）": "Donor state (purple, localised)",
+  "受主态（浅红，局域）": "Acceptor state (light red, localised)",
+  "填充 = ": "Filling = ",
+  "点选的其它态（深灰）": "Other selected states (dark grey)",
+  "引导探究（点击展开，先自己试一试再看答案）": "Guided inquiry (click to expand — try it yourself before opening the answers)",
+  "挑战任务": "Challenges",
+  "显示答案": "Show answer",
+  "挑战一 · 能带从何而来": "Challenge 1 · Where a band comes from",
+  "看行(a)：16 个完全相同的势阱给出了多少条能级？它们为什么不重合在同一条线上？能带宽度 ": "Look at row (a): how many levels do 16 identical wells give? Why do they not all fall on the same line? What is the band width ",
+  " 是多少，能带的中心又在哪个能量附近（对比读数面板里的单势阱束缚能 ": ", and near which energy does the centre of the band lie (compare it with the single-well binding energy ",
+  "）？再把「杂质势阱强度差 ": " in the readout panel)? Now drag the “impurity well strength difference ",
+  "」从 0.10 拉到 0.60，行(a) 的能带宽度会跟着变吗——为什么？": " from 0.10 to 0.60: does the band width of row (a) change with it — and why?",
+  "行(a) 给出 16 条能级——每个势阱贡献一条 1s 型束缚态。它们之所以不是 16 条重合在一起，是因为相邻势阱的波函数互相重叠（隧穿耦合），简并被解除，原来的一条原子能级被展宽成 16 条。实测带底 ": "Row (a) gives 16 levels — every well contributes one 1s-like bound state. They do not coincide, because the wave functions of neighbouring wells overlap (tunnel coupling): the degeneracy is lifted and the single atomic level is broadened into 16. Measured band bottom ",
+  "、带顶 ": ", band top ",
+  "，宽度 ": ", width ",
+  "；而能带中心 ": "; the band centre ",
+  "，与读数面板里的单势阱束缚能 ": " agrees with the single-well binding energy ",
+  " 在两位小数内一致——能带就是「原子能级 + 耦合展宽」。": " in the readout panel to two decimals — a band is nothing but “an atomic level plus coupling broadening”.",
+  "但这是有限链的近似结果，不是恒等式": "But this is an approximation for a finite chain, not an identity",
+  "：四位小数下能带中心 −4.1218 eV、": ": to four decimals the band centre is −4.1218 eV and ",
+  "−4.1209 eV，残差 −0.0008 eV（0.02%）—— 这个差别来自有限链本身：链端势阱缺了外侧那一半邻居、配位环境不完整，耦合里还含次近邻以上的成分，两者不会严格相等。这个残差由读数面板「中心 − 单势阱 ": "−4.1209 eV, a residual of −0.0008 eV (0.02%) — the difference comes from the finite chain itself: the end wells miss half of their neighbours, their coordination is incomplete, and the coupling also contains second-neighbour and higher terms, so the two are not strictly equal. This residual is listed live in the “centre − single-well ",
+  "（残差）」一行实时列出。把 ": " (residual)” row of the readout panel. Dragging ",
+  " 从 0.10 拉到 0.60，行(a) 的 ": " from 0.10 to 0.60, the ",
+  " 始终是 2.884 eV，一点都不变：行(a) 的 16 个势阱始终全同，": " of row (a) stays at 2.884 eV and does not change at all: the 16 wells of row (a) always remain identical, and ",
+  " 只改行(b)(c) 里那几个杂质势阱的强度，主体能带与杂质无关。（要压窄能带得减小势阱间距、削弱阱间耦合；本工具把 ": " only changes the strength of the few impurity wells in rows (b)(c) — the host band has nothing to do with the impurities. (To narrow the band one would have to reduce the well spacing and weaken the inter-well coupling; this tool fixes ",
+  " 与 ": " and ",
+  " 固定，只留杂质相关的旋钮。）": ", leaving only the impurity-related knobs.)",
+  "挑战二 · 施主与受主": "Challenge 2 · Donors and acceptors",
+  "」从 0.10 拉到 0.60：行(b) 的更深势阱和行(c) 的更浅势阱分别把能级推向哪边？": " from 0.10 to 0.60: which way do the deeper well of row (b) and the shallower well of row (c) push their levels?",
+  " 调到最小（0.10）时会怎样？": " set to its minimum (0.10)?",
+  "行(b) 势阱更深（": "The row (b) well is deeper (",
+  "），束缚能级更低，于是有一条能级从能带底部「掉出来」——施主能级 ": "), so its bound level is lower and one level “drops out” of the bottom of the band — the donor level ",
+  "；行(c) 势阱更浅（": "; the row (c) well is shallower (",
+  "），能级上移，从带顶「跳出去」——受主能级 ": "), the level moves up and “jumps out” of the top of the band — the acceptor level ",
+  "。默认 ": ". At the default ",
+  " 实测：": " the measurement gives: ",
+  " 在带底下方 0.576 eV，": " lies 0.576 eV below the band bottom and ",
+  " 在带顶上方 1.05 eV。（": " lies 1.05 eV above the band top. (",
+  "示意量级": "Order of magnitude only",
+  "：真实 Si 浅施主/浅受主都只有 ≈45 meV，本模型的阱参数是为画面清晰挑的，见读数面板「杂质能级」分组与类氢模型工具。）受主侧离带边更远，是因为本工具把受主杂质阱做得": ": real shallow donors and acceptors in Si are both only ≈45 meV; the well parameters of this model were chosen for a clear picture — see the “impurity levels” group of the readout panel and the hydrogenic-model tool.) The acceptor side sits further from the band edge because this tool makes the acceptor well",
+  "又浅又窄": "both shallower and narrower",
+  "，主体 2.00 Å）：阱浅 ⇒ 能级被推高，阱窄 ⇒ 阱内束缚弱、能级再被推高一截。但「离带边多远」不等于「束缚多紧」：受主态没有芯内束缚，尾巴每过一个晶格周期只衰减到约 0.44（施主被深阱攥住，约 0.37），包摊得比施主还开——这一点在挑战四里会放大成杂质子带宽度的差别。": " while the host is 2.00 Å): a shallower well ⇒ the level is pushed up, a narrower well ⇒ weaker binding inside the well and the level is pushed up by yet another notch. But “how far from the band edge” is not the same as “how tightly bound”: the acceptor state has no binding in the core, its tail decays only to about 0.44 per lattice period (the donor is gripped by the deep well, about 0.37), so its envelope spreads even wider than the donor — a difference that is amplified into the impurity-sub-band width in challenge 4.",
+  "（滑块下限）时施主只分裂出 0.186 eV、受主 0.702 eV——能级刚从能带边缘冒出来，波函数的包已经摊开到好几个势阱宽。": " (the lower limit of the slider) the donor splits off by only 0.186 eV and the acceptor by 0.702 eV — the level has just emerged from the band edge, yet the envelope of the wave function has already spread over several well widths.",
+  " 越小，电离能越小、包摊得越开；": " smaller, the smaller the ionisation energy and the wider the envelope; ",
+  " 越大，电离能越大、包收得越紧。一路拉到 ": " larger, the larger the ionisation energy and the tighter the envelope. Dragging all the way to ",
+  "，已经是深能级了。": ", which is already a deep level.",
+  "挑战三 · 杂质态是局域态": "Challenge 3 · Impurity states are localised",
+  "点击行(b) 的施主能级，看下方波函数图：紫色的杂质态和蓝色的能带态，形状上有什么根本不同？再把 ": "Click the donor level of row (b) and look at the wave-function plot below: what is the fundamental difference in shape between the purple impurity state and the blue band state? Now move ",
+  " 从 0.10 一路调到 0.60，紫色波函数的「包」是收紧还是摊开？": " from 0.10 all the way to 0.60: does the envelope of the purple wave function tighten or spread out?",
+  "能带态的 ": "The band-state ",
+  " 贯穿整条链，在每个势阱处都有振荡，从头到尾幅度相当——这是扩展态（布洛赫波）。杂质态完全不是这样：它的幅度只在杂质所在的那个势阱附近成包，向两侧迅速衰减，离开杂质三四个 Å 就基本看不见了——这是局域态。判断一个态局域与否，看图就够了：曲线是不是「只在杂质附近有一团」。把 ": " runs across the whole chain, oscillating at every well with comparable amplitude from end to end — an extended state (a Bloch wave). The impurity state is nothing like that: its amplitude forms a packet only around the well that holds the impurity and decays rapidly to both sides, essentially invisible three or four Å away — a localised state. To judge whether a state is localised the figure is enough: is the curve “just one lump near the impurity”? Moving ",
+  " 从 0.10 调到 0.60，施主电离能从 0.19 eV 增大到 2.94 eV，紫色波函数的包随之越来越紧、越来越向杂质收缩——束缚越深，电子被攥得越紧。反过来把 ": " from 0.10 to 0.60, the donor ionisation energy grows from 0.19 eV to 2.94 eV and the envelope of the purple wave function tightens more and more, contracting towards the impurity — the deeper the binding, the more tightly the electron is held. Conversely, setting ",
+  " 调小，电离能变小，包就摊开到覆盖好几个势阱；等到包的范围追上杂质之间的间距，相邻杂质的波函数连成一片，杂质态就「溶解」进能带——这正是 Mott 转变的图像。本工具只把已经彻底分裂出能带的杂质能级单独画出；能量仍落在能带范围内的态与能带态强烈混合，不再是独立的杂质能级。": " smaller, the ionisation energy shrinks and the envelope spreads to cover several wells; once the extent of the envelope catches up with the spacing between impurities, the wave functions of neighbouring impurities merge into one and the impurity state “dissolves” into the band — the very picture of the Mott transition. This tool draws separately only those impurity levels that have fully split out of the band; a state whose energy still lies inside the band mixes strongly with the band states and is no longer an independent impurity level.",
+  "挑战四 · 杂质子带": "Challenge 4 · The impurity sub-band",
+  "点「杂质子带」预设（": "Click the “impurity sub-band” preset (",
+  "、5 个杂质、间距 ": ", 5 impurities, spacing ",
+  "），再把杂质个数依次改成 1、2、3、6：行(b)(c) 里的杂质能级有几条？它们从最低到最高摊开的范围怎么变？接着把杂质个数固定为 3，把杂质间距 ": "), then change the number of impurities to 1, 2, 3 and 6 in turn: how many impurity levels are there in rows (b)(c), and how does the spread from the lowest to the highest change? Next, fix the number of impurities at 3 and shrink the impurity spacing ",
+  " 从 ": " from ",
+  " 缩到 ": " down to ",
+  "，又会发生什么？什么时候杂质能级会并回主体能带？（宽度数值不再单列，请直接从能级图上看这些线的跨度。）": " : what happens then? When do the impurity levels merge back into the host band? (The widths are no longer listed separately — read the span of the lines straight off the level plot.)",
+  "1 个杂质 = 1 条孤立能级，没有展宽。间距固定 ": "1 impurity = 1 isolated level, with no broadening. With the spacing fixed at ",
+  "、": ", ",
+  "，个数 1 → 2 → 3 → 6 时，行(b) 施主侧的跨度约 ": ", as the number goes 1 → 2 → 3 → 6, the spread on the donor side of row (b) is about ",
+  "，行(c) 受主侧约 ": " and on the acceptor side of row (c) about ",
+  "——杂质越多，相邻杂质波函数重叠越强、劈裂越大，这就是杂质子带。受主侧展得更宽，原因和挑战二一样：受主态没有芯内束缚（尾巴每周期只衰减到约 0.44，施主约 0.37），相邻杂质的重叠更强。更强的旋钮是间距：": " — the more impurities there are, the stronger the overlap of neighbouring impurity wave functions and the larger the splitting: that is the impurity sub-band. The acceptor side spreads wider for the same reason as in challenge 2: the acceptor state has no binding in the core (its tail decays only to about 0.44 per period, against about 0.37 for the donor), so neighbouring impurities overlap more strongly. The stronger knob is the spacing: ",
+  "，行(b) 的跨度约 ": ", the spread of row (b) is about ",
+  "，行(c) 约 ": " and that of row (c) about ",
+  "；到 ": "; at ",
+  " 时施主侧 3 条里只剩 2 条还在带底以下，第 3 条已被挤回主体能带（此时能级图上的紫色线只剩两条）。浓度再高，杂质子带就整体并入主体能带——这就是重掺杂简并半导体的形成机制（Mott 转变）：判据是杂质波函数的展布范围追上了杂质间距。图上的 ": " only 2 of the 3 donor levels are still below the band bottom; the third has been squeezed back into the host band (only two purple lines are then left on the level plot). At still higher concentration the whole impurity sub-band merges into the host band — the formation mechanism of a heavily doped degenerate semiconductor (the Mott transition): the criterion is that the spread of the impurity wave function catches up with the impurity spacing. On the figure the ",
+  " 标注、以及读数面板，都取": " labels, as well as the readout panel, all take",
+  "离带边最近的那一条": "the level closest to the band edge",
+  "（最浅的电离能），所以两侧口径一致、可以直接比。": " (the shallowest ionisation energy), so both sides use the same convention and can be compared directly.",
+  "挑战五 · 同一条带，两种角色：": "Challenge 5 · One band, two roles: ",
+  " 该画在哪一侧": " — on which side should it be drawn",
+  "行(b) 的杂质能级出现在能带的": "The impurity level of row (b) appears ",
+  "，行(c) 的出现在": " the band, that of row (c) ",
+  "——三行画的是同一条主体能带，可为什么行(b) 的 ": " — all three rows draw the same host band, so why does the ",
+  " 落在带的": " of row (b) lie ",
+  "、行(c) 的却落在带的": " the band while that of row (c) lies ",
+  "？把杂质个数从 1 拉到 6，": " the band? Dragging the number of impurities from 1 to 6, does the ",
+  " 是往带边靠还是往杂质能级靠？": " move towards the band edge or towards the impurity level?",
+  "关键在于": "The key point is",
+  "这条带在每一行里扮演谁": "which role this band plays in each row",
+  "。行(b) 的杂质能级是从": ". The impurity level of row (b) has ",
+  "「掉出来」的，所以行(b) 的这条带相当于": " “dropped out”, so in row (b) this band plays the part of the",
+  "导带": "conduction band",
+  "，它的带底就是 ": ", and its band bottom is ",
+  "：n 型半导体的 ": ": in an n-type semiconductor the ",
+  " 必须落在 ": " must lie between ",
+  " 之间，也就是带底": " and ",
+  "的禁带一侧、贴近带底。行(c) 的杂质能级是从": " , that is, on the gap side of the band bottom, close to it. The impurity level of row (c) has ",
+  "「跳出去」的，这条带相当于": " “jumped out”, so this band plays the part of the",
+  "价带": "valence band",
+  "，它的带顶就是 ": ", and its band top is ",
+  "：p 型的 ": ": in a p-type semiconductor the ",
+  " 落在 ": " lies between ",
+  " 之间，也就是带顶": " and ",
+  "的禁带一侧、贴近带顶。所以两行的 ": " , that is, on the gap side of the band top, close to it. So the ",
+  " 一上一下，正是「同一条带、两种映射」的直接后果——": " of the two rows sit one below and one above — a direct consequence of “one band, two mappings” — ",
+  " 绝不能画进能带内部，那是简并（重掺杂）半导体的图像": " must never be drawn inside the band: that is the picture of a degenerate (heavily doped) semiconductor",
+  "移动方向": "Direction of motion",
+  "：杂质个数 1 → 6（浓度升高）时，": ": as the number of impurities goes 1 → 6 (rising concentration), the ",
+  " 从间隙的 ": " moves from the ",
+  " 处推到 ": " point of the gap to the ",
+  " 处（读数面板「费米能级」分组实时给出），也就是": " point (given live in the “Fermi level” group of the readout panel); that is,",
+  "向带边靠拢": "it moves towards the band edge",
+  "——与第三章「掺杂越重 ": " — exactly as in chapter 3, “the heavier the doping, the closer the ",
+  " 越靠近带边、重掺杂时进入能带 ⇒ 简并」完全一致。": " sits to the band edge, and under heavy doping it enters the band ⇒ degeneracy”.",
+  "最后提醒：本工具给出的 ": "One last reminder: the ",
+  " 只是": " given by this tool is only",
+  "；真实 Si 室温下 ": "; in real Si at room temperature ",
+  " 只有 0.2 eV 上下，位置由第三章的载流子浓度公式（": " is only around 0.2 eV, and its position is set by the carrier-concentration formula of chapter 3 (",
+  "）定，不是由势阱深浅直接定的。": "), not directly by the depth of the wells.",
+  "本工具是 EIT-SP（半导体物理交互式教学工具箱）的一部分（武汉大学物理学院《半导体物理》智慧课程），以 MIT 协议开源，可自由使用与二次开发；转载请保留出处。": "This tool is part of EIT-SP, the Educational Interactive Toolkit for Semiconductor Physics (School of Physics and Technology, Wuhan University). Released under the MIT licence: free to use, modify and redistribute, including commercially. Please keep this attribution.",
+  "反馈意见": " Feedback",
+  "把「杂质势阱强度差 ": "the “impurity well strength difference ",
+  "杂质子带 ": "Impurity sub-band ",
+  "条，取最靠近带边的一条）": " bands; the one closest to the band edge is used)",
+  "第 ": "No. ",
+  " 条　": "　",
+  "（杂质态）": " (impurity state)",
+  " 条": " bands",
+};
+
+/* 注入点②：画布直写字符串。老工具直接调 g.fillText()，这里在原型上兜住。
+   measureText 必须一起挂钩，否则「量的宽度」和「量的文字」用的不是同一个串。 */
+(function () {
+  if (typeof CanvasRenderingContext2D === "undefined") return;
+  var ft = CanvasRenderingContext2D.prototype.fillText;
+  CanvasRenderingContext2D.prototype.fillText = function (s, x, y) {
+    if (typeof s === "string") arguments[0] = T(s);
+    return ft.apply(this, arguments);
+  };
+  var mt = CanvasRenderingContext2D.prototype.measureText;
+  CanvasRenderingContext2D.prototype.measureText = function (s) {
+    return mt.call(this, typeof s === "string" ? T(s) : s);
+  };
+})();
+
+/* 注入点④：逐字绘制的画布串。drawMath 一类把中文按单字拆成 token 再逐个 fillText，
+   T() 每次只见到一个汉字 ⇒ 整句词条永远命中不了。这里在整串进入分词之前先整体翻译，
+   于是画布标注也走「整句优先」，与 DOM 同一个口径。没有这些函数的工具自动跳过。
+   ⚠️ 签名坑：drawMath / measureMath 的第一个参数是 canvas context（对象），文本在第
+   二位；早期版本照着 arguments[0] 翻，等于把 context 送去 T()，补丁全程空转。
+   这里改为「找到第一个含中文的字符串参数」再翻，既躲开 context，也不会误伤
+   align / weight 之类以英文字符串传的选项。 */
+(function () {
+  ["drawMath", "drawMathHalo", "measureMath"].forEach(function (n) {
+    var f = window[n];
+    if (typeof f !== "function") return;
+    window[n] = function () {
+      for (var i = 0; i < arguments.length; i++) {
+        if (typeof arguments[i] === "string" && /[\u3400-\u9FFF]/.test(arguments[i])) {
+          arguments[i] = T(arguments[i]);
+          break;
+        }
+      }
+      return f.apply(this, arguments);
+    };
+  });
+})();
+
+
+/* ---- DOM 文本节点 ---- */
+function i18nNode(n) {
+  var el = n.parentElement;
+  if (!el) return;
+  var tag = el.tagName;
+  if (tag === "SCRIPT" || tag === "STYLE") return;
+  if (el.closest && el.closest("[data-noi18n]")) return;
+  var cur = n.nodeValue;
+  if (n.__orig === undefined || (cur !== n.__last && cur !== n.__orig)) n.__orig = cur;
+  var want = LANG === "en" ? T(n.__orig) : n.__orig;
+  if (want !== cur) n.nodeValue = want;
+  n.__last = want;
+}
+/* 属性（title / placeholder / optgroup label …）不是文本节点，MutationObserver 覆盖不到，
+   必须单独过一遍：否则悬停提示、下拉分组名会残留中文。原文缓存在元素 expando 上，
+   切回中文时原样写回。改属性不会触发 childList/characterData 观察器，不会递归。 */
+var I18N_ATTRS = ["title", "placeholder", "aria-label", "alt", "label"];
+function i18nAttrs(root) {
+  var els = [root], i, j;
+  if (root.querySelectorAll) els = els.concat(Array.prototype.slice.call(root.querySelectorAll("*")));
+  for (i = 0; i < els.length; i++) {
+    var el = els[i];
+    if (!el.getAttribute) continue;
+    if (el.closest && el.closest("[data-noi18n]")) continue;
+    for (j = 0; j < I18N_ATTRS.length; j++) {
+      var a = I18N_ATTRS[j];
+      if (!el.hasAttribute(a)) continue;
+      var key = "__a_" + a;
+      if (el[key] === undefined) el[key] = el.getAttribute(a);
+      var want = LANG === "en" ? T(el[key]) : el[key];
+      if (want !== el.getAttribute(a)) el.setAttribute(a, want);
+    }
+  }
+}
+/* 英文补空格（跨节点）：中文片段被行内标签切开时，各自翻成英文后直连会粘连。
+   判定用 DOM 结构而不是渲染矩形——折叠区（挑战答案）矩形为零，矩形法会漏。
+   两文本节点在文档序里紧邻（中间没有任何文本节点，包括空格节点）、
+   前段末尾与后段开头都是字母、双方词条都没自带空格、且不在上下标里 ⇒ 插一个空格。
+   空格节点记录在案，切回中文时移除。只动 i18n 注入层，不改业务文本。 */
+function fixGlue(root) {
+  var all = [];
+  var w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null, false), n;
+  while ((n = w.nextNode())) all.push(n);
+  function subbed(el) {
+    while (el) { var t = el.tagName; if (t === "SUB" || t === "SUP") return true; el = el.parentElement; }
+    return false;
+  }
+  for (var i = 0; i + 1 < all.length; i++) {
+    var a = all[i], b = all[i + 1];
+    if (!a.nodeValue || !b.nodeValue) continue;
+    if (/\s$/.test(a.nodeValue) || /^\s/.test(b.nodeValue)) continue;
+    if (!/[A-Za-z0-9]$/.test(a.nodeValue) || !/^[A-Za-z]/.test(b.nodeValue)) continue;
+    var pa = a.parentElement, pb = b.parentElement;
+    if (!pa || !pb || subbed(pa) || subbed(pb)) continue;
+    var sp = document.createTextNode(" ");
+    sp.__glue = 1;
+    (fixGlue._n = fixGlue._n || []).push(sp);
+    b.parentNode.insertBefore(sp, b);
+  }
+}
+function removeGlue() {
+  if (!fixGlue._n) return;
+  for (var i = 0; i < fixGlue._n.length; i++) { var g = fixGlue._n[i]; if (g.parentNode) g.parentNode.removeChild(g); }
+  fixGlue._n = [];
+}
+/* 全局防抖补空格：挑战答案这类「点击时才重建」的区域，observer 回调里对子树跑
+   fixGlue 的时机不全（答案重写、延迟渲染都会错过）。任何 DOM 变更后 60ms
+   对整页补一次；空格本身不触发新插入，收敛。 */
+var _glueTimer = null;
+function _glueKick() {
+  if (LANG !== "en") return;
+  if (_glueTimer) clearTimeout(_glueTimer);
+  _glueTimer = setTimeout(function () {
+    _glueTimer = null;
+    if (LANG === "en") fixGlue(document.body);
+  }, 60);
+}
+function i18nWalk(root) {
+  var w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null, false), n, c = 0;
+  while ((n = w.nextNode())) { i18nNode(n); c++; }
+  i18nAttrs(root);
+  if (LANG === "en") fixGlue(root === document ? document.body : root);
+  return c;
+}
+var _i18nBusy = false;
+function i18nWatch() {
+  if (typeof MutationObserver === "undefined") return;
+  var mo = new MutationObserver(function (ms) {
+    if (_i18nBusy) return;
+    _i18nBusy = true;
+    try {
+      for (var i = 0; i < ms.length; i++) {
+        var m = ms[i];
+        if (m.type === "childList") {
+          for (var j = 0; j < m.addedNodes.length; j++) {
+            var nd = m.addedNodes[j];
+            if (nd.nodeType === 3) i18nNode(nd);
+            else if (nd.nodeType === 1) i18nWalk(nd);
+          }
+        } else if (m.type === "characterData") i18nNode(m.target);
+      }
+    } finally { _i18nBusy = false; }
+    _glueKick();
+  });
+  mo.observe(document.body, { childList: true, subtree: true, characterData: true });
+}
+function setLang(l) {
+  LANG = l;
+  try { localStorage.setItem("opl_lang", l); } catch (e) { }
+  document.documentElement.lang = l === "en" ? "en" : "zh-CN";
+  var btn = document.getElementById("langBtn");
+  if (btn) btn.textContent = l === "en" ? "中文" : "EN";
+  document.title = l === "en" ? T(ORIG_TITLE) : ORIG_TITLE;
+  if (l !== "en") removeGlue();
+  i18nWalk(document.body);
+  _glueKick();
+  if (typeof syncInputs === "function") syncInputs();
+  if (typeof render === "function") render();
+}
+
+
+
+
+/* ---------------- 直接 fillText / strokeText 的自动排版钩子 ----------------
+   有些标注不走 txt() 而是直接 g.fillText()（状态徽标、能带边等），
+   这里在原型层统一处理：含数学记法的字符串先按 LaTeX 规则拆段再绘制，
+   measureText 同步返回拆段总宽，白底框长度自动跟着变。 */
+const NEED_MATH_HM = /[\u2070-\u209C\u00B2\u00B3\u00B9]|_\{?[A-Za-z0-9\u0370-\u03ff]|\^\{?[\d(\-]|\d(\.\d+)?[eE][+\-]\d|\u221A/;
+/* 原生 measureText：mathSegsHM 内部量宽必须走这一条，
+   否则 measureText 被钩子接管后会 self-recursion（RangeError）。 */
+var _mRawHM = null;
+function measureRawHM(g, s) { return (_mRawHM ? _mRawHM : g.measureText).call(g, s).width; }
+function mathSegsHM(g, s) {
+  const f = String(g.font || "");
+  const mm = /(\d+(?:\.\d+)?)px/.exec(f);
+  const size = mm ? parseFloat(mm[1]) : 12;
+  const family = f.replace(/^(?:\s*(?:italic|oblique|bold|[1-9]00)\s*)*\d+(?:\.\d+)?px\s*/, "");
+  const style = /italic|oblique/.test(f) ? "italic " : (/bold|[6-9]00/.test(f) ? "bold " : "");
+  const parts = AUTO(s), laid = [];
+  let w = 0;
+  for (const p of parts) {
+    const small = !!(p.sup || p.sub);
+    const fs = style + (small ? (size * 0.74).toFixed(2) : size.toFixed(2)) + "px " + family;
+    g.font = fs;
+    const tw = measureRawHM(g, p.s);
+    laid.push({ s: p.s, w: tw, fs: fs, dy: small ? (p.sup ? -size * 0.40 : size * 0.22) : 0 });
+    w += tw;
+  }
+  return { laid: laid, w: w, family: family, style: style, size: size };
+}
+(function hookMathHM() {
+  if (window.__MATH_HOOK) return; window.__MATH_HOOK = 1;
+  const P = CanvasRenderingContext2D.prototype;
+  const _fill = P.fillText, _stroke = P.strokeText, _measure = P.measureText;
+  function draw(drawRaw, g, s, x, y, rest) {
+    const info = mathSegsHM(g, s);
+    const al = g.textAlign, bl = g.textBaseline;
+    const cx = al === "right" ? x - info.w : (al === "center" ? x - info.w / 2 : x);
+    g.textAlign = "left";
+    let px = cx;
+    for (const L of info.laid) {
+      g.font = L.fs;
+      drawRaw.call(g, L.s, px, y + L.dy, ...rest);
+      px += L.w;
+    }
+    g.textAlign = al; g.textBaseline = bl;
+    g.font = info.style + info.size.toFixed(2) + "px " + info.family;
+    return info;
+  }
+  P.fillText = function (s, x, y) {
+    if (typeof s !== "string" || !NEED_MATH_HM.test(s)) return _fill.apply(this, arguments);
+    draw(_fill, this, s, x, y, Array.prototype.slice.call(arguments, 3));
+  };
+  P.strokeText = function (s, x, y) {
+    if (typeof s !== "string" || !NEED_MATH_HM.test(s)) return _stroke.apply(this, arguments);
+    draw(_stroke, this, s, x, y, Array.prototype.slice.call(arguments, 3));
+  };
+  if (!_mRawHM) _mRawHM = _measure;
+  P.measureText = function (s) {
+    if (window.__HM_IN || typeof s !== "string" || !NEED_MATH_HM.test(s)) return _measure.call(this, s);
+    window.__HM_IN = 1;
+    const save = this.font;
+    let info;
+    try { info = mathSegsHM(this, s); } finally { window.__HM_IN = 0; }
+    this.font = save;
+    return { width: info.w, get actualBoundingBoxLeft() { return 0; }, get actualBoundingBoxRight() { return info.w; } };
+  };
+})();
+
+/* ---------------- HTML 侧自动 LaTeX 排版 ----------------
+   读数 / 说明 / 按钮名里由 JS 拼出来的 cm⁻³、E_c、2.5e+8，
+   在写进 innerHTML 之前转成真 <sup>/<sub>；标签与属性原样放过（title 不会被塞进尖括号）。
+   与画布侧 AUTO() 对偶，保证网页和画布按同一套规则排版。 */
+const AUTOH_SUP = { "⁰": "0", "¹": "1", "²": "2", "³": "3", "⁴": "4", "⁵": "5", "⁶": "6",
+  "⁷": "7", "⁸": "8", "⁹": "9", "⁺": "+", "⁻": "−", "⁼": "=", "⁽": "(", "⁾": ")", "ⁿ": "n", "ⁱ": "i" };
+const AUTOH_SUB = { "₀": "0", "₁": "1", "₂": "2", "₃": "3", "₄": "4", "₅": "5", "₆": "6",
+  "₇": "7", "₈": "8", "₉": "9", "₊": "+", "₋": "−", "₌": "=", "₍": "(", "₎": ")",
+  "ₐ": "a", "ₑ": "e", "ₒ": "o", "ₓ": "x", "ₔ": "ə", "ₕ": "h", "ₖ": "k", "ₗ": "l",
+  "ₘ": "m", "ₙ": "n", "ₚ": "p", "ₛ": "s", "ₜ": "t", "ᵣ": "r", "ᵤ": "u", "ᵥ": "v" };
+const TEXH_NEED = /[\u2070-\u209C\u00B2\u00B3\u00B9]|_\{?[A-Za-z0-9\u0370-\u03ff]|\^\{?[\d(\-]|\d(\.\d+)?[eE][+\-]\d|\u221A/;
+/* 从 i 处（必须是 '<'）扫出一个"完整元素"的结束下标（含嵌套），失败返回 -1 */
+function TEXH_elemEnd(h, i) {
+  if (h.charAt(i) !== "<") return -1;
+  let depth = 0, j = i, guard = 0;
+  while (j < h.length && guard++ < 4000) {
+    if (h.charAt(j) !== "<") { j++; continue; }
+    const e = TEXH_tagEnd(h, j);
+    if (e < 0) return -1;
+    const isClose = h.charAt(j + 1) === "/";
+    const selfClose = h.charAt(e - 2) === "/";
+    if (isClose) { depth--; j = e; if (depth <= 0) return j; }
+    else if (selfClose) { j = e; if (depth === 0) return j; }
+    else { depth++; j = e; }
+  }
+  return -1;
+}
+/* √ 后面直接跟一个元素：√<i>E</i> → √‾E（前两条规则只吃 √(A) 与 √字母串） */
+function TEXHsqrtElem(s) {
+  let out = "", i = 0, guard = 0;
+  while (guard++ < 400) {
+    const k = s.indexOf("\u221A", i);
+    if (k < 0) break;
+    out += s.slice(i, k);
+    /* 守卫：√ 后面已是闭标签 ⇒ 该 √ 已排版过（对整段 HTML 重复跑 TEXH 会把 </span> 当成被开方式，
+       层层包出空壳根号，视觉上变成 √−3 / √−E），原样输出不再包裹 */
+    if (s.charAt(k + 1) === "<" && s.charAt(k + 2) === "/") { out += "\u221A"; i = k + 1; continue; }
+    let rad = null, end = k + 1;
+    if (s.charAt(k + 1) === "(") {
+      /* √(…) ：被开方式里常有标签，括号本身不在同一个文本片段里，必须整串扫 */
+      let depth = 0, p = k + 1;
+      while (p < s.length) {
+        const c = s.charAt(p);
+        if (c === "(") depth++;
+        else if (c === ")") { depth--; if (depth === 0) { rad = s.slice(k + 2, p); end = p + 1; break; } }
+        p++;
+      }
+    } else {
+      const e = TEXH_elemEnd(s, k + 1);
+      if (e > 0 && e - k < 500) { rad = s.slice(k + 1, e); end = e; }
+    }
+    if (rad !== null && rad.length) {
+      out += "<span class=\"sqrt\"><span class=\"rd\">\u221A</span><span class=\"rdc\">" + rad + "</span></span>";
+      i = end;
+    } else { out += "\u221A"; i = k + 1; }
+  }
+  return out + s.slice(i);
+}
+function TEXHpart(t) {
+  let s = t;
+  /* 根号：√ 或 √(A) → <span class="sqrt">√<span class="rd"><span class="rdc">A</span></span></span>（A 内不含嵌套括号） */
+  s = s.replace(/<span class="(?:op|rm|fn|v|u)">\u221A<\/span>/g, "\u221A");
+  s = s.replace(/\u221A<span class="(?:op|rm)">\(<\/span>([^()]{1,120}?)<span class="(?:op|rm)">\)<\/span>/g, function (m, a) {
+    return "<span class=\"sqrt\"><span class=\"rd\">\u221A</span><span class=\"rdc\">" + a + "</span></span>";
+  });
+  s = s.replace(/\u221A\(([^()]{1,120})\)/g, function (m, a) {
+    return "<span class=\"sqrt\"><span class=\"rd\">\u221A</span><span class=\"rdc\">" + a + "</span></span>";
+  });
+  s = s.replace(/\u221A([A-Za-z0-9\u0370-\u03ff]{1,6})/g, function (m, a) {
+    return "<span class=\"sqrt\"><span class=\"rd\">\u221A</span><span class=\"rdc\">" + a + "</span></span>";
+  });
+  s = s.replace(/(\d(?:\.\d+)?)e([+-])(\d+)/g, function (m, a, sg, e) {
+    return a + "\u00d710<sup>" + (sg === "-" ? "\u2212" : "") + e + "</sup>";
+  });
+  s = s.replace(/([A-Za-z\u0370-\u03ff)\]])\^\{([^{}]{1,12})\}/g, "$1<sup>$2</sup>");
+  s = s.replace(/([A-Za-z\u0370-\u03ff)\]])\^(\d+(?:\.\d+)?)/g, "$1<sup>$2</sup>");
+  s = s.replace(/([A-Za-z\u0370-\u03ff])_\{([A-Za-z0-9\u0370-\u03ff+\-]{1,8})\}/g, "<span class='m'><i>$1</i><sub>$2</sub></span>");
+  s = s.replace(/([A-Za-z\u0370-\u03ff])_([A-Za-z0-9\u0370-\u03ff]{1,6})(?![A-Za-z0-9])/g, "<span class='m'><i>$1</i><sub>$2</sub></span>");
+  if (/[\u2070-\u209C\u00B2\u00B3\u00B9]/.test(s)) {
+    let out = "", i = 0;
+    while (i < s.length) {
+      const ch = s[i];
+      if (AUTOH_SUP[ch] !== undefined || AUTOH_SUB[ch] !== undefined) {
+        const isSup = AUTOH_SUP[ch] !== undefined, tab = isSup ? AUTOH_SUP : AUTOH_SUB;
+        let j = i, buf = "";
+        while (j < s.length && (isSup ? AUTOH_SUP[s[j]] !== undefined : AUTOH_SUB[s[j]] !== undefined)) {
+          buf += tab[s[j]]; j++;
+        }
+        out += "<" + (isSup ? "sup" : "sub") + ">" + buf + "</" + (isSup ? "sup" : "sub") + ">";
+        i = j;
+      } else { out += ch; i++; }
+    }
+    s = out;
+  }
+  return s.indexOf("\u221A") >= 0 ? TEXHsqrtElem(s) : s;
+}
+/* 只有真正的标签才整段跳过：正文里裸写的 '<'（如 "t₂ < 0"）必须当普通字符，
+   否则 indexOf('>') 会一路吞掉后面整段，E₂⁰ 这类记法就漏排了。 */
+function TEXH_tagEnd(h, i) {
+  if (h.charAt(i) !== "<") return -1;
+  const c = h.charAt(i + 1);
+  if (c === "!" || c === "/") { const j = h.indexOf(">", i); return (j >= 0 && j - i < 300) ? j + 1 : -1; }
+  if (!/[A-Za-z]/.test(c)) return -1;
+  let j = i + 1;
+  while (j < h.length && /[A-Za-z0-9]/.test(h.charAt(j))) j++;
+  if (j === i + 1) return -1;
+  if (h.charAt(j) === ">") return j + 1;
+  if (h.charAt(j) !== " " && h.charAt(j) !== "\n" && h.charAt(j) !== "\t") return -1;
+  const g = h.indexOf(">", j), nx = h.indexOf("<", j);
+  if (g < 0 || g - i > 300) return -1;
+  if (nx >= 0 && nx < g) return -1;
+  return g + 1;
+}
+function TEXH(h) {
+  if (typeof h !== "string" || !TEXH_NEED.test(h)) return h;
+  if (h.indexOf("\u221A") >= 0) h = h.replace(/<span class="(?:op|rm|fn|v|u)">\u221A<\/span>/g, "\u221A");
+  if (h.indexOf("<") < 0) return TEXHpart(h);
+  let out = "", i = 0, n = h.length, guard = 0;
+  while (i < n && guard++ < 40000) {
+    const e = TEXH_tagEnd(h, i);
+    if (e > 0) { out += h.slice(i, e); i = e; continue; }
+    let j = i;
+    while (j < n && TEXH_tagEnd(h, j) <= 0) j++;
+    out += TEXHpart(h.slice(i, j)); i = j;
+  }
+  const r = out + h.slice(i);
+  return r.indexOf("\u221A") >= 0 ? TEXHsqrtElem(r) : r;
+}
+(function hookHTML() {
+  if (window.__TEXH_HOOK) return; window.__TEXH_HOOK = 1;
+  const d = Object.getOwnPropertyDescriptor(Element.prototype, "innerHTML");
+  if (!d || !d.set) return;
+  Object.defineProperty(Element.prototype, "innerHTML", {
+    configurable: true, get: d.get,
+    set: function (v) { d.set.call(this, typeof v === "string" ? TEXH(v) : v); }
+  });
+  /* insertAdjacentHTML 也会被用到 */
+  const ia = Element.prototype.insertAdjacentHTML;
+  Element.prototype.insertAdjacentHTML = function (pos, v) {
+    return ia.call(this, pos, typeof v === "string" ? TEXH(v) : v);
+  };
+})();
+
+/* ---------------- 画布自动 LaTeX 排版 ----------------
+   老调用点 txt(g, "cm⁻³") / txt(g, "E_c") / txt(g, "2.5e+8") 一行都不用改，
+   只要在绘制前把字符串解析成分段零件即可。规则与网页侧一致：
+   物理量斜体、描述性下标与单位正体、幂次用真上标（不用 Unicode 伪字符）。 */
+const SUPMAP = { "⁰": "0", "¹": "1", "²": "2", "³": "3", "⁴": "4", "⁵": "5", "⁶": "6",
+  "⁷": "7", "⁸": "8", "⁹": "9", "⁺": "+", "⁻": "−", "⁼": "=", "⁽": "(", "⁾": ")", "ⁿ": "n", "ⁱ": "i" };
+const SUBMAP = { "₀": "0", "₁": "1", "₂": "2", "₃": "3", "₄": "4", "₅": "5", "₆": "6",
+  "₇": "7", "₈": "8", "₉": "9", "₊": "+", "₋": "−", "₌": "=", "₍": "(", "₎": ")",
+  "ₐ": "a", "ₑ": "e", "ₒ": "o", "ₓ": "x", "ₔ": "ə", "ₕ": "h", "ₖ": "k", "ₗ": "l",
+  "ₘ": "m", "ₙ": "n", "ₚ": "p", "ₛ": "s", "ₜ": "t", "ᵣ": "r", "ᵤ": "u", "ᵥ": "v" };
+const MATH_IDCH = /[A-Za-z\u0370-\u03ff]/;
+const NEED_MATH = /[\u2070-\u209C\u00B2\u00B3\u00B9]|_\{?[A-Za-z0-9\u0370-\u03ff]|\^\{?[\d(\-]|\d(\.\d+)?[eE][+\-]\d/;
+function AUTO(s) {
+  const out = [];
+  let buf = "", mode = 0;
+  const emit = (t, kind) => {
+    if (!t) return;
+    if (kind === 1) out.push({ s: t, sup: true });
+    else if (kind === -1) out.push({ s: t, sub: true });
+    else out.push({ s: t });
+  };
+  let i = 0, italicAll = false;
+  while (i < s.length) {
+    const ch = s[i];
+    if (SUPMAP[ch] !== undefined) { if (mode !== 1) { emit(buf, mode); buf = ""; mode = 1; } buf += SUPMAP[ch]; i++; continue; }
+    if (SUBMAP[ch] !== undefined) { if (mode !== -1) { emit(buf, mode); buf = ""; mode = -1; } buf += SUBMAP[ch]; i++; continue; }
+    if (mode) { emit(buf, mode); buf = ""; mode = 0; }
+    const rest = s.slice(i);
+    const sc = /^\d(\.\d+)?[eE][+\-]\d{1,3}/.exec(rest);       /* ASCII 伪科学计数 2.5e+8 */
+    if (sc) {
+      const parts = sc[0].split(/[eE]/);
+      emit(parts[0] + "\u00d710", 0); emit(String(+parts[1]).replace("-", "\u2212"), 1);
+      i += sc[0].length; continue;
+    }
+    if (MATH_IDCH.test(ch) && i + 1 < s.length && (s[i + 1] === "_" || s[i + 1] === "^")) {
+      const sup = s[i + 1] === "^";
+      let j = i + 2, grp = "";
+      if (s[j] === "{") { const e = s.indexOf("}", j); if (e > 0) { grp = s.slice(j + 1, e); j = e + 1; } }
+      else {
+        const RCJK = /[\u2E80-\u9FFF]/, RASC = /[A-Za-z0-9\u0370-\u03ff+\-]/;
+        if (RCJK.test(s[j])) { while (j < s.length && RCJK.test(s[j]) && j - i < 8) j++; }   /* 中文描述性下标：τ_直接、E_声子 */
+        else { while (j < s.length && RASC.test(s[j])) j++; }
+        grp = s.slice(i + 2, j);
+      }
+      if (grp) {
+        emit(ch, 0);
+        if (italicAll || /^[A-Za-z\u0370-\u03ff]$/.test(ch)) out[out.length - 1].i = true;
+        emit(sup ? grp.replace(/-/g, "\u2212") : grp, sup ? 1 : -1);
+        i = j; continue;
+      }
+    }
+    buf += ch; i++;
+  }
+  emit(buf, mode);
+  return out;
+}
+function fontInfo(font, dflt) {
+  const f = String(font || "");
+  const m = /(\d+(?:\.\d+)?)px/.exec(f);
+  return { fp: m ? parseFloat(m[1]) : (dflt || 12), bd: /bold|70\d|600/.test(f), it: /italic|oblique/.test(f) };
+}
+
+/* ---------------- HTML 字符串 → 画布零件（网页与画布共用同一份排版） ----------------
+   mtxt(g, TX(H_NA), x, y, col, fp) —— H_* 常量本来就在喂 innerHTML，
+   再喂给 TX() 就不会出现「网页斜体、画布正体」的两边不一致。
+   <i> 斜体、<sub> 下标、<sup> 上标；<span class="op|un|rm|sqrt|frac"> 只剥标签（保持正体）。 */
+const catA = (...a) => [].concat(...a);
+function TX(h) {
+  const t = String(h == null ? "" : h)
+    .replace(/<span\b[^>]*>/g, "").replace(/<\/span>/g, "")
+    .replace(/<i\b[^>]*>/g, "<i>").replace(/<b\b[^>]*>/g, "").replace(/<\/b>/g, "")
+    .replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&").replace(/&nbsp;/g, " ");
+  const out = [], re = /<i>([\s\S]*?)<\/i>|<sub>([\s\S]*?)<\/sub>|<sup>([\s\S]*?)<\/sup>|([^<]+)/g;
+  let m;
+  while ((m = re.exec(t))) {
+    const raw = s => s == null ? null : s.replace(/<[^>]*>/g, "");
+    if (m[1] != null) out.push({ s: raw(m[1]), i: true });
+    else if (m[2] != null) out.push({ s: raw(m[2]), sub: true });
+    else if (m[3] != null) out.push({ s: raw(m[3]), sup: true });
+    else if (m[4]) out.push({ s: m[4] });
+  }
+  return out;
+}
+function TXof(...a) { return catA(...a.map(TX)); }
+
+
+function PSci(v, n) {
+  if (!isFinite(v) || v === 0) return [{ s: "0" }];
+  const e = Math.floor(Math.log10(Math.abs(v)));
+  const m = (v / Math.pow(10, e)).toFixed(n === undefined ? 1 : n);
+  /* 1 ≦ |v| < 10 时直接写尾数，不再拖一个 ×10⁰（与 sciH 一致） */
+  if (e === 0) return [{ s: m }];
+  /* 指数负号用 U+2212 */
+  return [{ s: m + "×10" },
+          { s: String(e).replace("-", "−"), sup: true }];
+}
+
+/* ==================================================================
+   0. 常量与状态
+   ================================================================== */
+const HBAR2_2M = 14.65;    /* ħ²/(2m*)，取 m* = 0.26 mₑ，单位 eV·Å² */
+const S_CUSP   = 0.40;     /* 屏蔽库仑势尖峰的软化参数（无量纲） */
+/* 受主杂质势阱的屏蔽长度（Å）。受主 = 比主体更弱、更局域的扰动（更浅 + 更窄）。
+   为什么受主还要「更窄」：若受主阱与主体同宽（λ=2.0 Å），受主态没有芯内束缚、
+   尾巴每过一个晶格周期只衰减到约 1/3，相邻受主交叠很强，杂质子带会被展宽到与
+   主体能带交叠，两侧图像不对称。把受主阱做窄（λ=1.40 Å）可把受主能级推到带顶上方：
+   实测（默认 Δf=0.20，单杂质）ΔE_D = 0.576 eV、ΔE_A = 1.050 eV，两侧都清晰地
+   从带边分裂出来；「杂质子带」预设（Δf=0.25、5 个杂质、d=2a）下施主子带顶到带底
+   0.568 eV、受主子带底到带顶 0.569 eV —— 两侧几乎相同，图像对称，
+   浓度升高时同样演示「杂质子带并入能带」。
+   注：两侧尾巴衰减的差别仍然存在（默认参数下每个晶格周期衰减到 施主 ≈0.37、
+   受主 ≈0.44），这正是受主子带展得更宽的原因，但已不足以把子带压进主体能带。 */
+const LAM_ACC  = 1.40;
+const FONT     = "'Segoe UI', 'Microsoft YaHei', sans-serif";
+const COL = {
+  host: "#1976d2", donor: "#7b3fa0", acceptor: "#e2695f",
+  band: "#1976d2", fermi: "#f2b705", axis: "#6b7a8c", grid: "#e8edf3",
+  pot: "#54708c", potDim: "rgba(84,112,140,0.20)"
+};
+
+const OPT = {
+  N: 16, a: 5.43, V0: 16, lam0: 2.0, df: 0.20, lamI: 2.0, nImp: 1, sp: 2,
+  dxIdx: 1,                       /* 0 粗 / 1 中 / 2 细 */
+  show: { dens: true, fermi: true, vbg: true },
+  sel: null                       /* { row:'a'|'b'|'c', k:index } */
+};
+const DXT = [0.42, 0.26, 0.17];
+
+/* ==================================================================
+   1. 物理内核：势能 → 有限差分哈密顿 → 数值对角化
+   ================================================================== */
+function potentialAt(x, wells) {
+  let v = 0;
+  for (let k = 0; k < wells.length; k++) {
+    const w = wells[k];
+    const r = Math.abs(x - w.xj) / w.lam;
+    v -= w.V * (S_CUSP / (r + S_CUSP)) * Math.exp(-r);
+  }
+  return v;
+}
+function makeGrid(N, a, pad, M) {
+  const Ltot = (N - 1) * a + 2 * pad;
+  const dx = Ltot / (M + 1);                 /* 两端 Dirichlet 边界 */
+  const x = new Float64Array(M);
+  for (let i = 0; i < M; i++) x[i] = -pad + (i + 1) * dx;
+  return { x, dx, M, Ltot, x0: -pad, x1: -pad + Ltot, pad };
+}
+function hamiltonian(grid, wells) {
+  const M = grid.M, dx = grid.dx, t = HBAR2_2M / (dx * dx);
+  const d = new Float64Array(M), off = new Float64Array(M - 1);
+  for (let i = 0; i < M; i++) d[i] = potentialAt(grid.x[i], wells) + 2 * t;
+  for (let i = 0; i < M - 1; i++) off[i] = -t;
+  return { d, off, t, M };
+}
+/* Sturm 序列：小于 x 的特征值个数（三对角 LDLᵀ 的负主元计数） */
+function sturmCount(d, off, x) {
+  const n = d.length;
+  let pivmin = 1e-300;
+  for (let i = 0; i < n; i++) {
+    const v = Math.abs(d[i]) + Math.abs(off[i] || 0) + Math.abs(off[i - 1] || 0);
+    if (v > pivmin) pivmin = v;
+  }
+  pivmin *= 1e-14;
+  let dd = d[0] - x, cnt = dd < 0 ? 1 : 0;
+  for (let i = 1; i < n; i++) {
+    const b = off[i - 1];
+    if (Math.abs(dd) < pivmin) dd = -pivmin;
+    dd = (d[i] - x) - (b * b) / dd;
+    if (dd < 0) cnt++;
+  }
+  return cnt;
+}
+/* 解 (H − shift·I) y = rhs：三对角 Thomas 算法（近奇异时加枢轴保护） */
+function tridiagSolve(d, off, shift, rhs) {
+  const n = d.length;
+  const c = new Float64Array(n), e = new Float64Array(n), y = new Float64Array(n);
+  let pivmin = 1e-300;
+  for (let i = 0; i < n; i++) {
+    const v = Math.abs(d[i]) + Math.abs(off[i] || 0) + Math.abs(off[i - 1] || 0);
+    if (v > pivmin) pivmin = v;
+  }
+  pivmin *= 1e-13;
+  let bb = d[0] - shift;
+  if (Math.abs(bb) < pivmin) bb = bb >= 0 ? pivmin : -pivmin;
+  c[0] = rhs[0] / bb; e[0] = off[0] / bb;
+  for (let i = 1; i < n; i++) {
+    const bi = off[i - 1];
+    bb = (d[i] - shift) - bi * e[i - 1];
+    if (Math.abs(bb) < pivmin) bb = bb >= 0 ? pivmin : -pivmin;
+    c[i] = (rhs[i] - bi * c[i - 1]) / bb;
+    if (i < n - 1) e[i] = off[i] / bb;
+  }
+  y[n - 1] = c[n - 1];
+  for (let i = n - 2; i >= 0; i--) y[i] = c[i] - e[i] * y[i + 1];
+  return y;
+}
+/* Jacobi 旋转法：用于 Rayleigh–Ritz 的小矩阵（K×K）精确对角化 */
+function jacobiEigen(Ain) {
+  const n = Ain.length;
+  const A = Ain.map(r => Float64Array.from(r));
+  const V = [];
+  for (let i = 0; i < n; i++) { V.push(new Float64Array(n)); V[i][i] = 1; }
+  for (let sweep = 0; sweep < 60; sweep++) {
+    let s = 0;
+    for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) s += A[i][j] * A[i][j];
+    if (s < 1e-26) break;
+    for (let p = 0; p < n - 1; p++) for (let q = p + 1; q < n; q++) {
+      if (Math.abs(A[p][q]) < 1e-18) continue;
+      const th = (A[q][q] - A[p][p]) / (2 * A[p][q]);
+      const tt = (th >= 0 ? 1 : -1) / (Math.abs(th) + Math.sqrt(th * th + 1));
+      const c = 1 / Math.sqrt(tt * tt + 1), sn = tt * c;
+      for (let k = 0; k < n; k++) { const a = A[k][p], b = A[k][q]; A[k][p] = c * a - sn * b; A[k][q] = sn * a + c * b; }
+      for (let k = 0; k < n; k++) { const a = A[p][k], b = A[q][k]; A[p][k] = c * a - sn * b; A[q][k] = sn * a + c * b; }
+      for (let k = 0; k < n; k++) { const a = V[k][p], b = V[k][q]; V[k][p] = c * a - sn * b; V[k][q] = sn * a + c * b; }
+    }
+  }
+  const vals = new Float64Array(n);
+  for (let i = 0; i < n; i++) vals[i] = A[i][i];
+  const idx = Array.from({ length: n }, (_, i) => i).sort((p, q) => vals[p] - vals[q]);
+  return { vals: idx.map(i => vals[i]), vecs: idx.map(i => V.map(r => r[i])) };
+}
+/* 最低 K 个本征对：Sturm 二分 + 逆迭代 + Rayleigh–Ritz(Jacobi)，残差大时自动精化 */
+function eigLowest(d, off, K) {
+  const M = d.length;
+  let lo = Infinity, hi = -Infinity;
+  for (let i = 0; i < M; i++) {
+    const r = Math.abs(off[i] || 0) + Math.abs(off[i - 1] || 0);
+    if (d[i] - r < lo) lo = d[i] - r;
+    if (d[i] + r > hi) hi = d[i] + r;
+  }
+  const vals = new Float64Array(K);
+  for (let k = 1; k <= K; k++) {                 /* 二分（Sturm 序列） */
+    let a = lo, b = hi;
+    for (let it = 0; it < 70 && (b - a) > 1e-12 * Math.max(1, Math.abs(b)); it++) {
+      const m = 0.5 * (a + b);
+      if (sturmCount(d, off, m) >= k) b = m; else a = m;
+    }
+    vals[k - 1] = 0.5 * (a + b);
+  }
+  const apply = v => {
+    const h = new Float64Array(M);
+    for (let i = 0; i < M; i++) {
+      h[i] = d[i] * v[i];
+      if (i > 0) h[i] += off[i - 1] * v[i - 1];
+      if (i < M - 1) h[i] += off[i] * v[i + 1];
+    }
+    return h;
+  };
+  const unit = v => { let s = 0; for (let i = 0; i < M; i++) s += v[i] * v[i]; s = Math.sqrt(s) || 1; for (let i = 0; i < M; i++) v[i] /= s; return v; };
+  const mgs = Q => {
+    for (let k = 0; k < Q.length; k++) {
+      for (let j = 0; j < k; j++) {
+        let s = 0; for (let i = 0; i < M; i++) s += Q[j][i] * Q[k][i];
+        for (let i = 0; i < M; i++) Q[k][i] -= s * Q[j][i];
+      }
+      unit(Q[k]);
+    }
+  };
+  const ritz = Q => {
+    const Hq = Q.map(apply);
+    const T = [];
+    for (let p = 0; p < K; p++) {
+      T.push(new Float64Array(K));
+      for (let q = 0; q < K; q++) { let s = 0; for (let i = 0; i < M; i++) s += Q[p][i] * Hq[q][i]; T[p][q] = s; }
+    }
+    const je = jacobiEigen(T);
+    const vecs = je.vecs.map(u => {
+      const v = new Float64Array(M);
+      for (let p = 0; p < K; p++) { if (u[p] === 0) continue; for (let i = 0; i < M; i++) v[i] += u[p] * Q[p][i]; }
+      unit(v);
+      let mx = 0, mi = 0;                        /* 定号：最大分量取正 */
+      for (let i = 0; i < M; i++) if (Math.abs(v[i]) > mx) { mx = Math.abs(v[i]); mi = i; }
+      if (v[mi] < 0) for (let i = 0; i < M; i++) v[i] = -v[i];
+      return v;
+    });
+    const res = new Float64Array(K);
+    let maxRes = 0;
+    for (let k = 0; k < K; k++) {
+      const h = apply(vecs[k]); let r2 = 0;
+      for (let i = 0; i < M; i++) { const e = h[i] - vals[k] * vecs[k][i]; r2 += e * e; }
+      res[k] = Math.sqrt(r2); if (res[k] > maxRes) maxRes = res[k];
+    }
+    return { vecs, res, maxRes };
+  };
+
+  let Q = [];                                    /* 初始：DST 基做逆迭代种子 */
+  for (let k = 0; k < K; k++) {
+    const rhs = new Float64Array(M);
+    for (let i = 0; i < M; i++) rhs[i] = Math.sin((k + 1) * Math.PI * (i + 1) / (M + 1));
+    Q.push(unit(tridiagSolve(d, off, vals[k], rhs)));
+  }
+  mgs(Q);
+  let out = ritz(Q);
+  for (let pass = 0; pass < 2 && out.maxRes > 1e-9; pass++) {   /* 精化 */
+    let bad = 0;
+    for (let k = 0; k < K; k++) {
+      if (out.res[k] > 1e-9) { Q[k] = unit(tridiagSolve(d, off, vals[k], out.vecs[k])); bad++; }
+      else Q[k] = out.vecs[k];
+    }
+    if (!bad) break;
+    mgs(Q);
+    out = ritz(Q);
+  }
+  return { vals, vecs: out.vecs, maxRes: out.maxRes };
+}
+/* ==================================================================
+   2. 求解调度（三行 + 单势阱参照，带缓存）
+   ================================================================== */
+function buildWells(kind) {
+  const N = OPT.N, a = OPT.a;
+  const nImp = kind === "a" ? 0 : Math.min(OPT.nImp, N);
+  const f = kind === "a" ? 1 : (kind === "b" ? 1 + OPT.df : Math.max(0.25, 1 - OPT.df));
+  const lamI = kind === "c" ? LAM_ACC : OPT.lamI;   /* 受主杂质阱更窄：见 LAM_ACC 说明 */
+  const impSet = new Set();
+  const sp = Math.max(1, Math.min(OPT.sp, nImp > 1 ? Math.floor((N - 1) / (nImp - 1)) : OPT.sp));
+  const c0 = Math.round((N - 1) / 2 - (nImp - 1) * sp / 2);
+  for (let k = 0; k < nImp; k++) impSet.add(Math.max(0, Math.min(N - 1, c0 + k * sp)));
+  const out = [];
+  for (let j = 0; j < N; j++) {
+    const isI = impSet.has(j);
+    out.push({ j, xj: j * a, V: isI ? OPT.V0 * f : OPT.V0, lam: isI ? lamI : OPT.lam0, imp: isI });
+  }
+  return { wells: out, f, nImp, impSites: [...impSet] };
+}
+/* 网格：每个晶格周期取整数个格点，且两端留白取 dx 的整数倍，
+   保证所有势阱中心都恰好落在格点上——否则尖峰采样位置随 dx 漂移，能级会非单调跳动。 */
+function gridFor(N, a, padMin, dxT) {
+  const nInt = Math.max(4, Math.round(a / dxT));      /* 每周期格点数 */
+  const dx = a / nInt;
+  const pad = Math.ceil(padMin / dx) * dx;
+  const M = Math.max(60, Math.round(((N - 1) * a + 2 * pad) / dx) - 1);
+  return makeGrid(N, a, pad, M);
+}
+function padMinOf() { return Math.min(26, Math.max(12, 2.6 * OPT.a)); }
+function gridOf(N) { return gridFor(N, OPT.a, padMinOf(), DXT[OPT.dxIdx]); }
+function solveRow(kind, grid) {
+  const bw = buildWells(kind);
+  const H = hamiltonian(grid, bw.wells);
+  const K = Math.min(OPT.N + 10, grid.M - 2);
+  const t0 = performance.now();
+  const eig = eigLowest(H.d, H.off, K);
+  const ms = performance.now() - t0;
+  return { kind, ...bw, eig, ms, K, grid };
+}
+const RES = { key: "", a: null, b: null, c: null, one: null, ms: 0 };
+function solveKey() {
+  return [OPT.N, OPT.a, OPT.V0, OPT.lam0, OPT.df, OPT.lamI, OPT.nImp, OPT.sp, OPT.dxIdx].join("|");
+}
+function solve() {
+  const key = solveKey();
+  if (key === RES.key && RES.a) return RES;
+  const g = gridOf(OPT.N);
+  const t0 = performance.now();
+  RES.a = solveRow("a", g);
+  RES.b = solveRow("b", g);
+  RES.c = solveRow("c", g);
+  /* 单势阱参照（仅主体参数，缓存独立） */
+  if (!RES.one || RES.one.key !== [OPT.V0, OPT.lam0, OPT.dxIdx].join("|")) {
+    const g1 = gridFor(1, OPT.a, 22, DXT[OPT.dxIdx]);
+    const w1 = [{ j: 0, xj: 0, V: OPT.V0, lam: OPT.lam0, imp: false }];
+    const H1 = hamiltonian(g1, w1);
+    const e1 = eigLowest(H1.d, H1.off, 6);
+    RES.one = { key: [OPT.V0, OPT.lam0, OPT.dxIdx].join("|"), E0: e1.vals[0] };
+  }
+  RES.ms = performance.now() - t0;
+  RES.key = key;
+  /* 以行(a) 的 N 条能级作为主体能带参照 */
+  const va = RES.a.eig.vals;
+  RES.band = { lo: va[0], hi: va[OPT.N - 1], W: va[OPT.N - 1] - va[0] };
+  for (const r of [RES.a, RES.b, RES.c]) classifyRow(r);
+  return RES;
+}
+/* 波函数落在杂质位点附近的权重：局域态接近 1，扩展态约为 杂质数/N */
+function impWeight(vec, sites) {
+  const g = RES.a.grid;
+  let tot = 0, on = 0;
+  for (let i = 0; i < vec.length; i++) {
+    const p = vec[i] * vec[i]; tot += p;
+    for (let s = 0; s < sites.length; s++) {
+      if (Math.abs(g.x[i] - sites[s] * OPT.a) < OPT.a / 2) { on += p; break; }
+    }
+  }
+  return on / (tot || 1);
+}
+/* 杂质能级识别：权重远高于均匀分布基线者（最多取 nImp 条） */
+function classifyRow(r) {
+  const N = OPT.N, tol = 0.03 * Math.max(0.2, RES.band.W);
+  r.w = [];
+  for (let k = 0; k < N; k++) r.w[k] = impWeight(r.eig.vecs[k], r.impSites);
+  const cand = [];
+  if (N === 1) {
+    const E = r.eig.vals[0], e0 = RES.one ? RES.one.E0 : E;
+    if (Math.abs(E - e0) > 0.02 * Math.abs(e0)) cand.push({ k: 0, w: 1 });
+  } else if (r.impSites.length) {
+    const base = r.impSites.length / N;
+    const thr = Math.max(0.30, Math.min(0.75, 1.6 * base));
+    for (let k = 0; k < N; k++) if (r.w[k] > thr) cand.push({ k, w: r.w[k] });
+    cand.sort((p, q) => q.w - p.w);
+    cand.length = Math.min(cand.length, r.impSites.length);
+    cand.sort((p, q) => p.k - q.k);
+  }
+  r.impIdx = cand.map(c => c.k);
+  const imp = r.impIdx.map(k => {
+    const E = r.eig.vals[k];
+    const side = E < RES.band.lo - tol ? "below" : (E > RES.band.hi + tol ? "above" : "in");
+    return { k, E, side, w: r.w[k] };
+  }).filter(x => x.side !== "in");   /* 只保留真正分裂出能带的束缚杂质能级（施主 below / 受主 above） */
+  r.imp = imp;
+  r.impW = imp.length >= 2 ? imp[imp.length - 1].E - imp[0].E : 0;
+}
+/* 只有一个杂质时「杂质能级」就是那一条；有多个杂质时它劈裂成杂质子带，
+   凡是要报一个数（面板读数、图上的 ΔE 标注、波函数曲线）都必须先挑一条。
+   两侧口径必须一致，否则施主/受主不可比：
+     gapOf  = 到最近带边的距离；
+     edgeImp= 离带边最近的一条 → 最浅电离能（面板 E_D/E_A 与图上 ΔE 用，两侧同口径）；
+     deepImp= 离带边最远的一条 → 束缚最深、最局域（波函数图用，最能体现局域）。 */
+function gapOf(im) { return im.side === "below" ? RES.band.lo - im.E : im.E - RES.band.hi; }
+function edgeImp(list) {
+  if (!list || !list.length) return null;
+  let b = list[0]; for (const im of list) if (gapOf(im) < gapOf(b)) b = im; return b;
+}
+function deepImp(list) {
+  if (!list || !list.length) return null;
+  let b = list[0]; for (const im of list) if (gapOf(im) > gapOf(b)) b = im; return b;
+}
+function impsOf(r, side) { return (r.imp || []).filter(x => x.side === side); }
+/* ---------------- 简化费米能级（示意） ----------------
+   三行画的是同一条「主体能带」，但它在两行里扮演不同的角色（见本文件「同一条带的
+   两种映射」说明）：
+     行(b) 杂质能级从带底下方分裂 ⇒ 这条带相当于导带，带底 b.lo 就是 E_c。
+           n 型：E_F 落在 E_D 与 E_c 之间的禁带里（贴近带底），绝不能画进能带内部。
+     行(c) 杂质能级从带顶上方分裂 ⇒ 这条带相当于价带，带顶 b.hi 就是 E_v。
+           p 型：E_F 落在 E_v 与 E_A 之间的禁带里（贴近带顶）。
+   行(a)（无杂质）取带中央，与「本征 E_F ≈ 禁带中线」对应。
+   【旧代码把两侧都画反了】旧版施主取 b.hi−0.08W（带顶附近 / 能带内）、受主取
+   b.lo+0.08W（带底附近 / 能带内）——那既不是 n 型也不是 p 型的图像（画进能带内部
+   是简并半导体的图像），与第三章 E_F 随掺杂移动的结论直接冲突，已改为带外一侧。
+   偏移比例 u 只随杂质个数（浓度）走：越浓 ⇒ E_F 越贴近带边（重掺杂进一步向带边
+   靠拢、直至进入能带 ⇒ 简并），这一趋势与第三章一致。绝对值（0.x eV）只是示意量级。 */
+function fermiU() {                      /* 0 = 正好在带边；1 = 正好在杂质能级上 */
+  return fermiUAt(OPT.nImp);
+}
+function fermiUAt(n) {                   /* 供挑战卡文案按当前 N 实时算出百分比，避免写死后过期 */
+  const N = Math.max(2, OPT.N);
+  const u = 0.5 * Math.log(N / Math.max(1, n)) / Math.log(N);   /* n=1 → 0.50；n=N → 0 */
+  return Math.max(0.14, Math.min(0.62, u));
+}
+function fermiOf(r) {
+  const b = RES.band;
+  if (r.kind === "a" || r.imp.length === 0) return 0.5 * (b.lo + b.hi);
+  const im = edgeImp(r.imp) || r.imp[0], u = fermiU();  /* 与面板 E_D / E_A 同口径 */
+  if (im.side === "below") return b.lo - u * (b.lo - im.E);   /* n 型：E_c 下方、E_D 上方 */
+  if (im.side === "above") return b.hi + u * (im.E - b.hi);   /* p 型：E_v 上方、E_A 下方 */
+  return 0.5 * (b.lo + b.hi);
+}
+/* 费米能级落在哪一侧（供读数面板复用，避免文案与图再次打架） */
+function fermiSide(r) {
+  if (r.kind === "a" || !r.imp.length) return "mid";
+  const im = edgeImp(r.imp) || r.imp[0];
+  return im.side === "below" ? "n" : (im.side === "above" ? "p" : "mid");
+}
+
+/* ==================================================================
+   3. 画布基础
+   ================================================================== */
+const $ = id => document.getElementById(id);
+const CV = {};
+function fitCanvas(id) {
+  const el = $(id);
+  const w = el.clientWidth || 600, h = +el.dataset.h;
+  const dpr = window.devicePixelRatio || 1;
+  el.width = Math.round(w * dpr); el.height = Math.round(h * dpr);
+  el.style.height = h + "px";
+  const g = el.getContext("2d");
+  g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  CV[id] = { g, W: w, H: h, el };
+  return CV[id];
+}
+function fitAll() { ["potA", "potB", "potC", "lvA", "lvB", "lvC", "psi"].forEach(fitCanvas); }
+function txt(g, s, x, y, col, font, align, base) {
+  g.fillStyle = col; g.font = font || "12px " + FONT;
+  g.textAlign = align || "left"; g.textBaseline = base || "middle";
+  if (typeof s === "string" && NEED_MATH.test(s)) {
+    const fi = fontInfo(font, 12);
+    mRun(g, AUTO(s), x, y, fi.fp, fi.bd, align || "left", false);
+    return;
+  }
+  g.fillText(s, x, y);
+}
+function txtHalo(g, s, x, y, col, font, align, base) {
+  g.font = font || "12px " + FONT;
+  g.textAlign = align || "left"; g.textBaseline = base || "middle";
+  g.strokeStyle = "rgba(255,255,255,0.92)"; g.lineWidth = 3.5; g.lineJoin = "round";
+  if (typeof s === "string" && NEED_MATH.test(s)) {
+    const fi = fontInfo(font, 12), parts = AUTO(s);
+    g.lineJoin = "round";
+    mRun(g, parts, x, y, fi.fp, fi.bd, align || "left", true);
+    g.fillStyle = col;
+    mRun(g, parts, x, y, fi.fp, fi.bd, align || "left", false);
+    return;
+  }
+  g.strokeText(s, x, y);
+  txt(g, s, x, y, col, font, align, base);
+}
+/* ---- 画布内的 LaTeX 风格排版（纯 Canvas，无外部库） ----
+   parts：字符串按直立文本处理；{s, i:1} 斜体变量；{s, sub:1} 下标；{s, sup:1} 上标。
+   与 LaTeX 一致：变量斜体、数字/单位/标签下标直立、变量下标斜体。 */
+const FONTM = "\"Cambria Math\",\"Times New Roman\",Times,serif";
+const SUBR = 0.74, SUBDY = 0.22, SUPDY = 0.40;
+function pFont(q, fp, bd) {
+  const sz = fp * ((q.sub || q.sup) ? SUBR : 1);
+  return (bd ? "bold " : "") + (q.i ? "italic " : "") + sz.toFixed(2) + "px " + FONTM;
+}
+/* i18n 注入点①：画布 token。带 i / sub / sup / un 标记的是物理量、下标与单位，一律不动；
+   没有这些标记的 token 才是自然语言，交给 T() —— 所以这里的判断只看标记，不看内容。 */
+function partsOf(parts) { return parts.map(q => {
+  const o = (typeof q === "string" ? { s: q } : q);
+  const natural = !(o.i || o.sub || o.sup || o.un);
+  if (LANG === "en" && natural && typeof o.s === "string" && /[\u4E00-\u9FFF]/.test(o.s)) {
+    const t = T(o.s);
+    return t === o.s ? o : Object.assign({}, o, { s: t });
+  }
+  return o;
+}); }
+function mMeasure(g, parts, fp, bd) {
+  let w = 0;
+  for (const q of partsOf(parts)) { g.font = pFont(q, fp, bd); w += g.measureText(q.s).width; }
+  return w;
+}
+function mRun(g, parts, x, y, fp, bd, align, stroke) {
+  const ps = partsOf(parts);
+  let cx = align === "right" ? x - mMeasure(g, ps, fp, bd) : (align === "center" ? x - mMeasure(g, ps, fp, bd) / 2 : x);
+  g.textAlign = "left"; g.textBaseline = "middle"; g.lineJoin = "round";
+  for (const q of ps) {
+    g.font = pFont(q, fp, bd);
+    const dy = q.sub ? fp * SUBDY : (q.sup ? -fp * SUPDY : 0);
+    if (stroke) { g.lineWidth = (q.sub || q.sup) ? 2.6 : 3.5; g.strokeText(q.s, cx, y + dy); }
+    else { g.fillText(q.s, cx, y + dy); }
+    cx += g.measureText(q.s).width;
+  }
+}
+function mtxt(g, parts, x, y, col, fp, align, bd) {
+  g.fillStyle = col; mRun(g, parts, x, y, fp, bd, align, false);
+}
+function mtxtHalo(g, parts, x, y, col, fp, align, bd) {
+  g.strokeStyle = "rgba(255,255,255,0.92)";
+  mRun(g, parts, x, y, fp, bd, align, true);
+  mtxt(g, parts, x, y, col, fp, align, bd);
+}
+function rrect(g, x, y, w, h, r) {
+  g.beginPath();
+  g.moveTo(x + r, y); g.lineTo(x + w - r, y); g.quadraticCurveTo(x + w, y, x + w, y + r);
+  g.lineTo(x + w, y + h - r); g.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  g.lineTo(x + r, y + h); g.quadraticCurveTo(x, y + h, x, y + h - r);
+  g.lineTo(x, y + r); g.quadraticCurveTo(x, y, x + r, y);
+  g.closePath();
+}
+/* 顶层标签：先收集、最后统一压在所有能级线之上（白底 chip + 纵向避让），
+   杂质子带情形下多条杂质线会把 ΔE / E_D / E_A 的文字压住，故必须最后画。 */
+const LBLBOX = {};
+function chipAdd(list, g, parts, x, y, col, align, fp) {
+  const ps = Array.isArray(parts) ? parts.map(p => (typeof p === "string" ? { s: p } : p)) : [{ s: String(parts) }];
+  const f = fp || 11;
+  list.push({ ps, x, y, col, align: align || "left", fp: f, w: mMeasure(g, ps, f), txt: ps.map(p => p.s).join("") });
+}
+function chipsDraw(g, list, T, ph, id) {
+  list.forEach(o => {
+    const x1 = o.align === "right" ? o.x - o.w - 5 : o.x - 5;
+    o.x1 = x1; o.x2 = x1 + o.w + 10; o.h = 16;
+  });
+  const top = T + 10, bot = T + ph - 10;
+  list.forEach(o => { o.y = Math.max(top, Math.min(bot, o.y)); });   /* 先夹进绘图区，再做避让 */
+  const xHit = (a, b) => !(b.x1 > a.x2 || a.x1 > b.x2);              /* 横向重叠才需要纵向让位 */
+  /* 纵向排布：不能只做"单向下推 + 整组上移"——列高不够时，被上边界夹住的 chip
+     不会跟着上移，间距会被重新压缩（实测 E_F 与「能带 N 条能级」相差 8.9 px 仍重叠）。
+     改为双向推开：一对冲突的 chip 各让一半，再夹回绘图区，迭代到无冲突；
+     若这一列确实放不下，逐级收缩间距（18 → 12）兜底。 */
+  for (let GAP = 18; GAP >= 12; GAP -= 2) {
+    for (let it = 0; it < 24; it++) {
+      let moved = 0;
+      list.sort((a, b) => a.y - b.y);
+      for (let i = 0; i < list.length; i++) for (let j = i + 1; j < list.length; j++) {
+        const a = list[i], b = list[j];
+        if (!xHit(a, b)) continue;
+        const need = GAP - (b.y - a.y);
+        if (need <= 0) continue;
+        const half = need / 2 + 0.01;
+        a.y = Math.max(top, a.y - half);
+        b.y = Math.min(bot, b.y + half);
+        moved++;
+      }
+      if (!moved) break;
+    }
+    let worst = 0;
+    list.sort((a, b) => a.y - b.y);
+    for (let i = 0; i < list.length; i++) for (let j = i + 1; j < list.length; j++) {
+      const a = list[i], b = list[j];
+      if (xHit(a, b)) worst = Math.max(worst, GAP - (b.y - a.y));
+    }
+    if (worst <= 0.01) break;                                        /* 这一档间距放得下就用它 */
+  }
+  list.forEach(o => { o.y = Math.max(top, Math.min(bot, o.y)); });
+  list.forEach(o => {
+    rrect(g, o.x1, o.y - o.h / 2, o.x2 - o.x1, o.h, 3);
+    g.globalAlpha = 1;                                   /* 底色必须近实白，否则能级线会透出来 */
+    g.fillStyle = "rgba(255,255,255,0.97)"; g.fill();
+    g.globalAlpha = 0.32; g.strokeStyle = o.col; g.lineWidth = 1; g.stroke();
+    g.globalAlpha = 1;
+    mtxt(g, o.ps, o.x, o.y, o.col, o.fp, o.align);
+  });
+  LBLBOX[id] = list.map(o => ({ x1: o.x1, x2: o.x2, y: o.y, txt: o.txt }));
+}
+function niceTicks(lo, hi, want) {
+  const span = hi - lo, raw = span / want, mag = Math.pow(10, Math.floor(Math.log10(raw || 1)));
+  const nm = raw / mag, step = (nm < 1.5 ? 1 : nm < 3 ? 2 : nm < 7 ? 5 : 10) * mag;
+  const out = [];
+  if (!(step > 0)) return out;
+  for (let v = Math.ceil(lo / step) * step; v <= hi + 1e-9; v += step) out.push(v);
+  return out;
+}
+const fmtE = (v, n) => v.toFixed(n === undefined ? 2 : n);
+
+/* ==================================================================
+   4. 图：势阱阵列
+   ================================================================== */
+const POTHIT = {};
+/* 势能曲线采样：阱底是 V 形尖角（斜率 ~V₀(1+1/S)/λ ≈ 28 eV/Å），
+   均匀采样（步长 ~0.17 Å）会漏掉阱底，各阱表观深度随采样相位跳动可达 ~1.9 eV。
+   因此在每个阱中心附近按 λ 加密采样，并精确包含 x_j 本身。 */
+const POT_OFFS = [0, 0.01, 0.025, 0.05, 0.1, 0.2, 0.4, 0.8, 1.2];
+function potSamples(grid, wells, pw) {
+  const NS = Math.max(300, Math.round(pw * 2));
+  const xs = [];
+  for (let i = 0; i <= NS; i++) xs.push(grid.x0 + (grid.x1 - grid.x0) * i / NS);
+  for (const w of wells) for (const o of POT_OFFS) {
+    const x = w.xj + o * w.lam;
+    if (x > grid.x0 && x < grid.x1) xs.push(x);
+  }
+  xs.sort((a, b) => a - b);
+  return xs;
+}
+function drawPot(id, row) {
+  const c = CV[id] || fitCanvas(id);
+  const g = c.g, W = c.W, H = c.H;
+  g.clearRect(0, 0, W, H);
+  const r = row, grid = r.grid;
+  const Lm = 52, Rm = 14, T = 26, B = 36;
+  const pw = W - Lm - Rm, ph = H - T - B;
+  const X = x => Lm + (x - grid.x0) / (grid.x1 - grid.x0) * pw;
+  const XS = px => grid.x0 + (px - Lm) / pw * (grid.x1 - grid.x0);
+
+  /* 采样 */
+  const xs = potSamples(grid, r.wells, pw);
+  const NS = xs.length - 1;
+  const vs = xs.map(x => potentialAt(x, r.wells));
+  let vmin = 0;
+  for (let i = 0; i <= NS; i++) if (vs[i] < vmin) vmin = vs[i];
+  const vmax = 0;
+  const Y = v => T + (vmax - v) / (vmax - vmin) * ph;
+
+  /* 边框与网格 */
+  g.strokeStyle = COL.grid; g.lineWidth = 1;
+  g.beginPath(); g.moveTo(Lm, T); g.lineTo(Lm, T + ph); g.lineTo(Lm + pw, T + ph); g.stroke();
+  niceTicks(grid.x0, grid.x1, 6).forEach(v => {
+    g.beginPath(); g.moveTo(X(v), T); g.lineTo(X(v), T + ph + 3); g.stroke();
+    txt(g, fmtE(v, 0), X(v), T + ph + 12, COL.axis, "10.5px " + FONT, "center");
+  });
+  niceTicks(vmin, vmax, 4).forEach(v => {
+    g.beginPath(); g.moveTo(Lm - 3, Y(v)); g.lineTo(Lm + pw, Y(v)); g.stroke();
+    txt(g, fmtE(v, 0), Lm - 6, Y(v), COL.axis, "10.5px " + FONT, "right");
+  });
+  mtxt(g, [{ s: "V", i: 1 }, " (eV)"], Lm - 6, T - 12, COL.axis, 10.5, "right");
+  mtxt(g, [{ s: "x", i: 1 }, " (Å)"], Lm + pw, T + ph + 22, COL.axis, 10.5, "right");
+
+  /* 势阱位置竖线 */
+  g.setLineDash([2, 3]); g.strokeStyle = "rgba(107,122,140,0.35)";
+  r.wells.forEach(w => { g.beginPath(); g.moveTo(X(w.xj), T); g.lineTo(X(w.xj), T + ph); g.stroke(); });
+  g.setLineDash([]);
+
+  /* 主体势曲线 */
+  const impCol = r.kind === "b" ? COL.donor : COL.acceptor;
+  g.lineWidth = 1.5; g.strokeStyle = COL.pot;
+  g.beginPath();
+  for (let i = 0; i <= NS; i++) { const px = X(xs[i]); i ? g.lineTo(px, Y(vs[i])) : g.moveTo(px, Y(vs[i])); }
+  g.stroke();
+
+  /* 杂质势阱：局部重描 + 高亮 */
+  if (r.impSites.length) {
+    g.lineWidth = 2.4; g.strokeStyle = impCol;
+    r.impSites.forEach(j => {
+      const xj = j * OPT.a;
+      g.beginPath();
+      let started = false;
+      for (let i = 0; i <= NS; i++) {
+        if (Math.abs(xs[i] - xj) > 2.2 * OPT.lamI) { started = false; continue; }
+        const px = X(xs[i]);
+        if (!started) { g.moveTo(px, Y(vs[i])); started = true; } else g.lineTo(px, Y(vs[i]));
+      }
+      g.stroke();
+      /* 顶端三角标记 */
+      const px = X(xj);
+      g.fillStyle = impCol;
+      g.beginPath(); g.moveTo(px, T - 1); g.lineTo(px - 4.5, T - 9); g.lineTo(px + 4.5, T - 9); g.closePath(); g.fill();
+    });
+    const j0 = r.impSites[0], px0 = X(j0 * OPT.a);
+    const lab0 = r.kind === "b" ? "更深 " : "更浅 ";
+    mtxtHalo(g, [lab0, { s: "V", i: 1 }, "=", fmtE(r.f, 2), { s: "V", i: 1 }, { s: "0", sub: 1 }],
+      px0, T + 4, impCol, 11, "center", true);
+  }
+
+  /* 悬停探针 */
+  const hv = POTHIT[id];
+  if (hv && hv.on) {
+    const px = Math.max(Lm, Math.min(Lm + pw, hv.px));
+    const x = XS(px), v = potentialAt(x, r.wells);
+    g.strokeStyle = "rgba(242,183,5,0.9)"; g.lineWidth = 1; g.setLineDash([3, 3]);
+    g.beginPath(); g.moveTo(px, T); g.lineTo(px, T + ph); g.stroke(); g.setLineDash([]);
+    let near = null, nd = 1e9;
+    r.wells.forEach(w => { const d = Math.abs(w.xj - x); if (d < nd) { nd = d; near = w; } });
+    const hp = [{ s: "x", i: 1 }, "=", fmtE(x, 1), " Å　", { s: "V", i: 1 }, "=", fmtE(v, 2), " eV"];
+    if (near) hp.push("（最近势阱 ", near.imp ? "杂质" : "主体", "，", { s: "V", i: 1 }, "=", fmtE(near.V, 1), " eV，", { s: "λ", i: 1 }, "=", fmtE(near.lam, 2), " Å）");
+    const tw = mMeasure(g, hp, 10.5) + 12;
+    const tx = Math.min(Lm + pw - tw, Math.max(Lm, px - tw / 2));
+    g.fillStyle = "rgba(255,255,255,0.95)"; g.strokeStyle = "#dde4ec";
+    g.beginPath(); g.rect(tx, T + 2, tw, 20); g.fill(); g.stroke();
+    mtxt(g, hp, tx + 6, T + 12, "#2c3e50", 10.5);
+  }
+}
+
+/* ==================================================================
+   5. 图：能级
+   ================================================================== */
+const LVHIT = {};
+function drawLv(id, row) {
+  const c = CV[id] || fitCanvas(id);
+  const g = c.g, W = c.W, H = c.H;
+  g.clearRect(0, 0, W, H);
+  const r = row;
+  const Lm = 52, Rm = 16, T = 26, B = 32;
+  const pw = W - Lm - Rm, ph = H - T - B;
+  const N = OPT.N, vals = r.eig.vals, band = RES.band;
+
+  /* 纵轴范围 */
+  let lo = Math.min(vals[0], band.lo), hi = Math.max(vals[N - 1], band.hi);
+  r.imp.forEach(im => { lo = Math.min(lo, im.E); hi = Math.max(hi, im.E); });
+  const pad = 0.12 * Math.max(hi - lo, 0.4);
+  lo -= pad; hi += pad;
+  const Y = E => T + (hi - E) / (hi - lo) * ph;
+
+  /* 主体能带参照带 */
+  g.fillStyle = "rgba(25,118,210,0.10)";
+  g.fillRect(Lm + 1, Y(band.hi), pw - 2, Math.max(1.5, Y(band.lo) - Y(band.hi)));
+  g.strokeStyle = "rgba(25,118,210,0.30)"; g.lineWidth = 1; g.setLineDash([4, 3]);
+  g.beginPath(); g.moveTo(Lm + 1, Y(band.hi)); g.lineTo(Lm + pw - 1, Y(band.hi));
+  g.moveTo(Lm + 1, Y(band.lo)); g.lineTo(Lm + pw - 1, Y(band.lo)); g.stroke(); g.setLineDash([]);
+
+  /* 纵轴 */
+  g.strokeStyle = COL.grid; g.lineWidth = 1;
+  g.beginPath(); g.moveTo(Lm, T); g.lineTo(Lm, T + ph); g.lineTo(Lm + pw, T + ph); g.stroke();
+  niceTicks(lo, hi, 5).forEach(v => {
+    txt(g, fmtE(v, 1), Lm - 6, Y(v), COL.axis, "10.5px " + FONT, "right");
+  });
+  mtxt(g, [{ s: "E", i: 1 }, " (eV)"], Lm - 6, T - 12, COL.axis, 10.5, "right");
+
+  /* 能带内能级 */
+  const impSet = new Set(r.impIdx);
+  for (let k = 0; k < N; k++) {
+    if (impSet.has(k)) continue;
+    g.strokeStyle = COL.band; g.lineWidth = 1.2;
+    g.beginPath(); g.moveTo(Lm + 3, Y(vals[k])); g.lineTo(Lm + pw - 3, Y(vals[k])); g.stroke();
+  }
+
+  /* 文字标签统一收集，最后压在最上层绘制 */
+  const chips = [];
+
+  /* 费米能级：用虚线画（实线会被读成一条「真实的能级/带边」，而 E_F 是统计填充的界线） */
+  if (OPT.show.fermi) {
+    const ef = fermiOf(r);
+    g.strokeStyle = COL.fermi; g.lineWidth = 1.6; g.setLineDash([6, 4]);
+    g.beginPath(); g.moveTo(Lm + 3, Y(ef)); g.lineTo(Lm + pw - 3, Y(ef)); g.stroke();
+    g.setLineDash([]);
+    chipAdd(chips, g, [{ s: "E", i: 1 }, { s: "F", sub: 1 }], Lm + 6, Y(ef) - 7, "#b8860b", "left", 10.5);
+  }
+
+  /* 杂质能级（多条时构成杂质子带，全部画出） */
+  r.imp.forEach(im => {
+    const col = im.side === "below" ? COL.donor : COL.acceptor;
+    g.strokeStyle = col; g.lineWidth = 3;
+    g.beginPath(); g.moveTo(Lm + 3, Y(im.E)); g.lineTo(Lm + pw - 3, Y(im.E)); g.stroke();
+  });
+  /* 只给「离带边最近的一条」加文字与 ΔE 箭头：
+     ① 多条杂质线挤在一起时文字会堆叠；② 这一条给出最浅的电离能，
+        与读数面板的 E_D / E_A 同口径，施主侧与受主侧可直接比较。 */
+  const im0 = edgeImp(r.imp);
+  if (im0) {
+    const col = im0.side === "below" ? COL.donor : COL.acceptor;
+    const tag = im0.side === "below"
+      ? [{ s: "E", i: 1 }, { s: "D", sub: 1 }]
+      : [{ s: "E", i: 1 }, { s: "A", sub: 1 }];
+    const lab = tag.concat([" = ", fmtE(im0.E, 2), " eV"]);
+    const yy = Y(im0.E) + (im0.side === "below" ? 12 : -11);
+    chipAdd(chips, g, lab, Lm + pw - 8, yy, col, "right", 11);
+    /* 与最近的带边之间画箭头 + ΔE */
+    const edge = im0.side === "below" ? band.lo : band.hi;
+    const ax = Lm + pw * 0.42;
+    g.strokeStyle = col; g.lineWidth = 1.2;
+    g.beginPath(); g.moveTo(ax, Y(edge)); g.lineTo(ax, Y(im0.E)); g.stroke();
+    [[Y(edge), edge < im0.E ? 1 : -1], [Y(im0.E), edge < im0.E ? -1 : 1]].forEach(([y, dir]) => {
+      g.beginPath(); g.moveTo(ax, y); g.lineTo(ax - 3, y + 4 * dir); g.lineTo(ax + 3, y + 4 * dir); g.closePath();
+      g.fillStyle = col; g.fill();
+    });
+    chipAdd(chips, g, ["Δ", { s: "E", i: 1 }, " = ", fmtE(Math.abs(im0.E - edge), 3), " eV"],
+      ax + 6, (Y(edge) + Y(im0.E)) / 2, col, "left", 11);
+  }
+
+  /* 能带标注 */
+  if (band.W > 0.02) {
+    chipAdd(chips, g, "能带 " + N + " 条能级", Lm + 8, Y(band.hi) - 8, COL.band, "left", 11);
+    chipAdd(chips, g, [{ s: "W", i: 1 }, " = ", fmtE(band.W, 2), " eV"], Lm + 8, Y(band.lo) + 9, COL.band, "left", 11);
+  } else {
+    chipAdd(chips, g, "单势阱：只有 1 条能级", Lm + 8, Y(vals[0]) - 10, COL.band, "left", 11);
+  }
+  if (r.imp.length === 0 && r.kind !== "a") {
+    chipAdd(chips, g, "杂质势阱与主体差别太小 → 能级埋在能带内", Lm + pw - 8, T + 10, "#5b6b7c", "right", 11);
+  }
+  /* 杂质子带的条数（界面简化：只报条数，宽度请直接看能级图上这些线的跨度） */
+  if (r.imp.length >= 2) {
+    const c0 = r.imp[0].side === "below" ? COL.donor : COL.acceptor;
+    const ymid = (Y(r.imp[0].E) + Y(r.imp[r.imp.length - 1].E)) / 2;
+    chipAdd(chips, g, "杂质子带 " + r.imp.length + " 条", Lm + 8, ymid, c0, "left", 11);
+  }
+
+  /* 所有文字最后统一压在最上层 */
+  chipsDraw(g, chips, T, ph, id);
+
+  /* 悬停 / 选中 */
+  const hv = LVHIT[id];
+  if (hv && hv.on && hv.k != null && hv.k < N) {
+    const y = Y(vals[hv.k]);
+    g.strokeStyle = "#f2b705"; g.lineWidth = 1; g.setLineDash([3, 3]);
+    g.beginPath(); g.moveTo(Lm + 3, y); g.lineTo(Lm + pw - 3, y); g.stroke(); g.setLineDash([]);
+    const isImp = r.impIdx.indexOf(hv.k) >= 0;
+    const hp = ["第 ", String(hv.k + 1), " 条　", { s: "E", i: 1 }, " = ", fmtE(vals[hv.k], 3), " eV"];
+    if (isImp) hp.push("（杂质态）");
+    const tw = mMeasure(g, hp, 10.5) + 12;
+    g.fillStyle = "rgba(255,255,255,0.96)"; g.strokeStyle = "#dde4ec";
+    g.beginPath(); g.rect(Lm + 6, T + 2, tw, 20); g.fill(); g.stroke();
+    mtxt(g, hp, Lm + 12, T + 12, "#2c3e50", 10.5);
+  }
+  if (OPT.sel && OPT.sel.row === r.kind) {
+    const k = OPT.sel.k, y = Y(vals[k]);
+    g.strokeStyle = "#2c3e50"; g.lineWidth = 1;
+    g.beginPath(); g.moveTo(Lm + 3, y - 1.5); g.lineTo(Lm + pw - 3, y - 1.5); g.stroke();
+  }
+  /* 命中缓存 */
+  LVHIT[id] = Object.assign(LVHIT[id] || {}, {
+    ys: Array.from({ length: N }, (_, k) => Y(vals[k])), kind: r.kind, T, B, ph
+  });
+  txt(g, "能级", Lm + pw, T + ph + 18, COL.axis, "10.5px " + FONT, "right");
+}
+
+/* ==================================================================
+   6. 图：波函数
+   ================================================================== */
+function drawPsi() {
+  const c = CV["psi"] || fitCanvas("psi");
+  const g = c.g, W = c.W, H = c.H;
+  g.clearRect(0, 0, W, H);
+  const r = solve();
+  const grid = RES.a.grid;
+  const Lm = 52, Rm = 16, T = 26, B = 36;
+  const pw = W - Lm - Rm, ph = H - T - B;
+  const X = x => Lm + (x - grid.x0) / (grid.x1 - grid.x0) * pw;
+  const y0 = T + ph / 2;
+
+  /* 背景 V(x) 取「被展示的那一行」：默认行(b)（施主侧，有杂质标记），
+     点了哪一行就切到哪一行，避免"曲线来自行(b)、底下的势却是行(a)"的错位。 */
+  const br = RES[OPT.sel && OPT.sel.row ? OPT.sel.row : "b"];
+  const impColB = br.kind === "c" ? "rgba(226,105,95,0.45)" : "rgba(123,63,160,0.45)";
+
+  /* V(x) 背景（与 drawPot 相同的加密采样，避免阱底漏采） */
+  const xs = potSamples(grid, br.wells, pw);
+  const NS = xs.length - 1;
+  const vs = xs.map(x => potentialAt(x, br.wells));
+  let vmin = 0;
+  for (let i = 0; i <= NS; i++) if (vs[i] < vmin) vmin = vs[i];
+  if (OPT.show.vbg) {
+    g.strokeStyle = COL.potDim; g.lineWidth = 1;
+    g.beginPath();
+    for (let i = 0; i <= NS; i++) {
+      const px = X(xs[i]), py = T + ph - (vs[i] / vmin) * ph * 0.92;
+      i ? g.lineTo(px, py) : g.moveTo(px, py);
+    }
+    g.stroke();
+  }
+  /* 坐标轴 */
+  g.strokeStyle = COL.grid; g.lineWidth = 1;
+  g.beginPath(); g.moveTo(Lm, T); g.lineTo(Lm, T + ph); g.lineTo(Lm + pw, T + ph); g.lineTo(Lm + pw, T); g.stroke();
+  g.strokeStyle = "#c9d4e0";
+  g.beginPath(); g.moveTo(Lm, y0); g.lineTo(Lm + pw, y0); g.stroke();
+  niceTicks(grid.x0, grid.x1, 8).forEach(v => {
+    g.beginPath(); g.moveTo(X(v), T + ph); g.lineTo(X(v), T + ph + 3); g.stroke();
+    txt(g, fmtE(v, 0), X(v), T + ph + 12, COL.axis, "10.5px " + FONT, "center");
+  });
+  mtxt(g, [{ s: "ψ", i: 1 }, "(", { s: "x", i: 1 }, ")"], Lm - 6, T - 12, COL.axis, 10.5, "right");
+  mtxt(g, [{ s: "x", i: 1 }, " (Å)"], Lm + pw, T + ph + 22, COL.axis, 10.5, "right");
+
+  /* 杂质位置竖线 */
+  const impX = br.impSites.map(j => j * OPT.a);
+  g.setLineDash([3, 3]); g.strokeStyle = impColB; g.lineWidth = 1;
+  impX.forEach(x => { g.beginPath(); g.moveTo(X(x), T); g.lineTo(X(x), T + ph); g.stroke(); });
+  g.setLineDash([]);
+
+  /* 参与绘制的态 */
+  const L2 = v => { let s = 0; for (let i = 0; i < v.length; i++) s += v[i] * v[i]; return Math.sqrt(s * grid.dx); };
+  const items = [];
+  const kHost = Math.floor(OPT.N / 2);
+  items.push({ row: "a", k: kHost, vec: RES.a.eig.vecs[kHost], col: COL.host, lw: 1.5, name: "能带态（扩展）" });
+  /* 局域对照曲线：施主取带下方最深的（below 中离带底最远），受主取带上方最高的，
+     即"束缚最深"的那一条——它最局域，与扩展态的对比最鲜明。 */
+  const bB = deepImp(impsOf(RES.b, "below"));
+  const cA = deepImp(impsOf(RES.c, "above"));
+  if (bB) items.push({ row: "b", k: bB.k, vec: RES.b.eig.vecs[bB.k], col: COL.donor, lw: 2.2, name: "施主态（局域）" });
+  if (cA) items.push({ row: "c", k: cA.k, vec: RES.c.eig.vecs[cA.k], col: COL.acceptor, lw: 2.2, name: "受主态（局域）" });
+  /* 点选的态：若不在上面三条里，单独以深色加粗画出，保证"点任意一条能级都能看到它的 ψ" */
+  const sel = OPT.sel;
+  if (sel && !items.some(it => it.row === sel.row && it.k === sel.k)) {
+    const rr = RES[sel.row];
+    if (rr && rr.eig.vecs[sel.k]) items.push({
+      row: sel.row, k: sel.k, vec: rr.eig.vecs[sel.k], col: "#2c3e50", lw: 1.8,
+      name: "选中态（" + ({ a: "行a", b: "行b", c: "行c" })[sel.row] + " 第 " + (sel.k + 1) + " 条）"
+    });
+  }
+
+  /* 归一化：L2 范数为 1，再统一缩放 */
+  let peak = 0, peak2 = 0;
+  items.forEach(it => {
+    it.n = L2(it.vec);
+    const v = Float64Array.from(it.vec, z => z / it.n);
+    it.v = v;
+    for (let i = 0; i < v.length; i++) { if (Math.abs(v[i]) > peak) peak = Math.abs(v[i]); if (v[i] * v[i] > peak2) peak2 = v[i] * v[i]; }
+  });
+  const sc = 0.86 * (ph / 2) / (peak || 1);
+  const sc2 = OPT.show.dens ? 0.86 * (ph / 2) / (peak2 || 1) : 0;
+
+  /* |ψ|² 填充 */
+  if (OPT.show.dens) {
+    items.forEach(it => {
+      g.fillStyle = it.col.replace(")", ",0.16)").replace("#", "#");
+      g.fillStyle = hexA(it.col, 0.15);
+      g.beginPath(); g.moveTo(X(grid.x[0]), y0);
+      for (let i = 0; i < it.v.length; i++) g.lineTo(X(grid.x[i]), y0 - it.v[i] * it.v[i] * sc2);
+      g.lineTo(X(grid.x[it.v.length - 1]), y0); g.closePath(); g.fill();
+    });
+  }
+  /* ψ 曲线 */
+  items.forEach(it => {
+    const sel = OPT.sel && OPT.sel.row === it.row && OPT.sel.k === it.k;
+    g.strokeStyle = it.col; g.lineWidth = sel ? 3.2 : it.lw;
+    if (it.dash && !sel) g.setLineDash([5, 3]);
+    g.beginPath();
+    for (let i = 0; i < it.v.length; i++) {
+      const px = X(grid.x[i]), py = y0 - it.v[i] * sc;
+      i ? g.lineTo(px, py) : g.moveTo(px, py);
+    }
+    g.stroke();
+    g.setLineDash([]);
+  });
+
+  /* 图例（右上，带白底） */
+  const leg = items.map(it => ({ name: it.name, col: it.col }));
+  leg.push({ name: "杂质位置（" + br.kind.toUpperCase() + " 行）", col: impColB });
+  let lx = Lm + pw - 6, ly = T + 8;
+  g.font = "10.5px " + FONT;
+  leg.forEach(L => {
+    const s = L.name;
+    const tw = g.measureText(s).width;
+    g.fillStyle = "rgba(255,255,255,0.9)";
+    g.fillRect(lx - tw - 26, ly - 8, tw + 30, 17);
+    g.strokeStyle = L.col; g.lineWidth = 2.4;
+    g.beginPath(); g.moveTo(lx - tw - 22, ly); g.lineTo(lx - tw - 6, ly); g.stroke();
+    txt(g, s, lx, ly, "#2c3e50", "10.5px " + FONT, "right");
+    ly += 17;
+  });
+}
+function hexA(hex, a) {
+  const h = hex.replace("#", "");
+  const n = parseInt(h.length === 3 ? h.split("").map(c => c + c).join("") : h, 16);
+  return "rgba(" + ((n >> 16) & 255) + "," + ((n >> 8) & 255) + "," + (n & 255) + "," + a + ")";
+}
+
+/* ==================================================================
+   7. 读数面板
+   ================================================================== */
+/* LaTeX 风格内联数学：<span class="m">…</span> */
+const MM = s => '<span class="m">' + s + '</span>';
+function updatePanels() {
+  const r = solve();
+  const b = RES.band, kv = $("kvBox");
+  /* 多杂质时杂质能级劈裂成杂质子带：读数统一报「离带边最近的一条」，
+     即最浅的电离能；施主侧与受主侧口径相同，可以直接比较。 */
+  const d = edgeImp(impsOf(RES.b, "below")) || edgeImp(impsOf(RES.c, "below"));
+  const a = edgeImp(impsOf(RES.c, "above")) || edgeImp(impsOf(RES.b, "above"));
+  const nD = impsOf(RES.b, "below").length, nA = impsOf(RES.c, "above").length;
+  const multi = s => "（" + s + " 条，取最靠近带边的一条）";
+  const row = (k, v) => '<div class="row"><span class="k">' + k + '</span><span class="v">' + v + '</span></div>';
+  const hd = s => '<div class="hd">' + s + '</div>';
+  let html = "";
+  html += hd("主体势阱与单势阱参照");
+  html += row(MM("势阱个数 <i>N</i>") + " / " + MM("间距 <i>a</i>"), "<b>" + OPT.N + "</b> 个 / <b>" + fmtE(OPT.a, 2) + "</b> Å");
+  html += row(MM("势阱强度 <i>V</i><sub>0</sub>") + " / " + MM("屏蔽长度 <i>λ</i><sub>0</sub>"), "<b>" + fmtE(OPT.V0, 1) + "</b> eV / <b>" + fmtE(OPT.lam0, 2) + "</b> Å");
+  /* 受主阱的 λ 是一个「藏在代码里的旋钮」（LAM_ACC），它把受主能级再推高一截，
+     必须在面板上露出来，否则学生调 Δf 时以为两侧对称变化（见挑战二）。 */
+  html += row(MM("杂质阱屏蔽长度 <i>λ</i>") + "（施主 / 受主）",
+    "<b>" + fmtE(OPT.lamI, 2) + "</b> / <b>" + fmtE(LAM_ACC, 2) + "</b> Å（主体 " + fmtE(OPT.lam0, 2) +
+    " Å；<b>受主阱更窄</b> ⇒ 受主能级被再推高一截）");
+  html += row(MM("单势阱束缚能 <i>E</i><sub>0</sub>"), "<b>" + fmtE(RES.one.E0, 3) + "</b> eV");
+  html += hd("主体能带（行 a，数值解）");
+  html += row("带底 / 带顶", fmtE(b.lo, 3) + " / " + fmtE(b.hi, 3) + " eV");
+  html += row(MM("能带宽度 <i>W</i>"), "<b>" + fmtE(b.W, 3) + "</b> eV（" + OPT.N + " 条能级）");
+  /* 「能带中心 = 单势阱束缚能」是有限链的近似结果，不是恒等式 —— 残差做成实时读数。
+     注意：本工具没有任何改变网格密度的 UI 入口（dxIdx 恒为中档），所以这里只能用
+     「链端势阱配位不完整」这个物理理由来解释近似，不能再叫学生去换网格密度自行验证。 */
+  const ctr = 0.5 * (b.lo + b.hi), res0 = ctr - RES.one.E0;
+  html += row("能带中心（带底+带顶）/2", "<b>" + fmtE(ctr, 3) + "</b> eV");
+  html += row("中心 − 单势阱 " + MM("<i>E</i><sub>0</sub>") + "（残差）",
+    fmtE(res0, 4) + " eV（相对 <b>" + fmtE(Math.abs(res0 / RES.one.E0) * 100, 2) + "%</b>）＝ 近似为零但<b>非恒等</b>（有限链的链端效应）");
+  /* 量级声明浓缩成分组标题的括号：页首黄条与面板量级声明组已按简化要求删除，
+     但「这些 eV 数不是真实 Si 的电离能」这条必须留在杂质能级这个位置上。 */
+  html += hd("杂质能级（一维机制演示模型，不是真实半导体数据）");
+  if (d) {
+    html += row(MM("施主能级 <i>E</i><sub>D</sub>") + (nD > 1 ? multi(nD) : ""), "<u>" + fmtE(d.E, 3) + "</u> eV");
+    html += row(MM("电离能 Δ<i>E</i><span class=\"op\">=</span>带底<span class=\"op\">−</span><i>E</i><sub>D</sub>"), "<u>" + fmtE(b.lo - d.E, 3) + "</u> eV");
+  } else html += row("施主型", "<i>未分裂（埋在能带内）</i>");
+  if (a) {
+    html += row(MM("受主能级 <i>E</i><sub>A</sub>") + (nA > 1 ? multi(nA) : ""), "<em>" + fmtE(a.E, 3) + "</em> eV");
+    html += row(MM("电离能 Δ<i>E</i><span class=\"op\">=</span><i>E</i><sub>A</sub><span class=\"op\">−</span>带顶"), "<em>" + fmtE(a.E - b.hi, 3) + "</em> eV");
+  } else html += row("受主型", "<i>未分裂（埋在能带内）</i>");
+  /* 费米能级（简化示意）：n 型必须落在 E_D 与 E_c 之间、p 型落在 E_v 与 E_A 之间。
+     旧版把两侧都画进了能带内部（那是简并半导体的图像），已订正为带外一侧。 */
+  html += hd("费米能级 " + MM("<i>E</i><sub>F</sub>") + "（简化示意）");
+  const uu = Math.round(fermiU() * 100);
+  [["行(b) 施主", RES.b, "n"], ["行(c) 受主", RES.c, "p"]].forEach(([nm, rr, sd]) => {
+    const im = edgeImp(rr.imp);
+    if (!im || sd !== fermiSide(rr)) { html += row(nm, "<i>未分裂 → 取带中央</i>"); return; }
+    const ef = fermiOf(rr);
+    html += row(nm + "（" + sd + " 型）", sd === "n"
+      ? "带底 " + MM("<i>E</i><sub>c</sub>") + " <b>下方</b> " + fmtE(b.lo - ef, 3) + " eV（" + MM("<i>E</i><sub>D</sub><span class=\"op\">→</span><i>E</i><sub>c</sub>") + " 间隙的 " + uu + "% 处，从带边算起）"
+      : "带顶 " + MM("<i>E</i><sub>v</sub>") + " <b>上方</b> " + fmtE(ef - b.hi, 3) + " eV（" + MM("<i>E</i><sub>v</sub><span class=\"op\">→</span><i>E</i><sub>A</sub>") + " 间隙的 " + uu + "% 处，从带边算起）");
+  });
+  html += hd("数值求解信息");
+  html += row(MM("网格点数 <i>M</i>") + " / " + MM("步长 Δ<i>x</i>"), RES.a.grid.M + " / " + fmtE(RES.a.grid.dx, 3) + " Å");
+  html += row(MM('<span class="frac"><span class="num"><i>ħ</i><sup>2</sup></span><span class="den">2<i>m</i><sup>*</sup>Δ<i>x</i><sup>2</sup></span></span>'),
+    fmtE(HBAR2_2M / (RES.a.grid.dx * RES.a.grid.dx), 0) + " eV（" + MM("<i>m</i><sup>*</sup><span class=\"op\">=</span>0.26<span class=\"un\">m</span><sub>e</sub>") + "）");
+  html += row("三行求解耗时", fmtE(RES.ms, 0) + " ms");
+  kv.innerHTML = html;
+
+  /* 波函数图例补充（杂质竖线颜色随当前展示的行：行b 紫 / 行c 浅红） */
+  const br = RES[OPT.sel && OPT.sel.row ? OPT.sel.row : "b"];
+  const icol = br.kind === "c" ? "rgba(226,105,95,.45)" : "rgba(123,63,160,.45)";
+  $("psiLegend").innerHTML =
+    '<span><i class="swatch" style="color:' + COL.host + '"></i>能带态（蓝，扩展）</span>' +
+    '<span><i class="swatch" style="color:' + COL.donor + '"></i>施主态（紫，局域）</span>' +
+    '<span><i class="swatch" style="color:' + COL.acceptor + '"></i>受主态（浅红，局域）</span>' +
+    '<span><i class="swatch" style="color:' + icol + '"></i>杂质位置（' + br.kind.toUpperCase() + ' 行）</span>' +
+    '<span>填充 = ' + MM('|<i>ψ</i>|<sup>2</sup>') + '</span>' +
+    '<span><i class="swatch" style="color:#2c3e50"></i>点选的其它态（深灰）</span>';
+}
+
+/* ==================================================================
+   8. 挑战任务
+   ================================================================== */
+const CHALS = [
+  {
+    t: "挑战一 · 能带从何而来",
+    q: "看行(a)：16 个完全相同的势阱给出了多少条能级？它们为什么不重合在同一条线上？能带宽度 " + MM("<i>W</i>") + " 是多少，能带的中心又在哪个能量附近（对比读数面板里的单势阱束缚能 " + MM("<i>E</i><sub>0</sub>") + "）？再把「杂质势阱强度差 " + MM("Δ<i>f</i>") + "」从 0.10 拉到 0.60，行(a) 的能带宽度会跟着变吗——为什么？",
+    a: "行(a) 给出 16 条能级——每个势阱贡献一条 1s 型束缚态。它们之所以不是 16 条重合在一起，是因为相邻势阱的波函数互相重叠（隧穿耦合），简并被解除，原来的一条原子能级被展宽成 16 条。实测带底 " + MM("−5.564<span class=\"un\">eV</span>") + "、带顶 " + MM("−2.680<span class=\"un\">eV</span>") + "，宽度 " + MM("<i>W</i><span class=\"op\">=</span>2.88<span class=\"un\">eV</span>") + "；而能带中心 " + MM("<span class=\"frac\"><span class=\"num\">−5.564−2.680</span><span class=\"den\">2</span></span><span class=\"op\">=</span>−4.12<span class=\"un\">eV</span>") + "，与读数面板里的单势阱束缚能 " + MM("<i>E</i><sub>0</sub><span class=\"op\">=</span>−4.121<span class=\"un\">eV</span>") + " 在两位小数内一致——能带就是「原子能级 + 耦合展宽」。<b>但这是有限链的近似结果，不是恒等式</b>：四位小数下能带中心 −4.1218 eV、" + MM("<i>E</i><sub>0</sub><span class=\"op\">=</span>") + "−4.1209 eV，残差 −0.0008 eV（0.02%）—— 这个差别来自有限链本身：链端势阱缺了外侧那一半邻居、配位环境不完整，耦合里还含次近邻以上的成分，两者不会严格相等。这个残差由读数面板「中心 − 单势阱 " + MM("<i>E</i><sub>0</sub>") + "（残差）」一行实时列出。把 " + MM("Δ<i>f</i>") + " 从 0.10 拉到 0.60，行(a) 的 " + MM("<i>W</i>") + " 始终是 2.884 eV，一点都不变：行(a) 的 16 个势阱始终全同，" + MM("Δ<i>f</i>") + " 只改行(b)(c) 里那几个杂质势阱的强度，主体能带与杂质无关。（要压窄能带得减小势阱间距、削弱阱间耦合；本工具把 " + MM("<i>N</i>") + " 与 " + MM("<i>a</i>") + " 固定，只留杂质相关的旋钮。）"
+  },
+  {
+    t: "挑战二 · 施主与受主",
+    q: "把「杂质势阱强度差 " + MM("Δ<i>f</i>") + "」从 0.10 拉到 0.60：行(b) 的更深势阱和行(c) 的更浅势阱分别把能级推向哪边？" + MM("Δ<i>f</i>") + " 调到最小（0.10）时会怎样？",
+    a: "行(b) 势阱更深（" + MM("<i>V</i><span class=\"op\">=</span>1.20<i>V</i><sub>0</sub>") + "），束缚能级更低，于是有一条能级从能带底部「掉出来」——施主能级 " + MM("<i>E</i><sub>D</sub>") + "；行(c) 势阱更浅（" + MM("<i>V</i><span class=\"op\">=</span>0.80<i>V</i><sub>0</sub>") + "），能级上移，从带顶「跳出去」——受主能级 " + MM("<i>E</i><sub>A</sub>") + "。默认 " + MM("Δ<i>f</i><span class=\"op\">=</span>0.20") + " 实测：" + MM("<i>E</i><sub>D</sub>") + " 在带底下方 0.576 eV，" + MM("<i>E</i><sub>A</sub>") + " 在带顶上方 1.05 eV。（<b>示意量级</b>：真实 Si 浅施主/浅受主都只有 ≈45 meV，本模型的阱参数是为画面清晰挑的，见读数面板「杂质能级」分组与类氢模型工具。）受主侧离带边更远，是因为本工具把受主杂质阱做得<b>又浅又窄</b>（" + MM("<i>λ</i><span class=\"op\">=</span>1.40<span class=\"un\">Å</span>") + "，主体 2.00 Å）：阱浅 ⇒ 能级被推高，阱窄 ⇒ 阱内束缚弱、能级再被推高一截。但「离带边多远」不等于「束缚多紧」：受主态没有芯内束缚，尾巴每过一个晶格周期只衰减到约 0.44（施主被深阱攥住，约 0.37），包摊得比施主还开——这一点在挑战四里会放大成杂质子带宽度的差别。" + MM("Δ<i>f</i><span class=\"op\">=</span>0.10") + "（滑块下限）时施主只分裂出 0.186 eV、受主 0.702 eV——能级刚从能带边缘冒出来，波函数的包已经摊开到好几个势阱宽。" + MM("Δ<i>f</i>") + " 越小，电离能越小、包摊得越开；" + MM("Δ<i>f</i>") + " 越大，电离能越大、包收得越紧。一路拉到 " + MM("Δ<i>f</i><span class=\"op\">=</span>0.60") + "，" + MM("Δ<i>E</i><sub>D</sub><span class=\"op\">=</span>2.94<span class=\"un\">eV</span>") + "、" + MM("Δ<i>E</i><sub>A</sub><span class=\"op\">=</span>2.51<span class=\"un\">eV</span>") + "，已经是深能级了。"
+  },
+  {
+    t: "挑战三 · 杂质态是局域态",
+    q: "点击行(b) 的施主能级，看下方波函数图：紫色的杂质态和蓝色的能带态，形状上有什么根本不同？再把 " + MM("Δ<i>f</i>") + " 从 0.10 一路调到 0.60，紫色波函数的「包」是收紧还是摊开？",
+    a: "能带态的 " + MM("<i>ψ</i>") + " 贯穿整条链，在每个势阱处都有振荡，从头到尾幅度相当——这是扩展态（布洛赫波）。杂质态完全不是这样：它的幅度只在杂质所在的那个势阱附近成包，向两侧迅速衰减，离开杂质三四个 Å 就基本看不见了——这是局域态。判断一个态局域与否，看图就够了：曲线是不是「只在杂质附近有一团」。把 " + MM("Δ<i>f</i>") + " 从 0.10 调到 0.60，施主电离能从 0.19 eV 增大到 2.94 eV，紫色波函数的包随之越来越紧、越来越向杂质收缩——束缚越深，电子被攥得越紧。反过来把 " + MM("Δ<i>f</i>") + " 调小，电离能变小，包就摊开到覆盖好几个势阱；等到包的范围追上杂质之间的间距，相邻杂质的波函数连成一片，杂质态就「溶解」进能带——这正是 Mott 转变的图像。本工具只把已经彻底分裂出能带的杂质能级单独画出；能量仍落在能带范围内的态与能带态强烈混合，不再是独立的杂质能级。"
+  },
+  {
+    t: "挑战四 · 杂质子带",
+    q: "点「杂质子带」预设（" + MM("Δ<i>f</i><span class=\"op\">=</span>0.25") + "、5 个杂质、间距 " + MM("2<i>a</i>") + "），再把杂质个数依次改成 1、2、3、6：行(b)(c) 里的杂质能级有几条？它们从最低到最高摊开的范围怎么变？接着把杂质个数固定为 3，把杂质间距 " + MM("<i>d</i>") + " 从 " + MM("4<i>a</i>") + " 缩到 " + MM("<i>a</i>") + "，又会发生什么？什么时候杂质能级会并回主体能带？（宽度数值不再单列，请直接从能级图上看这些线的跨度。）",
+    a: "1 个杂质 = 1 条孤立能级，没有展宽。间距固定 " + MM("<i>d</i><span class=\"op\">=</span>2<i>a</i>") + "、" + MM("Δ<i>f</i><span class=\"op\">=</span>0.25") + "，个数 1 → 2 → 3 → 6 时，行(b) 施主侧的跨度约 " + MM("0<span class=\"op\">→</span>0.23<span class=\"op\">→</span>0.34<span class=\"op\">→</span>0.44<span class=\"un\">eV</span>") + "，行(c) 受主侧约 " + MM("0<span class=\"op\">→</span>0.69<span class=\"op\">→</span>1.00<span class=\"op\">→</span>1.30<span class=\"un\">eV</span>") + "——杂质越多，相邻杂质波函数重叠越强、劈裂越大，这就是杂质子带。受主侧展得更宽，原因和挑战二一样：受主态没有芯内束缚（尾巴每周期只衰减到约 0.44，施主约 0.37），相邻杂质的重叠更强。更强的旋钮是间距：" + MM("<i>d</i>") + " 从 " + MM("4<i>a</i>") + " 缩到 " + MM("<i>a</i>") + "，行(b) 的跨度约 " + MM("0.02<span class=\"op\">→</span>0.09<span class=\"op\">→</span>0.34<span class=\"op\">→</span>0.63<span class=\"un\">eV</span>") + "，行(c) 约 " + MM("0.24<span class=\"op\">→</span>0.48<span class=\"op\">→</span>1.00<span class=\"op\">→</span>2.14<span class=\"un\">eV</span>") + "；到 " + MM("<i>d</i><span class=\"op\">=</span><i>a</i>") + " 时施主侧 3 条里只剩 2 条还在带底以下，第 3 条已被挤回主体能带（此时能级图上的紫色线只剩两条）。浓度再高，杂质子带就整体并入主体能带——这就是重掺杂简并半导体的形成机制（Mott 转变）：判据是杂质波函数的展布范围追上了杂质间距。图上的 " + MM("<i>E</i><sub>D</sub>") + " 与 " + MM("<i>E</i><sub>A</sub>") + " 标注、以及读数面板，都取<b>离带边最近的那一条</b>（最浅的电离能），所以两侧口径一致、可以直接比。"
+  },
+  {
+    t: "挑战五 · 同一条带，两种角色：E_F 该画在哪一侧",
+    q: "行(b) 的杂质能级出现在能带的<b>下方</b>，行(c) 的出现在<b>上方</b>——三行画的是同一条主体能带，可为什么行(b) 的 " + MM("<i>E</i><sub>F</sub>") + " 落在带的<b>下方</b>、行(c) 的却落在带的<b>上方</b>？把杂质个数从 1 拉到 6，" + MM("<i>E</i><sub>F</sub>") + " 是往带边靠还是往杂质能级靠？",
+    a: "关键在于<b>这条带在每一行里扮演谁</b>。行(b) 的杂质能级是从<b>带底</b>「掉出来」的，所以行(b) 的这条带相当于<b>导带</b>，它的带底就是 " + MM("<i>E</i><sub>c</sub>") + "：n 型半导体的 " + MM("<i>E</i><sub>F</sub>") + " 必须落在 " + MM("<i>E</i><sub>D</sub>") + " 与 " + MM("<i>E</i><sub>c</sub>") + " 之间，也就是带底<b>下方</b>的禁带一侧、贴近带底。行(c) 的杂质能级是从<b>带顶</b>「跳出去」的，这条带相当于<b>价带</b>，它的带顶就是 " + MM("<i>E</i><sub>v</sub>") + "：p 型的 " + MM("<i>E</i><sub>F</sub>") + " 落在 " + MM("<i>E</i><sub>v</sub>") + " 与 " + MM("<i>E</i><sub>A</sub>") + " 之间，也就是带顶<b>上方</b>的禁带一侧、贴近带顶。所以两行的 " + MM("<i>E</i><sub>F</sub>") + " 一上一下，正是「同一条带、两种映射」的直接后果——<b>" + MM("<i>E</i><sub>F</sub>") + " 绝不能画进能带内部，那是简并（重掺杂）半导体的图像</b>。" +
+        "<b>移动方向</b>：杂质个数 1 → 6（浓度升高）时，" + MM("<i>E</i><sub>F</sub>") + " 从间隙的 <b>" + Math.round(fermiUAt(1) * 100) + "%</b> 处推到 <b>" + Math.round(fermiUAt(6) * 100) + "%</b> 处（读数面板「费米能级」分组实时给出），也就是<b>向带边靠拢</b>——与第三章「掺杂越重 " + MM("<i>E</i><sub>F</sub>") + " 越靠近带边、重掺杂时进入能带 ⇒ 简并」完全一致。" +
+        "最后提醒：本工具给出的 " + MM("0.<i>x</i><span class=\"un\">eV</span>") + " 只是<b>示意量级</b>；真实 Si 室温下 " + MM("<i>E</i><sub>c</sub><span class=\"op\">−</span><i>E</i><sub>F</sub>") + " 只有 0.2 eV 上下，位置由第三章的载流子浓度公式（" + MM("<i>n</i><span class=\"op\">=</span><i>N</i><sub>c</sub><span class=\"op\">·</span><span class='rm'>e</span><sup><span class=\"op\">−</span>(<i>E</i><sub>c</sub><span class=\"op\">−</span><i>E</i><sub>F</sub>)<span class=\"sl\">/</span><i>k</i><span class=\"op\">·</span><i>T</i></sup>") + "）定，不是由势阱深浅直接定的。"
+  }
+
+];
+function buildChals() {
+  const grid = $("chalGrid");
+  grid.innerHTML = "";
+  CHALS.forEach(c => {
+    const d = document.createElement("div");
+    d.className = "chal";
+    d.innerHTML =
+      '<div class="chal-head"><b>' + c.t + '</b><span class="chev">▶</span></div>' +
+      '<div class="chal-body"><div class="q">' + c.q + '</div>' +
+      '<div class="btn-row"><button class="primary">显示答案</button></div>' +
+      '<div class="ans">' + c.a + '</div></div>';
+    d.querySelector(".chal-head").onclick = () => d.classList.toggle("open");
+    d.querySelector(".btn-row button").onclick = () => d.querySelector(".ans").classList.toggle("show");
+    grid.appendChild(d);
+  });
+}
+
+/* ==================================================================
+   9. 渲染与交互
+   ================================================================== */
+let rafId = 0;
+function requestDraw() { if (!rafId) rafId = requestAnimationFrame(() => { rafId = 0; render(); }); }
+function render() {
+  const r = solve();
+  drawPot("potA", r.a); drawPot("potB", r.b); drawPot("potC", r.c);
+  drawLv("lvA", r.a); drawLv("lvB", r.b); drawLv("lvC", r.c);
+  drawPsi(); updatePanels();
+}
+function syncLabels() {
+  $("vDF").textContent = fmtE(OPT.df, 2);
+  $("vNI").textContent = OPT.nImp;
+  $("vSP").innerHTML = '<span class="m">' + OPT.sp + '<i>a</i></span>';
+}
+function bindSlider(id, fn) {
+  const el = $(id);
+  el.oninput = e => {
+    fn(+e.target.value); syncLabels();
+    /* 手动调过滑块后状态已不再是任何预设，取消预设按钮的高亮，避免"高亮 ≠ 当前状态" */
+    $("presetRow").querySelectorAll("button").forEach(b => b.classList.remove("sel"));
+    requestDraw();
+  };
+}
+function bindCheck(id, key) {
+  const el = $(id);
+  el.onchange = e => { OPT.show[key] = e.target.checked; requestDraw(); };
+}
+function setOpt(o) {
+  Object.assign(OPT, o);
+  $("sDF").value = OPT.df; $("sNI").value = OPT.nImp; $("sSP").value = OPT.sp;
+  syncLabels(); requestDraw();
+}
+/* 悬停 */
+function bindHover(id, hit, onMove, onLeave, onClick) {
+  const el = $(id);
+  el.addEventListener("mousemove", e => {
+    const rect = el.getBoundingClientRect();
+    const px = e.clientX - rect.left, py = e.clientY - rect.top;
+    onMove(px, py);
+    requestDraw();
+  });
+  el.addEventListener("mouseleave", () => { onLeave(); requestDraw(); });
+  if (onClick) el.addEventListener("click", e => {
+    const rect = el.getBoundingClientRect();
+    onClick(e.clientX - rect.left, e.clientY - rect.top);
+    requestDraw();
+  });
+}
+function init() {
+  buildChals();
+  fitAll(); syncLabels();
+  bindSlider("sDF", v => OPT.df = v);
+  bindSlider("sNI", v => OPT.nImp = v);
+  bindSlider("sSP", v => OPT.sp = v);
+  bindCheck("ckDens", "dens"); bindCheck("ckFermi", "fermi");
+  bindCheck("ckVbg", "vbg");
+
+  /* 势阱图悬停 */
+  ["potA", "potB", "potC"].forEach(id => {
+    bindHover(id, POTHIT,
+      (px, py) => { POTHIT[id] = { on: true, px, py }; },
+      () => { if (POTHIT[id]) POTHIT[id].on = false; });
+  });
+  /* 能级图悬停 + 点击选中 */
+  [["lvA", "a"], ["lvB", "b"], ["lvC", "c"]].forEach(([id, kind]) => {
+    bindHover(id, LVHIT,
+      (px, py) => {
+        const h = LVHIT[id] || {};
+        let bk = null, bd = 1e9;
+        if (h.ys) h.ys.forEach((y, k) => { const d = Math.abs(y - py); if (d < bd) { bd = d; bk = k; } });
+        LVHIT[id] = Object.assign(h, { on: true, k: bd < 7 ? bk : null, px, py });
+      },
+      () => { if (LVHIT[id]) LVHIT[id].on = false; },
+      (px, py) => {
+        const h = LVHIT[id] || {};
+        let bk = 0, bd = 1e9;
+        if (h.ys) h.ys.forEach((y, k) => { const d = Math.abs(y - py); if (d < bd) { bd = d; bk = k; } });
+        OPT.sel = { row: kind, k: bk };
+      });
+  });
+  /* 预设 */
+  $("presetRow").querySelectorAll("button").forEach(btn => {
+    btn.onclick = () => {
+      const p = btn.dataset.p;
+      if (p === "shallow") setOpt({ df: 0.15, nImp: 1, lamI: OPT.lam0, N: 16, a: 5.43 });
+      else if (p === "deep") setOpt({ df: 0.45, nImp: 1, lamI: OPT.lam0, N: 16, a: 5.43 });
+      else if (p === "impsub") setOpt({ df: 0.25, nImp: 5, sp: 2, lamI: OPT.lam0, N: 16, a: 5.43 });
+      $("presetRow").querySelectorAll("button").forEach(b => b.classList.toggle("sel", b === btn));
+    };
+  });
+  window.addEventListener("resize", () => { fitAll(); requestDraw(); });
+  render();
+}
+if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
+else init();
+/* i18n 启动必须在 init() 之后：setLang() 会重跑 syncInputs()/render()，
+   放到 init() 之前会在 fitAll() 之前触发绘制，一旦抛异常整个 init() 就跑不到（挑战与画布会空）。 */
+(function () {
+  try {
+    i18nWatch();
+    ORIG_TITLE = ORIG_TITLE || document.title;
+    var btn = document.getElementById("langBtn");
+    if (btn) btn.onclick = function () { setLang(LANG === "en" ? "zh" : "en"); };
+    if (LANG === "en") setLang("en"); else { document.title = ORIG_TITLE; i18nWalk(document.body); }
+  } catch (e) { }
+})();
+</script>
+<div class="site-foot">本工具是 EIT-SP（半导体物理交互式教学工具箱）的一部分（武汉大学物理学院《半导体物理》智慧课程），以 MIT 协议开源，可自由使用与二次开发；转载请保留出处。反馈意见 <a href="mailto:doctorwanghao@qq.com">doctorwanghao@qq.com</a></div>
+</body>
+</html>

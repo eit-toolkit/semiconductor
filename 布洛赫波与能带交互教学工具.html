@@ -1,0 +1,2125 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<!-- SPDX-License-Identifier: MIT -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>布洛赫波与能带交互教学工具</title>
+<style>
+  :root {
+    --bg: #f7f9fb;
+    --panel: #ffffff;
+    --border: #dde4ec;
+    --text: #2c3e50;
+    --text-sub: #6b7a8c;
+    --blue: #1976d2;
+    --blue-light: #e3f0fb;
+    --red: #d94a3d;
+    --red-light: #fdeae8;
+    --teal: #0f9b8e;
+    --green: #2e9e5b;
+    --purple: #8e5bd0;
+    --orange: #ef8c1a;
+    --gray-ref: #9aa5b1;
+    --probe: #f5c518;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Microsoft YaHei", "PingFang SC", "Segoe UI", sans-serif;
+    background: var(--bg); color: var(--text); padding: 14px;
+  }
+  header { position: relative;
+    display: flex; align-items: baseline; justify-content: center;
+    gap: 14px; flex-wrap: wrap; text-align: center; margin-bottom: 4px;
+  }
+  .lang-btn { position: absolute; right: 0; top: 0; border: 1px solid var(--border); background: #fff;
+    color: var(--text-sub); padding: 3px 10px; border-radius: 7px; cursor: pointer; font-size: 12px; font-weight: 600; }
+  .lang-btn:hover { border-color: var(--blue); color: var(--blue); }
+  header h1 { font-size: 20px; }
+  header .formula { font-size: 15px; color: var(--text-sub); font-family: "Cambria Math", "STIX Two Math", serif; }
+  .sub-note { text-align: center; font-size: 12px; color: var(--text-sub); margin-bottom: 10px; }
+  .layout { display: flex; gap: 14px; align-items: flex-start; max-width: 1560px; margin: 0 auto; }
+  .viz { flex: 0 0 63%; min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+  .side { flex: 1; min-width: 310px; display: flex; flex-direction: column; gap: 12px; }
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; }
+  .sec-title { font-size: 13.5px; font-weight: 700; margin: 2px 0 6px; }
+  /* 模块编号徽标：只有教学内容模块才带编号；控制面板等辅助面板不是模块，不加 */
+  .sec-title .mtag {
+    display: inline-block; background: var(--blue); color: #fff;
+    font-size: 11px; font-weight: 700; padding: 1.5px 7px;
+    border-radius: 5px; margin-right: 6px; vertical-align: 1.5px; letter-spacing: .3px;
+  }
+  canvas { display: block; width: 100%; border-radius: 6px; touch-action: none; }
+  .chart-wrap { position: relative; }
+  .hint { font-size: 12px; color: var(--text-sub); margin-top: 6px; line-height: 1.6; }
+  .ctrl { margin-bottom: 12px; }
+  .ctrl:last-child { margin-bottom: 0; }
+  .fixed-row { font-size: 12px; color: var(--text-sub); line-height: 1.6; background: #f6f9fc;
+    border: 1px dashed var(--border); border-radius: 8px; padding: 6px 10px; margin-bottom: 12px; }
+  .fixed-row b { color: var(--text); font-variant-numeric: tabular-nums; }
+  .ctrl-head { display: flex; justify-content: space-between; align-items: baseline; font-size: 13.5px; font-weight: 600; margin-bottom: 4px; }
+  .ctrl-head .val { color: var(--blue); font-variant-numeric: tabular-nums; font-weight: 700; }
+  .ctrl input[type=range] { width: 100%; accent-color: var(--blue); }
+  .ctrl .sub { font-size: 12px; color: var(--text-sub); margin-top: 2px; }
+  .btn-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+  .btn-row button {
+    border: 1px solid var(--border); background: #fff; color: var(--text);
+    padding: 5px 11px; border-radius: 7px; cursor: pointer; font-size: 12.5px;
+  }
+  .btn-row button:hover { border-color: var(--blue); color: var(--blue); }
+  .btn-row button.sel { background: var(--blue); border-color: var(--blue); color: #fff; font-weight: 600; }
+  .btn-row .lbl { font-size: 12px; color: var(--text-sub); align-self: center; margin-right: 2px; }
+  /* 波矢模块内的吸附开关 */
+  .snap-chk { display: inline-flex; align-items: center; gap: 5px; margin: 5px 0 1px; font-size: 12px; color: var(--text-sub); cursor: pointer; }
+  .snap-chk input[type=checkbox] { accent-color: var(--blue); }
+  .legend { display: flex; gap: 6px 14px; flex-wrap: wrap; align-items: center; font-size: 12px; color: var(--text-sub); margin-top: 6px; }
+  .legend > span { display: inline-block; }
+  .legend .m { white-space: normal; line-height: 1.5; }
+  .swatch {
+    display: inline-block; vertical-align: middle; width: 20px; height: 0;
+    border-top: 3px solid currentColor; border-radius: 2px; margin-right: 6px;
+  }
+  .swatch.dash { border-top-style: dashed; }
+  .swatch.dot { border-top-style: dotted; }
+  .swatch.band { height: 11px; border: 1px solid rgba(142,91,208,.35); background: rgba(142,91,208,.14); }
+  /* ---- 数学排版（纯 CSS） ---- */
+  .frac {
+    display: inline-block; vertical-align: -0.50em; text-align: center;
+    margin: 0 .18em; font-size: .92em; line-height: 1.25;
+  }
+  .frac > .num { display: block; padding: 0 .32em; border-bottom: 1px solid currentColor; }
+  .frac > .den { display: block; padding: 0 .32em; }
+  /* ---- 读数表 ---- */
+  .kv { display: grid; grid-template-columns: auto 1fr; gap: 3px 10px; font-size: 12.5px; align-items: baseline; }
+  .kv .k { color: var(--text-sub); white-space: nowrap; }
+  .kv .v { font-variant-numeric: tabular-nums; font-style: normal; }
+  .kv .v b { color: var(--blue); }
+  /* ⚠️ 必须是直接子代 `>`：值列里的 <i> 被复用为灰色注释，
+     若写成 `.kv .v i`（后代选择器，特异性 0-2-1）会一路压过排版层的
+     `.m i`（0-2-0），把 .m 里的**物理量符号也强制成正体并染红**。 */
+  .kv .v > i { color: var(--red); font-style: normal; }
+  .kv .hd { grid-column: 1 / -1; font-weight: 700; color: var(--text); font-size: 12px; margin-top: 5px; }
+  .kv .hd:first-child { margin-top: 0; }
+  /* ---- 折叠区 ----
+     独立组件，类名一律 .fold：❌ 不许复用 .chal-head / .chev，
+     否则会被挑战区回归脚本按「挑战题」计数，也会污染挑战区视觉基线。 */
+  .fold { margin-top: 7px; border-top: 1px dotted var(--border); padding-top: 5px; }
+  .fold-head { display: flex; align-items: center; gap: 6px; cursor: pointer;
+    font-size: 12px; font-weight: 600; color: var(--text-sub); user-select: none; }
+  .fold-head:hover { color: var(--blue); }
+  .fold-head .chev { font-size: 11px; transition: transform .15s; display: inline-block; }
+  .fold.open .fold-head .chev { transform: rotate(90deg); }
+  .fold-body { display: none; margin-top: 4px; }
+  .fold.open .fold-body { display: block; }
+  /* ---- 挑战卡 ---- */
+  .chal-wrap { max-width: 1560px; margin: 14px auto 0; }
+  .chal-grid { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+  .chal { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 8px 12px; }
+  .chal-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; cursor: pointer; }
+  .chal-head b { font-size: 13.5px; }
+  .chal-head .chev { color: var(--text-sub); font-size: 12px; transition: transform .15s; }
+  .chal.open .chal-head .chev { transform: rotate(90deg); display: inline-block; }
+  .chal-body { display: none; margin-top: 6px; font-size: 12.5px; color: var(--text-sub); line-height: 1.75; }
+  .chal.open { border-color: var(--blue); }
+  .chal.open .chal-body { display: block; }
+  .chal-body .ans { display: none; margin-top: 6px; padding: 7px 10px; background: var(--blue-light); border-radius: 6px; color: var(--text); }
+  .chal-body .ans.show { display: block; }
+  .chal-body .ans b { color: var(--blue); }
+  .chal .q { color: var(--text); }
+  .chal-body button { border: 1px solid var(--border); background: #fff; color: var(--text-sub); padding: 3px 10px; border-radius: 6px; cursor: pointer; font-size: 12px; margin-top: 4px; }
+  @media (max-width: 1024px) {
+    .layout { flex-direction: column; }
+    .viz { flex: 1 1 auto; width: 100%; }
+  }
+  /* ---- 课程页脚 ---- */
+  .site-foot { max-width: 1560px; margin: 18px auto 0; padding: 12px 16px 24px;
+    border-top: 1px solid var(--border); color: var(--text-sub);
+    font-size: 12.5px; line-height: 1.8; text-align: center; }
+  .site-foot a { color: var(--blue, #1976d2); text-decoration: none; }
+  .site-foot a:hover { text-decoration: underline; }
+
+  .m { font-family: "Cambria Math", "STIX Two Math", "Latin Modern Math", "Times New Roman", Times, serif;
+       font-size: 1.05em; font-style: normal; white-space: nowrap; letter-spacing: .01em; }
+  .m i, .m var { font-style: italic; }
+  .m .m { font-size: 1em; }                      /* 嵌套容器不再放大 */
+  .m .rm { font-style: normal; }
+  .m sub, .m sup { font-size: .70em; font-style: normal; line-height: 1; }
+  .m sub { vertical-align: -.28em; }
+  .m sup { vertical-align: .50em; }
+  .m .op { font-style: normal; padding: 0 .24em; }
+  .m .sl { font-style: normal; padding: 0 .05em; }
+  .m .un { font-style: normal; padding-left: .16em; }
+  .op, .rm, .un { font-style: normal; }
+  .frac { display: inline-flex; flex-direction: column; vertical-align: -.45em; text-align: center; margin: 0 .18em; }
+  .frac .num { border-bottom: 1px solid currentColor; padding: 0 .22em; line-height: 1.16; }
+  .frac .den { padding: 0 .22em; line-height: 1.16; }
+  .sqrt { display: inline-flex; align-items: stretch; }
+  .sqrt .rd { position: relative; padding-left: .30em; padding-top: .10em; }
+  .sqrt .rdc { border-top: 1px solid currentColor; }
+  .sqrt > .rdc, .sqrt .rdc { display: inline-block; position: static; font-size: 1em;
+             border-top: .055em solid currentColor; padding: .06em .12em 0 .10em; margin: 0; line-height: 1; }
+
+  /* 公式排版：分式 / 根式 —— 全站统一为「回旋共振 v06」写法（置于末尾，覆盖本文件早期变体） */
+  .frac { display: inline-block; vertical-align: -0.52em; text-align: center; font-size: .78em; margin: 0 .12em; }
+  .frac > .num, .frac .num { display: block; padding: 0 .22em; border-bottom: .055em solid currentColor; line-height: inherit; }
+  .frac > .den, .frac .den { display: block; padding: 0 .22em; line-height: inherit; }
+  .sqrt { display: inline-block; white-space: nowrap; vertical-align: baseline; margin: 0; font-size: 1em; }
+  .sqrt > .rd, .sqrt .rd { display: inline-block; position: static; font-size: 1em; line-height: inherit; padding: 0 .02em 0 0; margin: 0; }
+  .sqrt > .rdc, .sqrt .rdc { display: inline-block; position: static; font-size: 1em;
+             border-top: .055em solid currentColor; padding: .06em .12em 0 .10em; margin: 0; line-height: 1; }
+  .sqrt .rdc:has(sup) { padding-top: .18em; }
+</style>
+</head>
+<body>
+
+<header>
+  <button id="langBtn" class="lang-btn" data-noi18n title="中文 / English">EN</button>
+  <h1>布洛赫波与能带交互教学工具</h1>
+  <div class="formula m">
+    <i>ψ</i><sub>k</sub><span class="op">(</span><i>r</i><span class="op">)</span><span class="op">=</span><span class="rm">e</span><sup><i>ikr</i></sup><i>u</i><sub>k</sub><span class="op">(</span><i>r</i><span class="op">)</span>
+    　·　<i>u</i><sub>k</sub><span class="op">(</span><i>r</i><span class="op">+</span><i>a</i><span class="op">)</span><span class="op">=</span><i>u</i><sub>k</sub><span class="op">(</span><i>r</i><span class="op">)</span>
+  </div>
+</header>
+<div class="sub-note">一维屏蔽库伦势 + 布洛赫调幅平面波模型</div>
+
+<div class="layout">
+  <!-- ================= 左列：可视化 ================= -->
+  <div class="viz">
+    <div class="card">
+      <div class="sec-title"><span class="mtag">模块一</span>复平面螺旋线：<span class="m"><i>ψ</i><sub>k</sub><span class="op">(</span><i>x</i><span class="op">)</span></span> = <span class="m"><span class="rm">e</span><sup><i>ikx</i></sup><i>u</i><sub>k</sub><span class="op">(</span><i>x</i><span class="op">)</span></span>（横轴 <span class="m"><i>x</i></span>，竖轴 Re，纵深 Im）</div>
+      <div class="chart-wrap"><canvas id="spiral" data-h="348"></canvas></div>
+      <div class="hint">图中<b>固定绘出</b>：螺旋线在 Re / Im 平面上的<b>投影虚线</b>（红 / 蓝），以及中心 <span class="m"><i>x</i></span><sub>0</sub> 处的<b>相量</b>与其模长圆（定态演化时旋转、半径不变）。</div>
+    </div>
+
+    <div class="card">
+      <div class="sec-title"><span class="mtag">模块二</span>六层分解：周期势 · 实部 · 虚部 · 周期函数 · 相位因子 · 概率密度（共享 <span class="m"><i>x</i></span> 轴）</div>
+      <div class="chart-wrap"><canvas id="five" data-h="590"></canvas></div>
+      <div class="legend" id="legFive"></div>
+      <div class="hint">(b)(c) 是 (d) 与 (e) 的<b>逐点乘积</b>：Re <span class="m"><i>ψ</i><span class="op">=</span><i>u</i><sub>k</sub><span class="op">·</span><span class="rm">cos</span><span class="op">(</span><i>kx</i><span class="op">+</span><i>φ</i><span class="op">)</span></span>、Im <span class="m"><i>ψ</i><span class="op">=</span><i>u</i><sub>k</sub><span class="op">·</span><span class="rm">sin</span><span class="op">(</span><i>kx</i><span class="op">+</span><i>φ</i><span class="op">)</span></span>——逐点相乘即可验证。(e) <b>恒幅 ±1</b>，所以 (b)(c) 的振幅起伏完全来自 (d) <span class="m"><i>u</i><sub>k</sub></span>，与平面波无关；<span class="m">|<span class="rm">e</span><sup><i>i</i><span class="op">(</span><i>kx</i><span class="op">+</span><i>φ</i><span class="op">)</span></sup>|<span class="op">=</span>1</span> 也正是 (f) |<span class="m"><i>ψ</i></span>|<sup>2</sup> = <span class="m"><i>u</i><sub>k</sub></span><sup>2</sup> 与 <span class="m"><i>k</i></span> 无关的根因。单独看实部或虚部会看到"振幅起伏"的假象，复数模才是守恒的物理量；全局相位滑块与播放使 Re、Im 按 <span class="m">Re′<span class="op">=</span>Re<span class="op">·</span><span class="rm">cos</span><i>φ</i><span class="op">−</span>Im<span class="op">·</span><span class="rm">sin</span><i>φ</i></span>、<span class="m">Im′<span class="op">=</span>Re<span class="op">·</span><span class="rm">sin</span><i>φ</i><span class="op">+</span>Im<span class="op">·</span><span class="rm">cos</span><i>φ</i></span> <b>重新混合</b>（复平面上的整体旋转）、(e) 随之整体平移，而 <span class="m"><i>u</i><sub>k</sub></span>、|<span class="m"><i>ψ</i></span>|<sup>2</sup> 与螺旋半径均不变。</div>
+    </div>
+  </div>
+
+  <!-- ================= 右列：控制、能带与读数 ================= -->
+  <div class="side">
+    <div class="card">
+      <div class="sec-title">控制面板</div>
+      <div class="fixed-row">
+        晶格常数 <span class="m"><i>a</i></span> = <b>6 Å</b> 固定；势场振幅 <span class="m"><i>V</i><sub>0</sub></span> 由下方三档切换：<b>近孤立原子</b> 30 eV → <b>周期势</b> 12 eV → <b>近自由电子</b> 0.3 eV（<span class="m"><i>V</i><sub>0</sub></span> 是解析式的振幅参数，实际势场起伏见读数面板）
+      </div>
+      <div class="ctrl">
+        <div class="ctrl-head"><span>波矢 <span class="m"><i>k</i></span>（<span id="kRangeTxt">−π/<span class="m"><i>a</i></span> → +π/<span class="m"><i>a</i></span></span>）</span><span class="val" id="kVal">0.50 π/a</span></div>
+        <input type="range" id="kSlider" min="-1000" max="1000" step="1" value="500">
+        <label class="snap-chk"><input type="checkbox" id="chkSnap"> 吸附到允许值 <span class="m"><i>k</i><span class="op">=</span>2π<i>m</i>/(<i>Na</i>)</span></label>
+        <div class="sub"><span class="m"><i>ψ</i></span> 的包络波长 <span class="m"><i>λ</i><span class="op">=</span>2π/|<i>k</i></span>| = <span id="lamVal">—</span>。Born–von Karman 边条只允许<b>量子化的</b> <span class="m"><i>k</i><span class="op">=</span>2π<i>m</i>/(<i>Na</i>)</span>；整条第一布里渊区恰含 <span class="m"><i>N</i></span> 个态，<span class="m"><i>m</i></span> = −<span class="m"><i>N</i></span>/2+1 … <span class="m"><i>N</i></span>/2——<span id="kStateTxt"></span></div>
+      </div>
+      <div class="ctrl">
+        <div class="ctrl-head"><span>全局相位 <span class="m"><i>φ</i></span></span><span class="val" id="pVal">0°</span></div>
+        <input type="range" id="pSlider" min="0" max="360" step="1" value="0">
+        <div class="sub">给 <span class="m"><i>ψ</i></span> 乘 <span class="m"><span class="rm">e</span><sup><i>iφ</i></sup></span>，复平面上<b>整体旋转</b>，|<span class="m"><i>ψ</i></span>|<sup>2</sup> 始终不变。</div>
+      </div>
+      <div class="btn-row"><span class="lbl">原胞数 N：</span>
+        <button data-n="4">4</button><button data-n="8" class="sel">8</button><button data-n="16">16</button><button data-n="32">32</button>
+      </div>
+      <div class="btn-row"><span class="lbl">能带 n：</span>
+        <button data-b="1" class="sel">带 1（s 型）</button><button data-b="2">带 2（p 型）</button>
+      </div>
+      <div class="btn-row">
+        <button id="btnPlay">▶ 播放（时间演化）</button>
+      </div>
+      <div class="btn-row"><span class="lbl">势场状态：</span>
+        <button data-preset="iso">近孤立原子</button>
+        <button data-preset="period" class="sel">周期势</button>
+        <button data-preset="free">近自由电子</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="sec-title"><span class="mtag">模块三</span>能带图 <span class="m"><i>E</i><span class="op">−</span><i>k</i></span>（<span id="bzTitle">第一布里渊区 −π/<span class="m"><i>a</i></span> → +π/<span class="m"><i>a</i></span></span>，竖线为当前 <span class="m"><i>k</i></span>）</div>
+      <div class="chart-wrap"><canvas id="band" data-h="286"></canvas></div>
+      <div class="hint">一个原子能级分裂为一个能带，<span class="m"><i>N</i></span> 个原胞在整个第一布里渊区给出 <span class="m"><i>N</i></span> 个 <span class="m"><i>k</i></span> 态（圆点；两端 ±π/<span class="m"><i>a</i></span> 是同一个态）。<b>带 1 由 s 型轨道形成、自 <span class="m"><i>k</i><span class="op">=</span>0</span> 向两侧上升；带 2 由 p 型轨道形成、跃迁积分反号，自 <span class="m"><i>k</i><span class="op">=</span>0</span> 向两侧下降</b>——两带弯曲方向相反，最小能隙出现在布里渊区边界 <span class="m"><i>k</i><span class="op">=</span>±π/<i>a</i></span>。半透明色带为禁带 <span class="m"><i>E</i><sub>g</sub></span>。</div>
+    </div>
+
+    <div class="card">
+      <div class="sec-title">读数面板</div>
+      <div class="kv" id="readout"></div>
+      <div class="fold">
+        <div class="fold-head"><span class="chev">▶</span><span>更多读数（k 的离散取值与传播方向）</span></div>
+        <div class="fold-body"><div class="kv" id="readoutMore"></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= 挑战任务（引导探究） ================= -->
+<div class="chal-wrap">
+  <div class="card">
+    <div style="display:flex; justify-content:space-between; align-items:baseline; gap:10px;">
+      <b style="font-size:14.5px;">引导探究（点击展开，先自己试一试再看答案）</b>
+      <span style="font-size:12px; color:var(--text-sub);">挑战任务</span>
+    </div>
+    <div class="chal-grid" id="chalGrid"></div>
+  </div>
+</div>
+
+<script>
+/* ==================================================================
+   i18n（C1 单文件双语：物理代码仍然只有一份）
+   LANG 取值优先级：URL ?lang=en / ?lang=zh  >  localStorage('opl_lang')  >  默认中文。
+   不做 location 跳转——保住「单文件拷走也能用」。
+   三个注入点，**业务字符串一个都不改**：
+     ① partsOf()   画布 token：带 i/sub/sup/un 标记的是物理量、下标与单位，跳过
+     ② fillText/measureText 原型挂钩：兜住直接写进画布的中文串
+     ③ DOM 文本节点：静态 HTML 与 JS 写进来的 innerHTML，用 MutationObserver 兜住新增节点
+   T() 先查整句词典，未命中再按「最长优先」做短语替换，因此拼接串也能翻。
+   漏翻会被记进 window.__MISS，可导出核对。 */
+var LANG = (function () {
+  var m = /[?&]lang=([a-zA-Z]+)/.exec(location.search);
+  var q = m ? m[1].toLowerCase() : "";
+  if (q === "en" || q === "zh") return q;
+  var s = "";
+  try { s = localStorage.getItem("opl_lang") || ""; } catch (e) { }
+  return (s === "en" || s === "zh") ? s : "zh";
+})();
+var ORIG_TITLE = document.title;
+var __MISS = [];
+try { window.__MISS = __MISS; } catch (e) { }
+function noteMiss(s) { if (__MISS.indexOf(s) < 0) __MISS.push(s); }
+function TSoft(s) {
+  if (!T._K) T._K = Object.keys(I18N).sort(function (a, b) { return b.length - a.length; });
+  var out = s, i, k, orig = s;
+  /* 两遍：第一遍只吃长度 ≥ 2 的短语；第二遍的单字 key 只在「传进来的串
+     恰好就是这一个字」时才上场——画布逐字排版会拿单字去 measureText，那一
+     路必须翻。反过来，绝不让单字 key 去切更长的句子：否则「导」「子」「原」
+     会把「半导体」「电子数」「泡利原理」切成半 conduction 体、电 quantum 数、
+     泡利 origin 理这类中英混排。同一条理由也适用于「下」：整句不该被切碎。 */
+  for (var pass = 0; pass < 2; pass++) {
+    for (i = 0; i < T._K.length; i++) {
+      k = T._K[i];
+      if (k.length < 2 && (pass === 0 || orig !== k)) continue;
+      if (out.indexOf(k) >= 0) out = out.split(k).join(I18N[k]);
+    }
+  }
+  return out;
+}
+/* 同一句被 DOM 切成好几个文本节点时，首尾空格会随机落在 data 里；
+   所以除了「整句命中」，再试一次「去空格后命中」并原样补回首尾空白。 */
+function trimMap() {
+  if (T._TM) return T._TM;
+  var m = {};
+  for (var k in I18N) if (Object.prototype.hasOwnProperty.call(I18N, k)) {
+    var t = k.replace(/^\s+|\s+$/g, "");
+    if (t && m[t] === undefined) m[t] = I18N[k];
+  }
+  T._TM = m;
+  return m;
+}
+/* eslint-disable no-use-before-define */
+function T(s) {
+  if (LANG !== "en" || typeof s !== "string" || !s) return s;
+  if (!/[一-鿿]/.test(s)) return s;
+  if (Object.prototype.hasOwnProperty.call(I18N, s)) return I18N[s];
+  var tm = trimMap(), core = s.replace(/^\s+|\s+$/g, "");
+  if (core && tm[core] !== undefined) {
+    var lead = s.slice(0, s.length - s.replace(/^\s+/, "").length);
+    var tail = s.slice(s.replace(/\s+$/, "").length);
+    return lead + tm[core] + tail;
+  }
+  var v = TSoft(s);
+  /* 译完还剩汉字也算漏翻：只翻掉一半的「半吊子译文」曾经让 __MISS 恒为 0。 */
+  if (v === s || /[\u3400-\u9FFF]/.test(v)) noteMiss(s);
+  return v;
+}
+var I18N = {
+  /* ---- 词典：中文原文 → 英文。key 禁含运行时数字（换个参数就漏），数字前后要拆开 ---- */
+  /* ---- 标题与页脚 ---- */
+  "布洛赫波与能带交互教学工具": "Bloch Waves and Energy Bands — Interactive Toolkit",
+  "一维屏蔽库伦势 + 布洛赫调幅平面波模型": "1-D screened Coulomb potential + amplitude-modulated Bloch plane wave",
+  "本工具是 EIT-SP（半导体物理交互式教学工具箱）的一部分（武汉大学物理学院《半导体物理》智慧课程），以 MIT 协议开源，可自由使用与二次开发；转载请保留出处。": "This tool is part of EIT-SP, the Educational Interactive Toolkit for Semiconductor Physics (School of Physics and Technology, Wuhan University). Released under the MIT licence: free to use, modify and redistribute, including commercially. Please keep this attribution.",
+  "反馈意见": " Feedback",
+  /* ---- 模块与图例 ---- */
+  "模块一": "Module 1",
+  "复平面螺旋线：": "Complex-plane helix: ",
+  "（横轴 ": " (horizontal axis ",
+  "，竖轴 Re，纵深 Im）": ", vertical axis Re, depth Im)",
+  " 图中": " In the figure, ",
+  " 固定绘出": " the following are drawn fixed",
+  " ：螺旋线在 Re / Im 平面上的": ": the helix, and its ",
+  " 投影虚线": " projections on the Re / Im plane (dashed)",
+  " （红 / 蓝），以及中心 ": " (red / blue), together with the ",
+  " 处的": " at the centre ",
+  " 相量": " phasor",
+  " 与其模长圆（定态演化时旋转、半径不变）。": " and its modulus circle (rotating under stationary evolution while the radius stays fixed).",
+  "模块二": "Module 2",
+  "六层分解：周期势 · 实部 · 虚部 · 周期函数 · 相位因子 · 概率密度（共享 ": "Six-layer decomposition: periodic potential · real part · imaginary part · periodic function · phase factor · probability density (sharing the ",
+  " 轴）": " axis)",
+  " (b)(c) 是 (d) 与 (e) 的": " (b)(c) are the ",
+  " 逐点乘积": " point-by-point product of (d) and (e)",
+  " ——逐点相乘即可验证。(e) ": " — verify it by multiplying point by point. (e) ",
+  " 恒幅 ±1": " has constant amplitude ±1",
+  " ，所以 (b)(c) 的振幅起伏完全来自 (d) ": ", so the amplitude undulation of (b)(c) comes entirely from (d) ",
+  " ，与平面波无关；": " and has nothing to do with the plane wave; ",
+  " 也正是 (f) |": " is also the root cause of why (f) |",
+  " 与 ": " is independent of ",
+  " 无关的根因。单独看实部或虚部会看到“振幅起伏”的假象，复数模才是守恒的物理量；全局相位滑块与播放使 Re、Im 按 ": ". Looking at the real or the imaginary part alone creates the illusion of an “amplitude undulation”; it is the complex modulus that is the conserved quantity. The global-phase slider and playback make Re and Im ",
+  " 重新混合": " remix",
+  " （复平面上的整体旋转）、(e) 随之整体平移，而 ": " (a rigid rotation in the complex plane) and shift (e) as a whole, while ",
+  " 与螺旋半径均不变。": " and the helix radius stay unchanged.",
+  /* ---- 控制面板 ---- */
+  "控制面板": "Control Panel",
+  "\n        晶格常数 ": "\n        lattice constant ",
+  " 固定；势场振幅 ": " fixed; the potential amplitude ",
+  " 由下方三档切换：": " is switched by the three presets below: ",
+  "近孤立原子": "near isolated atoms",
+  "周期势": "periodic potential",
+  "近自由电子": "nearly free electrons",
+  " 是解析式的振幅参数，实际势场起伏见读数面板）\n      ": " is the amplitude parameter of the analytic expression; the actual potential swing is in the readouts)\n      ",
+  "波矢 ": "Wave vector ",
+  " 吸附到允许值 ": " snaps to the allowed value ",
+  " 的包络波长 ": ", the envelope wavelength ",
+  "。Born–von Karman 边条只允许": ". The Born–von Karman boundary condition allows only ",
+  " 量子化的": " quantised",
+  "；整条第一布里渊区恰含 ": "; the whole first Brillouin zone holds exactly ",
+  " 个态，": " states, ",
+  " 与 +π/": " and +π/",
+  " 画一个点）——": ") — ",
+  "全局相位 ": "Global phase ",
+  "给 ": "multiplies ",
+  " 乘 ": " by ",
+  "，复平面上": "; in the complex plane ",
+  " 整体旋转": " rotates as a whole",
+  " 始终不变。": " never changes.",
+  "原胞数 N：": "Number of unit cells N: ",
+  "能带 n：": "Band n: ",
+  "带 1（s 型）": "Band 1 (s-type)",
+  "带 2（p 型）": "Band 2 (p-type)",
+  "▶ 播放（时间演化）": "▶ Play (time evolution)",
+  "势场状态：": "Potential regime: ",
+  /* ---- 模块三 ---- */
+  "模块三": "Module 3",
+  "能带图 ": "Band diagram ",
+  "第一布里渊区 −π/": "First Brillouin zone −π/",
+  "，竖线为当前 ": "; the vertical line marks the present ",
+  " 一个原子能级分裂为一个能带，": " one atomic level broadens into a band, and ",
+  " 个原胞在整个第一布里渊区给出 ": " unit cells give ",
+  " 个 ": " ",
+  " 态（圆点；两端 ±π/": " states across the zone (dots; the two ends ±π/",
+  " 是同一个态）。": " are the same state).",
+  " 带 1 由 s 型轨道形成、自 ": " Band 1 is built from s-type orbitals and rises from ",
+  " 向两侧上升；带 2 由 p 型轨道形成、跃迁积分反号，自 ": " towards both sides; band 2 is built from p-type orbitals, with the hopping integral reversed in sign, so it falls from ",
+  " 向两侧下降": " towards both sides",
+  " ——两带弯曲方向相反，最小能隙出现在布里渊区边界 ": " — the two bands curve in opposite directions and the smallest gap appears at the zone boundary ",
+  " 。半透明色带为禁带 ": ". The translucent strip is the forbidden gap ",
+  "读数面板": "Readout Panel",
+  "更多读数（k 的离散取值与传播方向）": "More readouts (discrete k values and propagation direction)",
+  /* ⚠️ 分组标题**禁用裸符号字母**（哪怕是单个 k / x）：排版层会把它们包成 <i> 而切开文本节点，
+     整句 key 永远命中不了（与 24 号 V_bi、15 号 12kT 同源）⇒ 新标题一律写成纯汉字。 */
+  "离散取值（允许态）": "Discrete values (allowed states)",
+  "传播方向": "Propagation direction",
+  /* ---- 画布与图例标注 ---- */
+  ")| 不变": ")| constant",
+  "不变": "constant",
+  "拖拽改变视角 · 滚动 = 相位旋转（半径不变）": "Drag to change the viewpoint · scroll = rotate the phase (radius unchanged)",
+  "周期 = a（与 V 同框）": "period = a (same frame as V)",
+  "教学简化：": "Teaching simplification: ",
+  " 固定取 ": " is fixed at ",
+  " = 0 的形式（严格地 ": " = 0 (strictly speaking, ",
+  " 随 ": " varies with ",
+  " 连续变化）": " continuously)",
+  "固定取": "fixed at",
+  "的形式（严格地": " (strictly, ",
+  "随": "varies with",
+  "连续变化）": " continuously)",
+  "周期 = ": "period = ",
+  "（与 ": " (with ",
+  " 同框）": " in the same frame)",
+  "周期": "period",
+  "（与": " (with",
+  "同框）": " in the same frame)",
+  "实部 cos（实线）/ 虚部 sin（虚线）": "Real part cos (solid) / imaginary part sin (dashed)",
+  "恒幅 ±1（": "constant amplitude ±1 (",
+  "恒幅": "constant amplitude",
+  "，严格周期 = ": "; the exact period is ",
+  "（本简化下与 ": " (independent of ",
+  " 无关）": " in this simplification)",
+  "，严格周期": "; the exact period",
+  "（本简化下与": " (independent of",
+  "无关）": " in this simplification)",
+  "带": "band",
+  " 型）": "-type)",
+  "带 2（": "Band 2 (",
+  "(a) 周期势 ": "(a) periodic potential ",
+  "(b) 实部 Re ": "(b) real part Re ",
+  " = (d)·(e)实部": " = (d)·(e), real part",
+  "(c) 虚部 Im ": "(c) imaginary part Im ",
+  " = (d)·(e)虚部": " = (d)·(e), imaginary part",
+  "(d) 周期函数 ": "(d) periodic function ",
+  "(x)，周期 ": "(x), period ",
+  "（教学简化：取 ": " (teaching simplification: taken as ",
+  " = 0 的形式）": " = 0)",
+  "(e) 相位因子 ": "(e) phase factor ",
+  "，恒幅 ±1": ", constant amplitude ±1",
+  "(f) 概率密度 |": "(f) probability density |",
+  /* ---- 读数面板键值 ---- */
+  " 当前连续可调": " is continuously adjustable",
+  "（最接近的允许态 ": " (nearest allowed state ",
+  "状态": "state",
+  "势场振幅 ": "Potential amplitude ",
+  " / 晶格常数 ": " / lattice constant ",
+  "势场起伏 ": "Potential swing ",
+  "（实测峰谷差）": " (measured peak-to-valley)",
+  "原胞数 ": "Number of unit cells ",
+  "  → 每带 ": "  → per band ",
+  " 点数": " points",
+  " 个（×2 自旋）": " (×2 spins)",
+  "允许态序号 ": "Allowed-state index ",
+  "（连续可调）": " (continuously adjustable)",
+  "传播方向": "Propagation direction",
+  "沿 +": "along +",
+  "能带 ": "Band ",
+  " = 1（s 型，随 ": " = 1 (s-type, rising with ",
+  " 上升）": ")",
+  "带 1→2 能隙 ": "Band 1→2 gap ",
+  "（在 ": " (at ",
+  " 当前势场状态": " present potential regime",
+  "周期势（": "periodic potential (",
+  "相位（演示）": "Phase (demonstration)",
+  "演化角频率 ": "Angular frequency of evolution ",
+  "动画已按示意速率放慢": "The animation is slowed to a schematic rate",
+  /* ---- 引导探究与挑战 ---- */
+  "引导探究（点击展开，先自己试一试再看答案）": "Guided inquiry (click to expand — try it yourself before opening the answers)",
+  "挑战任务": "Challenges",
+  "显示参考解答": "Show reference answer",
+  /* ---- 挑战一 ---- */
+  "挑战一：两个因子的分工": "Challenge 1 · The division of labour between the two factors",
+  "观察 (d) ": "Watch (d) ",
+  " (x) 与 (e) ": "(x) and (e) ",
+  " 它们各自的周期是多少？": ": what is the period of each? ",
+  " 逐点验证 (b) = (d)×(e)实部、(c) = (d)×(e)虚部。再把 ": " Verify point by point that (b) = Re[(d)×(e)] and (c) = Im[(d)×(e)]. Then sweep ",
+  " 从 −π/": " from −π/",
+  " 扫到 +π/": " to +π/",
+  " （越过 ": " (crossing ",
+  " = 0 时螺旋线的缠绕方向反转）：(e) 的波长 ": " = 0, where the winding direction of the helix reverses): how do the wavelength of (e), ",
+  " | 怎么变？而 (d) 变不变？": "|, change — and does (d) change?",
+  " (x) 与晶格势 ": "(x) has the same period ",
+  " (x) 同周期 ": " as the lattice potential ",
+  " ，刻画电子在每个原胞内的局域行为；": ", describing the local behaviour of the electron inside each unit cell; ",
+  " 的“波长”是 2π/|": " has “wavelength” 2π/|",
+  " 时最短，": ", shortest at ",
+  " ），只负责相邻原胞之间的相位联系；": "), and only carries the phase relation between neighbouring cells; ",
+  " 反号只改变相位推进的方向（螺旋线反向缠绕），不改变波长：平移一个 ": " changing sign only reverses the direction in which the phase advances (the helix winds the other way), not the wavelength: translating by one ",
+  " 只乘一个相位因子 ": " merely multiplies by a phase factor ",
+  " 。关键点：(e) ": ". The key point: (e) ",
+  " ——它是纯相位、不含任何概率信息；所以 (b)(c) 的振幅起伏完全是被 (d) ": " — it is pure phase and carries no probability information, so the undulation of (b)(c) is entirely “amplitude modulation” by (d) ",
+  "  “调幅”出来的。这正是“调幅平面波”的含义，也解释了为什么 |": ". That is what “amplitude-modulated plane wave” means, and it also explains why |",
+  " ：因为 |": ": because |",
+  " 注意这是本工具的教学简化": " Note the teaching simplification in this tool",
+  " ：周期部分固定取 ": ": the periodic part is fixed at ",
+  " （等价于 ": " (equivalent to the tight-binding sum at ",
+  "  = 0 处的紧束缚和），所以扫 ": " = 0), so sweeping ",
+  " 时 (d) 不动；严格地说 ": " leaves (d) unchanged; strictly speaking, ",
+  " 是 ": " is an eigenfunction of ",
+  " 的本征函数，": ", ",
+  " 在算符里面 ⇒ ": " sits inside the operator ⇒ ",
+  " 连续变化且一般为复数，|": " varies continuously and is in general complex, and |",
+  " 也随之改变。": " changes with it.",
+  /* ---- 挑战二 ---- */
+  "挑战二：能带的弯曲方向": "Challenge 2 · Why the bands curve as they do",
+  " 看 ": "Look at the ",
+  " 图（横轴 −π/": " diagram (horizontal axis −π/",
+  " ）：带 1 从 ": "): band 1 runs from ",
+  " = 0 向两侧": " = 0 and ",
+  " 上升": " rises towards both sides",
+  " ，带 2 从 ": ", while band 2 falls from ",
+  " 下降": " towards both sides",
+  " ，且两带都关于 ": ", and both bands are ",
+  " 左右对称": " symmetric about ",
+  " 。为什么弯曲方向相反、又为什么对称？最小能隙出现在哪个 ": ". Why do they curve oppositely, and why are they symmetric? At which ",
+  " ？这与面板 (d) 中带 1、带 2 的 ": " does the smallest gap appear, and how is that related to the shape of ",
+  " (x) 形状有什么联系？": "(x) for bands 1 and 2 in panel (d)?",
+  " 带 1 由 s 型（偶宇称）轨道形成，跃迁积分 ": " Band 1 is built from s-type (even-parity) orbitals; the hopping integral ",
+  " 在 ": " is minimal at ",
+  " = 0 取极小、向两侧上升；带 2 由 ": " = 0 and rises towards both sides. Band 2 is built from ",
+  " 型（奇宇称）轨道形成，相邻原胞间轨道重叠反号 → ": "-type (odd-parity) orbitals, whose overlap between neighbouring cells changes sign → ",
+  "  0，于是 ": " < 0, so ",
+  "  = 0 取极大、向两侧下降。两带一升一降，故最小能隙落在布里渊区边界 ": " is maximal at k = 0 and falls towards both sides. One band rises and the other falls, so the smallest gap lands at the zone boundary ",
+  "  = ±π/a。（普适表述：一维第 ": " = ±π/a. (General statement: in one dimension the orbitals of the ",
+  " 条带的轨道有 ": "th band have ",
+  " −1 个节点，宇称交替 ⇒ 跃迁积分符号按 (−1)": " − 1 nodes, the parity alternates ⇒ the sign of the hopping integral alternates as (−1)",
+  "  交替 ⇒ 相邻带弯曲方向相反；“s 型 / ": " ⇒ adjacent bands curve oppositely; “s-type / ",
+  " 型”只是 ": "-type” are only the names given to ",
+  "  = 1、2 的具体名字，决定弯曲方向的是 ": " = 1 and 2; the curvature is decided by the sign of ",
+  " 的符号，不是轨道的字母标签。）又因 ": ", not by the letter label of the orbital.) And because ",
+  " (k) 只含 cos(ka)、是 ": "(k) contains only cos(ka) and is an even function of ",
+  " 的偶函数，": ", ",
+  " (k)，整张图关于 ": "(k), the whole diagram is symmetric about ",
+  "  = 0 对称——这与时间反演对称（±": " = 0 — consistent with time-reversal symmetry (the ±",
+  "  态能量简并）一致，但 ±": " states are degenerate in energy), yet ±",
+  "  是两个不同的态（行进方向相反）。这也解释了 ": " are two different states (opposite directions of travel). This also explains the shape of ",
+  "  的形状：带 1 的 ": ": in band 1, ",
+  "  在原子核处最大，带 2 的 ": " is largest at the nuclei, while in band 2 ",
+  "  在核处有节点（奇函数）——与 ": " has a node at the nucleus (an odd function) — consistent with ",
+  "  轨道一致。": " orbitals.",
+  /* ---- 挑战三 ---- */
+  "挑战三：三档势场：能带是怎样“生长”出来的": "Challenge 3 · Three potential regimes: how a band “grows”",
+  " 依次点三档预设“近孤立原子 → 周期势 → 近自由电子”（": " Click through the three presets “near isolated atoms → periodic potential → nearly free electrons” (",
+  "  由 30 eV 减到 0.3 eV）：带宽 4|": " falls from 30 eV to 0.3 eV): how do the bandwidth 4|",
+  " |、能隙 ": "|, the gap ",
+  " ) 与螺旋线的半径包络各如何变化？为什么说两端的“近”字不能去掉？": ") and the radius envelope of the helix change? Why can the word “near” at both ends not be dropped?",
+  "  越大 → 轨道越局域、重叠越弱 → |": " is larger → the orbitals are more localised and the overlap weaker → |",
+  " | 越小 → 能带越窄、越像孤立原子的分立能级（": "| is smaller → the band is narrower and closer to the discrete levels of isolated atoms (",
+  " 是尖锐的原子波函数，半径包络起伏剧烈）；": " is a sharp atomic wave function and the radius envelope undulates strongly); ",
+  " 越小 → 重叠越强 → 带宽越大、": " is smaller → the overlap is stronger → the bandwidth larger, ",
+  " 越平、": " flatter, ",
+  " 越接近纯平面波。但两端都只是": " closer to a pure plane wave. But both ends are only ",
+  " 趋近": " approached asymptotically",
+  " ：只要 ": ": as long as ",
+  " 有限，|": " is finite, |",
+  " | 就不为零，能带仍有带宽（不是严格的分立能级）；即使 ": "| is non-zero and the band still has a width (not strictly discrete levels); even when ",
+  "  → 0 把 ": " → 0 makes ",
+  "  画成常数，本模型的原子能级间距 ": " a constant, the atomic level spacing of this model ",
+  "  仍在，能隙并不消失（也不会变成真正的自由连续谱）。能带 = 原子能级被周期势耦合后按 ": " remains and the gap does not vanish (nor does it turn into a truly free continuum). A band = an atomic level, coupled by the periodic potential and broadened as ",
+  " |cos(ka) 展宽的结果。": "|cos(ka).",
+  /* ---- 挑战四 ---- */
+  "挑战四：概率密度的周期性": "Challenge 4 · Periodicity of the probability density",
+  " 看面板 (f) |": "Look at panel (f) |",
+  " 。它在相邻原胞中是否相同？为什么？这与“电子弥散于整个晶体”的说法矛盾吗？": ": is it the same in neighbouring unit cells? Why? Does that contradict the statement that “the electron is spread over the whole crystal”?",
+  " 完全相同——|": " Exactly the same — |",
+  " ，因为相位因子 ": ", because the phase factor ",
+  "  的模为 1。这不矛盾：电子在每个原胞内的概率分布相同（形状由 ": " has modulus 1. There is no contradiction: the probability distribution inside each unit cell is the same (its shape set by ",
+  "  决定），但电子不属于任何一个原子——它以相干扩展的布洛赫态遍布整个晶体。定域的是“概率形状”，扩展的是“态本身”。": "), yet the electron does not belong to any single atom — it pervades the whole crystal as a coherent, extended Bloch state. What is localised is the “shape of the probability”; what is extended is “the state itself”.",
+  /* ---- 挑战五 ---- */
+  "挑战五：实部、虚部与模长的关系": "Challenge 5 · Real part, imaginary part and the modulus",
+  " 用纸遮住除 (b) 之外的各层，只看实部一条曲线：它的振荡幅度是否随位置起伏？再露出 (e)，它的振幅起伏吗？再看 (f) |": " Cover every layer except (b) and look only at the real-part curve: does its oscillation amplitude undulate with position? Now uncover (e) — does its amplitude undulate? And look at (f) |",
+  " ：它还起伏吗？拖动全局相位滑块（或点播放），实部、虚部、(e) 各如何变？模长变吗？试着在 3": ": does it still undulate? Drag the global-phase slider (or press play): how do the real part, the imaginary part and (e) change, and does the modulus change? Now, in the 3",
+  "  视图里竖直拖动改变视角，它跟拖相位、播放的画面有什么异同？": " view, drag vertically to change the viewpoint — how does that compare with dragging the phase or with playback?",
+  " 只看实部会看到“振幅周期性涨落”的假象（那是 ": " Looking only at the real part gives the illusion of an “amplitude waxing and waning periodically” (that is the product with ",
+  " ) 的乘积效应）：对照 (e) 就知道，平面波因子的振幅": ")): comparing with (e) shows that the amplitude of the plane-wave factor ",
+  " 始终等于 1": " is always exactly 1",
+  " ，起伏全部来自 ": ", so the whole undulation comes from ",
+  " 。加上虚部后两者恰好互补，|": ". Adding the imaginary part, the two complement each other exactly, and |",
+  "  严格周期、毫无起伏。拖动 ": " is strictly periodic with no undulation at all. Dragging ",
+  " （或播放时的 ": " (or, during playback, ",
+  " ）时 Re、Im 按 ": ") makes Re and Im ",
+  " （复平面上的整体旋转）、(e) 整体平移，而 |": " (a rigid rotation in the complex plane) and shifts (e) as a whole, while |",
+  "  与螺旋线半径均不变。再在 3": " and the helix radius stay unchanged. Again in the 3",
+  "  视图里竖直拖动、绕 ": " view, drag vertically to rotate the viewpoint about the ",
+  "  轴转视角 ": " axis: ",
+  "  ——屏上纵坐标变成 ": " — the vertical coordinate on screen becomes ",
+  "  ，正是 ": ", which is exactly the ",
+  "  的实部（与给 ": " real part (identical, point by point, to multiplying by ",
+  "  后取实部逐点相同；差别只是 3": " and then taking the real part; the only difference is the depth aliasing of the 3",
+  "  投影的深度混叠，Re/Im 平面上的投影曲线完全一致），所以": " projection — the projected curves on the Re/Im plane are identical), so ",
+  " 竖直方向上": " along the vertical direction ",
+  " 它与拖相位、与时间演化不可分辨。三者一致，恰恰说明整体相位（含随时间积累的那部分）不是可观测物理量，复数模才是。": " it cannot be told apart from dragging the phase or from time evolution. That the three agree shows precisely that the global phase (including the part accumulated in time) is not an observable, while the complex modulus is.",
+  /* ---- 标点兜底 ---- */
+  "（": " (",
+  "）": ")",
+  " 无关的根因。单独看实部或虚部会看到\"振幅起伏\"的假象，复数模才是守恒的物理量；全局相位滑块与播放使 Re、Im 按 ": ". Looking at the real or the imaginary part alone creates the illusion of an “amplitude undulation”; it is the complex modulus that is the conserved quantity. The global-phase slider and playback make Re and Im ",
+  " 的\"波长\"是 2π/|": " has “wavelength” 2π/|",
+  " \"调幅\"出来的。这正是\"调幅平面波\"的含义，也解释了为什么 |": ". That is what “amplitude-modulated plane wave” means, and it also explains why |",
+  "挑战三：三档势场：能带是怎样\"生长\"出来的": "Challenge 3 · Three potential regimes: how a band “grows”",
+  "依次点三档预设\"近孤立原子 → 周期势 → 近自由电子\"（": " Click through the three presets “near isolated atoms → periodic potential → nearly free electrons” (",
+  ") 与螺旋线的半径包络各如何变化？为什么说两端的\"近\"字不能去掉？": ") and the radius envelope of the helix change? Why can the word “near” at both ends not be dropped?",
+  "。它在相邻原胞中是否相同？为什么？这与\"电子弥散于整个晶体\"的说法矛盾吗？": ": is it the same in neighbouring unit cells? Why? Does that contradict the statement that “the electron is spread over the whole crystal”?",
+  " 决定），但电子不属于任何一个原子——它以相干扩展的布洛赫态遍布整个晶体。定域的是\"概率形状\"，扩展的是\"态本身\"。": "), yet the electron does not belong to any single atom — it pervades the whole crystal as a coherent, extended Bloch state. What is localised is the “shape of the probability”; what is extended is “the state itself”.",
+  "只看实部会看到\"振幅周期性涨落\"的假象（那是 ": " Looking only at the real part gives the illusion of an “amplitude waxing and waning periodically” (that is the product with ",
+  " 型，随 ": " type, following ",
+  "⏸ 暂停": "⏸ Pause",
+  " ≈ 常数，半径包络变平（趋近纯平面波）": " ≈ constant and the radius envelope flattens (approaching a pure plane wave)",
+  "常数，半径包络变平（趋近纯平面波）": "constant and the radius envelope flattens (approaching a pure plane wave)",
+  " ≈ 常数（近自由电子）": " ≈ constant (nearly free electron)",
+  "常数（": "constant (",
+  "沿 −": "along −",
+  "驻波（": "Standing wave (",
+  "当前已吸附": "adsorbed at present",
+  "（已吸附）": " (adsorbed)",
+  "（吸附到 ": " (adsorbed at ",
+  "教学简化：u 取 k = 0 的形式": "Teaching simplification: u takes the k = 0 form",
+  " 取 ": " takes ",
+  " = 0 的形式": " = 0 form",
+  "的形式": " form",
+};
+
+/* 注入点②：画布直写字符串。老工具直接调 g.fillText()（描边文字走 g.strokeText()），这里在原型上兜住。
+   measureText 必须一起挂钩，否则「量的宽度」和「量的文字」用的不是同一个串。 */
+(function () {
+  if (typeof CanvasRenderingContext2D === "undefined") return;
+  var ft = CanvasRenderingContext2D.prototype.fillText;
+  CanvasRenderingContext2D.prototype.fillText = function (s, x, y) {
+    if (typeof s === "string") arguments[0] = T(s);
+    return ft.apply(this, arguments);
+  };
+  /* 描边文字（白边包字）走 strokeText，同样要过 T()，否则画布标签漏翻 */
+  var stx = CanvasRenderingContext2D.prototype.strokeText;
+  CanvasRenderingContext2D.prototype.strokeText = function (s, x, y) {
+    if (typeof s === "string") arguments[0] = T(s);
+    return stx.apply(this, arguments);
+  };
+  var mt = CanvasRenderingContext2D.prototype.measureText;
+  CanvasRenderingContext2D.prototype.measureText = function (s) {
+    return mt.call(this, typeof s === "string" ? T(s) : s);
+  };
+})();
+
+/* 注入点④：逐字绘制的画布串。drawMath 一类把中文按单字拆成 token 再逐个 fillText，
+   T() 每次只见到一个汉字 ⇒ 整句词条永远命中不了。这里在整串进入分词之前先整体翻译，
+   于是画布标注也走「整句优先」，与 DOM 同一个口径。没有这些函数的工具自动跳过。
+   ⚠️ 签名坑：drawMath / measureMath 的第一个参数是 canvas context（对象），文本在第
+   二位；早期版本照着 arguments[0] 翻，等于把 context 送去 T()，补丁全程空转。
+   这里改为「找到第一个含中文的字符串参数」再翻，既躲开 context，也不会误伤
+   align / weight 之类以英文字符串传的选项。 */
+(function () {
+  ["drawMath", "drawMathHalo", "measureMath"].forEach(function (n) {
+    var f = window[n];
+    if (typeof f !== "function") return;
+    window[n] = function () {
+      for (var i = 0; i < arguments.length; i++) {
+        if (typeof arguments[i] === "string" && /[\u3400-\u9FFF]/.test(arguments[i])) {
+          arguments[i] = T(arguments[i]);
+          break;
+        }
+      }
+      return f.apply(this, arguments);
+    };
+  });
+})();
+
+
+/* ---- DOM 文本节点 ---- */
+function i18nNode(n) {
+  var el = n.parentElement;
+  if (!el) return;
+  var tag = el.tagName;
+  if (tag === "SCRIPT" || tag === "STYLE") return;
+  if (el.closest && el.closest("[data-noi18n]")) return;
+  var cur = n.nodeValue;
+  if (n.__orig === undefined || (cur !== n.__last && cur !== n.__orig)) n.__orig = cur;
+  var want = LANG === "en" ? T(n.__orig) : n.__orig;
+  if (want !== cur) n.nodeValue = want;
+  n.__last = want;
+}
+/* 属性（title / placeholder / optgroup label …）不是文本节点，MutationObserver 覆盖不到，
+   必须单独过一遍：否则悬停提示、下拉分组名会残留中文。原文缓存在元素 expando 上，
+   切回中文时原样写回。改属性不会触发 childList/characterData 观察器，不会递归。 */
+var I18N_ATTRS = ["title", "placeholder", "aria-label", "alt", "label"];
+function i18nAttrs(root) {
+  var els = [root], i, j;
+  if (root.querySelectorAll) els = els.concat(Array.prototype.slice.call(root.querySelectorAll("*")));
+  for (i = 0; i < els.length; i++) {
+    var el = els[i];
+    if (!el.getAttribute) continue;
+    if (el.closest && el.closest("[data-noi18n]")) continue;
+    for (j = 0; j < I18N_ATTRS.length; j++) {
+      var a = I18N_ATTRS[j];
+      if (!el.hasAttribute(a)) continue;
+      var key = "__a_" + a;
+      if (el[key] === undefined) el[key] = el.getAttribute(a);
+      var want = LANG === "en" ? T(el[key]) : el[key];
+      if (want !== el.getAttribute(a)) el.setAttribute(a, want);
+    }
+  }
+}
+function i18nWalk(root) {
+  var w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null, false), n, c = 0;
+  while ((n = w.nextNode())) { i18nNode(n); c++; }
+  i18nAttrs(root);
+  return c;
+}
+var _i18nBusy = false;
+function i18nWatch() {
+  if (typeof MutationObserver === "undefined") return;
+  var mo = new MutationObserver(function (ms) {
+    if (_i18nBusy) return;
+    _i18nBusy = true;
+    try {
+      for (var i = 0; i < ms.length; i++) {
+        var m = ms[i];
+        if (m.type === "childList") {
+          for (var j = 0; j < m.addedNodes.length; j++) {
+            var nd = m.addedNodes[j];
+            if (nd.nodeType === 3) i18nNode(nd);
+            else if (nd.nodeType === 1) i18nWalk(nd);
+          }
+        } else if (m.type === "characterData") i18nNode(m.target);
+      }
+    } finally { _i18nBusy = false; }
+  });
+  mo.observe(document.body, { childList: true, subtree: true, characterData: true });
+}
+function setLang(l) {
+  LANG = l;
+  try { localStorage.setItem("opl_lang", l); } catch (e) { }
+  document.documentElement.lang = l === "en" ? "en" : "zh-CN";
+  var btn = document.getElementById("langBtn");
+  if (btn) btn.textContent = l === "en" ? "中文" : "EN";
+  document.title = l === "en" ? T(ORIG_TITLE) : ORIG_TITLE;
+  i18nWalk(document.body);
+  if (typeof syncInputs === "function") syncInputs();
+  if (typeof render === "function") render();
+}
+
+
+
+/* ---------------- 直接 fillText / strokeText 的自动排版钩子 ----------------
+   有些标注不走 txt() 而是直接 g.fillText()（状态徽标、能带边等），
+   这里在原型层统一处理：含数学记法的字符串先按 LaTeX 规则拆段再绘制，
+   measureText 同步返回拆段总宽，白底框长度自动跟着变。 */
+const NEED_MATH_HM = /[\u2070-\u209C\u00B2\u00B3\u00B9]|_\{?[A-Za-z0-9\u0370-\u03ff]|\^\{?[\d(\-]|\d(\.\d+)?[eE][+\-]\d|\u221A/;
+/* 原生 measureText：mathSegsHM 内部量宽必须走这一条，
+   否则 measureText 被钩子接管后会 self-recursion（RangeError）。 */
+var _mRawHM = null;
+function measureRawHM(g, s) { return (_mRawHM ? _mRawHM : g.measureText).call(g, s).width; }
+function mathSegsHM(g, s) {
+  const f = String(g.font || "");
+  const mm = /(\d+(?:\.\d+)?)px/.exec(f);
+  const size = mm ? parseFloat(mm[1]) : 12;
+  const family = f.replace(/^(?:\s*(?:italic|oblique|bold|[1-9]00)\s*)*\d+(?:\.\d+)?px\s*/, "");
+  const style = /italic|oblique/.test(f) ? "italic " : (/bold|[6-9]00/.test(f) ? "bold " : "");
+  const parts = AUTO(s), laid = [];
+  let w = 0;
+  for (const p of parts) {
+    const small = !!(p.sup || p.sub);
+    const fs = style + (small ? (size * 0.74).toFixed(2) : size.toFixed(2)) + "px " + family;
+    g.font = fs;
+    const tw = measureRawHM(g, p.s);
+    laid.push({ s: p.s, w: tw, fs: fs, dy: small ? (p.sup ? -size * 0.40 : size * 0.22) : 0 });
+    w += tw;
+  }
+  return { laid: laid, w: w, family: family, style: style, size: size };
+}
+(function hookMathHM() {
+  if (window.__MATH_HOOK) return; window.__MATH_HOOK = 1;
+  const P = CanvasRenderingContext2D.prototype;
+  const _fill = P.fillText, _stroke = P.strokeText, _measure = P.measureText;
+  function draw(drawRaw, g, s, x, y, rest) {
+    const info = mathSegsHM(g, s);
+    const al = g.textAlign, bl = g.textBaseline;
+    const cx = al === "right" ? x - info.w : (al === "center" ? x - info.w / 2 : x);
+    g.textAlign = "left";
+    let px = cx;
+    for (const L of info.laid) {
+      g.font = L.fs;
+      drawRaw.call(g, L.s, px, y + L.dy, ...rest);
+      px += L.w;
+    }
+    g.textAlign = al; g.textBaseline = bl;
+    g.font = info.style + info.size.toFixed(2) + "px " + info.family;
+    return info;
+  }
+  P.fillText = function (s, x, y) {
+    if (typeof s !== "string" || !NEED_MATH_HM.test(s)) return _fill.apply(this, arguments);
+    draw(_fill, this, s, x, y, Array.prototype.slice.call(arguments, 3));
+  };
+  P.strokeText = function (s, x, y) {
+    if (typeof s !== "string" || !NEED_MATH_HM.test(s)) return _stroke.apply(this, arguments);
+    draw(_stroke, this, s, x, y, Array.prototype.slice.call(arguments, 3));
+  };
+  if (!_mRawHM) _mRawHM = _measure;
+  P.measureText = function (s) {
+    if (window.__HM_IN || typeof s !== "string" || !NEED_MATH_HM.test(s)) return _measure.call(this, s);
+    window.__HM_IN = 1;
+    const save = this.font;
+    let info;
+    try { info = mathSegsHM(this, s); } finally { window.__HM_IN = 0; }
+    this.font = save;
+    return { width: info.w, get actualBoundingBoxLeft() { return 0; }, get actualBoundingBoxRight() { return info.w; } };
+  };
+})();
+
+/* ---------------- HTML 侧自动 LaTeX 排版 ----------------
+   读数 / 说明 / 按钮名里由 JS 拼出来的 cm⁻³、E_c、2.5e+8，
+   在写进 innerHTML 之前转成真 <sup>/<sub>；标签与属性原样放过（title 不会被塞进尖括号）。
+   与画布侧 AUTO() 对偶，保证网页和画布按同一套规则排版。 */
+const AUTOH_SUP = { "⁰": "0", "¹": "1", "²": "2", "³": "3", "⁴": "4", "⁵": "5", "⁶": "6",
+  "⁷": "7", "⁸": "8", "⁹": "9", "⁺": "+", "⁻": "−", "⁼": "=", "⁽": "(", "⁾": ")", "ⁿ": "n", "ⁱ": "i" };
+const AUTOH_SUB = { "₀": "0", "₁": "1", "₂": "2", "₃": "3", "₄": "4", "₅": "5", "₆": "6",
+  "₇": "7", "₈": "8", "₉": "9", "₊": "+", "₋": "−", "₌": "=", "₍": "(", "₎": ")",
+  "ₐ": "a", "ₑ": "e", "ₒ": "o", "ₓ": "x", "ₔ": "ə", "ₕ": "h", "ₖ": "k", "ₗ": "l",
+  "ₘ": "m", "ₙ": "n", "ₚ": "p", "ₛ": "s", "ₜ": "t", "ᵣ": "r", "ᵤ": "u", "ᵥ": "v" };
+const TEXH_NEED = /[\u2070-\u209C\u00B2\u00B3\u00B9]|_\{?[A-Za-z0-9\u0370-\u03ff]|\^\{?[\d(\-]|\d(\.\d+)?[eE][+\-]\d|\u221A|(?:(?:^|[^A-Za-zͰ-Ͽ])[A-Za-zͰ-Ͽ](?![A-Za-zͰ-Ͽ]))/;
+/* ---------- 物理量自动斜体（DOM 与画布共用同一判据） ----------
+   孤立出现的单个拉丁/希腊字母 = 物理量 → 斜体；
+   前后仍是拉丁字母（eV、sin、cm）、紧邻中文（原子 A）、单字母单位（K/s/m/A/T/J/g/C）→ 保持正体。 */
+const IT_UNIT1 = /^[KsmATJCgi\u03c0]$/;   /* 单字母单位 + 圆周率 π：保持正体 */
+const IT_LAT = /[A-Za-z]/, IT_GRK = /[\u0370-\u03ff]/;
+const IT_CJK = /[\u2E80-\u9FFF\uF900-\uFAFF]/;   /* 只认中日韩文字；全角标点不阻止斜体（如「E）」的 E）*/
+function italOne(t, i) {
+  const ch = t.charAt(i), pv = i > 0 ? t.charAt(i - 1) : "", nx = t.charAt(i + 1);
+  if (!IT_LAT.test(ch) && !IT_GRK.test(ch)) return false;
+  if (IT_LAT.test(pv) || IT_LAT.test(nx)) return false;
+  if (pv && IT_CJK.test(pv)) return false;
+  if (nx && IT_CJK.test(nx)) return false;
+  if (pv === "(" && nx === ")") return false;   /* 子图标签 (a) (b)：保持正体 */
+  return !IT_UNIT1.test(ch);
+}
+/* DOM：纯文本段 → 孤立字母包 <i> */
+function italText(t) {
+  let out = "", i = 0;
+  while (i < t.length) {
+    if (italOne(t, i)) { out += "<span class='m'><i>" + t.charAt(i) + "</i></span>"; i++; continue; }
+    out += t.charAt(i); i++;
+  }
+  return out;
+}
+/* 画布：纯文本段 → 零件数组（孤立字母带 i:true） */
+function italParts(t) {
+  const out = []; let cur = "";
+  const flush = () => { if (cur) { out.push({ s: cur }); cur = ""; } };
+  for (let i = 0; i < t.length; i++) {
+    if (italOne(t, i)) { flush(); out.push({ s: t.charAt(i), i: true }); continue; }
+    cur += t.charAt(i);
+  }
+  flush(); return out;
+}
+
+/* 从 i 处（必须是 '<'）扫出一个"完整元素"的结束下标（含嵌套），失败返回 -1 */
+function TEXH_elemEnd(h, i) {
+  if (h.charAt(i) !== "<") return -1;
+  let depth = 0, j = i, guard = 0;
+  while (j < h.length && guard++ < 4000) {
+    if (h.charAt(j) !== "<") { j++; continue; }
+    const e = TEXH_tagEnd(h, j);
+    if (e < 0) return -1;
+    const isClose = h.charAt(j + 1) === "/";
+    const selfClose = h.charAt(e - 2) === "/";
+    if (isClose) { depth--; j = e; if (depth <= 0) return j; }
+    else if (selfClose) { j = e; if (depth === 0) return j; }
+    else { depth++; j = e; }
+  }
+  return -1;
+}
+/* √ 后面直接跟一个元素：√<i>E</i> → √‾E（前两条规则只吃 √(A) 与 √字母串） */
+function TEXHsqrtElem(s) {
+  let out = "", i = 0, guard = 0;
+  while (guard++ < 400) {
+    const k = s.indexOf("\u221A", i);
+    if (k < 0) break;
+    out += s.slice(i, k);
+    /* 守卫：√ 后面已是闭标签 ⇒ 该 √ 已排版过（对整段 HTML 重复跑 TEXH 会把 </span> 当成被开方式，
+       层层包出空壳根号，视觉上变成 √−3 / √−E），原样输出不再包裹 */
+    if (s.charAt(k + 1) === "<" && s.charAt(k + 2) === "/") { out += "\u221A"; i = k + 1; continue; }
+    let rad = null, end = k + 1;
+    if (s.charAt(k + 1) === "(") {
+      /* √(…) ：被开方式里常有标签，括号本身不在同一个文本片段里，必须整串扫 */
+      let depth = 0, p = k + 1;
+      while (p < s.length) {
+        const c = s.charAt(p);
+        if (c === "(") depth++;
+        else if (c === ")") { depth--; if (depth === 0) { rad = s.slice(k + 2, p); end = p + 1; break; } }
+        p++;
+      }
+    } else {
+      const e = TEXH_elemEnd(s, k + 1);
+      if (e > 0 && e - k < 500) { rad = s.slice(k + 1, e); end = e; }
+    }
+    if (rad !== null && rad.length) {
+      out += "<span class=\"sqrt\"><span class=\"rd\">\u221A</span><span class=\"rdc\">" + rad + "</span></span>";
+      i = end;
+    } else { out += "\u221A"; i = k + 1; }
+  }
+  return out + s.slice(i);
+}
+function TEXHpart(t) {
+  let s = t;
+  /* 根号：√ 或 √(A) → <span class="sqrt">√<span class="rd"><span class="rdc">A</span></span></span>（A 内不含嵌套括号） */
+  s = s.replace(/<span class="(?:op|rm|fn|v|u)">\u221A<\/span>/g, "\u221A");
+  s = s.replace(/\u221A<span class="(?:op|rm)">\(<\/span>([^()]{1,120}?)<span class="(?:op|rm)">\)<\/span>/g, function (m, a) {
+    return "<span class=\"sqrt\"><span class=\"rd\">\u221A</span><span class=\"rdc\">" + a + "</span></span>";
+  });
+  s = s.replace(/\u221A\(([^()]{1,120})\)/g, function (m, a) {
+    return "<span class=\"sqrt\"><span class=\"rd\">\u221A</span><span class=\"rdc\">" + a + "</span></span>";
+  });
+  s = s.replace(/\u221A([A-Za-z0-9\u0370-\u03ff]{1,6})/g, function (m, a) {
+    return "<span class=\"sqrt\"><span class=\"rd\">\u221A</span><span class=\"rdc\">" + a + "</span></span>";
+  });
+  s = s.replace(/(\d(?:\.\d+)?)e([+-])(\d+)/g, function (m, a, sg, e) {
+    return a + "\u00d710<sup>" + (sg === "-" ? "\u2212" : "") + e + "</sup>";
+  });
+  s = s.replace(/([A-Za-z\u0370-\u03ff)\]])\^\{([^{}]{1,12})\}/g, "$1<sup>$2</sup>");
+  s = s.replace(/([A-Za-z\u0370-\u03ff)\]])\^(\d+(?:\.\d+)?)/g, "$1<sup>$2</sup>");
+  s = s.replace(/([A-Za-z\u0370-\u03ff])_\{([A-Za-z0-9\u0370-\u03ff+\-]{1,8})\}/g, "<span class='m'><i>$1</i><sub>$2</sub></span>");
+  s = s.replace(/([A-Za-z\u0370-\u03ff])_([A-Za-z0-9\u0370-\u03ff]{1,6})(?![A-Za-z0-9])/g, "<span class='m'><i>$1</i><sub>$2</sub></span>");
+  if (/[\u2070-\u209C\u00B2\u00B3\u00B9]/.test(s)) {
+    let out = "", i = 0;
+    while (i < s.length) {
+      const ch = s[i];
+      if (AUTOH_SUP[ch] !== undefined || AUTOH_SUB[ch] !== undefined) {
+        const isSup = AUTOH_SUP[ch] !== undefined, tab = isSup ? AUTOH_SUP : AUTOH_SUB;
+        let j = i, buf = "";
+        while (j < s.length && (isSup ? AUTOH_SUP[s[j]] !== undefined : AUTOH_SUB[s[j]] !== undefined)) {
+          buf += tab[s[j]]; j++;
+        }
+        out += "<" + (isSup ? "sup" : "sub") + ">" + buf + "</" + (isSup ? "sup" : "sub") + ">";
+        i = j;
+      } else { out += ch; i++; }
+    }
+    s = out;
+  }
+  /* 物理量自动斜体：只作用于纯文本段（标签内的字母不动） */
+  s = s.replace(/(^|>)([^<]+)/g, function (mm, a, b) { return a + italText(b); });
+  return s.indexOf("\u221A") >= 0 ? TEXHsqrtElem(s) : s;
+}
+/* 只有真正的标签才整段跳过：正文里裸写的 '<'（如 "t₂ < 0"）必须当普通字符，
+   否则 indexOf('>') 会一路吞掉后面整段，E₂⁰ 这类记法就漏排了。 */
+function TEXH_tagEnd(h, i) {
+  if (h.charAt(i) !== "<") return -1;
+  const c = h.charAt(i + 1);
+  if (c === "!" || c === "/") { const j = h.indexOf(">", i); return (j >= 0 && j - i < 300) ? j + 1 : -1; }
+  if (!/[A-Za-z]/.test(c)) return -1;
+  let j = i + 1;
+  while (j < h.length && /[A-Za-z0-9]/.test(h.charAt(j))) j++;
+  if (j === i + 1) return -1;
+  if (h.charAt(j) === ">") return j + 1;
+  if (h.charAt(j) !== " " && h.charAt(j) !== "\n" && h.charAt(j) !== "\t") return -1;
+  const g = h.indexOf(">", j), nx = h.indexOf("<", j);
+  if (g < 0 || g - i > 300) return -1;
+  if (nx >= 0 && nx < g) return -1;
+  return g + 1;
+}
+function TEXH(h) {
+  if (typeof h !== "string" || !TEXH_NEED.test(h)) return h;
+  if (h.indexOf("\u221A") >= 0) h = h.replace(/<span class="(?:op|rm|fn|v|u)">\u221A<\/span>/g, "\u221A");
+  if (h.indexOf("<") < 0) return TEXHpart(h);
+  let out = "", i = 0, n = h.length, guard = 0;
+  while (i < n && guard++ < 40000) {
+    const e = TEXH_tagEnd(h, i);
+    if (e > 0) { out += h.slice(i, e); i = e; continue; }
+    let j = i;
+    while (j < n && TEXH_tagEnd(h, j) <= 0) j++;
+    out += TEXHpart(h.slice(i, j)); i = j;
+  }
+  const r = out + h.slice(i);
+  return r.indexOf("\u221A") >= 0 ? TEXHsqrtElem(r) : r;
+}
+(function hookHTML() {
+  if (window.__TEXH_HOOK) return; window.__TEXH_HOOK = 1;
+  const d = Object.getOwnPropertyDescriptor(Element.prototype, "innerHTML");
+  if (!d || !d.set) return;
+  Object.defineProperty(Element.prototype, "innerHTML", {
+    configurable: true, get: d.get,
+    set: function (v) { d.set.call(this, typeof v === "string" ? TEXH(v) : v); }
+  });
+  /* insertAdjacentHTML 也会被用到 */
+  const ia = Element.prototype.insertAdjacentHTML;
+  Element.prototype.insertAdjacentHTML = function (pos, v) {
+    return ia.call(this, pos, typeof v === "string" ? TEXH(v) : v);
+  };
+})();
+
+/* ---------------- 画布自动 LaTeX 排版 ----------------
+   老调用点 txt(g, "cm⁻³") / txt(g, "E_c") / txt(g, "2.5e+8") 一行都不用改，
+   只要在绘制前把字符串解析成分段零件即可。规则与网页侧一致：
+   物理量斜体、描述性下标与单位正体、幂次用真上标（不用 Unicode 伪字符）。 */
+const SUPMAP = { "⁰": "0", "¹": "1", "²": "2", "³": "3", "⁴": "4", "⁵": "5", "⁶": "6",
+  "⁷": "7", "⁸": "8", "⁹": "9", "⁺": "+", "⁻": "−", "⁼": "=", "⁽": "(", "⁾": ")", "ⁿ": "n", "ⁱ": "i" };
+const SUBMAP = { "₀": "0", "₁": "1", "₂": "2", "₃": "3", "₄": "4", "₅": "5", "₆": "6",
+  "₇": "7", "₈": "8", "₉": "9", "₊": "+", "₋": "−", "₌": "=", "₍": "(", "₎": ")",
+  "ₐ": "a", "ₑ": "e", "ₒ": "o", "ₓ": "x", "ₔ": "ə", "ₕ": "h", "ₖ": "k", "ₗ": "l",
+  "ₘ": "m", "ₙ": "n", "ₚ": "p", "ₛ": "s", "ₜ": "t", "ᵣ": "r", "ᵤ": "u", "ᵥ": "v" };
+const MATH_IDCH = /[A-Za-z\u0370-\u03ff]/;
+const NEED_MATH = /[\u2070-\u209C\u00B2\u00B3\u00B9]|_\{?[A-Za-z0-9\u0370-\u03ff]|\^\{?[\d(\-]|\d(\.\d+)?[eE][+\-]\d|(?:(?:^|[^A-Za-zͰ-Ͽ])[A-Za-zͰ-Ͽ](?![A-Za-zͰ-Ͽ]))/;
+function AUTO(s) {
+  const out = [];
+  let buf = "", mode = 0;
+  const emit = (t, kind) => {
+    if (!t) return;
+    if (kind === 1) { out.push({ s: t, sup: true }); return; }
+    if (kind === -1) { out.push({ s: t, sub: true }); return; }
+    for (const p of italParts(t)) out.push(p);
+  };
+  let i = 0, italicAll = false;
+  while (i < s.length) {
+    const ch = s[i];
+    if (SUPMAP[ch] !== undefined) { if (mode !== 1) { emit(buf, mode); buf = ""; mode = 1; } buf += SUPMAP[ch]; i++; continue; }
+    if (SUBMAP[ch] !== undefined) { if (mode !== -1) { emit(buf, mode); buf = ""; mode = -1; } buf += SUBMAP[ch]; i++; continue; }
+    if (mode) { emit(buf, mode); buf = ""; mode = 0; }
+    const rest = s.slice(i);
+    const sc = /^\d(\.\d+)?[eE][+\-]\d{1,3}/.exec(rest);       /* ASCII 伪科学计数 2.5e+8 */
+    if (sc) {
+      const parts = sc[0].split(/[eE]/);
+      emit(parts[0] + "\u00d710", 0); emit(String(+parts[1]).replace("-", "\u2212"), 1);
+      i += sc[0].length; continue;
+    }
+    if (MATH_IDCH.test(ch) && i + 1 < s.length && (s[i + 1] === "_" || s[i + 1] === "^")) {
+      const sup = s[i + 1] === "^";
+      let j = i + 2, grp = "";
+      if (s[j] === "{") { const e = s.indexOf("}", j); if (e > 0) { grp = s.slice(j + 1, e); j = e + 1; } }
+      else {
+        const RCJK = /[\u2E80-\u9FFF]/, RASC = /[A-Za-z0-9\u0370-\u03ff+\-]/;
+        if (RCJK.test(s[j])) { while (j < s.length && RCJK.test(s[j]) && j - i < 8) j++; }   /* 中文描述性下标：τ_直接、E_声子 */
+        else { while (j < s.length && RASC.test(s[j])) j++; }
+        grp = s.slice(i + 2, j);
+      }
+      if (grp) {
+        emit(ch, 0);
+        if (italicAll || /^[A-Za-z\u0370-\u03ff]$/.test(ch)) out[out.length - 1].i = true;
+        emit(sup ? grp.replace(/-/g, "\u2212") : grp, sup ? 1 : -1);
+        i = j; continue;
+      }
+    }
+    buf += ch; i++;
+  }
+  emit(buf, mode);
+  return out;
+}
+function fontInfo(font, dflt) {
+  const f = String(font || "");
+  const m = /(\d+(?:\.\d+)?)px/.exec(f);
+  return { fp: m ? parseFloat(m[1]) : (dflt || 12), bd: /bold|70\d|600/.test(f), it: /italic|oblique/.test(f) };
+}
+
+const FONT = '"Segoe UI","Microsoft YaHei",sans-serif';
+
+const FONTM = '"Cambria Math","STIX Two Math","Times New Roman",Times,serif';
+
+
+/* ---------------- 画布 LaTeX 排版层（零依赖；物理量斜体、下标/单位正体、幂次真上标） ---------------- */
+const SUBR = 0.74, SUBDY = 0.22, SUPDY = 0.40;
+function isCJKch(ch) {
+  const c = ch.codePointAt(0);
+  return (c >= 0x2E80 && c <= 0x9FFF) || (c >= 0xF900 && c <= 0xFAFF) ||
+    (c >= 0xFF00 && c <= 0xFF60) || c === 0x2014 || c === 0x2015 || c === 0x2026;
+}
+function segRuns(s) {
+  const out = []; let cur = "", curC = null;
+  for (const ch of s) {
+    const c = isCJKch(ch);
+    if (curC === null) { cur = ch; curC = c; }
+    else if (c === curC) cur += ch;
+    else { out.push({ s: cur, cjk: curC }); cur = ch; curC = c; }
+  }
+  if (cur) out.push({ s: cur, cjk: curC });
+  return out;
+}
+function pFont(q, fp, bd, cjk) {
+  const sz = fp * ((q.sub || q.sup) ? SUBR : 1);
+  return (bd ? "bold " : "") + (!cjk && q.i ? "italic " : "") + sz.toFixed(2) + "px " + (cjk ? FONT : FONTM);
+}
+/* i18n 注入点①：画布 token。带 i / sub / sup / un 标记的是物理量、下标与单位，一律不动；
+   没有这些标记的 token 才是自然语言，交给 T() —— 所以这里的判断只看标记，不看内容。 */
+const partsOf = p => p.map(q => {
+  const o = (typeof q === "string" ? { s: q } : q);
+  const natural = !(o.i || o.sub || o.sup || o.un);
+  if (LANG === "en" && natural && typeof o.s === "string" && /[\u4E00-\u9FFF]/.test(o.s)) {
+    const t = T(o.s);
+    return t === o.s ? o : Object.assign({}, o, { s: t });
+  }
+  return o;
+});
+function mMeasure(g, parts, fp, bd) {
+  let w = 0;
+  for (const q of partsOf(parts))
+    for (const sg of segRuns(q.s)) { g.font = pFont(q, fp, bd, sg.cjk); w += g.measureText(sg.s).width; }
+  return w;
+}
+function mRun(g, parts, x, y, fp, bd, align, stroke) {
+  const ps = partsOf(parts), w = mMeasure(g, ps, fp, bd);
+  let cx = align === "right" ? x - w : (align === "center" ? x - w / 2 : x);
+  g.textAlign = "left"; g.textBaseline = "middle"; g.lineJoin = "round";
+  for (const q of ps) {
+    const dy = q.sub ? fp * SUBDY : (q.sup ? -fp * SUPDY : 0);
+    for (const sg of segRuns(q.s)) {
+      g.font = pFont(q, fp, bd, sg.cjk);
+      if (stroke) { g.lineWidth = (q.sub || q.sup) ? 2.4 : 3.2; g.strokeText(sg.s, cx, y + dy); }
+      else g.fillText(sg.s, cx, y + dy);
+      cx += g.measureText(sg.s).width;
+    }
+  }
+}
+function mtxt(g, parts, x, y, col, fp, align, bd) {
+  g.fillStyle = col; mRun(g, parts, x, y, fp, bd || false, align, false);
+}
+function mtxtHalo(g, parts, x, y, col, fp, align, bd) {
+  g.strokeStyle = "rgba(255,255,255,0.94)";
+  mRun(g, parts, x, y, fp, bd || false, align, true);
+  mtxt(g, parts, x, y, col, fp, align, bd);
+}
+
+
+/* ---------------- HTML 字符串 → 画布零件（网页与画布共用同一份排版） ----------------
+   mtxt(g, TX(H_NA), x, y, col, fp) —— H_* 常量本来就在喂 innerHTML，
+   再喂给 TX() 就不会出现「网页斜体、画布正体」的两边不一致。
+   <i> 斜体、<sub> 下标、<sup> 上标；<span class="op|un|rm|sqrt|frac"> 只剥标签（保持正体）。 */
+const catA = (...a) => [].concat(...a);
+function TX(h) {
+  const t = String(h == null ? "" : h)
+    .replace(/<span\b[^>]*>/g, "").replace(/<\/span>/g, "")
+    .replace(/<i\b[^>]*>/g, "<i>").replace(/<b\b[^>]*>/g, "").replace(/<\/b>/g, "")
+    .replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&").replace(/&nbsp;/g, " ");
+  const out = [], re = /<i>([\s\S]*?)<\/i>|<sub>([\s\S]*?)<\/sub>|<sup>([\s\S]*?)<\/sup>|([^<]+)/g;
+  let m;
+  while ((m = re.exec(t))) {
+    const raw = s => s == null ? null : s.replace(/<[^>]*>/g, "");
+    if (m[1] != null) out.push({ s: raw(m[1]), i: true });
+    else if (m[2] != null) out.push({ s: raw(m[2]), sub: true });
+    else if (m[3] != null) out.push({ s: raw(m[3]), sup: true });
+    else if (m[4]) out.push({ s: m[4] });
+  }
+  return out;
+}
+function TXof(...a) { return catA(...a.map(TX)); }
+
+
+function PSci(v, n) {
+  if (!isFinite(v) || v === 0) return [{ s: "0" }];
+  const e = Math.floor(Math.log10(Math.abs(v)));
+  const m = (v / Math.pow(10, e)).toFixed(n === undefined ? 1 : n);
+  /* 1 ≦ |v| < 10 时直接写尾数，不再拖一个 ×10⁰（与 sciH 一致） */
+  if (e === 0) return [{ s: m }];
+  /* 指数负号用 U+2212 */
+  return [{ s: m + "×10" },
+          { s: String(e).replace("-", "−"), sup: true }];
+}
+
+/* ============================================================================
+   布洛赫波与能带交互教学工具
+   物理内核：
+   · 周期势   屏蔽库伦势 V(x) = -V0 · Σ_n e^{-|x-na|/λ}/√((x-na)²+ε²)，λ = 2.2a
+               （裸库伦势 1/|d| 的 Σ 对数发散，有限截断会让大 N 时画面边缘崩塌；
+                 加屏蔽因子后指数收敛，任意 N 下 V(x) 都严格以 a 为周期）
+   · 布洛赫波 调幅平面波模型 ψ_k(x) = e^{ikx}·u_k(x)，周期部分取教学简化形式
+               u₀(x) = Σ_m φ_n(x-ma)（原子轨道的无限链周期延拓，对称截断，
+               误差 ~ e^{-38}）。u₀ 为实函数、严格以 a 为周期且与 k 无关，故
+               Re ψ = u₀·cos(kx)、Im ψ = u₀·sin(kx)、|ψ|² = u₀² 严格周期且与 k 无关，
+               ψ(x+a) = e^{ika}ψ(x) 精确成立、无边界效应。
+               【教学简化·界面上已显式声明】严格的周期部分 u_k = e^{−ikx}ψ_k 是
+               H(k) = (p+ħk)²/2m + V 的本征函数 —— k 在算符里面 ⇒ u_k 必然随 k
+               连续变化、一般为复数，|ψ|² 也随之改变。此处钉死成 u₀，是为了让
+               「相位因子管相邻原胞的相位联系、周期部分管胞内的振幅与概率」
+               这一分工一目了然；代价是 (d) 层不随 k 变化、(f) 层与 k 无关，界面已显式声明。
+               工具只画第一布里渊区：k 只定义到相差一个倒格矢，区外并无新的物理态。
+   · 原子轨道 1s（偶）与 2p（奇，核处有节点），衰减长度随 V0 自洽
+   · 能带     E_n(k) = E_n⁰ − 2·s_n·|t_n|·cos(ka)，s_1 = +1、s_2 = −1：
+              宇称交替使跃迁积分反号 → 带 1 随 k 上升、带 2 随 k 下降，
+              最小能隙位于 k = π/a；|t_n| 整体钳制保证两带不交叉
+   全部为解析/半解析计算，无插值、无拟合，零第三方依赖。
+   ========================================================================== */
+
+/* ---------------- 常量与状态 ---------------- */
+const EPS = 0.9;                       /* 库伦势软化参数 Å */
+const HB2M = 3.80998212;               /* ħ²/2m，eV·Å²（自由电子抛物线参考用） */
+const HBAR_EV = 6.582e-16;             /* ħ，eV·s（定态相位因子 e^{−iEt/ħ} 的换算常数） */
+const E0 = [-6.0, -2.2];               /* 原子能级 E_n⁰（eV，示意）：1s 与 2p */
+const WB = [0.95, 0.68];               /* 跃迁积分基准 |t_n| = c·WB */
+const SGN = [+1, -1];                  /* 曲率符号：s 型带随 k 上升，p 型带随 k 下降 */
+const CMAX = (() => {                  /* 耦合上限：两带不交叉（最小隙出现在 k = π/a） */
+  return (E0[1] - E0[0]) / (2 * (WB[0] + WB[1]));
+})();
+const COL_G = "#2e9e5b", COL_R = "#d94a3d", COL_B = "#1976d2",
+      COL_O = "#ef8c1a", COL_P = "#8e5bd0", COL_GR = "#9aa5b1", COL_E = "#f5c518",
+      COL_T = "#0f9e86";                                   /* (e) 相位因子 e^{i(kx+φ)} */
+const BAND_COL = [COL_B, COL_O];
+
+const OPT = {
+  V0: 12, a: 6, N: 8, kf: 0.5, snap: false, band: 1, phi: 0,
+  playing: false
+};
+/* kf = k/(π/a) 的取值范围：本工具只演示第一布里渊区 [−1, 1]（−π/a … +π/a）。
+   第一区之外没有新的物理态（k 只定义到相差一个倒格矢），故不提供扩展区选项。 */
+const kfLo = () => -1;
+const kfHi = () => 1;
+let timePhase = 0;          /* 时间演化积累相位 ∫ω dt */
+let viewRoll = 0.3, viewYaw = 0.72;  /* 3D 视角 */
+
+const clamp = (v, a, b) => v < a ? a : (v > b ? b : v);
+const fmt = (v, d) => (isFinite(v) ? v.toFixed(d === undefined ? 2 : d) : "—");
+const $ = id => document.getElementById(id);
+
+/* ---------------- 物理内核 ---------------- */
+function coupling() { return Math.min(Math.exp(-OPT.V0 / 12) * Math.exp(-(OPT.a - 4) / 6), CMAX); }
+function tn(n) { return coupling() * WB[n - 1]; }              /* n = 1,2 */
+/* E_n(k) = E_n⁰ − 2·s_n·|t_n|·cos(ka)：s_n = +1（s 型）随 k 上升，s_n = −1（p 型）随 k 下降。
+   宇称交替 → 跃迁积分反号 → 相邻能带弯曲方向相反；最小能隙出现在布里渊区边界 k = π/a。 */
+function Eof(k, n) { return E0[n - 1] - 2 * SGN[n - 1] * tn(n) * Math.cos(k * OPT.a); }
+function bandwidth(n) { return 4 * tn(n); }
+function gapNow() {                    /* 带 1 → 带 2 的最小能隙（在 k = π/a） */
+  const g = (E0[1] - E0[0]) - 2 * (tn(1) + tn(2));
+  return Math.max(0, g);
+}
+/* Born–von Karman 边条：有限晶体 ψ(x+Na)=ψ(x) ⇒ e^{ikNa}=1 ⇒ k = 2πm/(Na)。
+   k 取遍整个第一布里渊区 (−π/a, +π/a]：m = −N/2+1 … N/2 共 N 个态（两端 ±π/a 简并）。
+   k 默认连续可调（手感顺滑）；勾选"吸附"后强制取最近的允许值 m。
+   kf ∈ [−1, 1] 线性映射到 k = kf·π/a；负 k 表示向 −x 方向传播的布洛赫波（螺旋线反向缠绕）。 */
+function kOf() { return OPT.kf * Math.PI / OPT.a; }
+/* 倒格矢折叠：k 只定义到相差一个倒格矢（e^{i(k+G)a} = e^{ika}·e^{i2π} = e^{ika}），
+   第一区之外并不存在新的物理态。因此本工具只画第一布里渊区内的 N 个允许态，
+   不再提供「超出第一布里渊区」选项——避免同一个物理态被画成两个不同的 ψ。 */
+function kMaxIdx() { return OPT.N / 2; }                         /* |m| 的上限，m ∈ [−N/2, N/2] */
+function mOf() { return Math.round(OPT.kf * kMaxIdx()); }        /* 最近的允许态序号（可为负） */
+function kOfM(m) { return 2 * Math.PI * m / (OPT.N * OPT.a); }   /* 第 m 个允许波矢 */
+/* 把 k 吸附到最近的允许值：kf = 2m/N */
+function snapK() {
+  /* 允许值集合取标准半开区间 (−π/a, +π/a]：m = −N/2+1 … N/2，共 N 个态 */
+  const m = clamp(mOf(), -kMaxIdx() + 1, kMaxIdx());
+  OPT.kf = clamp(2 * m / OPT.N, kfLo(), kfHi());
+  return m;
+}
+function isFree() { return OPT.V0 <= 0.35; }
+/* 势场状态命名：两端都只是"趋近"极限——V₀ 有限 ⇒ |t| ≠ 0 带宽非零；
+   V₀ → 0 ⇒ uₖ 平坦但原子能级间距 E₂⁰−E₁⁰ 仍在，能隙并不消失。 */
+function stateTxt() {
+  if (OPT.V0 >= 20) return "近孤立原子（V₀ = " + fmt(OPT.V0, 1) + " eV）";
+  if (OPT.V0 <= 1) return "近自由电子（V₀ = " + fmt(OPT.V0, 1) + " eV）";
+  return "周期势（V₀ = " + fmt(OPT.V0, 1) + " eV）";
+}
+/* 势场的实际峰谷起伏：V₀ 只是解析式前面的振幅系数，不是阱深。
+   V(x) 由一个周期内 min↔max 的实际差值才是"调制深度"，它随 V₀ 线性缩放，但
+   比例取决于软化参数 ε 与屏蔽长度 λ（默认 a = 6 Å：max−min ≈ 0.741 V₀，
+   V(0) ≈ −1.44 V₀、V(a/2) ≈ −0.70 V₀）。读数面板把标称 V₀ 与实测 ΔV 并列给出。 */
+let SWING_CACHE = { key: "", mn: 0, mx: 0 };
+function potSwing() {
+  const key = OPT.a.toFixed(4);
+  if (SWING_CACHE.key === key) return SWING_CACHE;
+  const NS = 2001, a = OPT.a, keep = OPT.V0;
+  OPT.V0 = 1;                                    /* 归一化：ΔV/V₀ 与 V₀ 无关 */
+  let mn = Infinity, mx = -Infinity;
+  for (let i = 0; i < NS; i++) {
+    const v = potV(-a / 2 + a * i / (NS - 1));
+    if (v < mn) mn = v;
+    if (v > mx) mx = v;
+  }
+  OPT.V0 = keep;
+  SWING_CACHE = { key: key, mn: mn, mx: mx };
+  return SWING_CACHE;
+}
+function potDeltaV() { const s = potSwing(); return (s.mx - s.mn) * OPT.V0; }   /* 峰谷差（eV，正值） */
+/* 定态的时间因子是 e^{−iEt/ħ} ⇒ 真实的相位演化角频率 ω = |E|/ħ（~10¹⁵ rad/s）。
+   动画另按示意速率放慢（见 omega()），两者不可混为一谈。 */
+function omegaTrue() { return Math.abs(Eof(kOf(), OPT.band)) / HBAR_EV; }
+function omega() { return 0.30 * Math.abs(Eof(kOf(), OPT.band)); } /* 动画演化速率（示意标度，非物理值） */
+/* 科学计数法（读数面板用，负指数用 U+2212） */
+function sciHtml(v, n) {
+  if (!isFinite(v) || v === 0) return "0";
+  const e = Math.floor(Math.log10(Math.abs(v)));
+  const m = (v / Math.pow(10, e)).toFixed(n === undefined ? 2 : n);
+  return m + "\u00d710<sup>" + (e < 0 ? "\u2212" + Math.abs(e) : String(e)) + "</sup>";
+}
+
+/* 原子轨道（未归一化）：n=1 为 1s（偶函数），n=2 为 2p（奇函数，核处有节点）。
+   宇称不同 → 相邻原胞间的跃迁积分反号 → 两条能带弯曲方向相反。 */
+function orbVal(n, x, a0) {
+  const s = Math.abs(x) / a0;
+  if (n === 1) return Math.exp(-s);                    /* 1s：∝ e^{-|x|/a₀} */
+  return (x / a0) * Math.exp(-0.5 * s);                /* 2p：∝ x·e^{-|x|/2a₀} */
+}
+/* 轨道衰减长度随阱深自洽：V0 大 → 局域；V0 → 0 → 弥散（趋于平面波） */
+function a0of() { return 1.3 + 3.7 * Math.exp(-OPT.V0 / 7); }
+
+let ORB_CACHE = { key: "", norm: [1, 1] };
+function orbNorm() {                     /* 归一化 ∫φ²dx = 1（各能带轨道） */
+  const a0 = a0of(), key = a0.toPrecision(6);
+  if (ORB_CACHE.key === key) return ORB_CACHE.norm;
+  const out = [];
+  for (let n = 1; n <= 2; n++) {
+    const R = 40 * a0, M = 2401, dx = 2 * R / (M - 1);
+    let s = 0;
+    for (let i = 0; i < M; i++) {
+      const x = -R + i * dx, v = orbVal(n, x, a0);
+      s += v * v * (i === 0 || i === M - 1 ? 0.5 : 1);
+    }
+    out[n] = 1 / Math.sqrt(s * dx);
+  }
+  ORB_CACHE = { key, norm: out };
+  return out;
+}
+
+/* 教学简化的周期部分 u₀(x) = Σ_m φ_n(x−ma)：原子轨道的无限链周期延拓（对称截断）。
+   截断半径 M·a ≥ 38·衰减长度 → 误差 ~ e^{-38}；u₀ 为实函数、严格以 a 为周期，
+   与 k 无关（等价于 k = 0 的紧束缚和，故调用处一律传 k = 0）。
+   严格定义应为 u_k(x) = e^{−ikx}ψ_k(x) = Σ_m e^{−ik(x−ma)}φ_n(x−ma)
+   —— 即把下面的相位 ph = k·m·a 换成 ph = −k·(x − m·a) 即得；它随 k 连续变化且一般为
+   复数，|ψ|² 也随之改变。本工具刻意不这么做（见文件头「教学简化」说明）。 */
+function psiRaw(x, k, n, a0) {
+  const r = n * a0;                              /* 该能带轨道衰减长度 */
+  const M = Math.min(140, Math.max(8, Math.ceil(38 * r / OPT.a)));
+  const j0 = Math.round(x / OPT.a);
+  let re = 0, im = 0;
+  for (let m = j0 - M; m <= j0 + M; m++) {
+    const v = orbNorm()[n] * orbVal(n, x - m * OPT.a, a0);
+    const ph = k * m * OPT.a;
+    re += Math.cos(ph) * v; im += Math.sin(ph) * v;
+  }
+  return { re, im };
+}
+/* 归一化常数（在 u₀ 简化下与 k 无关）：每原胞 ∫u₀²dx = ∫|ψ|²dx = 1。
+   严格做法应对每个 k 重算 N(k) = 1/√(∫|ψ_k|²dx)，该积分随 k 变化。 */
+function psiNorm(k, n, a0) {
+  const M = 481, dx = OPT.a / (M - 1);
+  let s = 0;
+  for (let i = 0; i < M; i++) {
+    const v = psiRaw(i * dx, k, n, a0).re;
+    s += v * v * (i === 0 || i === M - 1 ? 0.5 : 1);
+  }
+  return 1 / Math.sqrt(s * dx);
+}
+
+/* 周期势：屏蔽库伦势（Yukawa 型）——比裸库伦势更接近晶体中的真实离子实势场
+   V(x) = -V0 · Σ_n exp(-|x-na|/λ) / √((x-na)²+ε²)，  λ = SCREEN·a（屏蔽长度）
+   裸库伦势 ~1/|d| 的级数对数发散（无限晶体里无定义，只能人为截断，N 大时边缘崩塌）；
+   加上屏蔽因子后指数收敛，POT_M = ±26a 已远超 ε 精度，任意 N 下 V(x) 都严格以 a 为周期。 */
+const SCREEN = 2.2;                    /* 屏蔽长度 λ = SCREEN·a */
+const POT_M = 26;                      /* 求和半径（指数收敛，无需随 N 调整） */
+function potV(x) {
+  const lam = SCREEN * OPT.a;
+  let s = 0;
+  for (let n = -POT_M; n <= POT_M; n++) {
+    const d = Math.abs(x - n * OPT.a);
+    s += Math.exp(-d / lam) / Math.sqrt(d * d + EPS * EPS);
+  }
+  return -OPT.V0 * s;
+}
+
+/* ---- 采样数据（六层面板与螺旋线共享） ---- */
+const DATA = { xs: [], re: [], im: [], ur: [], ui: [], pwr: [], pwi: [], dens: [], V: [], x0: 0, x1: 0 };
+/* V(x) 只依赖 (V0, a, N)，缓存以免每次重绘都做 POT_M 重求和 */
+let POT_CACHE = { key: "", V: null };
+function potArr(xs) {
+  const key = OPT.V0.toFixed(4) + "|" + OPT.a.toFixed(4) + "|" + OPT.N;
+  if (POT_CACHE.key === key && POT_CACHE.V && POT_CACHE.V.length === xs.length) return POT_CACHE.V;
+  const V = xs.map(potV);
+  POT_CACHE = { key, V };
+  return V;
+}
+function computeData() {
+  /* 显示窗口 = 原胞数 N（即画 N 个原胞），采样密度随 N 自适应以保证曲线平滑 */
+  const x0 = -OPT.N * OPT.a / 2, x1 = -x0;
+  const NS = Math.min(1600, Math.max(560, OPT.N * 50)), k = kOf(), n = OPT.band, a0 = a0of();
+  /* 调幅平面波模型：ψ_k(x) = e^{ikx}·u₀(x)，周期部分取教学简化形式 u₀（实、与 k 无关），
+     于是 Re ψ = u₀·cos(kx)、Im ψ = u₀·sin(kx)，|ψ|² = u₀² 严格以 a 为周期且与 k 无关，
+     ψ(x+a) = e^{ika}ψ(x) 精确成立。k 被限制在第一布里渊区内 ⇒ 不存在
+     「同一个物理态画出两种 ψ」的问题。（u₀ 为何是简化，见文件头与 panel (d) 的画内注记。） */
+  const CN = isFree() ? 1 / Math.sqrt(OPT.a) : psiNorm(0, n, a0);
+  const xs = [], re = [], im = [], ur = [], ui = [], dens = [], pwr = [], pwi = [];
+  const pe = phaseEff();                        /* 相位因子同样携带全局相位 φ+ωt */
+  for (let i = 0; i <= NS; i++) {
+    const x = x0 + (x1 - x0) * i / NS;
+    let pr, pi, qr, qi;
+    if (isFree()) {                       /* 近自由电子：u → 常数，ψ → 纯平面波（极限画法） */
+      pr = Math.cos(k * x) * CN; pi = Math.sin(k * x) * CN;
+      qr = CN; qi = 0;
+    } else {
+      const U = psiRaw(x, 0, n, a0).re * CN;   /* u₀：原胞内的凹凸 */
+      pr = U * Math.cos(k * x); pi = U * Math.sin(k * x);
+      qr = U; qi = 0;
+    }
+    xs.push(x); re.push(pr); im.push(pi); ur.push(qr); ui.push(qi);
+    dens.push(pr * pr + pi * pi);
+    pwr.push(Math.cos(k * x + pe)); pwi.push(Math.sin(k * x + pe));  /* (e) e^{i(kx+φ)} */
+  }
+  DATA.xs = xs; DATA.re = re; DATA.im = im; DATA.ur = ur; DATA.ui = ui;
+  DATA.pwr = pwr; DATA.pwi = pwi; DATA.dens = dens;
+  DATA.V = potArr(xs); DATA.x0 = x0; DATA.x1 = x1;
+}
+function phaseEff() { return OPT.phi + timePhase; }
+/* 施加全局相位 e^{iφ} 后的显示用实部/虚部 */
+function dispPsi(i) {
+  const b = phaseEff(), c = Math.cos(b), s = Math.sin(b);
+  return [DATA.re[i] * c - DATA.im[i] * s, DATA.re[i] * s + DATA.im[i] * c];
+}
+
+/* ---------------- 画布基础 ---------------- */
+const SV = { g: null, W: 0, H: 0 }, FV = { g: null, W: 0, H: 0 }, BV = { g: null, W: 0, H: 0 };
+function fitCanvas(c, id, hFix) {
+  const el = $(id), w = el.clientWidth || 600, h = hFix || +el.dataset.h;
+  const dpr = window.devicePixelRatio || 1;
+  el.width = Math.round(w * dpr); el.height = Math.round(h * dpr);
+  el.style.height = h + "px";
+  const g = el.getContext("2d");
+  g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  c.g = g; c.W = w; c.H = h; c.el = el;
+}
+function fitAll() { fitCanvas(SV, "spiral"); fitCanvas(FV, "five"); fitCanvas(BV, "band"); }
+function txt(g, s, x, y, col, font, align, base) {
+  g.fillStyle = col; g.font = font || "12px 'Segoe UI','Microsoft YaHei',sans-serif";
+  g.textAlign = align || "left"; g.textBaseline = base || "middle";
+  if (typeof s === "string" && NEED_MATH.test(s)) {
+    const fi = fontInfo(font, 12);
+    mRun(g, AUTO(s), x, y, fi.fp, fi.bd, align || "left", false);
+    return;
+  }
+  g.fillText(s, x, y);
+}
+/* 带白色描边光晕的标注：用于画在曲线内部/上方的说明文字，保证压线时仍清晰可读 */
+function txtHalo(g, s, x, y, col, font, align, base) {
+  g.font = font || "12px 'Segoe UI','Microsoft YaHei',sans-serif";
+  g.textAlign = align || "left"; g.textBaseline = base || "middle";
+  g.strokeStyle = "rgba(255,255,255,.92)"; g.lineWidth = 3.5; g.lineJoin = "round";
+  if (typeof s === "string" && NEED_MATH.test(s)) {
+    const fi = fontInfo(font, 12), parts = AUTO(s);
+    g.lineJoin = "round";
+    mRun(g, parts, x, y, fi.fp, fi.bd, align || "left", true);
+    g.fillStyle = col;
+    mRun(g, parts, x, y, fi.fp, fi.bd, align || "left", false);
+    return;
+  }
+  g.strokeText(s, x, y);
+  txt(g, s, x, y, col, font, align, base);
+}
+/* 高亮标签：浅色圆角底 + 同色描边 + 加粗字 —— 用于会随预设/滑块变化的读数，提醒注意这个值在动 */
+function pill(g, s, x, y, fill, edge, col, font) {
+  g.font = font || "bold 11px 'Segoe UI','Microsoft YaHei',sans-serif";
+  const w = g.measureText(s).width + 12, h = 17, x0 = x - 6, y0 = y - 8.5, r = 4.5;
+  g.beginPath();
+  g.moveTo(x0 + r, y0);
+  g.arcTo(x0 + w, y0, x0 + w, y0 + h, r);
+  g.arcTo(x0 + w, y0 + h, x0, y0 + h, r);
+  g.arcTo(x0, y0 + h, x0, y0, r);
+  g.arcTo(x0, y0, x0 + w, y0, r);
+  g.closePath();
+  g.fillStyle = fill; g.fill();
+  g.strokeStyle = edge; g.lineWidth = 1.2; g.stroke();
+  txt(g, s, x, y, col, font);
+}
+function niceTicks(lo, hi, want) {
+  const span = hi - lo, raw = span / want, mag = Math.pow(10, Math.floor(Math.log10(raw)));
+  const nm = raw / mag;
+  const step = (nm < 1.5 ? 1 : nm < 3 ? 2 : nm < 7 ? 5 : 10) * mag;
+  const out = [];
+  for (let v = Math.ceil(lo / step) * step; v <= hi + 1e-9; v += step) out.push(v);
+  return out;
+}
+function lerpCol(c1, c2, t) {  /* c = [r,g,b] */
+  const r = Math.round(c1[0] + (c2[0] - c1[0]) * t),
+        g = Math.round(c1[1] + (c2[1] - c1[1]) * t),
+        b = Math.round(c1[2] + (c2[2] - c1[2]) * t);
+  return "rgb(" + r + "," + g + "," + b + ")";
+}
+function cellCenters() {
+  const out = [];
+  for (let m = Math.ceil(DATA.x0 / OPT.a); m * OPT.a <= DATA.x1 + 1e-9; m++) out.push(m * OPT.a);
+  return out;
+}
+
+/* ---------------- 螺旋线视图 ---------------- */
+const SPI = {};   /* 投影参数缓存 */
+function projPt(x, y, z) {
+  const cb = Math.cos(viewRoll), sb = Math.sin(viewRoll);
+  const y1 = y * cb - z * sb, z1 = y * sb + z * cb;      /* 视角滚动（绕 x 轴） */
+  const cg = Math.cos(viewYaw), sg = Math.sin(viewYaw);
+  const x2 = x * cg + z1 * sg, z2 = -x * sg + z1 * cg;   /* 环绕（绕竖直轴） */
+  return { sx: SPI.cx + x2 * SPI.Sx, sy: SPI.cy - y1 * SPI.Syz, d: z2 };
+}
+function drawSpiral() {
+  const g = SV.g, W = SV.W, H = SV.H;
+  g.clearRect(0, 0, W, H);
+  /* 纵/深比例基准固定取半径包络 |ψ| = |u| 的峰值（与相位无关），
+     否则相位旋转时整条螺旋会随 max(|Re|,|Im|) 一起"呼吸"，看不出半径守恒。 */
+  let amp = 0;
+  for (let i = 0; i < DATA.dens.length; i++) amp = Math.max(amp, Math.sqrt(DATA.dens[i]));
+  amp = Math.max(amp, 1e-6);
+  SPI.cx = W * 0.5; SPI.cy = H * 0.5;
+  SPI.Sx = (W * 0.82) / (DATA.x1 - DATA.x0);
+  SPI.Syz = (H * 0.36) / amp;
+  const X = x => SPI.cx + (x - (DATA.x0 + DATA.x1) / 2) * SPI.Sx;
+
+  /* 背景平面提示（浅色格） */
+  g.strokeStyle = "#eef2f7"; g.lineWidth = 1;
+  g.strokeRect(8, 8, W - 16, H - 16);
+
+  /* x 轴（螺旋轴） */
+  const a0 = projPt(DATA.x0, 0, 0), a1 = projPt(DATA.x1, 0, 0);
+  g.strokeStyle = "#b6c2cf"; g.lineWidth = 1.4;
+  g.beginPath(); g.moveTo(a0.sx, a0.sy); g.lineTo(a1.sx, a1.sy); g.stroke();
+  /* 阱中心刻点（呼应参考图顶排圆点） */
+  for (const xc of cellCenters()) {
+    const p = projPt(xc, 0, 0);
+    g.fillStyle = "#8b97a6";
+    g.beginPath(); g.arc(p.sx, p.sy, 2.2, 0, 6.2832); g.fill();
+  }
+
+  /* Re / Im 轴小箭头 */
+  const axA = projPt(DATA.x0 + 0.3, 0, 0);
+  const axRe = projPt(DATA.x0 + 0.3, amp * 1.06, 0);
+  const axIm = projPt(DATA.x0 + 0.3, 0, amp * 1.06);
+  g.lineWidth = 1.4;
+  g.strokeStyle = COL_R; g.beginPath(); g.moveTo(axA.sx, axA.sy); g.lineTo(axRe.sx, axRe.sy); g.stroke();
+  g.strokeStyle = COL_B; g.beginPath(); g.moveTo(axA.sx, axA.sy); g.lineTo(axIm.sx, axIm.sy); g.stroke();
+  txt(g, "Re", axRe.sx + 6, axRe.sy, COL_R, "12px 'Segoe UI',sans-serif");
+  txt(g, "Im", axIm.sx + 6, axIm.sy, COL_B, "12px 'Segoe UI',sans-serif");
+
+  /* 投影虚线（固定生效） */
+  {
+    g.setLineDash([3, 4]); g.lineWidth = 1;
+    g.strokeStyle = "rgba(217,74,61,.45)";
+    g.beginPath();
+    for (let i = 0; i < DATA.xs.length; i++) {
+      const p = dispPsi(i), q = projPt(DATA.xs[i], p[0], 0);
+      i ? g.lineTo(q.sx, q.sy) : g.moveTo(q.sx, q.sy);
+    }
+    g.stroke();
+    g.strokeStyle = "rgba(25,118,210,.45)";
+    g.beginPath();
+    for (let i = 0; i < DATA.xs.length; i++) {
+      const p = dispPsi(i), q = projPt(DATA.xs[i], 0, p[1]);
+      i ? g.lineTo(q.sx, q.sy) : g.moveTo(q.sx, q.sy);
+    }
+    g.stroke();
+    g.setLineDash([]);
+  }
+
+  /* 螺旋线本体（沿 x 颜色渐变 + 深度明暗） */
+  g.lineWidth = 2.2; g.lineJoin = "round";
+  const c1 = [25, 118, 210], c2 = [217, 74, 61], NS = DATA.xs.length - 1;
+  const zs = new Array(NS + 1);
+  let zMin = 1e9, zMax = -1e9;
+  for (let i = 0; i <= NS; i++) {
+    const p = dispPsi(i), q = projPt(DATA.xs[i], p[0], p[1]);
+    zs[i] = q.d; zMin = Math.min(zMin, q.d); zMax = Math.max(zMax, q.d);
+  }
+  const zSpan = Math.max(zMax - zMin, 1e-9);
+  for (let i = 0; i < NS; i++) {
+    const p1 = dispPsi(i), p2 = dispPsi(i + 1);
+    const q1 = projPt(DATA.xs[i], p1[0], p1[1]), q2 = projPt(DATA.xs[i + 1], p2[0], p2[1]);
+    g.globalAlpha = 0.5 + 0.5 * ((zs[i] + zs[i + 1]) / 2 - zMin) / zSpan;
+    g.strokeStyle = lerpCol(c1, c2, i / NS);
+    g.beginPath(); g.moveTo(q1.sx, q1.sy); g.lineTo(q2.sx, q2.sy); g.stroke();
+  }
+  g.globalAlpha = 1;
+
+  /* 相量（定态演化）：x₀ 处的旋转矢量与半径圆（固定生效） */
+  {
+    const x0c = (DATA.x0 + DATA.x1) / 2;
+    const idx = Math.round((x0c - DATA.x0) / (DATA.x1 - DATA.x0) * NS);
+    const p = dispPsi(idx), rad = Math.hypot(p[0], p[1]);
+    const tip = projPt(x0c, p[0], p[1]), base = projPt(x0c, 0, 0);
+    /* 半径圆：模长守恒的可视证据 */
+    g.strokeStyle = "rgba(245,197,24,.5)"; g.lineWidth = 1; g.setLineDash([3, 3]);
+    g.beginPath();
+    for (let j = 0; j <= 48; j++) {
+      const th = j / 48 * 6.2832, q = projPt(x0c, rad * Math.cos(th), rad * Math.sin(th));
+      j ? g.lineTo(q.sx, q.sy) : g.moveTo(q.sx, q.sy);
+    }
+    g.stroke(); g.setLineDash([]);
+    g.strokeStyle = COL_E; g.lineWidth = 2.6;
+    g.beginPath(); g.moveTo(base.sx, base.sy); g.lineTo(tip.sx, tip.sy); g.stroke();
+    g.fillStyle = COL_E;
+    g.beginPath(); g.arc(tip.sx, tip.sy, 4, 0, 6.2832); g.fill();
+    g.strokeStyle = "rgba(245,197,24,.65)"; g.lineWidth = 1; g.setLineDash([2, 3]);
+    g.beginPath(); g.moveTo(tip.sx, tip.sy);
+    const pr1 = projPt(x0c, p[0], 0), pr2 = projPt(x0c, 0, p[1]);
+    g.lineTo(pr1.sx, pr1.sy); g.moveTo(tip.sx, tip.sy); g.lineTo(pr2.sx, pr2.sy); g.stroke();
+    g.setLineDash([]);
+    txtHalo(g, "|ψ(x₀)| 不变", base.sx + 8, base.sy - 12, "#b3901a", "11px 'Segoe UI',sans-serif");
+  }
+
+  txt(g, "拖拽改变视角 · 滚动 = 相位旋转（半径不变）", 14, H - 12, "#8b97a6", "11px 'Segoe UI',sans-serif");
+  if (isFree()) txt(g, "近自由电子：uₖ ≈ 常数，半径包络变平（趋近纯平面波）", W - 14, H - 12, COL_O, "11px 'Segoe UI',sans-serif", "right");
+}
+
+/* ---------------- 六层面板 ---------------- */
+const LAYERS = ["V", "re", "im", "u", "pw", "dens"];   /* 自上而下的堆叠顺序 */
+const FIVE_PH = 86, FIVE_T = 8, FIVE_B = 20, FIVE_GAP = 9;
+/* 六层固定全显，高度恒定（不再提供层开关） */
+function fiveHeight() {
+  const nv = LAYERS.length;
+  return FIVE_T + FIVE_B + nv * FIVE_PH + (nv - 1) * FIVE_GAP;
+}
+function drawFive() {
+  const g = FV.g, W = FV.W;
+  const wantH = fiveHeight();
+  if (FV.H !== wantH) { fitCanvas(FV, "five", wantH); }
+  const H = FV.H;
+  g.clearRect(0, 0, W, H);
+  /* 左边距 L 需容纳最宽的层标签 "(e) e^i(kx+φ)"（实测 ≈73px @12.5px）：
+     右对齐锚点 L-8，左端 = L-8-73 ≥ 0 ⇒ L ≥ 81，取 100 留余量 */
+  const L = 100, Rm = 28, T = FIVE_T, B = FIVE_B, gap = FIVE_GAP;
+  const nv = LAYERS.length;
+  const pw = W - L - Rm;
+  const ph = (H - T - B - (nv - 1) * gap) / nv;
+  const X = x => L + (x - DATA.x0) / (DATA.x1 - DATA.x0) * pw;
+  const NS = DATA.xs.length - 1;
+  FV.map = { L, pw };
+
+  /* 各面板 y 映射 */
+  let vmin = 1e9, uamp = 1e-9, dmax = 1e-9;
+  for (let i = 0; i <= NS; i++) {
+    vmin = Math.min(vmin, DATA.V[i]);
+    uamp = Math.max(uamp, Math.abs(DATA.ur[i]), Math.abs(DATA.ui[i]));
+    dmax = Math.max(dmax, DATA.dens[i]);
+  }
+  const yaLo = vmin * 1.16, yaHi = vmin * 0.14;      /* (a) 势 */
+  /* (b)(c) 的纵轴基准固定取 |u| 的峰值（Re = u·cos、Im = u·sin ⇒ 恒有 |Re|,|Im| ≤ |u|），
+     不能用每帧的 max(|Re|,|Im|) 自适应——否则相位一转，坐标轴跟着呼吸，
+     k = 0 时更会把 |cos ωt|、|sin ωt| 的此消彼长放大成"忽停忽动"的假象。 */
+  const yb = uamp * 1.14;                             /* (b)(c) ±uamp（与 (d) 同基准） */
+  const yd = uamp * 1.14;                             /* (d) ±uamp */
+  const ye = dmax * 1.18;                             /* (f) 0..dmax */
+  /* 六层自上而下连续堆叠，槽位即层序 */
+  const slotOf = {};
+  const slotCnt = LAYERS.length;
+  LAYERS.forEach((k, i) => { slotOf[k] = i; });
+  const panelY = s => T + s * (ph + gap);
+  const Ya = v => panelY(slotOf.V) + ph * (yaHi - v) / (yaHi - yaLo);
+  const Yb = v => panelY(slotOf.re) + ph / 2 - v / yb * (ph / 2);
+  const Yc = v => panelY(slotOf.im) + ph / 2 - v / yb * (ph / 2);
+  const Yd = v => panelY(slotOf.u) + ph / 2 - v / yd * (ph / 2);
+  const Yp = v => panelY(slotOf.pw) + ph / 2 - v / 1.12 * (ph / 2);   /* (e) 恒幅 ±1 */
+  const Ye = v => panelY(slotOf.dens) + ph - v / ye * ph;
+  const yBot = () => T + slotCnt * ph + (slotCnt - 1) * gap;
+
+  /* 阱中心竖虚线（贯穿各层） */
+  g.setLineDash([2, 5]); g.lineWidth = 1; g.strokeStyle = "rgba(154,165,177,.4)";
+  for (const xc of cellCenters()) {
+    g.beginPath(); g.moveTo(X(xc), T); g.lineTo(X(xc), yBot()); g.stroke();
+  }
+  g.setLineDash([]);
+
+  const panels = [
+    { key: "V",    col: COL_G, tag: "(a) V(x)" },
+    { key: "re",   col: COL_R, tag: "(b) Re ψ" },
+    { key: "im",   col: COL_B, tag: "(c) Im ψ" },
+    { key: "u",    col: COL_O, tag: "(d) uₖ(x)" },
+    { key: "pw",   col: COL_T, tag: "(e) e^i(kx+φ)" },
+    { key: "dens", col: COL_P, tag: "(f) |ψ|²" }
+  ];
+  panels.forEach(p => {
+    const y0 = panelY(slotOf[p.key]);
+    g.strokeStyle = "#e3e9f0"; g.lineWidth = 1;
+    g.strokeRect(L, y0, pw, ph);
+    txt(g, p.tag, L - 8, y0 + ph / 2, p.col, "12.5px 'Segoe UI','Microsoft YaHei',sans-serif", "right");
+  });
+
+  /* (a) 周期势：填充 + 曲线 + 阱心圆点 */
+  g.save(); g.beginPath(); g.rect(L, panelY(slotOf.V), pw, ph); g.clip();
+  g.fillStyle = "rgba(46,158,91,.10)";
+  g.beginPath(); g.moveTo(X(DATA.x0), panelY(slotOf.V) + ph);
+  for (let i = 0; i <= NS; i++) g.lineTo(X(DATA.xs[i]), Ya(DATA.V[i]));
+  g.lineTo(X(DATA.x1), panelY(slotOf.V) + ph); g.closePath(); g.fill();
+  g.strokeStyle = COL_G; g.lineWidth = 1.8;
+  g.beginPath();
+  for (let i = 0; i <= NS; i++) { const q = [X(DATA.xs[i]), Ya(DATA.V[i])]; i ? g.lineTo(q[0], q[1]) : g.moveTo(q[0], q[1]); }
+  g.stroke();
+  g.fillStyle = COL_G;
+  for (const xc of cellCenters()) {
+    g.beginPath(); g.arc(X(xc), Ya(potV(xc)) - 5, 2.6, 0, 6.2832); g.fill();
+  }
+  g.restore();
+  /* V₀ 随三档预设（30 / 12 / 0.3 eV）跳变 ⇒ 做成高亮胶囊，避免被当成固定标注 */
+  pill(g, "V₀ = " + fmt(OPT.V0, 1) + " eV", L + 13, panelY(slotOf.V) + 11,
+    "rgba(46,158,91,.15)", COL_G, "#1b7a44", "bold 11px 'Segoe UI','Microsoft YaHei',sans-serif");
+  /* (b) 实部 */
+  g.strokeStyle = COL_R; g.lineWidth = 2; g.setLineDash([]);
+  g.beginPath();
+  for (let i = 0; i <= NS; i++) { const p = dispPsi(i), q = [X(DATA.xs[i]), Yb(p[0])]; i ? g.lineTo(q[0], q[1]) : g.moveTo(q[0], q[1]); }
+  g.stroke();
+  /* (c) 虚部 */
+  g.strokeStyle = COL_B; g.lineWidth = 2; g.setLineDash([6, 4]);
+  g.beginPath();
+  for (let i = 0; i <= NS; i++) { const p = dispPsi(i), q = [X(DATA.xs[i]), Yc(p[1])]; i ? g.lineTo(q[0], q[1]) : g.moveTo(q[0], q[1]); }
+  g.stroke(); g.setLineDash([]);
+  /* (d) 周期函数 u_k */
+  g.strokeStyle = COL_O; g.lineWidth = 2; g.setLineDash([2, 3]);
+  g.beginPath();
+  for (let i = 0; i <= NS; i++) { const q = [X(DATA.xs[i]), Yd(DATA.ur[i])]; i ? g.lineTo(q[0], q[1]) : g.moveTo(q[0], q[1]); }
+  g.stroke(); g.setLineDash([]);
+  /* (d) 层 u 恒为实函数（周期部分取教学简化形式），不再有复数分支 */
+  /* 教学简化声明：本工具的周期部分固定取 k = 0 的形式 u₀，故在第一区内扫 k 时 (d) 不动。
+     严格变分解里 u_k 是 H(k) 的本征函数、随 k 连续变化且一般为复数，|ψ|² 也随之改变；
+     此处为突出「相位 vs 模长」这一分工而作此简化，必须在画面上写明，避免学生误以为 u_k 与 k 无关。
+     它与右侧的「周期 = a」处在同一行 ⇒ 先量宽再决定用长句、短句还是省略，窄窗口下绝不压字。 */
+  const FS = "10.5px 'Segoe UI','Microsoft YaHei',sans-serif";
+  const noteU = !isFree() ? "周期 = a（与 V 同框）" : "uₖ ≈ 常数（近自由电子）";
+  g.font = "11px 'Segoe UI',sans-serif";
+  const wNote = g.measureText(noteU).width;
+  const longU = "教学简化：u 固定取 k = 0 的形式（严格地 uₖ 随 k 连续变化）";
+  const shrtU = "教学简化：u 取 k = 0 的形式";
+  g.font = FS;
+  let noteL = 12 + g.measureText(longU).width + 14 + wNote <= pw ? longU
+    : (12 + g.measureText(shrtU).width + 14 + wNote <= pw ? shrtU : "");
+  if (noteL) txtHalo(g, noteL, L + 6, panelY(slotOf.u) + 9, "#8a94a6", FS, "left");
+  txtHalo(g, noteU, L + pw - 6, panelY(slotOf.u) + 9, "#b06a12", "11px 'Segoe UI',sans-serif", "right");
+  /* (e) 相位因子 e^{i(kx+φ)}：恒幅 ±1，实线 cos + 虚线 sin */
+  const y0p = panelY(slotOf.pw);
+  g.save(); g.beginPath(); g.rect(L, y0p, pw, ph); g.clip();
+  g.strokeStyle = "rgba(15,158,134,.28)"; g.lineWidth = 1; g.setLineDash([2, 3]);
+  for (const v of [1, -1]) { g.beginPath(); g.moveTo(L, Yp(v)); g.lineTo(L + pw, Yp(v)); g.stroke(); }
+  g.setLineDash([]);
+  g.strokeStyle = COL_T; g.lineWidth = 1.7;
+  g.beginPath();
+  for (let i = 0; i <= NS; i++) { const q = [X(DATA.xs[i]), Yp(DATA.pwr[i])]; i ? g.lineTo(q[0], q[1]) : g.moveTo(q[0], q[1]); }
+  g.stroke();
+  g.strokeStyle = COL_T; g.globalAlpha = 0.75; g.lineWidth = 1.5; g.setLineDash([5, 4]);
+  g.beginPath();
+  for (let i = 0; i <= NS; i++) { const q = [X(DATA.xs[i]), Yp(DATA.pwi[i])]; i ? g.lineTo(q[0], q[1]) : g.moveTo(q[0], q[1]); }
+  g.stroke(); g.setLineDash([]); g.globalAlpha = 1;
+  g.restore();
+  txtHalo(g, "实部 cos（实线）/ 虚部 sin（虚线）", L + 6, y0p + 9, "#0b7a68", "10.5px 'Segoe UI',sans-serif");
+  const lamPW = Math.abs(kOf()) > 1e-9 ? 2 * Math.PI / Math.abs(kOf()) : Infinity;
+  txtHalo(g, "恒幅 ±1（λ = " + (isFinite(lamPW) ? fmt(lamPW) : "∞") + " Å）",
+    L + pw - 6, y0p + 9, "#0b7a68", "10.5px 'Segoe UI',sans-serif", "right");
+  /* (f) 概率密度 */
+  g.fillStyle = "rgba(142,91,208,.16)";
+  g.beginPath(); g.moveTo(X(DATA.x0), panelY(slotOf.dens) + ph);
+  for (let i = 0; i <= NS; i++) g.lineTo(X(DATA.xs[i]), Ye(DATA.dens[i]));
+  g.lineTo(X(DATA.x1), panelY(slotOf.dens) + ph); g.closePath(); g.fill();
+  g.strokeStyle = COL_P; g.lineWidth = 1.8;
+  g.beginPath();
+  for (let i = 0; i <= NS; i++) { const q = [X(DATA.xs[i]), Ye(DATA.dens[i])]; i ? g.lineTo(q[0], q[1]) : g.moveTo(q[0], q[1]); }
+  g.stroke();
+  txtHalo(g, "= (d)²，严格周期 = a（本简化下与 k 无关）", L + pw - 6, panelY(slotOf.dens) + 9, "#6a4396", "11px 'Segoe UI',sans-serif", "right");
+
+  /* 底部 x 轴刻度（晶格常数） */
+  const yb0 = yBot();
+  g.strokeStyle = "#b6c2cf"; g.lineWidth = 1;
+  g.beginPath(); g.moveTo(L, yb0); g.lineTo(L + pw, yb0); g.stroke();
+  g.fillStyle = "#8b97a6";
+  const step = OPT.N <= 8 ? 2 : (OPT.N <= 16 ? 4 : 8);   /* 标签间隔随原胞数稀释 */
+  for (let m = Math.ceil(DATA.x0 / OPT.a); m * OPT.a <= DATA.x1 + 1e-9; m++) {
+    const xx = X(m * OPT.a);
+    g.beginPath(); g.moveTo(xx, yb0); g.lineTo(xx, yb0 + 4); g.stroke();
+    if (Math.abs(m) <= 4 || (m % step === 0)) txt(g, (m * OPT.a).toFixed(0), xx, yb0 + 11, "#8b97a6", "10.5px 'Segoe UI',sans-serif", "center");
+  }
+  /* 轴单位放轴线右端上方（与下方刻度数字 "24" 分行，避免挤在一起） */
+  txtHalo(g, "x / Å", L + pw + 22, yb0 - 9, "#8b97a6", "10.5px 'Segoe UI',sans-serif", "right");
+}
+
+/* ---------------- 能带图 ---------------- */
+function drawBand() {
+  const g = BV.g, W = BV.W, H = BV.H;
+  g.clearRect(0, 0, W, H);
+  const L = 50, Rm = 16, T = 24, B = 30;   /* T 留足纵轴标题 “E / eV” 的高度，避免被画布上缘裁掉 */
+  const pw = W - L - Rm, ph = H - T - B;
+  const kunit = Math.PI / OPT.a;
+  const klo = -kunit;                                   /* 左端恒为 −π/a */
+  const khi = kunit;                                    /* 右端恒为 +π/a（只画第一布里渊区） */
+  const elo = -8.4, ehi = 0.2;
+  const KX = k => L + (k - klo) / (khi - klo) * pw;
+  const EY = e => T + ph * (ehi - e) / (ehi - elo);
+
+  /* 禁带色带（两带之间的能量窗口；最小隙位于布里渊区边界 k = π/a；Eg 标注在末尾顶层绘制） */
+  {
+    const top = E0[0] + 2 * tn(1), bot = E0[1] - 2 * tn(2);
+    if (top < bot - 0.02) {
+      g.fillStyle = "rgba(217,74,61,.07)";
+      g.fillRect(L, EY(bot), pw, EY(top) - EY(bot));
+    }
+  }
+
+  /* 坐标轴 */
+  g.strokeStyle = "#b6c2cf"; g.lineWidth = 1;
+  g.beginPath(); g.moveTo(L, T); g.lineTo(L, T + ph); g.lineTo(L + pw, T + ph); g.stroke();
+  txt(g, "E / eV", L - 6, T - 4, "#8b97a6", "10.5px 'Segoe UI',sans-serif", "left", "bottom");
+  for (const e of niceTicks(elo, ehi, 4)) {
+    if (e < elo || e > ehi) continue;
+    g.strokeStyle = "#e3e9f0"; g.beginPath(); g.moveTo(L, EY(e)); g.lineTo(L + pw, EY(e)); g.stroke();
+    txt(g, e.toFixed(0), L - 5, EY(e), "#8b97a6", "10.5px 'Segoe UI',sans-serif", "right");
+  }
+  /* k = 0 处的竖直参考线（布里渊区中心） */
+  g.strokeStyle = "#e3e9f0"; g.beginPath(); g.moveTo(KX(0), T); g.lineTo(KX(0), T + ph); g.stroke();
+  /* 横轴刻度：π/2a 的整数倍 */
+  {
+    const step = 0.5;
+    const lab = f => {
+      if (f === 0) return "0";
+      const sg = f < 0 ? "−" : "", af = Math.abs(f);
+      if (af === 0.5) return sg + "π/2a";
+      if (af === 1.5) return sg + "3π/2a";
+      const n = Math.round(af);
+      return sg + (n === 1 ? "" : n) + "π/a";
+    };
+    for (let f = -1; f <= 1 + 1e-9; f += step) {
+      const kk = f * kunit;
+      txt(g, lab(f), KX(kk), T + ph + 12, "#8b97a6", "11px 'Segoe UI',sans-serif", "center");
+    }
+  }
+  txt(g, "k", L + pw + 4, T + ph, "#8b97a6", "11px 'Segoe UI',sans-serif");
+
+  /* 能带曲线 */
+  const NM = 140;
+  for (let n = 1; n <= 2; n++) {
+    const sel = n === OPT.band;
+    /* 先画未选中的带（细、淡、去饱和），再画选中的带（粗、实、带白色描边光晕），拉开层次 */
+    g.strokeStyle = sel ? BAND_COL[n - 1] : "rgba(142,155,170,.85)";   /* 未选中：中性灰 */
+    g.lineWidth = sel ? 3.4 : 1.3;
+    g.globalAlpha = sel ? 1 : 0.75;
+    g.beginPath();
+    for (let i = 0; i <= NM; i++) {
+      const k = klo + (khi - klo) * i / NM;
+      const q = [KX(k), EY(Eof(k, n))];
+      i ? g.lineTo(q[0], q[1]) : g.moveTo(q[0], q[1]);
+    }
+    if (sel) {                       /* 白色描边光晕，使选中带在交叉/靠近处也清晰 */
+      g.strokeStyle = "#fff"; g.lineWidth = 5.6; g.stroke();
+      g.strokeStyle = BAND_COL[n - 1]; g.lineWidth = 3.4; g.stroke();
+    } else g.stroke();
+    g.globalAlpha = 1;
+    txt(g, "带 " + n + (n === 1 ? "（s 型）" : "（p 型）"), KX(0) + 6,
+      EY(Eof(0, n)) + (n === 1 ? 12 : -10),
+      sel ? BAND_COL[n - 1] : "rgba(142,155,170,.95)",
+      (sel ? "bold " : "") + "11px 'Segoe UI',sans-serif");
+  }
+
+  /* 允许的 k 态（半开区间 m = −N/2+1 … N/2，共 N 个；+π/a 与 −π/a 相差一个倒格矢、
+     是同一个物理态，故只画落在 +π/a 的那个点） */
+  const kCur = kOf();
+  for (let m = -OPT.N / 2 + 1; m <= kMaxIdx(); m++) {
+    const km = 2 * Math.PI * m / (OPT.N * OPT.a);
+    if (km < klo - 1e-9 || km > khi + 1e-9) continue;
+    for (let n = 1; n <= 2; n++) {
+      const sel = n === OPT.band;
+      g.fillStyle = sel ? BAND_COL[n - 1] : "rgba(142,155,170,.8)";
+      g.globalAlpha = sel ? 1 : 0.5;
+      g.beginPath(); g.arc(KX(km), EY(Eof(km, n)), sel ? 3 : 1.5, 0, 6.2832); g.fill();
+      if (sel) { g.strokeStyle = "#fff"; g.lineWidth = 1.2; g.stroke(); }
+    }
+    g.globalAlpha = 1;
+  }
+
+  /* 当前 k 标记 */
+  g.strokeStyle = "#f5c518"; g.lineWidth = 1.6; g.setLineDash([5, 4]);
+  g.beginPath(); g.moveTo(KX(kCur), T); g.lineTo(KX(kCur), T + ph); g.stroke(); g.setLineDash([]);
+  for (let n = 1; n <= 2; n++) {
+    g.fillStyle = n === OPT.band ? BAND_COL[n - 1] : "rgba(142,155,170,.85)";
+    g.beginPath(); g.arc(KX(kCur), EY(Eof(kCur, n)), n === OPT.band ? 5.5 : 3, 0, 6.2832); g.fill();
+    if (n === OPT.band) {
+      g.strokeStyle = "#fff"; g.lineWidth = 1.6;
+      g.beginPath(); g.arc(KX(kCur), EY(Eof(kCur, n)), 5, 0, 6.2832); g.stroke();
+    }
+  }
+  g.strokeStyle = "#f5c518"; g.setLineDash([3, 3]); g.lineWidth = 1;
+  const eSel = Eof(kCur, OPT.band);
+  g.beginPath(); g.moveTo(L, EY(eSel)); g.lineTo(KX(kCur), EY(eSel)); g.stroke(); g.setLineDash([]);
+
+  /* Eg 标注（顶层绘制）：右边缘对齐，垂直方向自色带中央上移 1/4 条能量格线间距，避开格线横穿 */
+  {
+    const top = E0[0] + 2 * tn(1), bot = E0[1] - 2 * tn(2);
+    const tk = niceTicks(elo, ehi, 4);
+    const dPy = tk.length > 1 ? Math.abs(EY(tk[0]) - EY(tk[1])) : 30;
+    const egS = top < bot - 0.02 ? "Eg = " + fmt(bot - top) + " eV" : "Eg ≈ 0（两带连成一片）";
+    g.font = "11px 'Segoe UI',sans-serif"; g.textAlign = "right"; g.textBaseline = "middle";
+    g.strokeStyle = "rgba(255,255,255,.92)"; g.lineWidth = 3.5;
+    g.strokeText(egS, L + pw - 4, (EY(top) + EY(bot)) / 2 - dPy / 4);
+    g.fillStyle = "#b3574e";
+    g.fillText(egS, L + pw - 4, (EY(top) + EY(bot)) / 2 - dPy / 4);
+  }
+}
+
+/* ---------------- 读数面板 ---------------- */
+function updatePanels() {
+  const k = kOf(), n = OPT.band;
+  const lam = Math.abs(k) > 1e-6 ? 2 * Math.PI / Math.abs(k) : Infinity;   /* 包络波长 λ = 2π/|k| */
+  const t = tn(n);
+  const eg = gapNow();
+  const gapTxt = fmt(eg) + " eV" + (eg < 0.02 ? "（已闭合）" : "");
+  const pe = ((phaseEff() % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
+  /* 读数两区化（2026-10-23）：核心 8 行 + 折叠 3 行，另删 1 行。
+     ⚠️ 与方案文档的一处**事实更正**：面板里并不存在两个 V₀ 入口——`[data-preset]` 三组按钮就是
+     唯一的 V₀ 开关（`V0 = 30 / 12 / 0.3 eV`），顶部的 fixed-row 只是它的文字说明。
+     真正三重复的是**读数自己**：「势场振幅 V₀ / 晶格常数 a」与「当前势场状态」说的是同一件事，
+     而 stateTxt() **本身就把 V₀ 数值写进了文案**（"周期势（V₀ = 12.0 eV）"），a = 6 Å 也早已在
+     fixed-row 披露 ⇒ 删掉纯数值那一行，保留带物理命名的那一行。控制面**一个控件都没动**。 */
+  $("readout").innerHTML =
+    '<div class="hd">状态</div>' +
+    '<div class="k">势场起伏 <span class="m"><span class="op">Δ</span><i>V</i></span>（实测峰谷差）</div><div class="v"><b>' + fmt(potDeltaV(), 2) + ' eV</b>　<i style="color:#8b97a6;font-style:normal">≈ ' + fmt(potDeltaV() / OPT.V0, 2) + ' V₀</i></div>' +
+    '<div class="k">波矢 k（' + (OPT.snap ? '吸附到 2πm/Na' : '连续可调') + '）</div><div class="v"><b>' + fmt(k, 3) + '</b> Å⁻¹ = ' + fmt(k / (Math.PI / OPT.a), 2) + ' · π/a</div>' +
+    '<div class="k"><span class="m"><i>ψ</i></span> 的包络波长 <span class="m"><i>λ</i><span class="op">=</span>2π/|<i>k</i>|</span></div><div class="v">' + (isFinite(lam) ? fmt(lam) + ' Å' : '∞（k = 0）') + '</div>' +
+    '<div class="hd">能带 n = ' + n + '（' + (n === 1 ? 's 型，随 k 上升' : 'p 型，随 k 下降') + '）</div>' +
+    '<div class="k">E<sub>n</sub>(k)，n = ' + n + '</div><div class="v"><b>' + fmt(Eof(k, n)) + '</b> eV</div>' +
+    '<div class="k">带 1→2 能隙 E<sub>g</sub>（在 k = ±π/a）</div><div class="v">' + gapTxt + '</div>' +
+    '<div class="k">当前势场状态</div><div class="v">' + stateTxt() + '</div>' +
+    '<div class="hd">相位（演示）</div>' +
+    '<div class="k">全局相位 φ_eff</div><div class="v">' + fmt(pe * 180 / Math.PI, 0) + '°（' + fmt(pe, 2) + ' rad）</div>' +
+    '<div class="k">演化角频率 ω = |E|/ħ</div><div class="v"><b>' + sciHtml(omegaTrue(), 2) + ' rad/s</b>　<i style="color:#8b97a6;font-style:normal">动画已按示意速率放慢</i></div>';
+
+  /* 折叠区：Born–von Karman 离散化的回显（N 与允许态序号）＋由 k 符号派生的传播方向。
+     这两件事在控制面板的 sub 行里已经用整段文字讲过，读数里只留数值备查。 */
+  $("readoutMore").innerHTML =
+    '<div class="hd">离散取值（允许态）</div>' +
+    '<div class="k">原胞数 N → 每带 k 点数</div><div class="v">' + OPT.N + ' → ' + OPT.N + ' 个（×2 自旋）</div>' +
+    '<div class="k">允许态序号 <span class="m"><i>m</i><span class="op">=</span><i>k</i><i>N</i><i>a</i><span class="op">/</span>2<i>π</i></span></div><div class="v"><b>' + mOf() + '</b> / −' + (kMaxIdx() - 1) + '…' + kMaxIdx() +
+      (OPT.snap ? '（已吸附）' : '（Δk = ' + fmt(2 * Math.PI / (OPT.N * OPT.a), 3) + ' Å⁻¹）') + '</div>' +
+    '<div class="hd">传播方向</div>' +
+    '<div class="k">传播方向</div><div class="v">' + (Math.abs(k) < 1e-9 ? '驻波（k = 0）' : (k > 0 ? '沿 +x（k > 0）' : '沿 −x（k < 0）')) + '</div>';
+}
+
+/* ---------------- 挑战任务 ---------------- */
+const CHALS = [
+  { t: "两个因子的分工", q: "观察 (d) <span class=\"m\"><i>u</i><sub>k</sub></span>(x) 与 (e) <span class=\"m\"><span class=\"rm\">e</span><sup><i>i</i><span class=\"op\">(</span><i>kx</i><span class=\"op\">+</span><i>φ</i><span class=\"op\">)</span></sup></span>：<u>它们各自的周期是多少？</u>逐点验证 (b) = (d)×(e)实部、(c) = (d)×(e)虚部。再把 <span class=\"m\"><i>k</i></span> 从 −π/a 扫到 +π/a（越过 k = 0 时螺旋线的缠绕方向反转）：(e) 的波长 λ = 2π/|k| 怎么变？而 (d) 变不变？",
+    a: "u<sub>k</sub>(x) 与晶格势 V(x) 同周期 a，刻画电子在每个原胞内的局域行为；e<sup>ikx</sup> 的\"波长\"是 2π/|k|（|k| = π/a 时最短，λ = 2a），只负责相邻原胞之间的相位联系；k 反号只改变相位推进的方向（螺旋线反向缠绕），不改变波长：平移一个 a，ψ 只乘一个相位因子 e<sup>ika</sup>。关键点：(e) <b>恒幅 ±1</b>——它是纯相位、不含任何概率信息；所以 (b)(c) 的振幅起伏完全是被 (d) u<sub>k</sub> \"调幅\"出来的。这正是\"调幅平面波\"的含义，也解释了为什么 |ψ|² = u<sub>k</sub>²：因为 |e<sup>ikx</sup>| = 1。<b>注意这是本工具的教学简化</b>：周期部分固定取 u₀（等价于 k = 0 处的紧束缚和），所以扫 k 时 (d) 不动；严格地说 u<sub>k</sub> = e<sup>−ikx</sup>ψ<sub>k</sub> 是 H(k) = (p + ħk)²/2m + V 的本征函数，k 在算符里面 ⇒ u<sub>k</sub> 随 k 连续变化且一般为复数，|ψ|² 也随之改变。" },
+  { t: "能带的弯曲方向", q: "看 E−k 图（横轴 −π/a → +π/a）：带 1 从 k = 0 向两侧<b>上升</b>，带 2 从 k = 0 向两侧<b>下降</b>，且两带都关于 k = 0 <b>左右对称</b>。为什么弯曲方向相反、又为什么对称？最小能隙出现在哪个 k？这与面板 (d) 中带 1、带 2 的 u<sub>k</sub>(x) 形状有什么联系？",
+    a: "带 1 由 s 型（偶宇称）轨道形成，跃迁积分 <span class='m'><i>t</i><sub>1</sub></span> <span class='op'>&gt;</span> 0，<span class='m'><i>E</i><sub>1</sub>(<i>k</i>)<span class='op'>=</span><i>E</i><sub>1</sub><sup>0</sup><span class='op'>−</span>2|<i>t</i><sub>1</sub>|<span class='rm'>cos</span>(<i>ka</i>)</span> 在 k = 0 取极小、向两侧上升；带 2 由 p 型（奇宇称）轨道形成，相邻原胞间轨道重叠反号 → <span class='m'><i>t</i><sub>2</sub></span> <span class='op'>&lt;</span> 0，于是 <span class='m'><i>E</i><sub>2</sub>(<i>k</i>)<span class='op'>=</span><i>E</i><sub>2</sub><sup>0</sup><span class='op'>+</span>2|<i>t</i><sub>2</sub>|<span class='rm'>cos</span>(<i>ka</i>)</span> 在 k = 0 取极大、向两侧下降。两带一升一降，故最小能隙落在布里渊区边界 k = ±π/a。（普适表述：一维第 n 条带的轨道有 n−1 个节点，宇称交替 ⇒ 跃迁积分符号按 (−1)<sup>n−1</sup> 交替 ⇒ 相邻带弯曲方向相反；“s 型 / p 型”只是 n = 1、2 的具体名字，决定弯曲方向的是 t 的符号，不是轨道的字母标签。）又因 E<sub>n</sub>(k) 只含 cos(ka)、是 k 的偶函数，E<sub>n</sub>(−k) = E<sub>n</sub>(k)，整张图关于 k = 0 对称——这与时间反演对称（±k 态能量简并）一致，但 ±k 是两个不同的态（行进方向相反）。这也解释了 u<sub>k</sub> 的形状：带 1 的 u<sub>k</sub> 在原子核处最大，带 2 的 u<sub>k</sub> 在核处有节点（奇函数）——与 p 轨道一致。" },
+  { t: "三档势场：能带是怎样\"生长\"出来的", q: "依次点三档预设\"近孤立原子 → 周期势 → 近自由电子\"（V₀ 由 30 eV 减到 0.3 eV）：带宽 4|t<sub>n</sub>|、能隙 E<sub>g</sub>、<span class='m'><i>u</i><sub>k</sub></span>(<span class='m'><i>x</i></span>) 与螺旋线的半径包络各如何变化？为什么说两端的\"近\"字不能去掉？",
+    a: "<span class='m'><i>V</i><sub>0</sub></span> 越大 → 轨道越局域、重叠越弱 → |<span class='m'><i>t</i></span>| 越小 → 能带越窄、越像孤立原子的分立能级（<span class='m'><i>u</i><sub>k</sub></span> 是尖锐的原子波函数，半径包络起伏剧烈）；<span class='m'><i>V</i><sub>0</sub></span> 越小 → 重叠越强 → 带宽越大、<span class='m'><i>u</i><sub>k</sub></span> 越平、<span class='m'><i>ψ</i></span> 越接近纯平面波。但两端都只是<u>趋近</u>：只要 <span class='m'><i>V</i><sub>0</sub></span> 有限，|<span class='m'><i>t</i></span>| 就不为零，能带仍有带宽（不是严格的分立能级）；即使 <span class='m'><i>V</i><sub>0</sub></span> → 0 把 <span class='m'><i>u</i><sub>k</sub></span> 画成常数，本模型的原子能级间距 E₂⁰−E₁⁰ 仍在，能隙并不消失（也不会变成真正的自由连续谱）。能带 = 原子能级被周期势耦合后按 E<sub>n</sub>(k) = E<sub>n</sub>⁰ − 2s<sub>n</sub>|t<sub>n</sub>|cos(ka) 展宽的结果。" },
+  { t: "概率密度的周期性", q: "看面板 (f) |ψ|²。它在相邻原胞中是否相同？为什么？这与\"电子弥散于整个晶体\"的说法矛盾吗？",
+    a: "完全相同——|ψ<sub>k</sub>(x+a)|² = |ψ<sub>k</sub>(x)|²，因为相位因子 e<sup>ika</sup> 的模为 1。这不矛盾：电子在每个原胞内的概率分布相同（形状由 u<sub>k</sub> 决定），但电子不属于任何一个原子——它以相干扩展的布洛赫态遍布整个晶体。定域的是\"概率形状\"，扩展的是\"态本身\"。" },
+  { t: "实部、虚部与模长的关系", q: "用纸遮住除 (b) 之外的各层，只看实部一条曲线：它的振荡幅度是否随位置起伏？再露出 (e)，它的振幅起伏吗？再看 (f) |ψ|²：它还起伏吗？拖动全局相位滑块（或点播放），实部、虚部、(e) 各如何变？模长变吗？试着在 3D 视图里竖直拖动改变视角，它跟拖相位、播放的画面有什么异同？",
+    a: "只看实部会看到\"振幅周期性涨落\"的假象（那是 <span class='m'><i>u</i><sub>k</sub></span>(x)·cos(kx+φ) 的乘积效应）：对照 (e) 就知道，平面波因子的振幅<b>始终等于 1</b>，起伏全部来自 <span class='m'><i>u</i><sub>k</sub></span>。加上虚部后两者恰好互补，|<span class='m'><i>ψ</i></span>|<sup>2</sup> = Re² + Im² = <span class='m'><i>u</i><sub>k</sub></span>² 严格周期、毫无起伏。拖动 φ（或播放时的 <span class='m'><i>ω</i></span><span class='m'><i>t</i></span>）时 Re、Im 按 <span class=\"m\">Re′<span class=\"op\">=</span>Re<span class=\"op\">·</span><span class=\"rm\">cos</span><i>φ</i><span class=\"op\">−</span>Im<span class=\"op\">·</span><span class=\"rm\">sin</span><i>φ</i></span>、<span class=\"m\">Im′<span class=\"op\">=</span>Re<span class=\"op\">·</span><span class=\"rm\">sin</span><i>φ</i><span class=\"op\">+</span>Im<span class=\"op\">·</span><span class=\"rm\">cos</span><i>φ</i></span> <b>重新混合</b>（复平面上的整体旋转）、(e) 整体平移，而 |<span class='m'><i>ψ</i></span>|<sup>2</sup>、<span class='m'><i>u</i><sub>k</sub></span> 与螺旋线半径均不变。再在 3D 视图里竖直拖动、绕 x 轴转视角 θ——屏上纵坐标变成 <span class=\"m\">Re<span class=\"op\">·</span><span class=\"rm\">cos</span><i>θ</i><span class=\"op\">−</span>Im<span class=\"op\">·</span><span class=\"rm\">sin</span><i>θ</i></span>，正是 <span class=\"m\"><span class=\"rm\">e</span><sup><i>iθ</i></sup><i>ψ</i></span> 的实部（与给 <span class=\"m\"><i>ψ</i></span> 乘 <span class=\"m\"><span class=\"rm\">e</span><sup><i>iθ</i></sup></span> 后取实部逐点相同；差别只是 3D 投影的深度混叠，Re/Im 平面上的投影曲线完全一致），所以<b>竖直方向上</b>它与拖相位、与时间演化不可分辨。三者一致，恰恰说明整体相位（含随时间积累的那部分）不是可观测物理量，复数模才是。" }
+];
+function buildChals() {
+  const box = $("chalGrid");
+  CHALS.forEach((c, i) => {
+    const d = document.createElement("div");
+    d.className = "chal";
+    d.innerHTML = '<div class="chal-head"><b>挑战' + "一二三四五"[i] + "：" + c.t +
+      '</b><span class="chev">▸</span></div><div class="chal-body"><div class="q">' + c.q +
+      '</div><button>显示参考解答</button><div class="ans">' + c.a + "</div></div>";
+    box.appendChild(d);
+  });
+  box.addEventListener("click", e => {
+    const head = e.target.closest(".chal-head");
+    if (head) { head.parentNode.classList.toggle("open"); return; }
+    if (e.target.tagName === "BUTTON") {
+      const ans = e.target.parentNode.querySelector(".ans");
+      if (ans) ans.classList.toggle("show");
+    }
+  });
+}
+function buildLegend() {
+  $("legFive").innerHTML = [
+    '<span><i class="swatch" style="color:' + COL_G + '"></i>(a) 周期势 V(x)</span>',
+    '<span><i class="swatch" style="color:' + COL_R + '"></i>(b) 实部 Re ψ = (d)·(e)实部</span>',
+    '<span><i class="swatch dash" style="color:' + COL_B + '"></i>(c) 虚部 Im ψ = (d)·(e)虚部</span>',
+    '<span><i class="swatch dot" style="color:' + COL_O + '"></i>(d) 周期函数 u<sub>k</sub>(x)，周期 a（教学简化：取 k = 0 的形式）</span>',
+    '<span><i class="swatch dash" style="color:' + COL_T + '"></i>(e) 相位因子 <span class="m"><span class="rm">e</span><sup><i>i</i><span class="op">(</span><i>kx</i><span class="op">+</span><i>φ</i><span class="op">)</span></sup></span>，恒幅 ±1</span>',
+    '<span><i class="swatch band"></i>(f) 概率密度 |ψ|² = Re²+Im² = (d)²</span>'
+  ].join("");
+}
+
+/* ---------------- 渲染调度与动画 ---------------- */
+let rafId = 0, lastT = 0;
+function render() {
+  computeData();
+  drawSpiral(); drawFive(); drawBand();
+  updatePanels();
+}
+function loop(ts) {
+  if (OPT.playing) {
+    const dt = clamp((ts - lastT) / 1000, 0, 0.05);
+    timePhase += omega() * dt;
+    lastT = ts; render();
+    rafId = requestAnimationFrame(loop);
+  } else rafId = 0;
+}
+function kick() {
+  if (!rafId) { lastT = performance.now(); rafId = requestAnimationFrame(loop); }
+}
+
+/* ---------------- 控件绑定 ---------------- */
+function bindSlider(id, fn) {
+  const el = $(id);
+  if (el) el.oninput = e => { fn(+e.target.value); requestDraw(); };
+}
+function setTxt(id, s) { const e = $(id); if (e) e.innerHTML = TEXH(s); }   /* 可能含公式的显示位必须走 innerHTML + TEXH，否则 10¹⁶ / Å⁻¹ 这类记法画不成真上标 */
+function requestDraw() { render(); }
+function syncLabels() {
+  const kv = kOf();
+  setTxt("kVal", fmt(OPT.kf, 2) + " · π/a（k = " + fmt(kv, 3) + " Å⁻¹）");
+  setTxt("pVal", fmt(OPT.phi * 180 / Math.PI, 0) + "°");
+  const lamE = Math.abs(kv) > 1e-6 ? 2 * Math.PI / Math.abs(kv) : Infinity;   /* 包络波长 λ = 2π/|k| */
+  setTxt("lamVal", isFinite(lamE) ? fmt(lamE) + " Å" : "∞（k = 0）");
+  const ks = $("kStateTxt");
+  if (ks) {
+    const m = mOf();
+    ks.innerHTML = OPT.snap
+      ? '<b>当前已吸附</b>：<span class="m"><i>m</i></span> = ' + m + '（−' + (kMaxIdx() - 1) + '…' + kMaxIdx() + '）'
+      : '<b>当前连续可调</b>（最接近的允许态 <span class="m"><i>m</i></span> = ' + m + '）';
+  }
+}
+/* k 滑块量程/档位随吸附开关与 N 同步 */
+function syncKSlider() {
+  const el = $("kSlider");
+  if (!el) return;
+  /* 吸附时：允许值集合为 m = −N/2+1 … N/2（共 N 个，±π/a 同态只取其一），
+     故量程同步收缩到 [−1+2/N, +1]，保证每档恰好对应一个允许 m。 */
+  const st = 1000 / kMaxIdx();
+  el.min = OPT.snap ? kfLo() * 1000 + st : kfLo() * 1000;
+  el.max = kfHi() * 1000;
+  el.step = OPT.snap ? st : 1;
+  el.value = Math.round(clamp(OPT.kf, kfLo(), kfHi()) * 1000);
+}
+function init() {
+  buildLegend(); buildChals();
+  fitAll();
+  bindSlider("kSlider", v => {
+    OPT.kf = clamp(v / 1000, kfLo(), kfHi());
+    if (OPT.snap) { snapK(); $("kSlider").value = Math.round(OPT.kf * 1000); }
+    syncLabels();
+  });
+  bindSlider("pSlider", v => { OPT.phi = v * Math.PI / 180; syncLabels(); });
+  $("chkSnap").onchange = e => {                 /* 勾选/取消时立即重吸附并同步档位 */
+    OPT.snap = e.target.checked;
+    if (OPT.snap) snapK();
+    syncKSlider(); syncLabels(); render();
+  };
+
+  document.querySelectorAll("[data-n]").forEach(b => {
+    b.onclick = () => {
+      OPT.N = +b.dataset.n;
+      if (OPT.snap) snapK();                    /* 允许值随 N 变，重吸附到最近的一个 */
+      document.querySelectorAll("[data-n]").forEach(x => x.classList.toggle("sel", x === b));
+      syncKSlider(); syncLabels(); render();
+    };
+  });
+  document.querySelectorAll("[data-b]").forEach(b => {
+    b.onclick = () => {
+      OPT.band = +b.dataset.b;
+      document.querySelectorAll("[data-b]").forEach(x => x.classList.toggle("sel", x === b));
+      render();
+    };
+  });
+  document.querySelectorAll("[data-preset]").forEach(b => {
+    b.onclick = () => {
+      const p = b.dataset.preset;
+      /* 三态：深阱（弱耦合，紧束缚侧）→ 中等周期势 → 极浅阱（强耦合，近自由电子侧）。
+         两端都只能"近"：V₀ 有限时 |t| ≠ 0（能带仍有带宽），而 V₀ → 0 时本模型的
+         原子能级 Eₙ⁰ 间距并不消失，故都未真正达到孤立原子 / 自由电子极限。 */
+      OPT.V0 = p === "iso" ? 30 : (p === "free" ? 0.3 : 12);
+      document.querySelectorAll("[data-preset]").forEach(x => x.classList.toggle("sel", x === b));
+      syncLabels(); render();
+    };
+  });
+  $("btnPlay").onclick = () => {
+    OPT.playing = !OPT.playing;
+    $("btnPlay").textContent = OPT.playing ? "⏸ 暂停" : "▶ 播放（时间演化）";
+    $("btnPlay").classList.toggle("sel", OPT.playing);
+    if (OPT.playing) kick();
+  };
+
+  /* 螺旋线拖拽：水平 = 环绕，竖直 = 滚动（相位视角） */
+  let dragging = false, lx = 0, ly = 0;
+  const sp = $("spiral");
+  sp.style.cursor = "grab";
+  sp.addEventListener("pointerdown", e => {
+    dragging = true; lx = e.clientX; ly = e.clientY;
+    sp.setPointerCapture(e.pointerId); sp.style.cursor = "grabbing";
+  });
+  sp.addEventListener("pointermove", e => {
+    if (!dragging) return;
+    viewYaw = clamp(viewYaw + (e.clientX - lx) * 0.008, -1.25, 1.25);
+    viewRoll = clamp(viewRoll + (e.clientY - ly) * 0.008, -1.5, 1.5);
+    lx = e.clientX; ly = e.clientY;
+    render();
+  });
+  const endDrag = () => { dragging = false; sp.style.cursor = "grab"; };
+  sp.addEventListener("pointerup", endDrag);
+  sp.addEventListener("pointercancel", endDrag);
+
+  window.addEventListener("resize", () => { fitAll(); render(); });
+  /* 折叠区（.fold）：事件委托，新增折叠块不用再逐个绑定。
+     与挑战区的 .chal 完全独立，两者互不影响。 */
+  document.addEventListener("click", e => {
+    const fh = e.target.closest ? e.target.closest(".fold-head") : null;
+    if (!fh) return;
+    const f = fh.parentNode;
+    if (f && f.classList && f.classList.contains("fold")) f.classList.toggle("open");
+  });
+  syncKSlider(); syncLabels();
+  render();
+}
+if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
+else init();
+/* i18n 启动必须在 init() 之后：setLang() 会重跑 syncInputs()/render()，
+   放到 init() 之前会在 fitAll() 之前触发绘制，一旦抛异常整个 init() 就跑不到（挑战与画布会空）。 */
+(function () {
+  try {
+    i18nWatch();
+    ORIG_TITLE = ORIG_TITLE || document.title;
+    var btn = document.getElementById("langBtn");
+    if (btn) btn.onclick = function () { setLang(LANG === "en" ? "zh" : "en"); };
+    if (LANG === "en") setLang("en"); else { document.title = ORIG_TITLE; i18nWalk(document.body); }
+  } catch (e) { }
+})();
+</script>
+<div class="site-foot">本工具是 EIT-SP（半导体物理交互式教学工具箱）的一部分（武汉大学物理学院《半导体物理》智慧课程），以 MIT 协议开源，可自由使用与二次开发；转载请保留出处。反馈意见 <a href="mailto:doctorwanghao@qq.com">doctorwanghao@qq.com</a></div>
+</body>
+</html>

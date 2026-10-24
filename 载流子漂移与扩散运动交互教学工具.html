@@ -1,0 +1,2219 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<!-- SPDX-License-Identifier: MIT -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>载流子漂移与扩散运动交互教学工具</title>
+<style>
+
+  :root {
+    --bg: #f7f9fb;
+    --panel: #ffffff;
+    --border: #dde4ec;
+    --text: #2c3e50;
+    --text-sub: #6b7a8c;
+    --blue: #1976d2;
+    --blue-light: #e3f0fb;
+    --orange: #ef8c1a;
+    --red: #d94a3d;
+    --teal: #0f9b8e;
+    --green: #2e9e5b;
+    --purple: #7b3fa0;
+    --gray-ref: #9aa5b1;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Microsoft YaHei", "PingFang SC", "Segoe UI", sans-serif;
+    background: var(--bg); color: var(--text); padding: 14px;
+  }
+  header { position: relative; display: flex; align-items: baseline; justify-content: center; gap: 14px; flex-wrap: wrap; text-align: center; margin-bottom: 2px; }
+  .lang-btn { position: absolute; right: 0; top: 0; border: 1px solid var(--border); background: #fff;
+    color: var(--text-sub); padding: 3px 10px; border-radius: 7px; cursor: pointer; font-size: 12px; font-weight: 600; }
+  .lang-btn:hover { border-color: var(--blue); color: var(--blue); }
+  header h1 { font-size: 20px; }
+  header .formula { font-size: 14.5px; color: var(--text-sub); }
+  .sub-note { text-align: center; font-size: 12.5px; color: var(--text-sub); margin-bottom: 12px; line-height: 1.75; }
+  .sub-note b { color: var(--blue); }
+
+  .layout { display: flex; gap: 14px; align-items: flex-start; max-width: 1500px; margin: 0 auto; }
+  .viz { flex: 0 0 64%; min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+  .side { flex: 1; min-width: 310px; display: flex; flex-direction: column; gap: 12px; }
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; }
+  .sec-title { font-size: 13.5px; font-weight: 700; margin: 2px 0 6px; }
+  /* 模块编号徽标：只有教学内容模块才带编号；控制面板等辅助面板不是模块，不加 */
+  .sec-title .mtag {
+    display: inline-block; background: var(--blue); color: #fff;
+    font-size: 11px; font-weight: 700; padding: 1.5px 7px;
+    border-radius: 5px; margin-right: 6px; vertical-align: 1.5px; letter-spacing: .3px;
+  }
+  canvas { display: block; width: 100%; border-radius: 6px; touch-action: none; }
+  canvas:focus { outline: 2px solid rgba(25,118,210,.45); outline-offset: 1px; }
+  .chart-wrap { position: relative; }
+  .hint { font-size: 12px; color: var(--text-sub); margin-top: 6px; line-height: 1.6; }
+  .ctrl { margin-bottom: 10px; }
+  .ctrl:last-child { margin-bottom: 0; }
+  .ctrl-head { display: flex; justify-content: space-between; align-items: baseline; font-size: 13px; font-weight: 600; margin-bottom: 2px; gap: 8px; }
+  .ctrl-head .val { color: var(--blue); font-variant-numeric: tabular-nums; font-weight: 700; white-space: nowrap; }
+  .ctrl input[type=range] { width: 100%; accent-color: var(--blue); }
+  .ctrl .sub { font-size: 11.5px; color: var(--text-sub); margin-top: 1px; line-height: 1.5; }
+  .btn-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+  .btn-row button {
+    border: 1px solid var(--border); background: #fff; color: var(--text);
+    padding: 5px 11px; border-radius: 7px; cursor: pointer; font-size: 12.5px;
+  }
+  .btn-row button:hover { border-color: var(--blue); color: var(--blue); }
+  .btn-row.tight button { padding: 4px 9px; font-size: 12px; }
+  .btn-row button.sel { background: var(--blue); border-color: var(--blue); color: #fff; font-weight: 600; }
+  .btn-row button.primary { background: var(--blue-light); border-color: var(--blue); color: var(--blue); font-weight: 600; }
+  .mode-switch { display: flex; gap: 6px; }
+  .mode-switch button {
+    flex: 1; border: 1px solid var(--border); background: #fff; color: var(--text-sub);
+    padding: 6px 10px; border-radius: 8px; cursor: pointer; font-size: 12.5px; font-weight: 600;
+  }
+  .mode-switch button.active { background: var(--blue); border-color: var(--blue); color: #fff; }
+  .chk-row { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12.5px; color: var(--text-sub); margin-top: 4px; }
+  .chk-row.two { display: grid; grid-template-columns: 1fr 1fr; gap: 5px 12px; }
+  .chk-row label { display: inline-flex; align-items: center; gap: 5px; cursor: pointer; }
+  .chk-row input[type=checkbox] { accent-color: var(--blue); }
+  .legend { display: flex; gap: 6px 14px; flex-wrap: wrap; align-items: center; font-size: 12px; color: var(--text-sub); margin-top: 6px; }
+  .swatch { display: inline-block; vertical-align: middle; width: 20px; height: 0; border-top: 3px solid currentColor; border-radius: 2px; margin-right: 6px; }
+  .swatch.dash { border-top-style: dashed; }
+  .swatch.dot { width: 11px; height: 11px; border: none; border-radius: 50%; }
+  .swatch.sq { width: 11px; height: 11px; border: none; border-radius: 3px; }
+  /* ---- LaTeX 风格数学排版（纯 CSS，无外部库） ---- */
+  .m { font-family: "Cambria Math", "STIX Two Math", "Latin Modern Math", "Times New Roman", Times, serif;
+       font-size: 1.05em; font-style: normal; white-space: nowrap; letter-spacing: .01em; }
+  .m i, .m var { font-style: italic; }
+  .m .rm { font-style: normal; }
+  .m sub, .m sup { font-size: .70em; font-style: normal; line-height: 1; }
+  .m sub { vertical-align: -.28em; }
+  .m sup { vertical-align: .50em; }
+.m .m { font-size: 1em; }   /* 嵌套容器（TEXH 下标转换叠加）不再放大字号 */
+  .m sub i, .m sup i { font-style: italic; }
+  .m .op { font-style: normal; padding: 0 .24em; }
+  .m .sl { font-style: normal; padding: 0 .05em; }
+  .m .un { font-style: normal; padding-left: .16em; }
+  .frac { display: inline-block; vertical-align: -0.52em; text-align: center; margin: 0 .16em; font-size: .86em; line-height: 1.18; }
+  .frac > .num { display: block; padding: 0 .34em; border-bottom: 1px solid currentColor; }
+  .frac > .den { display: block; padding: 0 .34em; }
+  /* ---- 读数区 ---- */
+  .kv { display: grid; grid-template-columns: 1fr; gap: 2px 22px; font-size: 12.5px; }
+  .kv .row { display: flex; justify-content: space-between; gap: 8px; border-bottom: 1px dotted #eef2f7; padding: 2px 0; }
+  .kv .k { color: var(--text-sub); white-space: nowrap; }
+  .kv .v { font-variant-numeric: tabular-nums; text-align: right; }
+  .kv .v b { color: var(--blue); }
+  .kv .hd { grid-column: 1 / -1; font-weight: 700; color: var(--text); font-size: 12px; margin: 6px 0 2px; }
+  .kv .hd:first-child { margin-top: 0; }
+  .unit-note { font-size: 11.5px; color: var(--text-sub); line-height: 1.55; margin-top: 6px; }
+  /* ---- 折叠区（读数「更多」/ 控制「更多参数」）----
+     独立组件，类名一律 .fold：❌ 不许复用 .chal-head / .chev，
+     否则会被挑战区回归脚本按「挑战题」计数，也会污染挑战区视觉基线。 */
+  .fold { margin-top: 7px; border-top: 1px dotted var(--border); padding-top: 5px; }
+  .fold-head { display: flex; align-items: center; gap: 6px; cursor: pointer;
+    font-size: 12px; font-weight: 600; color: var(--text-sub); user-select: none; }
+  .fold-head:hover { color: var(--blue); }
+  .fold-head .chev { font-size: 11px; transition: transform .15s; display: inline-block; }
+  .fold.open .fold-head .chev { transform: rotate(90deg); }
+  .fold-body { display: none; margin-top: 4px; }
+  .fold.open .fold-body { display: block; }
+  /* ---- 引导探究 ---- */
+  .chal-wrap { max-width: 1500px; margin: 14px auto 0; }
+  .chal-bar { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+  .chal-bar b { font-size: 14.5px; }
+  .chal-bar span { font-size: 12px; color: var(--text-sub); }
+  .chal-grid { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+  .chal { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 8px 12px; }
+  .chal-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; cursor: pointer; }
+  .chal-head b { font-size: 13.5px; }
+  .chal-head .chev { color: var(--text-sub); font-size: 12px; transition: transform .15s; display: inline-block; }
+  .chal.open .chal-head .chev { transform: rotate(90deg); }
+  .chal.open { border-color: var(--blue); }
+  .chal-body { display: none; margin-top: 6px; font-size: 12.5px; color: var(--text-sub); line-height: 1.75; }
+  .chal.open .chal-body { display: block; }
+  .chal-body .ans { display: none; margin-top: 6px; padding: 7px 10px; background: var(--blue-light); border-radius: 6px; color: var(--text); }
+  .chal-body .ans.show { display: block; }
+  .chal-body .ans b { color: var(--blue); }
+  .chal-body .btn-row { margin-top: 8px; }
+  @media (max-width: 1100px) {
+    .layout { flex-direction: column; }
+    .viz { flex: 1 1 auto; width: 100%; }
+  }
+  /* ---- 课程页脚 ---- */
+  .site-foot { max-width: 1500px; margin: 18px auto 0; padding: 12px 16px 24px;
+    border-top: 1px solid var(--border); color: var(--text-sub);
+    font-size: 12.5px; line-height: 1.8; text-align: center; }
+  .site-foot a { color: var(--blue, #1976d2); text-decoration: none; }
+  .site-foot a:hover { text-decoration: underline; }
+
+  .sqrt > .rdc, .sqrt .rdc { display: inline-block; position: static; font-size: 1em;
+             border-top: .055em solid currentColor; padding: .06em .12em 0 .10em; margin: 0; line-height: 1; }
+
+  /* 公式排版：分式 / 根式 —— 全站统一为「回旋共振 v06」写法（置于末尾，覆盖本文件早期变体） */
+  .frac { display: inline-block; vertical-align: -0.52em; text-align: center; font-size: .78em; margin: 0 .12em; }
+  .frac > .num, .frac .num { display: block; padding: 0 .22em; border-bottom: .055em solid currentColor; line-height: inherit; }
+  .frac > .den, .frac .den { display: block; padding: 0 .22em; line-height: inherit; }
+  .sqrt { display: inline-block; white-space: nowrap; vertical-align: baseline; margin: 0; font-size: 1em; }
+  .sqrt > .rd, .sqrt .rd { display: inline-block; position: static; font-size: 1em; line-height: inherit; padding: 0 .02em 0 0; margin: 0; }
+  .sqrt > .rdc, .sqrt .rdc { display: inline-block; position: static; font-size: 1em;
+             border-top: .055em solid currentColor; padding: .06em .12em 0 .10em; margin: 0; line-height: 1; }
+  .sqrt .rdc:has(sup) { padding-top: .18em; }
+</style>
+</head>
+<body>
+
+<header>
+  <button id="langBtn" class="lang-btn" data-noi18n title="中文 / English">EN</button>
+  <h1>载流子漂移与扩散运动交互教学工具</h1>
+  <div class="formula"><span class="m"><i>v</i><sub>d</sub><span class="op">=</span><i>μE</i></span>　·　<span class="m"><i>J</i><span class="op">=</span><i>qnμE</i><span class="op">+</span><i>qD</i><span class="frac"><span class="num">d<i>n</i></span><span class="den">d<i>x</i></span></span></span>　·　<span class="m"><span class="frac"><span class="num"><i>D</i></span><span class="den"><i>μ</i></span></span><span class="op">=</span><span class="frac"><span class="num"><i>kT</i></span><span class="den"><i>q</i></span></span></span>　·　<span class="m">⟨<i>x</i><sup>2</sup>⟩<span class="op">=</span>2<i>Dt</i></span></div>
+</header>
+<div class="sub-note">
+  每个载流子都在做<b>无规热运动</b>（速度约 10<sup>7</sup> cm/s，方向随机、平均下来不产生净位移）；加上电场后，热运动之上再叠加一个很小的<b>定向漂移</b>（10<sup>2</sup>~10<sup>7</sup> cm/s，场强越高越逼近饱和速度，本工具默认档电子已达 2.2×10<sup>6</sup> cm/s）。<b>扩散</b>同样源于热运动。
+</div>
+
+<div class="layout">
+  <div class="viz">
+    <div class="card">
+      <div class="sec-title"><span class="mtag">模块一</span>粒子模拟视图：热运动 + 漂移（实空间，示意时间尺度）</div>
+      <div class="chart-wrap"><canvas id="sim" data-h="300" tabindex="0"></canvas></div>
+      <div class="legend" id="legSim"></div>
+      <div class="hint">半导体棒长 <span class="m">10<i>μ</i>m</span>，蓝色圆点是电子、红色方块是空穴。画面上的每一步是<b>放大了时间尺度的粗粒化扩散步</b>（每步 <span class="m"><i>σ</i><span class="op">=</span>√(2<i>D</i>Δ<i>t</i>)</span> <span id="stepSz">—</span>，<span class="m"><i>σ</i><span class="op">∝</span>√Δ<i>t</i></span> 会随所取时间步而变）：粒子抖动的快慢<b>不是</b>热运动速度 <span class="m"><i>v</i><sub>th</sub></span>，后者是公式值，见读数面板。</div>
+    </div>
+
+    <div class="card">
+      <div class="sec-title"><span class="mtag">模块二</span>浓度分布 <span class="m"><i>n</i>(<i>x</i>)</span>：漂移使整体平移，扩散使峰展宽</div>
+      <div class="chart-wrap"><canvas id="conc" data-h="250" tabindex="0"></canvas></div>
+      <div class="legend" id="legConc"></div>
+      <div class="hint">浅色柱是<b>粒子统计直方图</b>（数出来的），实线是<b>漂移–扩散方程</b> <span class="m"><span class="frac"><span class="num">∂<i>n</i></span><span class="den">∂<i>t</i></span></span><span class="op">=</span><i>D</i><span class="frac"><span class="num">∂<sup>2</sup><i>n</i></span><span class="den">∂<i>x</i><sup>2</sup></span></span><span class="op">−</span><i>v</i><sub>d</sub><span class="frac"><span class="num">∂<i>n</i></span><span class="den">∂<i>x</i></span></span></span> 的<b>数值解</b>（算出来的）。曲线下的面积（总粒子数）守恒。</div>
+    </div>
+
+  </div>
+
+  <div class="side">
+    <div class="card">
+      <div class="sec-title">控制面板</div>
+
+      <div class="ctrl">
+        <div class="ctrl-head"><span>情境</span><span class="val" id="presetVal">纯漂移</span></div>
+        <div class="btn-row tight" id="presetBtns"></div>
+        <div class="sub" id="presetNote"></div>
+      </div>
+
+      <div class="ctrl">
+        <div class="ctrl-head"><span>开关一 · 电场 <span class="m"><i>E</i></span>（只管漂移）</span><span class="val" id="eVal">2.0 kV/cm</span></div>
+        <div class="btn-row tight" id="efBtns"></div>
+        <div class="sub" id="eSub"></div>
+      </div>
+
+      <div class="ctrl">
+        <div class="ctrl-head"><span>开关二 · 浓度分布（只管扩散）</span><span class="val" id="initVal">高斯</span></div>
+        <div class="btn-row tight" id="initBtns"></div>
+        <div class="sub" id="sSub">峰越窄，浓度梯度越陡，扩散就越快。</div>
+      </div>
+
+      <div class="ctrl">
+        <div class="ctrl-head"><span>载流子</span><span class="val" id="carVal">电子</span></div>
+        <div class="mode-switch" id="carBtns">
+          <button data-c="e" class="active">电子（逆电场）</button>
+          <button data-c="h">空穴（顺电场）</button>
+        </div>
+        <div class="sub" id="matSub"></div>
+      </div>
+
+      <div class="ctrl">
+        <div class="ctrl-head"><span>动画</span><span class="val" id="spVal">1.00×</span></div>
+        <input type="range" id="spSlider" min="10" max="300" step="5" value="100">
+        <div class="btn-row tight">
+          <button id="btnPlay" class="sel">⏸ 暂停</button>
+          <button id="btnReset">重置</button>
+        </div>
+        <div class="sub">粒子数固定为 400；时间以 <span class="m">ps</span> 计（真实散射时间 <span class="m"><i>τ</i></span> ≈ 0.1~0.2 ps，随载流子而异，见读数面板；此处放慢以便观察）。</div>
+      </div>
+
+      <div class="ctrl">
+        <div class="ctrl-head"><span>显示项目</span></div>
+        <div class="chk-row two">
+          <label><input type="checkbox" id="ckTrail" checked> 粒子轨迹</label>
+          <label><input type="checkbox" id="ckTrace" checked> 示踪粒子（4 个）</label>
+          <label><input type="checkbox" id="ckMean" checked> 平均位移标尺</label>
+          <label><input type="checkbox" id="ckField" checked> 电场箭头</label>
+          <label><input type="checkbox" id="ckPde" checked> 方程解曲线</label>
+          <label><input type="checkbox" id="ckHist" checked> 统计直方图</label>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="sec-title">读数面板</div>
+      <div class="kv" id="readout"></div>
+      <div class="fold" id="foldRo">
+        <div class="fold-head"><span class="chev">▶</span><span>更多读数（材料、参数与中间量）</span></div>
+        <div class="fold-body"><div class="kv" id="readoutMore"></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="chal-wrap">
+  <div class="card">
+    <div class="chal-bar">
+      <b>引导探究（点击展开，先自己试一试再看答案）</b>
+      <span>挑战任务</span>
+    </div>
+    <div class="chal-grid" id="chalGrid"></div>
+  </div>
+</div>
+
+<div class="site-foot">本工具是 EIT-SP（半导体物理交互式教学工具箱）的一部分（武汉大学物理学院《半导体物理》智慧课程），以 MIT 协议开源，可自由使用与二次开发；转载请保留出处。反馈意见 <a href="mailto:doctorwanghao@qq.com">doctorwanghao@qq.com</a></div>
+
+<script>
+/* ==================================================================
+   i18n（C1 单文件双语：物理代码仍然只有一份）
+   LANG 取值优先级：URL ?lang=en / ?lang=zh  >  localStorage('opl_lang')  >  默认中文。
+   不做 location 跳转——保住「单文件拷走也能用」。
+   三个注入点，**业务字符串一个都不改**：
+     ① partsOf()   画布 token：带 i/sub/sup/un 标记的是物理量、下标与单位，跳过
+     ② fillText/measureText 原型挂钩：兜住直接写进画布的中文串
+     ③ DOM 文本节点：静态 HTML 与 JS 写进来的 innerHTML，用 MutationObserver 兜住新增节点
+   T() 先查整句词典，未命中再按「最长优先」做短语替换，因此拼接串也能翻。
+   漏翻会被记进 window.__MISS，可导出核对。 */
+var LANG = (function () {
+  var m = /[?&]lang=([a-zA-Z]+)/.exec(location.search);
+  var q = m ? m[1].toLowerCase() : "";
+  if (q === "en" || q === "zh") return q;
+  var s = "";
+  try { s = localStorage.getItem("opl_lang") || ""; } catch (e) { }
+  return (s === "en" || s === "zh") ? s : "zh";
+})();
+var ORIG_TITLE = document.title;
+var __MISS = [];
+try { window.__MISS = __MISS; } catch (e) { }
+function noteMiss(s) { if (__MISS.indexOf(s) < 0) __MISS.push(s); }
+function TSoft(s) {
+  if (!T._K) T._K = Object.keys(I18N).sort(function (a, b) { return b.length - a.length; });
+  var out = s, i, k, orig = s;
+  /* 两遍：第一遍只吃长度 ≥ 2 的短语；第二遍的单字 key 只在「传进来的串
+     恰好就是这一个字」时才上场——画布逐字排版会拿单字去 measureText，那一
+     路必须翻。反过来，绝不让单字 key 去切更长的句子：否则「导」「子」「原」
+     会把「半导体」「电子数」「泡利原理」切成半 conduction 体、电 quantum 数、
+     泡利 origin 理这类中英混排。同一条理由也适用于「下」：整句不该被切碎。 */
+  for (var pass = 0; pass < 2; pass++) {
+    for (i = 0; i < T._K.length; i++) {
+      k = T._K[i];
+      if (k.length < 2 && (pass === 0 || orig !== k)) continue;
+      if (out.indexOf(k) < 0) continue;
+      /* 中文片段之间没有空格：前一片段已翻成英文时，本片段英文直连进去会粘连
+         （「更深」「或」「更浅」逐段替换成 deeper、or、shallower 会拼出 deeperor），
+         所以替换时看上下文：key 以中文开头、前一字符已是英文 ⇒ 前面补一个空格。 */
+      out = out.replace(new RegExp(k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "g"), function (m, off, str) {
+        var v = I18N[k];
+        var pre = off > 0 ? str.charAt(off - 1) : "";
+        if (/[A-Za-z0-9]/.test(pre) && /^[A-Za-z0-9(]/.test(v) && /[\u3400-\u9FFF]/.test(k.charAt(0))) v = " " + v;
+        return v;
+      });
+    }
+  }
+  return out;
+}
+/* 同一句被 DOM 切成好几个文本节点时，首尾空格会随机落在 data 里；
+   所以除了「整句命中」，再试一次「去空格后命中」并原样补回首尾空白。 */
+function trimMap() {
+  if (T._TM) return T._TM;
+  var m = {};
+  for (var k in I18N) if (Object.prototype.hasOwnProperty.call(I18N, k)) {
+    var t = k.replace(/^\s+|\s+$/g, "");
+    if (t && m[t] === undefined) m[t] = I18N[k];
+  }
+  T._TM = m;
+  return m;
+}
+/* eslint-disable no-use-before-define */
+function T(s) {
+  if (LANG !== "en" || typeof s !== "string" || !s) return s;
+  if (!/[一-鿿]/.test(s)) return s;
+  if (Object.prototype.hasOwnProperty.call(I18N, s)) return I18N[s];
+  var tm = trimMap(), core = s.replace(/^\s+|\s+$/g, "");
+  if (core && tm[core] !== undefined) {
+    var lead = s.slice(0, s.length - s.replace(/^\s+/, "").length);
+    var tail = s.slice(s.replace(/\s+$/, "").length);
+    return lead + tm[core] + tail;
+  }
+  var v = TSoft(s);
+  /* 译完还剩汉字也算漏翻：只翻掉一半的「半吊子译文」曾经让 __MISS 恒为 0。 */
+  if (v === s || /[\u3400-\u9FFF]/.test(v)) noteMiss(s);
+  return v;
+}
+var I18N = {
+  /* ---- 词典：中文原文 → 英文。key 禁含运行时数字（换个参数就漏），数字前后要拆开 ---- */
+  "模块一": "Module 1",
+  "模块二": "Module 2",
+  "同样源于": "comes from ",
+  "控制面板": "Control Panel",
+  "引导探究（点击展开，先自己试一试再看答案）": "Guided inquiry (click to expand — try it yourself before opening the answers)",
+  "挑战任务": "Challenges",
+  " 倍；": " times; ",
+  "？": "?",
+  "，而 ": ", while ",
+  "，": ", ",
+  "、": ", ",
+  "：": ": ",
+  "；": "; ",
+  "（": " (",
+  "）": ")",
+  "本工具是 EIT-SP（半导体物理交互式教学工具箱）的一部分（武汉大学物理学院《半导体物理》智慧课程），以 MIT 协议开源，可自由使用与二次开发；转载请保留出处。": "This tool is part of EIT-SP, the Educational Interactive Toolkit for Semiconductor Physics (School of Physics and Technology, Wuhan University). Released under the MIT licence: free to use, modify and redistribute, including commercially. Please keep this attribution.",
+  "反馈意见": " Feedback",
+  "材料": "Material",
+  "读数面板": "Readout Panel",
+  "%）": "%)",
+  "看答案": "Show answer",
+  "有效质量 ": "effective mass ",
+  "从 ": " from ",
+  "材料与参数": "Materials and parameters",
+  "实测 ": "Measured ",
+  " 倍。": " times the lattice constant.",
+  "），": "), and ",
+  "）；": "); ",
+  "迁移率": "the mobility",
+  "没有": "no",
+  "两个": "two",
+  "动画": "Animation",
+  "示意": "schematic",
+  "）：": "): ",
+  "看看答案": "Show answer",
+  "多了": "extra",
+  "下方": "below",
+  "，这就是": ", and this is the ",
+  " ⇒ ": " ⇒ ",
+  "同向": "in the same direction",
+  "⏸ 暂停": "⏸ Pause",
+  "几乎": "almost ",
+  "有效质量": "Effective mass",
+  "中心": "centre",
+  "预设": "Preset",
+  "显示": "Display",
+  "温度 ": "Temperature ",
+  "右边": "right panel of Module 3",
+  "不变": "constant",
+  "周期": "period",
+  "均匀：": "Uniform: ",
+  " / ": " / ",
+  "杂质": "impurity",
+  " 个": " ",
+  " 个）": " in total)",
+  "声子": "phonon",
+  "间接": "indirect",
+  "直接": "direct",
+  "带隙": "Band gap",
+  "（固定）": " (fixed)",
+  "当前：": "Current: ",
+  " 的": " ",
+  "差 ": "a factor of ",
+  " 对 ": " against ",
+  "同时": "at the same time",
+  "符号": "sign",
+  " 载流子": " Carriers",
+  " 与": " and ",
+  "长 ": "length ",
+  "迁移率 ": "mobility ",
+  "怎么变？": " of the charge piled up on the walls change?",
+  " 会": " would ",
+  "宽度": "width",
+  "，把": " and push the ",
+  "，盯住": ", keeping an eye on the ",
+  "电流": "current",
+  "线性": "linearly",
+  "空穴": "holes",
+  "浓度": "concentration",
+  "本工具是 EIT-SP（半导体物理交互式教学工具箱）的一部分（武汉大学物理学院《半导体物理》智慧课程），以 MIT 协议开源，可自由使用与二次开发；转载请保留出处。反馈意见": "This tool is part of EIT-SP, the Educational Interactive Toolkit for Semiconductor Physics (School of Physics and Technology, Wuhan University). Released under the MIT licence: free to use, modify and redistribute, including commercially. Please keep this attribution. Feedback",
+  "本工具是": "This tool is part of",
+  "（半导体物理交互式教学工具箱）的一部分（武汉大学物理学院《半导体物理》智慧课程），以": ", the Educational Interactive Toolkit for Semiconductor Physics (School of Physics and Technology, Wuhan University). Released under the",
+  "协议开源，可自由使用与二次开发；转载请保留出处。反馈意见": "licence: free to use, modify and redistribute, including commercially. Please keep this attribution. Feedback",
+  "协议开源，可自由使用与二次开发；转载请保留出处。": "licence: free to use, modify and redistribute, including commercially. Please keep this attribution.",
+  "点「纯扩散」预设，看模块二的高斯峰随时间演化：峰值怎么变？峰宽怎么变？曲线下的面积（总粒子数）变了吗？": "Click the “Pure diffusion” preset and watch the Gaussian peak in module 2 evolve in time: how does the peak height change? How does the width change? Does the area under the curve (the total number of particles) change?",
+  "浓度均匀 + 周期边界 ⇒ n(x) 恒定：这边出去多少、那边就进来多少，浓度场本身看不出漂移": "Uniform concentration + periodic boundaries ⇒ n(x) stays constant: whatever leaves on one side comes in on the other, so the concentration field itself shows no drift",
+  "浓度均匀": "Uniform concentration",
+  "周期边界": "periodic boundaries",
+  "恒定：这边出去多少、那边就进来多少，浓度场本身看不出漂移": "stays constant: whatever leaves on one side comes in on the other, so the concentration field itself shows no drift",
+  "无电场 + 浓度均匀：粒子乱走，平均位移始终在 0 附近抖动 —— 热运动不产生净位移。": "No field + uniform concentration: the particles wander at random and the mean displacement keeps jittering around 0 — thermal motion produces no net displacement.",
+  "无电场": "No field",
+  "浓度均匀：粒子乱走，平均位移始终在": "uniform concentration: the particles wander at random and the mean displacement keeps jittering around",
+  "热运动不产生净位移。": "motion produces no net displacement.",
+  "：从 400 个粒子的位移统计反推，与设定值对照（单次快照的统计涨落约 ±7%）。另外": ": inferred back from the displacement statistics of the 400 particles and compared with the set value (the statistical scatter of a single snapshot is about ±7%). Also",
+  "：从": ": inferred back from the displacement statistics of the",
+  "个粒子的位移统计反推，与设定值对照（单次快照的统计涨落约": "particles and compared with the set value (the statistical scatter of a single snapshot is about",
+  "）。另外": "). Also",
+  "cm/s，方向随机、平均下来不产生净位移）；加上电场后，热运动之上再叠加一个很小的": "cm/s in random directions, which average out to no net displacement); once the field is applied, a very small",
+  "，方向随机、平均下来不产生净位移）；加上电场后，热运动之上再叠加一个很小的": "in random directions, which average out to no net displacement); once the field is applied, a very small",
+  "有电场 + 浓度均匀：没有浓度梯度就没有扩散，只有整体平移（右边出、左边进）。": "Field + uniform concentration: with no concentration gradient there is no diffusion, only a rigid shift (out at the right, in at the left).",
+  "有电场": "Field",
+  "浓度均匀：没有浓度梯度就没有扩散，只有整体平移（右边出、左边进）。": "uniform concentration: with no concentration gradient there is no diffusion, only a rigid shift (out at the right, in at the left).",
+  "≈ 0.1~0.2 ps，随载流子而异，见读数面板；此处放慢以便观察）。": "≈ 0.1–0.2 ps depending on the carrier — see the readout panel; it is slowed down here so that it can be watched.",
+  "无电场 + 高斯峰：峰只在原地展宽变矮，中心不动 —— 这就是扩散。": "No field + Gaussian peak: the peak only broadens and flattens where it stands, and its centre does not move — that is diffusion.",
+  "高斯峰：峰只在原地展宽变矮，中心不动": "Gaussian",
+  "这就是扩散。": "the peak only broadens and flattens where it stands, and its centre does not move — that is diffusion.",
+  "cm/s，场强越高越逼近饱和速度，本工具默认档电子已达 2.2×10": "cm/s; the stronger the field the closer it comes to the saturation velocity, and at this tool’s default setting the electrons already reach 2.2×10",
+  "，场强越高越逼近饱和速度，本工具默认档电子已达": "; the stronger the field the closer it comes to the saturation velocity, and at this tool’s default setting the electrons already reach",
+  "虚线 = 初始分布，浅蓝柱 = 粒子统计，实线 = 方程解": "Dashed line = initial distribution, light blue bars = particle statistics, solid line = solution of the equation",
+  "虚线": "Dashed line",
+  "初始分布，浅蓝柱": "initial distribution, light blue bars",
+  "粒子统计，实线": "particle statistics, solid line",
+  "方程解": "solution of the equation",
+  "流动：右端流出 = 左端流入（净通量 ≠ 0，浓度却不变）": "flow: what flows out at the right end flows in at the left (the net flux ≠ 0, yet the concentration does not change)",
+  "有电场 + 高斯峰：一边展宽一边整体平移，两种效应叠加。": "Field + Gaussian peak: it broadens while shifting as a whole — the two effects superpose.",
+  "高斯峰：一边展宽一边整体平移，两种效应叠加。": "Gaussian peak: it broadens while shifting as a whole — the two effects superpose.",
+  "粒子模拟视图：热运动 + 漂移（实空间，示意时间尺度）": "Particle view: thermal motion + drift (real space, indicative time scale)",
+  "粒子模拟视图：热运动": "Particle view: thermal motion",
+  "漂移（实空间，示意时间尺度）": "drift (real space, indicative time scale)",
+  "，蓝色圆点是电子、红色方块是空穴。画面上的每一步是": "; blue dots are electrons and red squares are holes. Each step on the screen is",
+  "仍取低场爱因斯坦值，本工具不随场强做热载流子修正。": "still the low-field Einstein value; this tool applies no hot-carrier correction with field.",
+  "（算出来的）。曲线下的面积（总粒子数）守恒。": " (computed). The area under the curve (the total number of particles) is conserved.",
+  "速度（对数刻度 10²–10⁸ cm/s）": "Velocity (logarithmic scale 10²–10⁸ cm/s)",
+  "速度（对数刻度": "Velocity (logarithmic scale",
+  "，不构成独立验证。真正的交叉检验是面板里的": ", so it is not an independent check. The real cross-check is the",
+  "浓度均匀 + 周期边界 ⇒ 只看累计位移": "Uniform concentration + periodic boundaries ⇒ look only at the accumulated displacement",
+  "只看累计位移": "look only at the accumulated displacement",
+  "定量地联系起来（室温 ≈ 26 mV）。": "relates quantitatively (≈ 26 mV at room temperature).",
+  "定量地联系起来（室温": "relates quantitatively (",
+  "）。": "at room temperature).",
+  "周期边界会把坐标折回 ⇒ 只看累计位移": "Periodic boundaries fold the coordinate back ⇒ look only at the accumulated displacement",
+  "周期边界会把坐标折回": "Periodic boundaries fold the coordinate back",
+  "×10⁵ cm/s，只有热速度的 1/": "×10⁵ cm/s, only 1/",
+  "，只有热速度的": ", only",
+  "峰整体朝一个方向平移（当前 v_d =": "The peak shifts as a whole in one direction (currently v_d =",
+  "峰整体朝一个方向平移（当前": "The peak shifts as a whole in one direction (currently",
+  "均匀分布没有浓度梯度（峰宽不起作用）。": "A uniform distribution has no concentration gradient (the peak width plays no part).",
+  "个数量级，可是热运动各向同性、平均下来": "orders of magnitude, yet thermal motion is isotropic and on average",
+  "×10⁷ cm/s，漂移 v_d =": "×10⁷ cm/s, drift v_d =",
+  "，漂移": ", drift",
+  "会随所取时间步而变）：粒子抖动的快慢": "changes with the time step chosen): how fast the particles jitter",
+  "经爱因斯坦关系定出，再读回来自然等于": "fixed by the Einstein relation, so reading it back naturally gives",
+  "峰越窄，浓度梯度越陡，扩散就越快。": "The narrower the peak, the steeper the concentration gradient and the faster the diffusion.",
+  "漂移流与扩散流（峰值处，相对值）": "Drift flux and diffusion flux (at the peak, relative values)",
+  "倍；平衡电场参考值 E_eq =": " times; the reference balancing field E_eq =",
+  "倍；平衡电场参考值": "times; the reference balancing field",
+  "载流子漂移与扩散运动交互教学工具": "Carrier Drift and Diffusion — Interactive Toolkit",
+  "开关二 · 浓度分布（只管扩散）": "Switch two · concentration profile (diffusion only)",
+  "开关二": "Switch two",
+  "浓度分布（只管扩散）": "concentration profile (diffusion only)",
+  "：漂移使整体平移，扩散使峰展宽": ": drift shifts the whole profile, diffusion broadens the peak",
+  "情境": "Scenario",
+  "半导体样品（一维，周期边界）": "Semiconductor sample (one-dimensional, periodic boundaries)",
+  "电场 E = 0（纯热运动）": "Field E = 0 (pure thermal motion)",
+  "电场": "Field",
+  "（纯热运动）": "(pure thermal motion)",
+  "示踪粒子净位移 Δx（μm）": "Net displacement of the tracer Δx (μm)",
+  "示踪粒子净位移": "Net displacement of the tracer",
+  "n(x)（相对值，纵轴固定）": "n(x) (relative value, fixed vertical axis)",
+  "（相对值，纵轴固定）": "(relative value, fixed vertical axis)",
+  "放大了时间尺度的粗粒化扩散步": "a coarse-grained diffusion step with an enlarged time scale",
+  "，后者是公式值，见读数面板。": ", the latter is the formula value; see the readout panel.",
+  "粒子数固定为 400；时间以": "The number of particles is fixed at 400; time is measured in",
+  "粒子数固定为": "The number of particles is fixed at",
+  "；时间以": "; time is measured in",
+  "含速度饱和修正（当前比线性值": "including the velocity-saturation correction (currently",
+  "扩散流 D|dn/dx|": "Diffusion flux D|dn/dx|",
+  "扩散流": "Diffusion flux",
+  "有（2.0 kV/cm）": "On (2.0 kV/cm)",
+  "有（": "On (",
+  "平均位移 ⟨Δx⟩ =": "Mean displacement ⟨Δx⟩ =",
+  "平均位移": "Mean displacement",
+  "流密度（相对值，对数）": "Flux density (relative value, logarithmic)",
+  "漂移方向 v_d =": "Drift direction v_d =",
+  "漂移方向": "Drift direction",
+  "热运动 v_th ≈": "Thermal motion v_th ≈",
+  "热运动": "Thermal motion",
+  "（数出来的），实线是": " (counted), the solid line is",
+  "（300 K 值）": " (value at 300 K)",
+  "漂移流 n·v_d": "Drift flux n·v_d",
+  "漂移流": "Drift flux",
+  "示踪粒子（4 个）": "Tracer particles (4",
+  "示踪粒子（": "Tracer particles (",
+  "模拟时间 t =": "Simulation time t =",
+  "模拟时间": "Simulation time",
+  "散射时间 τ =": "Scattering time τ =",
+  "散射时间": "Scattering time",
+  "材料 / 载流子": "Material / carrier",
+  "载流子": "carrier",
+  "—（计时后给出）": "— (given after timing)",
+  "两者相消所需电场": "Field needed to cancel the two",
+  "更多读数（材料、参数与中间量）": "More readouts (material, parameters, intermediate quantities)",
+  "中间量": "Intermediate quantities",
+  "热运动 v_th": "Thermal motion v_th",
+  "无（E = 0）": "Off (E = 0)",
+  "无（": "Off (",
+  "每个载流子都在做": "Every carrier performs",
+  "开关一 · 电场": "Switch one · electric field",
+  "开关一": "Switch one",
+  "计（真实散射时间": "count (the real scattering time",
+  "「粒子实测 D」": "“D measured from the particles”",
+  "（速度约 10": " (velocity about 10",
+  "（速度约": "(velocity about",
+  "粒子统计直方图": "Particle histogram",
+  "漂移–扩散方程": "Drift–diffusion equation",
+  "漂移": "Drift",
+  "扩散方程": "diffusion equation",
+  "电子（逆电场）": "Electrons (against the field)",
+  "空穴（顺电场）": "Holes (along the field)",
+  "」在本工具里是": "” is in this tool",
+  "，而漂移虽小却": ", while the drift, small as it is,",
+  "整齐朝一个方向": "neatly in one direction",
+  "电场 E =": "Field E =",
+  "位置 x =": "Position x =",
+  "位置": "Position",
+  "累计位移 =": "Accumulated displacement =",
+  "累计位移": "Accumulated displacement",
+  "个样品长度）": " sample lengths)",
+  "（设定值 =": " (set value =",
+  "（设定值": "(set value",
+  "× 设定值）": "× the set value)",
+  "设定值）": "the set value)",
+  "/ 散射时间": "/ scattering time",
+  "漂移 v_d": "Drift v_d",
+  "（当前：漂移": " (currently: drift",
+  "（只管漂移）": " (drift only)",
+  "平均位移标尺": "Mean-displacement scale",
+  "不产生净位移": "produces no net displacement",
+  "漂移＋扩散": "Drift + diffusion",
+  "峰 n =": "Peak n =",
+  "电子（●）": "Electrons (●)",
+  "电子（": "Electrons (",
+  "空穴（■）": "Holes (■)",
+  "空穴（": "Holes (",
+  "（含饱和）": " (with saturation)",
+  "热运动速度": "Thermal velocity",
+  "基本无偏离": "essentially no deviation",
+  "当前漂移流": "The current drift flux is ",
+  "无规热运动": "Random thermal motion",
+  "半导体棒长": "Semiconductor bar length",
+  "方程解曲线": "Curve of the equation solution",
+  "统计直方图": "Statistical histogram",
+  "输入关系式": "Enter a relation",
+  "暂停": "Pause",
+  "纯热运动": "Pure thermal motion",
+  "● 电子": "● Electrons",
+  "电子": "Electrons",
+  "■ 空穴": "■ Holes",
+  "扩散系数": "Diffusion coefficient",
+  "粒子实测": "Measured from the particles",
+  "漂移速度": "Drift velocity",
+  "两者之比": "Ratio of the two",
+  "浓度梯度": "Concentration gradient",
+  "、扩散流": " and the diffusion flux ",
+  "＋ 扩散": " + diffusion",
+  "扩散": "+ diffusion",
+  "▶ 播放": "▶ Play",
+  "播放": "Play",
+  "定向漂移": "Directed drift",
+  "浓度分布": "Concentration profile",
+  "浅色柱是": "The light bars are",
+  "初始峰宽": "Initial peak width",
+  "显示项目": "Display items",
+  "粒子轨迹": "Particle tracks",
+  "电场箭头": "Field arrow",
+  "对数刻度": "Logarithmic scale",
+  "纯漂移": "Pure drift",
+  "纯扩散": "Pure diffusion",
+  "看得见": "visible",
+  "运动学": "kinematics",
+  "（每步": " (each step",
+  "数值解": "Numerical solution",
+  "直接由": "directly from",
+  "），而": "), while",
+  "倍；": " times; ",
+  "，而": ", while",
+  "实测": "measured",
+  "倍。": " times.",
+  "温度": "temperature",
+  "个）": ")",
+  "瞬移": "teleport",
+  "整体": "as a whole",
+  "向右": "to the right",
+  "向左": "to the left",
+  "高斯": "Gaussian",
+  "均匀": "uniform",
+  "不是": "not",
+  "重置": "Reset",
+  "，随载流子而异，见读数面板；此处放慢以便观察）。": ", depending on the carrier — see the readout panel; it is slowed down here so that it can be watched.",
+  "流动：右端流出": "flow: what flows out at the right end",
+  "左端流入（净通量": "what flows in at the left (the net flux",
+  "，浓度却不变）": ", yet the concentration does not change)",
+  "。": ". ",
+  "！": "!",
+  "＋": " + ",
+  "×": " × ",
+  "电子（圆形，漂移逆电场）": "Electrons (circles, drifting against the field)",
+  "空穴（方形，漂移顺电场）": "Holes (squares, drifting along the field)",
+  " 标尺（样品棒下方白卡，绿色箭头随时间变长）": " scale (the white card below the sample bar; the green arrow lengthens with time)",
+  "示踪粒子 4 个（带编号，长尾迹；右上角给出各自净位移 ": "4 tracer particles (numbered, with long trails; the top right gives each one’s net displacement ",
+  "初始分布": "initial distribution",
+  "有": "On",
+  "无": "Off",
+  " ＋ 扩散 无）": " + diffusion; Off)",
+  "当前 ": "Current ",
+  "半导体固定为 ": "The semiconductor is fixed to ",
+  "（间接带隙、室温以声子散射为主）：电子迁移率 1400、空穴 450 cm": " (indirect gap; at room temperature phonon scattering dominates): electron mobility 1400, hole mobility 450 cm",
+  "，饱和速度 1.0×10": ", saturation velocity 1.0×10",
+  " cm/s。换载流子即可看到 ": " cm/s. Switch the carrier to see ",
+  " 相差约 3 倍。": " differ by about a factor of 3.",
+  "/s（低场近似）": "/s (low-field approximation)",
+  "低 22%": "lower by 22%",
+  "1. 点「纯漂移」，盯住模块一里样品棒下方那条": "1. Click “Pure drift” and keep your eye on the",
+  "」标尺": "\" scale",
+  "（绿色箭头，随时间变长），再看模块二的 ": " (the green arrow lengthens with time), then look at the ",
+  "：粒子明明都在往一个方向走，为什么浓度曲线却": ": the particles are all clearly moving in one direction, so why does the concentration curve",
+  "一动不动": "stay put",
+  "？（顺带一试：在「纯漂移」下把": "? (Try this too: under “Pure drift”, switch",
+  "切成高斯，情境名会立刻变成「漂移＋扩散」，想想为什么。）": " to Gaussian and the scenario name immediately becomes “Drift + diffusion” — think about why.)",
+  "热运动的速度虽然高达 ": "The thermal velocity is as high as ",
+  "，但方向": ", but its direction is",
+  "完全随机": "completely random",
+  "，向左和向右的粒子一样多，矢量平均为零 ⇒ 不产生净位移。电场只是在这份随机之上叠加了一个": ": as many particles go left as go right, the vector average is zero ⇒ no net displacement. The field merely superposes on this randomness a",
+  "的小漂移（当前 ": " small drift (currently ",
+  " cm/s，只有热速度的 1/10），但它是": " cm/s, only 1/10 of the thermal velocity), but it is",
+  "所有粒子同向": "shared by all particles in the same direction",
+  "的，平均下来不会被抵消 ⇒ 产生净位移、产生电流。": ", so it is not cancelled on average ⇒ a net displacement, and hence a current.",
+  "大而无序 vs 小而有序": "Large but disordered vs small but ordered",
+  "，这就是关键。": " — and that is the crux.",
+  "曲线不动是因为": "The curve does not move because",
+  "：从右端流出的载流子立刻从左端等量流入，各处浓度始终不变，": ": carriers leaving at the right end flow in at the left in equal numbers immediately, so the concentration everywhere stays constant;",
+  "瞬时坐标的平均值也被“折回”钉在棒中心": " the mean of the instantaneous coordinates is also “folded back” and pinned at the centre of the bar",
+  "。所以均匀情形下要看": ". So in the uniform case one must look at",
+  "展开坐标的累计位移": "the accumulated displacement of the unfolded coordinate",
+  " —— 模块一里样品棒下方那条「平均位移 ": " — the “Mean displacement ",
+  "」标尺（当前 0.00 μm ＝ 0.00 个样品长度），它随时间线性增长 —— 这才是漂移的证据。另外，把浓度分布切成高斯后情境名立刻变成「漂移＋扩散」：": "\" scale below the sample bar in module 1 (currently 0.00 μm = 0.00 sample lengths); it grows linearly in time — that is the evidence of drift. Also, switching the concentration profile to Gaussian immediately changes the scenario name to “Drift + diffusion”:",
+  "有没有漂移看电场，有没有扩散看浓度梯度": "Whether there is drift is decided by the field; whether there is diffusion is decided by the concentration gradient",
+  "，两者是两个彼此独立的开关。": "; the two are independent switches.",
+  "峰值": "peak height",
+  "不断下降": "keeps falling",
+  "、峰宽": ", the width",
+  "不断变宽": "keeps growing",
+  "（宽度按 ": " (the width grows as ",
+  " 增长，而不是线性增长），但面积": " rather than linearly), but the area",
+  "始终不变": "stays constant",
+  " —— 粒子一个都没少，只是摊开了。这正是扩散方程的核心特征：": " — not a single particle is lost, they have merely spread out. That is the central feature of the diffusion equation:",
+  "粒子数守恒": "the number of particles is conserved",
+  "，随机行走使分布按高斯自我相似地展宽。再点「漂移＋扩散」对照：展宽规律分毫不变，只是整体多了一个平移 —— 说明漂移与扩散": ", and the random walk makes the distribution broaden in a self-similar Gaussian way. Now click “Drift + diffusion” for comparison: the broadening law is unchanged in the slightest, there is only an extra shift of the whole profile — showing that drift and diffusion",
+  "彼此独立、可以线性叠加": "are independent of each other and superpose linearly",
+  "3. 点「漂移＋扩散」预设，再把载流子在": "3. Click the “Drift + diffusion” preset, then switch the carrier between",
+  "和": " and ",
+  "之间切换：峰往哪边走？展宽的那部分变了吗？": " : which way does the peak move? Has the broadening part changed?",
+  "继续展宽": "keeps broadening",
+  " —— 平移来自漂移，展宽来自扩散，两者": " — the shift comes from drift, the broadening from diffusion, and the two",
+  "互不干扰地叠加": "superpose without disturbing each other",
+  "，正好对应漂移–扩散方程 ": ", corresponding exactly to the two terms of the drift–diffusion equation ",
+  " 的两项。电子带负电，漂移": ". Electrons are negatively charged and drift",
+  "逆着电场": "against the field",
+  "走；空穴": "; holes",
+  "顺着电场": "along the field",
+  "走（当前：电子）。": " (currently: electrons).",
+  "换载流子时，平移方向和展宽快慢两者都变": "When the carrier is changed, both the direction of the shift and the rate of broadening change",
+  "：方向由电荷符号决定，展宽快慢由 ": ": the direction is set by the sign of the charge, the rate of broadening by ",
+  " 决定，而 ": ", while ",
+  " 经爱因斯坦关系随 ": " scales with ",
+  " 同比缩放 —— Si 室温电子 ": " through the Einstein relation — for Si at room temperature, electrons ",
+  " = 1400 对空穴 450，": " = 1400 against 450 for holes,",
+  " 相差 ": ", a difference of ",
+  "3.1 倍": "a factor of 3.1",
+  "/s），峰变宽的快慢也差这么多（t = 100 ps 时 ": "/s), and the rate at which the peak broadens differs by the same amount (at t = 100 ps, ",
+  " ≈ 1.17 μm 对 0.93 μm）。真正": " ≈ 1.17 μm against 0.93 μm). What is truly",
+  "与电场无关": "independent of the field",
+  "的是扩散：对": " is diffusion: for",
+  "同一个载流子": "the same carrier",
+  "只拨动电场开关，展宽分毫不变，只是多出一段平移 —— 漂移平移与扩散展宽互不干扰地线性叠加。": ", flipping only the field switch leaves the broadening unchanged in the slightest and merely adds a shift — the drift shift and the diffusive broadening superpose linearly without disturbing one another.",
+  "4. 把载流子在": "4. Switch the carrier between",
+  "之间切换，读面板里的迁移率 ": " and read the mobility ",
+  " 与它们的比值 ": " and their ratio ",
+  "：哪几个量变了？哪个量始终不变？": " in the panel: which quantities change? Which one never changes?",
+  "半导体固定在 Si（本工具不换材料），只换载流子就能看出规律：当前": "The semiconductor is fixed at Si (this tool does not change material); changing only the carrier already reveals the rule: currently",
+  "/s；换成另一种载流子时两者": "/s; when the other carrier is chosen the two",
+  "相差好几倍": "differ by several times",
+  "（Si 室温电子 1400 对空穴 450，因为有效质量 0.26 m": " (Si at room temperature: electrons 1400 against holes 450, because the effective mass 0.26 m",
+  " 都受": " are both governed by",
+  "有效质量与散射机制": "the effective mass and the scattering mechanism",
+  "控制。但它们的比值 ": ". But their ratio ",
+  " = 25.9 mV 始终不变": " = 25.9 mV never changes",
+  "，与材料、与散射机制、与载流子种类完全无关：这就是": ", completely independent of the material, the scattering mechanism and the carrier type: this is",
+  "爱因斯坦关系": "the Einstein relation",
+  "。漂移和扩散不是两件事，而是": ". Drift and diffusion are not two separate things, but",
+  "同一种热运动": "the same thermal motion",
+  "在“有电场”和“有浓度梯度”两种条件下的表现。": " manifesting itself under two different conditions, “with a field” and “with a concentration gradient”.",
+  "5. 分别在「纯扩散」和「纯漂移」预设下读面板里的": "5. Under the “Pure diffusion” and “Pure drift” presets in turn, read the two values in the panel for",
+  "两条数值，再展开「更多读数」看 ": " and then expand “More readings” to see ",
+  "：要让两者恰好相抵需要多大的电场？这对应半导体中什么真实情形？": ": how large a field is needed for the two to cancel exactly? What real situation in a semiconductor does this correspond to?",
+  "（相对值）：「纯扩散」时扩散流一家独大，「纯漂移」时漂移流后来居上。要让两者相抵，需要 ": " (relative values): under “Pure diffusion” the diffusion flux reigns alone, under “Pure drift” the drift flux overtakes it. For the two to cancel one needs ",
+  "|，即「更多读数」里的 ": "|, namely the one in “More readings” ",
+  "；此时净流 ≈ 0，浓度峰几乎停在原地。这正是 ": "; then the net flux ≈ 0 and the concentration peak almost stops where it is. This is exactly ",
+  "pn 结自建电场": "the built-in field of a pn junction",
+  "的形成机制：扩散先把载流子从高浓度推向低浓度，留下的电离杂质产生电场，电场又驱动反向的漂移流，两者恰好相抵时结区就有了内建电势。": " forms: diffusion first pushes carriers from high concentration to low, the ionised impurities left behind create a field, the field in turn drives an opposite drift flux, and when the two exactly cancel the junction region has its built-in potential.",
+  "倍": " times",
+  "电子迁移率": "electron mobility",
+  "」标尺（当前 ": "\" scale (currently ",
+  " μm ＝ ": " μm = ",
+  " 个样品长度），它随时间线性增长 —— 这才是漂移的证据。另外，把浓度分布切成高斯后情境名立刻变成「漂移＋扩散」：": " sample lengths); it grows linearly in time — that is the evidence of drift. Also, switching the concentration profile to Gaussian immediately changes the scenario name to “Drift + diffusion”:",
+  "随时间线性增长": "grows linearly with time",
+  "线性增长": "grows linearly",
+  "增长": "growth",
+  "把浓度分布": "the concentration profile",
+  "浓度分布切成高斯": "the concentration profile is switched to Gaussian",
+  "情境名": "the scenario name",
+  "立刻变成": "immediately becomes",
+  "另外": "Also",
+  "这才是": "this is exactly",
+  "证据": "evidence",
+  "粒子实测 D": "D measured from the particles",
+  "无电场 + 浓度均匀：粒子乱走，平均位移始终在 ": "No field + uniform concentration: the particles wander at random and the mean displacement keeps jittering around ",
+  "附近抖动 —— 热运动不产生净位移。（当前：漂移 无 ＋ 扩散 无）": " — thermal motion produces no net displacement. (Now: drift off ＋ diffusion off)",
+  " cm/s，只有热速度的 ": " cm/s, only ",
+  "），但它是": "), but it is ",
+  "无电场 + 高斯峰：峰只在原地展宽变矮，中心不动 —— 这就是扩散。（当前：漂移 无 ＋ 扩散 ": "No field + Gaussian peak: the peak only broadens and flattens where it is, its centre never moves — that is diffusion. (Now: drift off ＋ diffusion ",
+  "峰越窄，浓度梯度越陡，扩散越快；": "The narrower the peak, the steeper the concentration gradient and the faster the diffusion; ",
+  "走（当前：空穴）。": " moves (now: holes).",
+  " 无": " off",
+  " 无）": " off)",
+  "无）": "off)",
+};
+
+/* 注入点②：画布直写字符串。老工具直接调 g.fillText()，这里在原型上兜住。
+   measureText 必须一起挂钩，否则「量的宽度」和「量的文字」用的不是同一个串。
+   ⚠️ 必须在 init() 之后才调用 i18nHookCanvas()：自带画布排版层的工具会在脚本里
+     替换 prototype.fillText，挂钩要装在它**外面**，拿到的是整串而不是被切开的单字。 */
+function i18nHookCanvas() {
+  if (typeof CanvasRenderingContext2D === "undefined") return;
+  var ft = CanvasRenderingContext2D.prototype.fillText;
+  CanvasRenderingContext2D.prototype.fillText = function (s, x, y) {
+    if (typeof s === "string") arguments[0] = T(s);
+    return ft.apply(this, arguments);
+  };
+  /* 描边文字（白边包字）走 strokeText，同样要过 T()，否则画布标签漏翻 */
+  var stx = CanvasRenderingContext2D.prototype.strokeText;
+  CanvasRenderingContext2D.prototype.strokeText = function (s, x, y) {
+    if (typeof s === "string") arguments[0] = T(s);
+    return stx.apply(this, arguments);
+  };
+  var mt = CanvasRenderingContext2D.prototype.measureText;
+  CanvasRenderingContext2D.prototype.measureText = function (s) {
+    return mt.call(this, typeof s === "string" ? T(s) : s);
+  };
+}
+
+/* 注入点④：逐字绘制的画布串。drawMath 一类把中文按单字拆成 token 再逐个 fillText，
+   T() 每次只见到一个汉字 ⇒ 整句词条永远命中不了。这里在整串进入分词之前先整体翻译，
+   于是画布标注也走「整句优先」，与 DOM 同一个口径。没有这些函数的工具自动跳过。
+   ⚠️ 签名坑：drawMath / measureMath 的第一个参数是 canvas context（对象），文本在第
+   二位；早期版本照着 arguments[0] 翻，等于把 context 送去 T()，补丁全程空转。
+   这里改为「找到第一个含中文的字符串参数」再翻，既躲开 context，也不会误伤
+   align / weight 之类以英文字符串传的选项。 */
+(function () {
+  ["drawMath", "drawMathHalo", "measureMath"].forEach(function (n) {
+    var f = window[n];
+    if (typeof f !== "function") return;
+    window[n] = function () {
+      for (var i = 0; i < arguments.length; i++) {
+        if (typeof arguments[i] === "string" && /[\u3400-\u9FFF]/.test(arguments[i])) {
+          arguments[i] = T(arguments[i]);
+          break;
+        }
+      }
+      return f.apply(this, arguments);
+    };
+  });
+})();
+
+
+/* ---- DOM 文本节点 ---- */
+function i18nNode(n) {
+  var el = n.parentElement;
+  if (!el) return;
+  var tag = el.tagName;
+  if (tag === "SCRIPT" || tag === "STYLE") return;
+  if (el.closest && el.closest("[data-noi18n]")) return;
+  var cur = n.nodeValue;
+  if (n.__orig === undefined || (cur !== n.__last && cur !== n.__orig)) n.__orig = cur;
+  var want = LANG === "en" ? T(n.__orig) : n.__orig;
+  if (want !== cur) n.nodeValue = want;
+  n.__last = want;
+}
+/* 属性（title / placeholder / optgroup label …）不是文本节点，MutationObserver 覆盖不到，
+   必须单独过一遍：否则悬停提示、下拉分组名会残留中文。原文缓存在元素 expando 上，
+   切回中文时原样写回。改属性不会触发 childList/characterData 观察器，不会递归。 */
+var I18N_ATTRS = ["title", "placeholder", "aria-label", "alt", "label"];
+function i18nAttrs(root) {
+  var els = [root], i, j;
+  if (root.querySelectorAll) els = els.concat(Array.prototype.slice.call(root.querySelectorAll("*")));
+  for (i = 0; i < els.length; i++) {
+    var el = els[i];
+    if (!el.getAttribute) continue;
+    if (el.closest && el.closest("[data-noi18n]")) continue;
+    for (j = 0; j < I18N_ATTRS.length; j++) {
+      var a = I18N_ATTRS[j];
+      if (!el.hasAttribute(a)) continue;
+      var key = "__a_" + a;
+      if (el[key] === undefined) el[key] = el.getAttribute(a);
+      var want = LANG === "en" ? T(el[key]) : el[key];
+      if (want !== el.getAttribute(a)) el.setAttribute(a, want);
+    }
+  }
+}
+/* 英文补空格（跨节点）：中文片段被行内标签切开时，各自翻成英文后直连会粘连。
+   判定用 DOM 结构而不是渲染矩形——折叠区（挑战答案）矩形为零，矩形法会漏。
+   两文本节点在文档序里紧邻（中间没有任何文本节点，包括空格节点）、
+   前段末尾与后段开头都是字母、双方词条都没自带空格、且不在上下标里 ⇒ 插一个空格。
+   空格节点记录在案，切回中文时移除。只动 i18n 注入层，不改业务文本。 */
+function fixGlue(root) {
+  var all = [];
+  var w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null, false), n;
+  while ((n = w.nextNode())) all.push(n);
+  function subbed(el) {
+    while (el) { var t = el.tagName; if (t === "SUB" || t === "SUP") return true; el = el.parentElement; }
+    return false;
+  }
+  for (var i = 0; i + 1 < all.length; i++) {
+    var a = all[i], b = all[i + 1];
+    if (!a.nodeValue || !b.nodeValue) continue;
+    if (/\s$/.test(a.nodeValue) || /^\s/.test(b.nodeValue)) continue;
+    if (!/[A-Za-z0-9]$/.test(a.nodeValue) || !/^[A-Za-z]/.test(b.nodeValue)) continue;
+    var pa = a.parentElement, pb = b.parentElement;
+    if (!pa || !pb || subbed(pa) || subbed(pb)) continue;
+    var sp = document.createTextNode(" ");
+    sp.__glue = 1;
+    (fixGlue._n = fixGlue._n || []).push(sp);
+    b.parentNode.insertBefore(sp, b);
+  }
+}
+function removeGlue() {
+  if (!fixGlue._n) return;
+  for (var i = 0; i < fixGlue._n.length; i++) { var g = fixGlue._n[i]; if (g.parentNode) g.parentNode.removeChild(g); }
+  fixGlue._n = [];
+}
+/* 全局防抖补空格：挑战答案这类「点击时才重建」的区域，observer 回调里对子树跑
+   fixGlue 的时机不全（答案重写、延迟渲染都会错过）。任何 DOM 变更后 60ms
+   对整页补一次；空格本身不触发新插入，收敛。 */
+var _glueTimer = null;
+function _glueKick() {
+  if (LANG !== "en") return;
+  if (_glueTimer) clearTimeout(_glueTimer);
+  _glueTimer = setTimeout(function () {
+    _glueTimer = null;
+    if (LANG === "en") fixGlue(document.body);
+  }, 60);
+}
+function i18nWalk(root) {
+  var w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null, false), n, c = 0;
+  while ((n = w.nextNode())) { i18nNode(n); c++; }
+  i18nAttrs(root);
+  if (LANG === "en") fixGlue(root === document ? document.body : root);
+  return c;
+}
+var _i18nBusy = false;
+function i18nWatch() {
+  if (typeof MutationObserver === "undefined") return;
+  var mo = new MutationObserver(function (ms) {
+    if (_i18nBusy) return;
+    _i18nBusy = true;
+    try {
+      for (var i = 0; i < ms.length; i++) {
+        var m = ms[i];
+        if (m.type === "childList") {
+          for (var j = 0; j < m.addedNodes.length; j++) {
+            var nd = m.addedNodes[j];
+            if (nd.nodeType === 3) i18nNode(nd);
+            else if (nd.nodeType === 1) i18nWalk(nd);
+          }
+        } else if (m.type === "characterData") i18nNode(m.target);
+      }
+    } finally { _i18nBusy = false; }
+    _glueKick();
+  });
+  mo.observe(document.body, { childList: true, subtree: true, characterData: true });
+}
+function setLang(l) {
+  LANG = l;
+  try { localStorage.setItem("opl_lang", l); } catch (e) { }
+  document.documentElement.lang = l === "en" ? "en" : "zh-CN";
+  var btn = document.getElementById("langBtn");
+  if (btn) btn.textContent = l === "en" ? "中文" : "EN";
+  document.title = l === "en" ? T(ORIG_TITLE) : ORIG_TITLE;
+  if (l !== "en") removeGlue();
+  i18nWalk(document.body);
+  _glueKick();
+  if (typeof syncInputs === "function") syncInputs();
+  if (typeof render === "function") render();
+}
+
+
+
+
+
+i18nHookCanvas();
+/* ---------------- 直接 fillText / strokeText 的自动排版钩子 ----------------
+   有些标注不走 txt() 而是直接 g.fillText()（状态徽标、能带边等），
+   这里在原型层统一处理：含数学记法的字符串先按 LaTeX 规则拆段再绘制，
+   measureText 同步返回拆段总宽，白底框长度自动跟着变。 */
+const NEED_MATH_HM = /[\u2070-\u209C\u00B2\u00B3\u00B9]|_\{?[A-Za-z0-9\u0370-\u03ff]|\^\{?[\d(\-]|\d(\.\d+)?[eE][+\-]\d|\u221A/;
+/* 原生 measureText：mathSegsHM 内部量宽必须走这一条，
+   否则 measureText 被钩子接管后会 self-recursion（RangeError）。 */
+var _mRawHM = null;
+function measureRawHM(g, s) { return (_mRawHM ? _mRawHM : g.measureText).call(g, s).width; }
+function mathSegsHM(g, s) {
+  const f = String(g.font || "");
+  const mm = /(\d+(?:\.\d+)?)px/.exec(f);
+  const size = mm ? parseFloat(mm[1]) : 12;
+  const family = f.replace(/^(?:\s*(?:italic|oblique|bold|[1-9]00)\s*)*\d+(?:\.\d+)?px\s*/, "");
+  const style = /italic|oblique/.test(f) ? "italic " : (/bold|[6-9]00/.test(f) ? "bold " : "");
+  const parts = AUTO(s), laid = [];
+  let w = 0;
+  for (const p of parts) {
+    const small = !!(p.sup || p.sub);
+    const fs = style + (small ? (size * 0.74).toFixed(2) : size.toFixed(2)) + "px " + family;
+    g.font = fs;
+    const tw = measureRawHM(g, p.s);
+    laid.push({ s: p.s, w: tw, fs: fs, dy: small ? (p.sup ? -size * 0.40 : size * 0.22) : 0 });
+    w += tw;
+  }
+  return { laid: laid, w: w, family: family, style: style, size: size };
+}
+(function hookMathHM() {
+  if (window.__MATH_HOOK) return; window.__MATH_HOOK = 1;
+  const P = CanvasRenderingContext2D.prototype;
+  const _fill = P.fillText, _stroke = P.strokeText, _measure = P.measureText;
+  function draw(drawRaw, g, s, x, y, rest) {
+    const info = mathSegsHM(g, s);
+    const al = g.textAlign, bl = g.textBaseline;
+    const cx = al === "right" ? x - info.w : (al === "center" ? x - info.w / 2 : x);
+    g.textAlign = "left";
+    let px = cx;
+    for (const L of info.laid) {
+      g.font = L.fs;
+      drawRaw.call(g, L.s, px, y + L.dy, ...rest);
+      px += L.w;
+    }
+    g.textAlign = al; g.textBaseline = bl;
+    g.font = info.style + info.size.toFixed(2) + "px " + info.family;
+    return info;
+  }
+  P.fillText = function (s, x, y) {
+    if (typeof s !== "string" || !NEED_MATH_HM.test(s)) return _fill.apply(this, arguments);
+    draw(_fill, this, s, x, y, Array.prototype.slice.call(arguments, 3));
+  };
+  P.strokeText = function (s, x, y) {
+    if (typeof s !== "string" || !NEED_MATH_HM.test(s)) return _stroke.apply(this, arguments);
+    draw(_stroke, this, s, x, y, Array.prototype.slice.call(arguments, 3));
+  };
+  if (!_mRawHM) _mRawHM = _measure;
+  P.measureText = function (s) {
+    if (window.__HM_IN || typeof s !== "string" || !NEED_MATH_HM.test(s)) return _measure.call(this, s);
+    window.__HM_IN = 1;
+    const save = this.font;
+    let info;
+    try { info = mathSegsHM(this, s); } finally { window.__HM_IN = 0; }
+    this.font = save;
+    return { width: info.w, get actualBoundingBoxLeft() { return 0; }, get actualBoundingBoxRight() { return info.w; } };
+  };
+})();
+
+/* ---------------- HTML 侧自动 LaTeX 排版 ----------------
+   读数 / 说明 / 按钮名里由 JS 拼出来的 cm⁻³、E_c、2.5e+8，
+   在写进 innerHTML 之前转成真 <sup>/<sub>；标签与属性原样放过（title 不会被塞进尖括号）。
+   与画布侧 AUTO() 对偶，保证网页和画布按同一套规则排版。 */
+const AUTOH_SUP = { "⁰": "0", "¹": "1", "²": "2", "³": "3", "⁴": "4", "⁵": "5", "⁶": "6",
+  "⁷": "7", "⁸": "8", "⁹": "9", "⁺": "+", "⁻": "−", "⁼": "=", "⁽": "(", "⁾": ")", "ⁿ": "n", "ⁱ": "i" };
+const AUTOH_SUB = { "₀": "0", "₁": "1", "₂": "2", "₃": "3", "₄": "4", "₅": "5", "₆": "6",
+  "₇": "7", "₈": "8", "₉": "9", "₊": "+", "₋": "−", "₌": "=", "₍": "(", "₎": ")",
+  "ₐ": "a", "ₑ": "e", "ₒ": "o", "ₓ": "x", "ₔ": "ə", "ₕ": "h", "ₖ": "k", "ₗ": "l",
+  "ₘ": "m", "ₙ": "n", "ₚ": "p", "ₛ": "s", "ₜ": "t", "ᵣ": "r", "ᵤ": "u", "ᵥ": "v" };
+const TEXH_NEED = /[\u2070-\u209C\u00B2\u00B3\u00B9]|_\{?[A-Za-z0-9\u0370-\u03ff]|\^\{?[\d(\-]|\d(\.\d+)?[eE][+\-]\d|\u221A/;
+/* 从 i 处（必须是 '<'）扫出一个"完整元素"的结束下标（含嵌套），失败返回 -1 */
+function TEXH_elemEnd(h, i) {
+  if (h.charAt(i) !== "<") return -1;
+  let depth = 0, j = i, guard = 0;
+  while (j < h.length && guard++ < 4000) {
+    if (h.charAt(j) !== "<") { j++; continue; }
+    const e = TEXH_tagEnd(h, j);
+    if (e < 0) return -1;
+    const isClose = h.charAt(j + 1) === "/";
+    const selfClose = h.charAt(e - 2) === "/";
+    if (isClose) { depth--; j = e; if (depth <= 0) return j; }
+    else if (selfClose) { j = e; if (depth === 0) return j; }
+    else { depth++; j = e; }
+  }
+  return -1;
+}
+/* √ 后面直接跟一个元素：√<i>E</i> → √‾E（前两条规则只吃 √(A) 与 √字母串） */
+function TEXHsqrtElem(s) {
+  let out = "", i = 0, guard = 0;
+  while (guard++ < 400) {
+    const k = s.indexOf("\u221A", i);
+    if (k < 0) break;
+    out += s.slice(i, k);
+    /* 守卫：√ 后面已是闭标签 ⇒ 该 √ 已排版过（对整段 HTML 重复跑 TEXH 会把 </span> 当成被开方式，
+       层层包出空壳根号，视觉上变成 √−3 / √−E），原样输出不再包裹 */
+    if (s.charAt(k + 1) === "<" && s.charAt(k + 2) === "/") { out += "\u221A"; i = k + 1; continue; }
+    let rad = null, end = k + 1;
+    if (s.charAt(k + 1) === "(") {
+      /* √(…) ：被开方式里常有标签，括号本身不在同一个文本片段里，必须整串扫 */
+      let depth = 0, p = k + 1;
+      while (p < s.length) {
+        const c = s.charAt(p);
+        if (c === "(") depth++;
+        else if (c === ")") { depth--; if (depth === 0) { rad = s.slice(k + 2, p); end = p + 1; break; } }
+        p++;
+      }
+    } else {
+      const e = TEXH_elemEnd(s, k + 1);
+      if (e > 0 && e - k < 500) { rad = s.slice(k + 1, e); end = e; }
+    }
+    if (rad !== null && rad.length) {
+      out += "<span class=\"sqrt\"><span class=\"rd\">\u221A</span><span class=\"rdc\">" + rad + "</span></span>";
+      i = end;
+    } else { out += "\u221A"; i = k + 1; }
+  }
+  return out + s.slice(i);
+}
+function TEXHpart(t) {
+  let s = t;
+  /* 根号：√ 或 √(A) → <span class="sqrt">√<span class="rd"><span class="rdc">A</span></span></span>（A 内不含嵌套括号） */
+  s = s.replace(/<span class="(?:op|rm|fn|v|u)">\u221A<\/span>/g, "\u221A");
+  s = s.replace(/\u221A<span class="(?:op|rm)">\(<\/span>([^()]{1,120}?)<span class="(?:op|rm)">\)<\/span>/g, function (m, a) {
+    return "<span class=\"sqrt\"><span class=\"rd\">\u221A</span><span class=\"rdc\">" + a + "</span></span>";
+  });
+  s = s.replace(/\u221A\(([^()]{1,120})\)/g, function (m, a) {
+    return "<span class=\"sqrt\"><span class=\"rd\">\u221A</span><span class=\"rdc\">" + a + "</span></span>";
+  });
+  s = s.replace(/\u221A([A-Za-z0-9\u0370-\u03ff]{1,6})/g, function (m, a) {
+    return "<span class=\"sqrt\"><span class=\"rd\">\u221A</span><span class=\"rdc\">" + a + "</span></span>";
+  });
+  s = s.replace(/(\d(?:\.\d+)?)e([+-])(\d+)/g, function (m, a, sg, e) {
+    return a + "\u00d710<sup>" + (sg === "-" ? "\u2212" : "") + e + "</sup>";
+  });
+  s = s.replace(/([A-Za-z\u0370-\u03ff)\]])\^\{([^{}]{1,12})\}/g, "$1<sup>$2</sup>");
+  s = s.replace(/([A-Za-z\u0370-\u03ff)\]])\^(\d+(?:\.\d+)?)/g, "$1<sup>$2</sup>");
+  s = s.replace(/([A-Za-z\u0370-\u03ff])_\{([A-Za-z0-9\u0370-\u03ff+\-]{1,8})\}/g, "<span class='m'><i>$1</i><sub>$2</sub></span>");
+  s = s.replace(/([A-Za-z\u0370-\u03ff])_([A-Za-z0-9\u0370-\u03ff]{1,6})(?![A-Za-z0-9])/g, "<span class='m'><i>$1</i><sub>$2</sub></span>");
+  if (/[\u2070-\u209C\u00B2\u00B3\u00B9]/.test(s)) {
+    let out = "", i = 0;
+    while (i < s.length) {
+      const ch = s[i];
+      if (AUTOH_SUP[ch] !== undefined || AUTOH_SUB[ch] !== undefined) {
+        const isSup = AUTOH_SUP[ch] !== undefined, tab = isSup ? AUTOH_SUP : AUTOH_SUB;
+        let j = i, buf = "";
+        while (j < s.length && (isSup ? AUTOH_SUP[s[j]] !== undefined : AUTOH_SUB[s[j]] !== undefined)) {
+          buf += tab[s[j]]; j++;
+        }
+        out += "<" + (isSup ? "sup" : "sub") + ">" + buf + "</" + (isSup ? "sup" : "sub") + ">";
+        i = j;
+      } else { out += ch; i++; }
+    }
+    s = out;
+  }
+  return s.indexOf("\u221A") >= 0 ? TEXHsqrtElem(s) : s;
+}
+/* 只有真正的标签才整段跳过：正文里裸写的 '<'（如 "t₂ < 0"）必须当普通字符，
+   否则 indexOf('>') 会一路吞掉后面整段，E₂⁰ 这类记法就漏排了。 */
+function TEXH_tagEnd(h, i) {
+  if (h.charAt(i) !== "<") return -1;
+  const c = h.charAt(i + 1);
+  if (c === "!" || c === "/") { const j = h.indexOf(">", i); return (j >= 0 && j - i < 300) ? j + 1 : -1; }
+  if (!/[A-Za-z]/.test(c)) return -1;
+  let j = i + 1;
+  while (j < h.length && /[A-Za-z0-9]/.test(h.charAt(j))) j++;
+  if (j === i + 1) return -1;
+  if (h.charAt(j) === ">") return j + 1;
+  if (h.charAt(j) !== " " && h.charAt(j) !== "\n" && h.charAt(j) !== "\t") return -1;
+  const g = h.indexOf(">", j), nx = h.indexOf("<", j);
+  if (g < 0 || g - i > 300) return -1;
+  if (nx >= 0 && nx < g) return -1;
+  return g + 1;
+}
+function TEXH(h) {
+  if (typeof h !== "string" || !TEXH_NEED.test(h)) return h;
+  if (h.indexOf("\u221A") >= 0) h = h.replace(/<span class="(?:op|rm|fn|v|u)">\u221A<\/span>/g, "\u221A");
+  if (h.indexOf("<") < 0) return TEXHpart(h);
+  let out = "", i = 0, n = h.length, guard = 0;
+  while (i < n && guard++ < 40000) {
+    const e = TEXH_tagEnd(h, i);
+    if (e > 0) { out += h.slice(i, e); i = e; continue; }
+    let j = i;
+    while (j < n && TEXH_tagEnd(h, j) <= 0) j++;
+    out += TEXHpart(h.slice(i, j)); i = j;
+  }
+  const r = out + h.slice(i);
+  return r.indexOf("\u221A") >= 0 ? TEXHsqrtElem(r) : r;
+}
+(function hookHTML() {
+  if (window.__TEXH_HOOK) return; window.__TEXH_HOOK = 1;
+  const d = Object.getOwnPropertyDescriptor(Element.prototype, "innerHTML");
+  if (!d || !d.set) return;
+  Object.defineProperty(Element.prototype, "innerHTML", {
+    configurable: true, get: d.get,
+    set: function (v) { d.set.call(this, typeof v === "string" ? TEXH(v) : v); }
+  });
+  /* insertAdjacentHTML 也会被用到 */
+  const ia = Element.prototype.insertAdjacentHTML;
+  Element.prototype.insertAdjacentHTML = function (pos, v) {
+    return ia.call(this, pos, typeof v === "string" ? TEXH(v) : v);
+  };
+})();
+
+/* ---------------- 画布自动 LaTeX 排版 ----------------
+   老调用点 txt(g, "cm⁻³") / txt(g, "E_c") / txt(g, "2.5e+8") 一行都不用改，
+   只要在绘制前把字符串解析成分段零件即可。规则与网页侧一致：
+   物理量斜体、描述性下标与单位正体、幂次用真上标（不用 Unicode 伪字符）。 */
+const SUPMAP = { "⁰": "0", "¹": "1", "²": "2", "³": "3", "⁴": "4", "⁵": "5", "⁶": "6",
+  "⁷": "7", "⁸": "8", "⁹": "9", "⁺": "+", "⁻": "−", "⁼": "=", "⁽": "(", "⁾": ")", "ⁿ": "n", "ⁱ": "i" };
+const SUBMAP = { "₀": "0", "₁": "1", "₂": "2", "₃": "3", "₄": "4", "₅": "5", "₆": "6",
+  "₇": "7", "₈": "8", "₉": "9", "₊": "+", "₋": "−", "₌": "=", "₍": "(", "₎": ")",
+  "ₐ": "a", "ₑ": "e", "ₒ": "o", "ₓ": "x", "ₔ": "ə", "ₕ": "h", "ₖ": "k", "ₗ": "l",
+  "ₘ": "m", "ₙ": "n", "ₚ": "p", "ₛ": "s", "ₜ": "t", "ᵣ": "r", "ᵤ": "u", "ᵥ": "v" };
+const MATH_IDCH = /[A-Za-z\u0370-\u03ff]/;
+const NEED_MATH = /[\u2070-\u209C\u00B2\u00B3\u00B9]|_\{?[A-Za-z0-9\u0370-\u03ff]|\^\{?[\d(\-]|\d(\.\d+)?[eE][+\-]\d/;
+function AUTO(s) {
+  const out = [];
+  let buf = "", mode = 0;
+  const emit = (t, kind) => {
+    if (!t) return;
+    if (kind === 1) out.push({ s: t, sup: true });
+    else if (kind === -1) out.push({ s: t, sub: true });
+    else out.push({ s: t });
+  };
+  let i = 0, italicAll = false;
+  while (i < s.length) {
+    const ch = s[i];
+    if (SUPMAP[ch] !== undefined) { if (mode !== 1) { emit(buf, mode); buf = ""; mode = 1; } buf += SUPMAP[ch]; i++; continue; }
+    if (SUBMAP[ch] !== undefined) { if (mode !== -1) { emit(buf, mode); buf = ""; mode = -1; } buf += SUBMAP[ch]; i++; continue; }
+    if (mode) { emit(buf, mode); buf = ""; mode = 0; }
+    const rest = s.slice(i);
+    const sc = /^\d(\.\d+)?[eE][+\-]\d{1,3}/.exec(rest);       /* ASCII 伪科学计数 2.5e+8 */
+    if (sc) {
+      const parts = sc[0].split(/[eE]/);
+      emit(parts[0] + "\u00d710", 0); emit(String(+parts[1]).replace("-", "\u2212"), 1);
+      i += sc[0].length; continue;
+    }
+    if (MATH_IDCH.test(ch) && i + 1 < s.length && (s[i + 1] === "_" || s[i + 1] === "^")) {
+      const sup = s[i + 1] === "^";
+      let j = i + 2, grp = "";
+      if (s[j] === "{") { const e = s.indexOf("}", j); if (e > 0) { grp = s.slice(j + 1, e); j = e + 1; } }
+      else {
+        const RCJK = /[\u2E80-\u9FFF]/, RASC = /[A-Za-z0-9\u0370-\u03ff+\-]/;
+        if (RCJK.test(s[j])) { while (j < s.length && RCJK.test(s[j]) && j - i < 8) j++; }   /* 中文描述性下标：τ_直接、E_声子 */
+        else { while (j < s.length && RASC.test(s[j])) j++; }
+        grp = s.slice(i + 2, j);
+      }
+      if (grp) {
+        emit(ch, 0);
+        if (italicAll || /^[A-Za-z\u0370-\u03ff]$/.test(ch)) out[out.length - 1].i = true;
+        emit(sup ? grp.replace(/-/g, "\u2212") : grp, sup ? 1 : -1);
+        i = j; continue;
+      }
+    }
+    buf += ch; i++;
+  }
+  emit(buf, mode);
+  return out;
+}
+function fontInfo(font, dflt) {
+  const f = String(font || "");
+  const m = /(\d+(?:\.\d+)?)px/.exec(f);
+  return { fp: m ? parseFloat(m[1]) : (dflt || 12), bd: /bold|70\d|600/.test(f), it: /italic|oblique/.test(f) };
+}
+
+/* ---------------- HTML 字符串 → 画布零件（网页与画布共用同一份排版） ----------------
+   mtxt(g, TX(H_NA), x, y, col, fp) —— H_* 常量本来就在喂 innerHTML，
+   再喂给 TX() 就不会出现「网页斜体、画布正体」的两边不一致。
+   <i> 斜体、<sub> 下标、<sup> 上标；<span class="op|un|rm|sqrt|frac"> 只剥标签（保持正体）。 */
+const catA = (...a) => [].concat(...a);
+function TX(h) {
+  const t = String(h == null ? "" : h)
+    .replace(/<span\b[^>]*>/g, "").replace(/<\/span>/g, "")
+    .replace(/<i\b[^>]*>/g, "<i>").replace(/<b\b[^>]*>/g, "").replace(/<\/b>/g, "")
+    .replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&").replace(/&nbsp;/g, " ");
+  const out = [], re = /<i>([\s\S]*?)<\/i>|<sub>([\s\S]*?)<\/sub>|<sup>([\s\S]*?)<\/sup>|([^<]+)/g;
+  let m;
+  while ((m = re.exec(t))) {
+    const raw = s => s == null ? null : s.replace(/<[^>]*>/g, "");
+    if (m[1] != null) out.push({ s: raw(m[1]), i: true });
+    else if (m[2] != null) out.push({ s: raw(m[2]), sub: true });
+    else if (m[3] != null) out.push({ s: raw(m[3]), sup: true });
+    else if (m[4]) out.push({ s: m[4] });
+  }
+  return out;
+}
+function TXof(...a) { return catA(...a.map(TX)); }
+
+
+function PSci(v, n) {
+  if (!isFinite(v) || v === 0) return [{ s: "0" }];
+  const e = Math.floor(Math.log10(Math.abs(v)));
+  const m = (v / Math.pow(10, e)).toFixed(n === undefined ? 1 : n);
+  /* 1 ≦ |v| < 10 时直接写尾数，不再拖一个 ×10⁰（与 sciH 一致） */
+  if (e === 0) return [{ s: m }];
+  /* 指数负号用 U+2212 */
+  return [{ s: m + "×10" },
+          { s: String(e).replace("-", "−"), sup: true }];
+}
+
+/* ---------------- 0. 小工具 ---------------- */
+const $ = id => document.getElementById(id);
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const fmt = (v, n) => (isFinite(v) ? v.toFixed(n === undefined ? 2 : n) : "—");
+const MM = h => '<span class="m">' + h + "</span>";
+
+/* ---------------- 3. 画布与画布内排版 ---------------- */
+const CV = {};
+function fitCanvas(id) {
+  const el = $(id);
+  if (!el || !el.clientWidth) return null;
+  const w = el.clientWidth, h = +el.dataset.h;
+  const dpr = window.devicePixelRatio || 1;
+  el.width = Math.round(w * dpr); el.height = Math.round(h * dpr);
+  el.style.height = h + "px";
+  const g = el.getContext("2d");
+  g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  CV[id] = { g: g, W: w, H: h, el: el };
+  return CV[id];
+}
+function fitAll() { ["chain", "disp", "zoom"].forEach(fitCanvas); }
+
+const FONT = "\"Microsoft YaHei\",\"PingFang SC\",sans-serif";
+const FONTM = "\"Cambria Math\",\"Times New Roman\",Times,serif";
+const SUBR = 0.74, SUBDY = 0.22, SUPDY = 0.40;
+const C_AC = "#1976d2", C_OP = "#d94a3d";
+const C_HEAVY = "#2f4a6b", C_LIGHT = "#7fb2e3";
+const C_ARROW = "#ef8c1a", C_SUB = "#6b7a8c", C_GRID = "#e7edf4", C_REF = "#9aa5b1";
+
+function txt(g, s, x, y, col, font, align, base) {
+  g.fillStyle = col; g.font = font || "12px " + FONT;
+  g.textAlign = align || "left"; g.textBaseline = base || "middle";
+  if (typeof s === "string" && NEED_MATH.test(s)) {
+    const fi = fontInfo(font, 12);
+    mRun(g, AUTO(s), x, y, fi.fp, fi.bd, align || "left", false);
+    return;
+  }
+  g.fillText(s, x, y);
+}
+function txtHalo(g, s, x, y, col, font, align, base) {
+  g.font = font || "12px " + FONT;  g.textAlign = align || "left"; g.textBaseline = base || "middle";
+  g.lineJoin = "round"; g.strokeStyle = "rgba(255,255,255,0.94)"; g.lineWidth = 3.2;
+  if (typeof s === "string" && NEED_MATH.test(s)) {
+    const fi = fontInfo(font, 12), parts = AUTO(s);
+    g.lineJoin = "round";
+    mRun(g, parts, x, y, fi.fp, fi.bd, align || "left", true);
+    g.fillStyle = col;
+    mRun(g, parts, x, y, fi.fp, fi.bd, align || "left", false);
+    return;
+  }
+  g.strokeText(s, x, y); g.fillStyle = col; g.fillText(s, x, y);
+}
+function isCJKch(ch) {
+  const c = ch.codePointAt(0);
+  return (c >= 0x2E80 && c <= 0x9FFF) || (c >= 0xF900 && c <= 0xFAFF) ||
+    (c >= 0xFF00 && c <= 0xFF60) || c === 0x2014 || c === 0x2015 || c === 0x2026;
+}
+function segRuns(s) {
+  const out = []; let cur = "", curC = null;
+  for (const ch of s) {
+    const c = isCJKch(ch);
+    if (curC === null) { cur = ch; curC = c; }
+    else if (c === curC) cur += ch;
+    else { out.push({ s: cur, cjk: curC }); cur = ch; curC = c; }
+  }
+  if (cur) out.push({ s: cur, cjk: curC });
+  return out;
+}
+function pFont(q, fp, bd, cjk) {
+  const sz = fp * ((q.sub || q.sup) ? SUBR : 1);
+  return (bd ? "bold " : "") + (!cjk && q.i ? "italic " : "") + sz.toFixed(2) + "px " + (cjk ? FONT : FONTM);
+}
+/* i18n 注入点①：画布 token。带 i / sub / sup / un 标记的是物理量、下标与单位，一律不动；
+   没有这些标记的 token 才是自然语言，交给 T() —— 所以这里的判断只看标记，不看内容。 */
+const partsOf = p => p.map(q => {
+  const o = (typeof q === "string" ? { s: q } : q);
+  const natural = !(o.i || o.sub || o.sup || o.un);
+  if (LANG === "en" && natural && typeof o.s === "string" && /[\u4E00-\u9FFF]/.test(o.s)) {
+    const t = T(o.s);
+    return t === o.s ? o : Object.assign({}, o, { s: t });
+  }
+  return o;
+});
+function mMeasure(g, parts, fp, bd) {
+  let w = 0;
+  for (const q of partsOf(parts))
+    for (const sg of segRuns(q.s)) { g.font = pFont(q, fp, bd, sg.cjk); w += g.measureText(sg.s).width; }
+  return w;
+}
+function mRun(g, parts, x, y, fp, bd, align, stroke) {
+  const ps = partsOf(parts), w = mMeasure(g, ps, fp, bd);
+  let cx = align === "right" ? x - w : (align === "center" ? x - w / 2 : x);
+  g.textAlign = "left"; g.textBaseline = "middle"; g.lineJoin = "round";
+  for (const q of ps) {
+    const dy = q.sub ? fp * SUBDY : (q.sup ? -fp * SUPDY : 0);
+    for (const sg of segRuns(q.s)) {
+      g.font = pFont(q, fp, bd, sg.cjk);
+      if (stroke) { g.lineWidth = (q.sub || q.sup) ? 2.4 : 3.2; g.strokeText(sg.s, cx, y + dy); }
+      else g.fillText(sg.s, cx, y + dy);
+      cx += g.measureText(sg.s).width;
+    }
+  }
+}
+function mtxt(g, parts, x, y, col, fp, align, bd) {
+  g.fillStyle = col; mRun(g, parts, x, y, fp, bd || false, align, false);
+}
+function mtxtHalo(g, parts, x, y, col, fp, align, bd) {
+  g.strokeStyle = "rgba(255,255,255,0.94)";
+  mRun(g, parts, x, y, fp, bd || false, align, true);
+  mtxt(g, parts, x, y, col, fp, align, bd);
+}
+function line(g, x1, y1, x2, y2, col, lw, dash) {
+  g.save();
+  g.strokeStyle = col; g.lineWidth = lw || 1;
+  if (dash) g.setLineDash(dash);
+  g.beginPath(); g.moveTo(x1, y1); g.lineTo(x2, y2); g.stroke();
+  g.restore();
+}
+function arrowHead(g, x, y, ang, sz, col) {
+  g.save(); g.translate(x, y); g.rotate(ang);
+  g.beginPath(); g.moveTo(0, 0); g.lineTo(-sz, sz * 0.42); g.lineTo(-sz, -sz * 0.42);
+  g.closePath(); g.fillStyle = col; g.fill(); g.restore();
+}
+function arrow(g, x1, y1, x2, y2, col, lw, sz) {
+  const dx = x2 - x1, dy = y2 - y1, L = Math.hypot(dx, dy);
+  if (L < 0.5) return;
+  line(g, x1, y1, x2, y2, col, lw || 1.4);
+  arrowHead(g, x2, y2, Math.atan2(dy, dx), sz || 6, col);
+}
+function chip(g, s, x, y, col, font, align) {
+  g.font = font || "11px " + FONT;
+  const w = g.measureText(s).width, al = align || "left";
+  const bx = al === "right" ? x - w : (al === "center" ? x - w / 2 : x);
+  g.fillStyle = "rgba(255,255,255,0.92)";
+  g.fillRect(bx - 4, y - 8, w + 8, 16);
+  txt(g, s, bx, y, col, font, "left", "middle");
+}
+
+
+"use strict";
+/* ==================================================================
+   载流子漂移与扩散运动交互教学工具
+   模型：一维半导体棒（长 Lx = 10 μm，周期边界），N = 400 个载流子。
+   每个载流子的运动 = 无规热运动（布朗，步长 σ = √(2DΔt)） + 定向漂移 v_d。
+     v_d = μE / (1 + μE/v_sat)     ← 低场线性、高场饱和（Caughey–Thomas 型）
+     μ    = μ₃₀₀ (Si 室温值)       ← 本工具 T 固定 300 K，不讨论 μ(T)（属散射机制范畴）
+     D    = μ kT/q                 ← 爱因斯坦关系（低场、非简并近似；不随场强做热载流子修正）
+     τ    = μ m* / q               ← 平均自由时间
+     v_th = √(3kT/m*)              ← 热运动速度
+   浓度演化（与粒子同步、同一组参数）：
+     ∂n/∂t = D ∂²n/∂x² − v_d ∂n/∂x   （漂移项用迎风格式）
+   单位约定：长度 μm，时间 ps，速度 μm/ps（v[cm/s] × 1e-8），扩散系数 μm²/ps（D[cm²/s] × 1e-4）。
+   ================================================================== */
+
+/* ---------------- 1. 常数与状态 ---------------- */
+const Q_E = 1.602176634e-19;      // C
+const K_B = 1.380649e-23;         // J/K
+const M_0 = 9.1093837015e-31;     // kg
+const KB_Q = K_B / Q_E;           // k/q  V/K
+
+/* 半导体固定为 Si —— 本工具不提供材料切换按钮，注意力集中在「漂移 vs 扩散」的对比上。
+   mue/muh：300 K 迁移率 (cm²/(V·s))；me/mh：有效质量 (m0)；vsat：饱和速度 (cm/s) */
+const MATS = [
+  { name: "Si", mue: 1400, muh: 450, me: 0.26, mh: 0.39, vsat: 1.00e7,
+    note: "半导体固定为 <b>Si</b>（间接带隙、室温以声子散射为主）：电子迁移率 1400、空穴 450 cm²/V·s，" +
+          "有效质量 0.26 / 0.39 m₀，饱和速度 1.0×10⁷ cm/s。换载流子即可看到 <span class='m'><i>μ</i></span> 与 <span class='m'><i>D</i></span> 相差约 3 倍。" }
+];
+
+/* 情境 = 两个正交开关的组合，不是独立的一档设置：
+     开关一 Eon（有无电场）⇒ 只产生漂移；开关二 Grad（有无浓度梯度）⇒ 只产生扩散。
+   2×2 恰好穷尽四个教学场景，场景名永远由当前开关状态推导，不会出现“名叫纯漂移、画面里却在扩散”。*/
+const E_STEP = 200;                // “加电场”档：200/100 = 2.0 kV/cm
+const SCEN = [
+  { name: "纯热运动",  Eon: false, grad: false, note: "无电场 + 浓度均匀：粒子乱走，平均位移始终在 0 附近抖动 —— 热运动不产生净位移。" },
+  { name: "纯漂移",    Eon: true,  grad: false, note: "有电场 + 浓度均匀：没有浓度梯度就没有扩散，只有整体平移（右边出、左边进）。" },
+  { name: "纯扩散",    Eon: false, grad: true,  note: "无电场 + 高斯峰：峰只在原地展宽变矮，中心不动 —— 这就是扩散。" },
+  { name: "漂移＋扩散", Eon: true,  grad: true,  note: "有电场 + 高斯峰：一边展宽一边整体平移，两种效应叠加。" }
+];
+function scenIdx() { return (OPT.E > 0 ? 1 : 0) + (OPT.init === "gauss" ? 2 : 0); }
+function setScen(i) { const s = SCEN[i]; OPT.E = s.Eon ? E_STEP : 0; OPT.init = s.grad ? "gauss" : "uniform"; }
+
+const LX = 10;                    // 棒长 μm
+const MGRID = 240;                // 浓度格点数
+const DX = LX / MGRID;
+const NPART = 400;                // 载流子数
+const DT = 0.04;                  // 模拟步长 ps
+const SUB_BASE = 14;              // 每帧子步数（× 速度倍率）
+
+const OPT = {
+  carrier: "e",                   // carrier：e（电子）/ h（空穴）；半导体固定为 Si，无材料选项
+  T: 300, E: E_STEP,              // T 固定 300 K；E：0 或 E_STEP（/100 = kV/cm）
+  init: "uniform", sig: 0.80,     // sig 固定 0.80 μm；init：uniform（无梯度）/ gauss（有梯度）
+  playing: true, speed: 1.0,
+  ckTrail: true, ckTrace: true, ckMean: true, ckField: true, ckPde: true, ckHist: true
+};
+
+/* ---------------- 2. 物理内核 ---------------- */
+/* 半导体固定为 Si（不提供材料切换） */
+function matNow() { return MATS[0]; }
+/* cm²/(V·s)。本工具 T 恒为 300 K（无温度控件），故 μ 直接取 300 K 值，
+   不再写 μ(T) = μ₃₀₀(T/300)^(−3/2) 这类永远取 1 的死分支。 */
+function muNow() {
+  const M = matNow();
+  return OPT.carrier === "e" ? M.mue : M.muh;
+}
+function mStar() { const M = matNow(); return (OPT.carrier === "e" ? M.me : M.mh) * M_0; }
+function vsatNow() { const M = matNow(); return OPT.carrier === "e" ? M.vsat : M.vsat * 0.8; }
+function Efield() { return OPT.E / 100 * 1e3; }            // V/cm
+function vDrift() {                                        // cm/s（含饱和）
+  const mu = muNow(), E = Efield(), vs = vsatNow();
+  const vlin = mu * E;
+  return vlin / (1 + vlin / vs);
+}
+function diffD() { return muNow() * KB_Q * OPT.T; }          // cm²/s
+function tauSc() { return muNow() * 1e-4 * mStar() / Q_E; }  // s
+function vTherm() { return Math.sqrt(3 * K_B * OPT.T / mStar()); }  // m/s
+
+/* 单位换算到 μm / ps */
+const D_PS = () => diffD() * 1e-4;          // μm²/ps
+const VD_PS = () => {                        // μm/ps，带符号（电子逆电场）
+  const v = vDrift() * 1e-8;
+  return OPT.carrier === "e" ? -v : v;
+};
+
+/* 派生量（缓存） */
+let DK = null, DKKEY = "";
+function der() {
+  const key = [OPT.carrier, OPT.T, OPT.E].join("|");
+  if (DK && DKKEY === key) return DK;
+  const mu = muNow(), D = diffD(), vd = vDrift();
+  DK = {
+    mu: mu, D: D, Dps: D * 1e-4, vd: vd, vdps: VD_PS(),
+    vsat: vsatNow(), tau: tauSc(), vth: vTherm() * 100,     // cm/s
+    kTq: KB_Q * OPT.T,                                       // V
+    sigStep: Math.sqrt(2 * D * 1e-4 * DT),                   // 每子步随机位移 μm
+    E: Efield(), mstar: mStar() / M_0
+  };
+  DKKEY = key;
+  return DK;
+}
+
+/* ---------------- 3. 粒子系统与浓度场 ---------------- */
+let PARTS = [];
+let CONC = new Float64Array(MGRID);
+let YFIX = 2.0;                 // 模块二纵轴量程：重置时按初始分布定一次，之后恒定不变
+/* 纵轴量程取「不小于 1.12×初始峰值」的最小整档 —— 四条网格线都落在好读的数上，
+   且因为浓度只会被扩散摊平、峰值不会长高，所以初始峰值就是全程上界，曲线永远不出框。 */
+const Y_LADDER = [2.0, 2.4, 3.0, 4.0, 5.0, 6.0, 8.0, 10.0, 12.0, 16.0, 20.0, 25.0, 30.0];
+function yLadder(peak) {
+  const need = Math.max(1.12 * peak, 2.0);
+  for (const v of Y_LADDER) if (v >= need - 1e-9) return v;
+  return Y_LADDER[Y_LADDER.length - 1];
+}
+let SIMT = 0;
+let TRAIL_MAX = 9;
+/* 示踪粒子：从 400 个里挑 4 个单独染色、留长尾迹，用来盯住“单个粒子”看随机行走 */
+let TRACE = [];
+const N_TRACE = 4;
+const C_TR = "#7b1fa2";                 // 示踪色（统一一种，避免与主色蓝/红混淆）
+const TTRAIL_MAX = 120;                 // 示踪尾迹长度（普通轨迹只有 9 个点）
+let NCROSS = 0;               // 净穿界计数：向左穿出 − 向右穿出（周期边界下漂移的直接证据）
+
+function gauss() {
+  let u = 0, v = 0;
+  while (u === 0) u = Math.random();
+  while (v === 0) v = Math.random();
+  return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+}
+
+function initProfile(x) {          // x：μm，返回相对浓度（峰值归一到 1 附近）
+  const x0 = LX / 2, s = Math.max(0.15, OPT.sig);
+  if (OPT.init === "gauss") return Math.exp(-((x - x0) * (x - x0)) / (2 * s * s));
+  return 1;
+}
+
+function resetSim() {
+  /* 浓度场 */
+  let tot = 0;
+  for (let i = 0; i < MGRID; i++) { CONC[i] = initProfile((i + 0.5) * DX); tot += CONC[i]; }
+  for (let i = 0; i < MGRID; i++) CONC[i] *= MGRID / tot;      // 归一到平均 1
+  /* 纵轴量程在此定死：只由「初始分布」决定，此后不随时间/演化变化
+     —— 否则峰一边变矮、坐标一边收缩，看不出衰减到底有多快。 */
+  let cmax0 = 0;
+  for (let i = 0; i < MGRID; i++) cmax0 = Math.max(cmax0, CONC[i]);
+  YFIX = yLadder(cmax0);
+  /* 粒子（按浓度拒绝采样） */
+  PARTS = [];
+  let cnt = 0, guard = 0;
+  while (cnt < NPART && guard < NPART * 200) {
+    guard++;
+    const x = Math.random() * LX, xi = Math.min(MGRID - 1, Math.floor(x / DX));
+    if (Math.random() * cmax0 > CONC[xi]) continue;
+    PARTS.push({
+      x: x, y: (Math.random() - 0.5) * 0.8,        // y 归一化到 [-0.4, 0.4]
+      s: 0, x0: x, trail: [], tr: -1, ttrail: []
+    });
+    cnt++;
+  }
+  while (PARTS.length < NPART) {                    // 兜底
+    PARTS.push({ x: Math.random() * LX, y: (Math.random() - 0.5) * 0.8, s: 0, x0: Math.random() * LX, trail: [], tr: -1, ttrail: [] });
+  }
+  SIMT = 0; PHASE = 0; NCROSS = 0;
+  pickTrace();
+}
+
+/* 挑 4 个示踪粒子：尽量分散在棒的不同位置，便于分别观察 */
+function pickTrace() {
+  TRACE = [];
+  const want = [0.15, 0.40, 0.65, 0.90];
+  for (const w of want) {
+    let best = null, bd = 1e9;
+    for (const p of PARTS) {
+      if (p.tr >= 0) continue;
+      const dd = Math.abs(p.x - w * LX);
+      if (dd < bd) { bd = dd; best = p; }
+    }
+    if (best) { best.tr = TRACE.length; best.ttrail = []; TRACE.push(best); }
+  }
+}
+
+/* 一个子步：更新粒子 + 浓度场 */
+function stepSim(dt) {
+  const d = der();
+  const vd = d.vdps, sg = Math.sqrt(2 * d.Dps * dt);
+  for (const p of PARTS) {
+    const dxr = vd * dt + sg * gauss();
+    const dyr = sg * gauss();
+    p.x += dxr; p.y += dyr; p.s += dxr;         // s：累计位移（展开坐标，不经周期 wrap）
+    /* 穿界：坐标折回 ⇒ 轨迹必须断开，否则拖尾会横穿整幅图，看着像"瞬移" */
+    if (p.x >= LX) { p.x -= LX; NCROSS--; p.trail.length = 0; }
+    else if (p.x < 0) { p.x += LX; NCROSS++; p.trail.length = 0; }
+    if (p.y > 0.42) { p.y = 0.84 - p.y; } else if (p.y < -0.42) { p.y = -0.84 - p.y; }
+    if (OPT.ckTrail) {
+      p.trail.push(p.x, p.y);
+      if (p.trail.length > TRAIL_MAX * 2) p.trail.splice(0, p.trail.length - TRAIL_MAX * 2);
+    } else if (p.trail.length) p.trail.length = 0;
+    /* 示踪尾迹：明显更长；跨周期边界时坐标会跳，绘制时按跳变断开，不清空 */
+    if (OPT.ckTrace && p.tr >= 0) {
+      p.ttrail.push(p.x, p.y);
+      if (p.ttrail.length > TTRAIL_MAX * 2) p.ttrail.splice(0, p.ttrail.length - TTRAIL_MAX * 2);
+    } else if (p.ttrail && p.ttrail.length) p.ttrail.length = 0;
+  }
+  /* 浓度场：显式迎风 */
+  const nx = new Float64Array(MGRID);
+  const Dp = d.Dps;
+  for (let i = 0; i < MGRID; i++) {
+    const ip = (i + 1) % MGRID, im = (i - 1 + MGRID) % MGRID;
+    const dif = Dp * (CONC[ip] - 2 * CONC[i] + CONC[im]) / (DX * DX);
+    const drf = vd > 0 ? -vd * (CONC[i] - CONC[im]) / DX : -vd * (CONC[ip] - CONC[i]) / DX;
+    nx[i] = CONC[i] + dt * (dif + drf);
+    if (nx[i] < 0) nx[i] = 0;
+  }
+  CONC = nx;
+  SIMT += dt;
+}
+
+/* 统计量（基于累计位移 s = 展开坐标，不受周期边界折回影响） */
+function stats() {
+  let s1 = 0, s2 = 0;
+  for (const p of PARTS) { s1 += p.s; s2 += p.s * p.s; }
+  const n = PARTS.length;
+  return { mean: s1 / n, msd: s2 / n, cross: NCROSS };
+}
+
+/* 浓度梯度（峰值附近用于平衡电场） */
+function gradInfo() {
+  let bi = 0, bv = -1;
+  for (let i = 0; i < MGRID; i++) if (CONC[i] > bv) { bv = CONC[i]; bi = i; }
+  let maxRel = 0;
+  for (let i = 0; i < MGRID; i++) {
+    const ip = (i + 1) % MGRID, im = (i - 1 + MGRID) % MGRID;
+    const g = (CONC[ip] - CONC[im]) / (2 * DX);
+    const rel = Math.abs(g) / Math.max(CONC[i], 1e-9);
+    if (rel > maxRel && CONC[i] > 0.15 * bv) maxRel = rel;
+  }
+  return { peak: bv, peakIdx: bi, relGrad: maxRel };
+}
+
+
+let PHASE = 0;
+function fitAll() { ["sim", "conc"].forEach(fitCanvas); }
+
+/* ---------------- 4. 模块一：粒子模拟视图 ---------------- */
+const HOV = { sim: null, conc: null };
+const C_E = "#2f6fb5", C_H = "#c9483c", C_FLD = "#ef8c1a", C_MEAN = "#2e9e5b";
+
+function simGeom(W, H) {
+  const L = 58, R = W - 18, T = 44, B = H - 34;
+  return { L: L, R: R, T: T, B: B, cy: (T + B) / 2, half: Math.min(52, (B - T) / 2 - 6) };
+}
+
+/* 图上文字的统一外观：不透明白底圆角框 + 浅灰描边，保证压在粒子/柱子上也清晰 */
+function tagBox(g, s, x, y, col, font, align) {
+  g.font = font || "11px " + FONT;
+  const w = g.measureText(s).width, al = align || "left";
+  const bx = al === "right" ? x - w : (al === "center" ? x - w / 2 : x);
+  const rx = bx - 5, ry = y - 9, rw = w + 10, rh = 18;
+  g.fillStyle = "rgba(255,255,255,0.97)"; g.strokeStyle = "#d7dfe8"; g.lineWidth = 1;
+  g.beginPath();
+  if (g.roundRect) { g.roundRect(rx, ry, rw, rh, 4); g.fill(); g.stroke(); }
+  else { g.fillRect(rx, ry, rw, rh); g.strokeRect(rx, ry, rw, rh); }
+  txt(g, s, bx, y, col, font, "left", "middle");
+}
+
+function drawSim() {
+  const c = CV.sim || fitCanvas("sim"); if (!c) return;
+  const g = c.g, W = c.W, H = c.H, d = der();
+  g.clearRect(0, 0, W, H);
+  g.fillStyle = "#fff"; g.fillRect(0, 0, W, H);
+  const G = simGeom(W, H), L = G.L, R = G.R, cy = G.cy, hh = G.half;
+  const sx = (R - L) / LX;
+  const X = x => L + x * sx;
+  const Y = y => cy - y * hh * 2;          // y∈[-0.42,0.42]
+
+  /* 棒的边框 */
+  g.fillStyle = "#f5f8fb"; g.fillRect(L, cy - hh, R - L, hh * 2);
+  line(g, L, cy - hh, R, cy - hh, "#c9d6e4", 1.2);
+  line(g, L, cy + hh, R, cy + hh, "#c9d6e4", 1.2);
+  line(g, L, cy - hh, L, cy + hh, "#c9d6e4", 1.2);
+  line(g, R, cy - hh, R, cy + hh, "#c9d6e4", 1.2);
+  txt(g, "半导体样品（一维，周期边界）", L, cy - hh - 12, C_SUB, "11px " + FONT);
+
+  /* 电场箭头 */
+  if (OPT.ckField) {
+    const ey = G.T - 6;
+    const dir = Efield() > 0 ? 1 : -1;
+    const x1 = L + 8, x2 = R - 8;
+    if (Math.abs(Efield()) > 1e-9) {
+      const nA = 7;
+      for (let i = 0; i < nA; i++) {
+        const xa = L + (R - L) * (i + 0.5) / nA;
+        arrow(g, xa - dir * 16, ey, xa + dir * 16, ey, C_FLD, 1.6, 5);
+      }
+      txt(g, "电场 E = " + fmt(Efield() / 1000, 2) + " kV/cm →", x1, ey - 13, C_FLD, "11.5px " + FONT);
+      /* 漂移方向 */
+      const vdir = d.vdps > 0 ? 1 : -1;
+      const dy2 = cy + hh + 16;
+      arrow(g, (L + R) / 2 - vdir * 60, dy2, (L + R) / 2 + vdir * 60, dy2,
+        OPT.carrier === "e" ? C_E : C_H, 2, 6.5);
+      txt(g, (OPT.carrier === "e" ? "电子" : "空穴") + "漂移方向 v_d = " + fmt(d.vd / 1e5, 2) + "×10⁵ cm/s",
+        (L + R) / 2, dy2 + 14, OPT.carrier === "e" ? C_E : C_H, "11.5px " + FONT, "center");
+    } else {
+      txt(g, "电场 E = 0（纯热运动）", (L + R) / 2, ey, C_SUB, "11.5px " + FONT, "center");
+    }
+  }
+
+  /* 粒子轨迹 */
+  if (OPT.ckTrail) {
+    g.strokeStyle = OPT.carrier === "e" ? "rgba(47,111,181,.30)" : "rgba(201,72,60,.30)";
+    g.lineWidth = 1;
+    for (const p of PARTS) {
+      if (p.trail.length < 4) continue;
+      g.beginPath();
+      for (let i = 0; i < p.trail.length; i += 2) {
+        const px = X(p.trail[i]), py = Y(p.trail[i + 1]);
+        i === 0 ? g.moveTo(px, py) : g.lineTo(px, py);
+      }
+      g.stroke();
+    }
+  }
+
+  /* 示踪粒子的长尾迹（画在普通轨迹之上：紫色、更长的随机行走路径） */
+  if (OPT.ckTrace) {
+    g.strokeStyle = C_TR; g.lineWidth = 1.3; g.globalAlpha = 0.55;
+    for (const p of TRACE) {
+      if (!p.ttrail || p.ttrail.length < 4) continue;
+      g.beginPath();
+      let prev = null;
+      for (let i = 0; i < p.ttrail.length; i += 2) {
+        const px = X(p.ttrail[i]), py = Y(p.ttrail[i + 1]);
+        /* 周期边界折回：相邻两点跨度超过半个棒 ⇒ 断开，否则会画出一条横穿全图的假线 */
+        if (prev === null || Math.abs(px - prev) > (R - L) * 0.5) g.moveTo(px, py);
+        else g.lineTo(px, py);
+        prev = px;
+      }
+      g.stroke();
+    }
+    g.globalAlpha = 1;
+  }
+
+  /* 粒子 */
+  const isE = OPT.carrier === "e";
+  for (const p of PARTS) {
+    const px = X(p.x), py = Y(p.y);
+    if (isE) {
+      g.beginPath(); g.arc(px, py, 3.1, 0, 6.2832);
+      g.fillStyle = C_E; g.fill();
+    } else {
+      g.fillStyle = C_H; g.fillRect(px - 2.8, py - 2.8, 5.6, 5.6);
+    }
+  }
+
+  /* 示踪粒子本体：紫色实心 + 同色外圈 + 编号，压在普通粒子之上 */
+  if (OPT.ckTrace) {
+    for (const p of TRACE) {
+      const px = X(p.x), py = Y(p.y);
+      g.beginPath(); g.arc(px, py, 6, 0, 6.2832);
+      g.strokeStyle = C_TR; g.lineWidth = 1.8; g.stroke();
+      g.beginPath(); g.arc(px, py, 3.4, 0, 6.2832);
+      g.fillStyle = C_TR; g.fill();
+      /* 编号始终留在棒内（贴边的粒子不会把编号顶到棒外的标题行上） */
+      txtHalo(g, String(p.tr + 1), px, clamp(py - 14, cy - hh + 8, cy + hh - 4), C_TR, "bold 9.5px " + FONT, "center");
+    }
+  }
+
+  /* 示踪粒子净位移卡片（棒内右上角，白底保证压在粒子上也清楚） */
+  if (OPT.ckTrace && TRACE.length) {
+    g.font = "10.5px " + FONT;
+    const items = TRACE.map(p => (p.s >= 0 ? "+" : "−") + fmt(Math.abs(p.s), 2));
+    let w = 14;                                  // 左右内边距
+    for (const s of items) w += 12 + g.measureText(s).width + 8;
+    w += g.measureText("μm").width + 4;
+    const cw = clamp(w, 150, R - L - 20), ch = 34;
+    const bx = R - 6 - cw, by = cy - hh + 4;
+    g.fillStyle = "rgba(255,255,255,0.95)"; g.strokeStyle = "#dfe6ee"; g.lineWidth = 1;
+    g.beginPath();
+    if (g.roundRect) { g.roundRect(bx, by, cw, ch, 4); g.fill(); g.stroke(); }
+    else { g.fillRect(bx, by, cw, ch); g.strokeRect(bx, by, cw, ch); }
+    txt(g, "示踪粒子净位移 Δx（μm）", bx + 8, by + 11, "#2c3e50", "10.5px " + FONT);
+    let tx = bx + 8;
+    TRACE.forEach((p, i) => {
+      const yy = by + 25;
+      g.beginPath(); g.arc(tx + 4.5, yy, 4.5, 0, 6.2832);
+      g.fillStyle = C_TR; g.fill();
+      txt(g, String(i + 1), tx + 4.5, yy, "#fff", "bold 8px " + FONTM, "center", "middle");
+      txt(g, items[i], tx + 12, yy, C_TR, "10.5px " + FONT, "left", "middle");
+      tx += 12 + g.measureText(items[i]).width + 8;
+    });
+    txt(g, "μm", tx + 2, by + 25, C_SUB, "10px " + FONT, "left", "middle");
+  }
+
+  /* 图例标签 */
+  txt(g, isE ? "● 电子" : "■ 空穴", R, G.T - 6, isE ? C_E : C_H, "bold 12px " + FONT, "right");
+  /* 时间读数放在漂移方向箭头那一行的左右两端：把棒下方正中与底部整条让给「平均位移」读数条 */
+  txt(g, "模拟时间 t = " + fmt(SIMT, 1) + " ps", L, cy + hh + 16, C_SUB, "11px " + FONT, "left");
+  txt(g, "散射时间 τ = " + fmt(d.tau * 1e12, 3) + " ps", R, cy + hh + 16, C_SUB, "11px " + FONT, "right");
+
+  /* 悬停读数 */
+  if (HOV.sim) {
+    let best = null, bd = 1e9;
+    for (const p of PARTS) {
+      const dd = Math.hypot(X(p.x) - HOV.sim.x, Y(p.y) - HOV.sim.y);
+      if (dd < bd) { bd = dd; best = p; }
+    }
+    if (best && bd < 16) {
+      const s1 = (isE ? "电子" : "空穴") + "　位置 x = " + fmt(best.x, 2) + " μm";
+      const s2 = "累计位移 = " + fmt(best.s, 2) + " μm";
+      const s3 = "热运动 v_th ≈ " + fmt(d.vth / 1e7, 2) + "×10⁷ cm/s，漂移 v_d = " + fmt(d.vd / 1e5, 2) + "×10⁵ cm/s";
+      g.font = "11px " + FONT;
+      const wid = Math.max(g.measureText(s1).width, g.measureText(s2).width, g.measureText(s3).width) + 16;
+      const bx = clamp(X(best.x) + 14, 6, W - wid - 6), by = clamp(Y(best.y) - 56, G.T, H - 112);
+      g.fillStyle = "rgba(255,255,255,0.96)"; g.strokeStyle = "#c9d4e0"; g.lineWidth = 1;
+      g.beginPath(); g.rect(bx, by, wid, 52); g.fill(); g.stroke();
+      txt(g, s1, bx + 8, by + 13, "#2c3e50", "11px " + FONT);
+      txt(g, s2, bx + 8, by + 28, C_MEAN, "11px " + FONT);
+      txt(g, s3, bx + 8, by + 43, C_SUB, "11px " + FONT);
+    }
+  }
+
+  /* 平均位移 ⟨Δx⟩：放在最后画 ⇒ 压在粒子与尾迹之上，永远不会被挡住；
+     读数挪到样品棒「下方」的独立白卡里，和粒子区彻底分开。
+     本工具刻意不再显示「瞬时平均位置 ⟨x⟩」：周期边界会把坐标 mod L 折回，浓度均匀时它被
+     永久钉在棒心（明明在漂移却纹丝不动），包绕时又会突跳 ±L —— 作为输运证据已经失效。
+     干净的量只有一个：每一步真实 dx 的累计和（展开坐标），四个情境口径统一。 */
+  if (OPT.ckMean) {
+    let msp = 0;
+    for (const p of PARTS) msp += p.s;
+    msp /= PARTS.length;
+    const uni = OPT.init !== "gauss";
+    const sg = v => (v < 0 ? "−" : "+") + fmt(Math.abs(v), 2);
+
+    /* 棒下方：平均位移读数条 */
+    const ry = Math.min(cy + hh + 66, H - 22);
+    const bh = 36, bx = L, bw = R - L, yA = ry - 9, yB = ry + 11;
+    g.fillStyle = "rgba(255,255,255,0.98)"; g.strokeStyle = "#b9dcc8"; g.lineWidth = 1.4;
+    g.beginPath();
+    if (g.roundRect) { g.roundRect(bx, ry - bh / 2, bw, bh, 6); g.fill(); g.stroke(); }
+    else { g.fillRect(bx, ry - bh / 2, bw, bh); g.strokeRect(bx, ry - bh / 2, bw, bh); }
+
+    /* 上行：左端读数值，右端一句话说明为什么这里不给「平均位置」 */
+    g.font = "bold 11px " + FONT;
+    let sR = "平均位移 ⟨Δx⟩ = " + sg(msp) + " μm（" + fmt(msp / LX, 2) + " 个样品长度）";
+    if (g.measureText(sR).width > bw * 0.62) sR = "平均位移 ⟨Δx⟩ = " + sg(msp) + " μm";
+    txt(g, sR, bx + 12, yA, C_MEAN, "bold 11px " + FONT, "left", "middle");
+    const tip = uni ? "浓度均匀 + 周期边界 ⇒ 只看累计位移" : "周期边界会把坐标折回 ⇒ 只看累计位移";
+    g.font = "10px " + FONT;
+    if (g.measureText(sR).width + g.measureText(tip).width + 40 < bw)
+      txt(g, tip, bx + bw - 12, yA, C_SUB, "10px " + FONT, "right", "middle");
+
+    /* 下行：量程自动取整档（箭头永远有分辨率），两端标出满量程 */
+    const FSL = [0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50, 100];
+    const aL = Math.abs(msp) / LX;
+    let fs = FSL[FSL.length - 1];
+    for (const v of FSL) if (aL <= v * 0.88) { fs = v; break; }
+    g.font = "9.5px " + FONT;
+    const endTxt = fmt(fs * LX, fs * LX < 10 ? 1 : 0) + " μm";
+    const ew = g.measureText(endTxt).width;
+    const rx0 = bx + 14 + ew + 8, rx1 = bx + bw - 14 - ew - 8, xm = (rx0 + rx1) / 2;
+    line(g, rx0, yB, rx1, yB, "#e4ecf4", 1.6);
+    for (let i = 0; i <= 4; i++) {
+      const xx = rx0 + (rx1 - rx0) * i / 4;
+      line(g, xx, yB - 4, xx, yB + 4, "#cbd8e6", 1);
+    }
+    line(g, xm, yB - 7, xm, yB + 7, C_MEAN, 1.8);
+    txt(g, "−" + endTxt, rx0 - 6, yB, C_SUB, "9.5px " + FONT, "right", "middle");
+    txt(g, "+" + endTxt, rx1 + 6, yB, C_SUB, "9.5px " + FONT, "left", "middle");
+    const len = clamp(aL / fs, 0, 1) * (rx1 - rx0) / 2;
+    if (len > 2.5) {
+      const dir = msp < 0 ? -1 : 1;
+      line(g, xm, yB, xm + dir * len, yB, "#ffffff", 6.5);
+      arrow(g, xm, yB, xm + dir * len, yB, C_MEAN, 3, 8);
+      g.beginPath(); g.arc(xm + dir * len, yB, 2.6, 0, 6.2832);
+      g.fillStyle = C_MEAN; g.fill();
+    }
+  }
+}
+
+/* ---------------- 5. 模块二：浓度分布 ---------------- */
+function drawConc() {
+  const c = CV.conc || fitCanvas("conc"); if (!c) return;
+  const g = c.g, W = c.W, H = c.H, d = der();
+  g.clearRect(0, 0, W, H);
+  g.fillStyle = "#fff"; g.fillRect(0, 0, W, H);
+  const L = 58, R = W - 18, T = 26, B = H - 36;
+  const pw = R - L, ph = B - T;
+  const X = x => L + x / LX * pw;
+
+  const ymax = YFIX;                     // 固定量程：不再随时间自适应
+  const Y = n => B - clamp(n / ymax, 0, 1.08) * ph;
+
+  /* 网格 */
+  for (let i = 0; i <= 4; i++) {
+    const yy = T + ph * i / 4;
+    line(g, L, yy, R, yy, C_GRID, 1);
+    txt(g, fmt(ymax * (1 - i / 4), 2), L - 8, yy, C_SUB, "10.5px " + FONT, "right");
+  }
+  for (let i = 0; i <= 10; i++) {
+    const xx = L + pw * i / 10;
+    line(g, xx, T, xx, B, "#f2f6fa", 1);
+    txt(g, fmt(i, 0), xx, B + 13, C_SUB, "10.5px " + FONT, "center");
+  }
+  line(g, L, B, R, B, "#b9c5d2", 1.2);
+  line(g, L, T, L, B, "#b9c5d2", 1.2);
+  txt(g, "n(x)（相对值，纵轴固定）", L - 8, T - 12, C_SUB, "11px " + FONT, "left");
+  txt(g, "x（μm）", (L + R) / 2, B + 28, C_SUB, "11.5px " + FONT, "center");
+
+  /* 初始分布（归一化到平均 1）虚线 */
+  let s0 = 0; const prof = new Float64Array(MGRID);
+  for (let i = 0; i < MGRID; i++) { prof[i] = initProfile((i + 0.5) * DX); s0 += prof[i]; }
+  for (let i = 0; i < MGRID; i++) prof[i] *= MGRID / Math.max(s0, 1e-9);
+  g.beginPath();
+  for (let i = 0; i < MGRID; i++) {
+    const xx = X((i + 0.5) * DX), yy = Y(prof[i]);
+    i === 0 ? g.moveTo(xx, yy) : g.lineTo(xx, yy);
+  }
+  g.strokeStyle = "#c3cedb"; g.lineWidth = 1.3; g.setLineDash([5, 4]); g.stroke(); g.setLineDash([]);
+
+  /* 统计直方图（相对浓度 = 计数 / 均匀期望计数） */
+  if (OPT.ckHist) {
+    const NB = 60, bw = pw / NB, hist = new Float64Array(NB);
+    for (const p of PARTS) {
+      const bi = Math.min(NB - 1, Math.max(0, Math.floor(p.x / LX * NB)));
+      hist[bi]++;
+    }
+    const unit = NPART / NB;
+    g.fillStyle = "rgba(47,111,181,0.22)";
+    for (let i = 0; i < NB; i++) {
+      const nval = hist[i] / unit;
+      const y1 = B - clamp(nval / ymax, 0, 1.08) * ph;
+      g.fillRect(L + i * bw + 0.5, y1, Math.max(1, bw - 1), B - y1);
+    }
+  }
+
+  /* PDE 解曲线 */
+  if (OPT.ckPde) {
+    g.beginPath();
+    for (let i = 0; i < MGRID; i++) {
+      const xx = X((i + 0.5) * DX), yy = Y(CONC[i]);
+      i === 0 ? g.moveTo(xx, yy) : g.lineTo(xx, yy);
+    }
+    g.strokeStyle = "#1976d2"; g.lineWidth = 2.4; g.stroke();
+  }
+
+  /* 峰值标记与梯度 */
+  const gi = gradInfo();
+  const xp = X((gi.peakIdx + 0.5) * DX);
+  line(g, xp, T, xp, B, "rgba(46,158,91,.55)", 1.2, [4, 3]);
+  tagBox(g, "峰 n = " + fmt(gi.peak, 2), xp, Y(gi.peak) - 12, C_MEAN, "10.5px " + FONT, "center");
+
+  tagBox(g, "虚线 = 初始分布，浅蓝柱 = 粒子统计，实线 = 方程解", L + 4, T + 10, C_SUB, "11px " + FONT);
+
+  /* 均匀浓度 + 周期边界：浓度场恒定，必须另找"看得见"的漂证据 */
+  if (OPT.init !== "gauss") {
+    tagBox(g, "浓度均匀 + 周期边界 ⇒ n(x) 恒定：这边出去多少、那边就进来多少，浓度场本身看不出漂移",
+      L + 4, T + 28, C_SUB, "11px " + FONT);
+    if (Math.abs(d.vd) > 1) {
+      const yf = T + 52, dir = d.vdps > 0 ? 1 : -1;
+      arrow(g, L + 24, yf, L + 24 + dir * 36, yf, "#1976d2", 1.8, 5.5);
+      arrow(g, R - 24, yf, R - 24 + dir * 36, yf, "#1976d2", 1.8, 5.5);
+      tagBox(g, "整体" + (dir > 0 ? "向右" : "向左") + "流动：右端流出 = 左端流入（净通量 ≠ 0，浓度却不变）",
+        (L + R) / 2, yf, "#1976d2", "11px " + FONT, "center");
+    }
+  }
+
+  /* 悬停 */
+  if (HOV.conc && HOV.conc.x > L && HOV.conc.x < R) {
+    const xq = (HOV.conc.x - L) / pw * LX;
+    const idx = Math.min(MGRID - 1, Math.floor(xq / DX));
+    line(g, HOV.conc.x, T, HOV.conc.x, B, "rgba(107,122,140,.45)", 1, [3, 3]);
+    const s1 = "x = " + fmt(xq, 2) + " μm";
+    const s2 = "n = " + fmt(CONC[idx], 3);
+    g.font = "11px " + FONT;
+    const wid = Math.max(g.measureText(s1).width, g.measureText(s2).width) + 14;
+    const bx = clamp(HOV.conc.x + 10, 6, W - wid - 6), by = clamp(HOV.conc.y - 34, T, B - 36);
+    g.fillStyle = "rgba(255,255,255,0.96)"; g.strokeStyle = "#c9d4e0"; g.lineWidth = 1;
+    g.beginPath(); g.rect(bx, by, wid, 34); g.fill(); g.stroke();
+    txt(g, s1, bx + 7, by + 12, "#2c3e50", "11px " + FONT);
+    txt(g, s2, bx + 7, by + 25, "#1976d2", "11px " + FONT);
+  }
+}
+
+
+/* ---------------- 7. 读数与对比条 ---------------- */
+function kvHd(s) { return '<div class="hd">' + s + "</div>"; }
+function kvRow(k, v) { return '<div class="row"><span class="k">' + k + '</span><span class="v">' + v + "</span></div>"; }
+
+function flows() {
+  const d = der(), gi = gradInfo();
+  const jdrift = gi.peak * Math.abs(d.vd);                 // 相对流密度（cm⁻²s⁻¹ 的相对值）
+  const jdiff = d.D * gi.relGrad * 1e4 * gi.peak;          // relGrad 单位 μm⁻¹ → cm⁻¹
+  return { jdrift: jdrift, jdiff: jdiff, relGrad: gi.relGrad, peak: gi.peak };
+}
+
+/* 读数面板分两区：
+     #readout      —— 核心读数（7 行，默认可见）：这一页要学生记住的量
+     #readoutMore  —— 「更多读数」折叠区（默认收起）：材料、固定参数、中间量、判据
+   判据：① 控制旋钮上已经写着的值不上核心区；② 能由核心读数一步算出的不上核心区；
+        ③ 判据 / 对账类只在越界时才有意义，放折叠区或画布角标。 */
+function updateReadout() {
+  const d = der(), M = matNow(), st = stats(), fl = flows();
+  const isE = OPT.carrier === "e";
+  /* 由粒子累计位移反推的 D：⟨Δx²⟩ − ⟨Δx⟩² = 2Dt（t 用模拟时间）
+     —— 这是模块一（粒子随机行走）与模块二（漂移–扩散方程）之间的真实交叉检验，
+        而「D/μ = kT/q」只是把定义式读回来，不构成验证（故 D/μ 不再单独占行）。 */
+  const varS = Math.max(st.msd - st.mean * st.mean, 0);
+  const Dmeas = SIMT > 0.5 ? varS / (2 * SIMT) * 1e4 : null;      // μm²/ps → cm²/s
+
+  let html = "";
+  html += kvHd("运动学");
+  html += kvRow("漂移速度 " + MM("<i>v</i><sub>d</sub><span class='op'>=</span><i>μE</i>") + "（含饱和）", "<b>" + fmt(d.vd / 1e5, 2) + "×10⁵</b> cm/s");
+  html += kvRow("热运动速度 " + MM("<i>v</i><sub>th</sub>"), "<b>" + fmt(d.vth / 1e7, 2) + "×10⁷</b> cm/s");
+  html += kvRow("两者之比 " + MM("<i>v</i><sub>th</sub><span class='op'>/</span><i>v</i><sub>d</sub>"), "<b>" + (d.vd > 1 ? fmt(d.vth / d.vd, 0) : "∞") + "×</b>");
+  html += kvRow("扩散系数 " + MM("<i>D</i><span class='op'>=</span><i>μkT</i><span class='op'>/</span><i>q</i>"), "<b>" + fmt(d.D, 1) + "</b> cm²/s（低场近似）");
+  html += kvRow("粒子实测 " + MM("<i>D</i>") + "（" + MM("⟨Δ<i>x</i><sup>2</sup>⟩<span class='op'>−</span>⟨Δ<i>x</i>⟩<sup>2</sup><span class='op'>=</span>2<i>Dt</i>") + "）",
+    Dmeas === null ? "—（计时后给出）" : "<b>" + fmt(Dmeas, 1) + "</b> cm²/s（" + fmt(Dmeas / d.D, 2) + "× 设定值）");
+
+  html += kvHd("漂移流与扩散流（峰值处，相对值）");
+  html += kvRow("漂移流 " + MM("<i>n</i><span class='op'>·</span><i>v</i><sub>d</sub>"), "<b>" + fmt(fl.jdrift, 2) + "</b>");
+  html += kvRow("扩散流 " + MM("<i>D</i><span class='op'>·</span>|<span class='un'>d</span><i>n</i><span class='op'>/</span><span class='un'>d</span><i>x</i>|"), "<b>" + fmt(fl.jdiff, 2) + "</b>");
+  $("readout").innerHTML = html;
+
+  /* ---- 更多读数（折叠）---- */
+  let h2 = "";
+  h2 += kvHd("材料与参数");
+  h2 += kvRow("材料 / 载流子", "<b>" + M.name + "</b>（固定）/ " + (isE ? "电子（●）" : "空穴（■）"));
+  h2 += kvRow("温度 " + MM("<i>T</i>") + "（固定）", "<b>" + OPT.T + " K</b>　（" + MM("<i>kT</i><span class='op'>/</span><i>q</i>") + " = " + fmt(d.kTq * 1000, 1) + " mV）");
+  h2 += kvRow("迁移率 " + MM("<i>μ</i>") + "（300 K 值）", "<b>" + fmt(d.mu, 0) + "</b> cm²/V·s");
+  h2 += kvRow("有效质量 " + MM("<i>m</i><sup>*</sup>") + " / 散射时间 " + MM("<i>τ</i>"), fmt(d.mstar, 3) + " m₀ / " + fmt(d.tau * 1e12, 3) + " ps");
+
+  h2 += kvHd("中间量");
+  h2 += kvRow("模拟时间 " + MM("<i>t</i>"), fmt(SIMT, 1) + " ps");
+  h2 += kvRow("浓度梯度 " + MM("|<span class='un'>d</span><i>n</i><span class='op'>/</span><span class='un'>d</span><i>x</i>|<span class='op'>/</span><i>n</i>"), fmt(fl.relGrad, 2) + " μm⁻¹");
+  h2 += kvRow("两者相消所需电场 " + MM("<i>E</i><sub>eq</sub>"), "<b>" + fmt(d.kTq * fl.relGrad * 1e4 / 1e3, 3) + " kV/cm</b>");
+  $("readoutMore").innerHTML = h2;
+
+  /* v_d 相对线性值 μE 被饱和压低的百分比（诚实披露「含饱和 + 低场 D」两套近似的拼用） */
+  $("stepSz").textContent = "≈ " + fmt(d.sigStep, 3) + " μm";
+}
+
+/* ---------------- 8. 图例 ---------------- */
+function buildLegends() {
+  $("legSim").innerHTML = [
+    '<span><span class="swatch dot" style="background:' + C_E + '"></span>电子（圆形，漂移逆电场）</span>',
+    '<span><span class="swatch sq" style="background:' + C_H + '"></span>空穴（方形，漂移顺电场）</span>',
+    '<span><span class="swatch" style="border-color:' + C_FLD + '"></span>电场 <span class="m"><i>E</i></span></span>',
+    '<span><span class="swatch" style="border-color:' + C_MEAN + '"></span>平均位移 <span class="m">⟨Δ<i>x</i>⟩</span> 标尺（样品棒下方白卡，绿色箭头随时间变长）</span>',
+    '<span><span class="swatch dot" style="background:' + C_TR + '"></span>示踪粒子 4 个（带编号，长尾迹；右上角给出各自净位移 <span class="m">Δ<i>x</i></span>）</span>'
+  ].join("");
+  $("legConc").innerHTML = [
+    '<span><span class="swatch" style="border-color:#1976d2"></span>漂移–扩散方程数值解 <span class="m"><i>n</i>(<i>x</i>)</span></span>',
+    '<span><span class="swatch sq" style="background:rgba(47,111,181,.35)"></span>粒子统计直方图</span>',
+    '<span><span class="swatch dash" style="border-color:#c3cedb"></span>初始分布</span>'
+  ].join("");
+}
+
+/* ---------------- 9. 引导探究 ---------------- */
+const CHAL = [
+  {
+    q: "点「纯漂移」，盯住模块一里样品棒下方那条<b>「平均位移 <span class=\"m\">⟨Δ<i>x</i>⟩</span>」标尺</b>（绿色箭头，随时间变长），再看模块二的 <span class=\"m\"><i>n</i>(<i>x</i>)</span>：粒子明明都在往一个方向走，为什么浓度曲线却<b>一动不动</b>？（顺带一试：在「纯漂移」下把<b>开关二</b>切成高斯，情境名会立刻变成「漂移＋扩散」，想想为什么。）",
+    a: () => { const d = der(), st = stats(); return "热运动的速度虽然高达 <b>" + fmt(d.vth / 1e7, 2) + "×10⁷ cm/s</b>，但方向<b>完全随机</b>，向左和向右的粒子一样多，矢量平均为零 ⇒ 不产生净位移。电场只是在这份随机之上叠加了一个<b>整齐朝一个方向</b>的小漂移（当前 v_d = " +
+      fmt(d.vd / 1e5, 2) + "×10⁵ cm/s，只有热速度的 1/" + fmt(d.vth / Math.max(d.vd, 1), 0) + "），但它是<b>所有粒子同向</b>的，平均下来不会被抵消 ⇒ 产生净位移、产生电流。<b>大而无序 vs 小而有序</b>，这就是关键。<br><br>曲线不动是因为<b>周期边界 + 浓度均匀</b>：从右端流出的载流子立刻从左端等量流入，各处浓度始终不变，<b>瞬时坐标的平均值也被“折回”钉在棒中心</b>。所以均匀情形下要看<b>展开坐标的累计位移</b> —— 模块一里样品棒下方那条「平均位移 <span class=\"m\">⟨Δ<i>x</i>⟩</span>」标尺（当前 " + fmt(Math.abs(st.mean), 2) + " μm ＝ " + fmt(Math.abs(st.mean) / LX, 2) + " 个样品长度），它随时间线性增长 —— 这才是漂移的证据。另外，把浓度分布切成高斯后情境名立刻变成「漂移＋扩散」：<b>有没有漂移看电场，有没有扩散看浓度梯度</b>，两者是两个彼此独立的开关。"; }
+  },
+  {
+    q: '点「纯扩散」预设，看模块二的高斯峰随时间演化：峰值怎么变？峰宽怎么变？曲线下的面积（总粒子数）变了吗？',
+    a: () => '峰值<b>不断下降</b>、峰宽<b>不断变宽</b>（宽度按 <span class="m"><span class="sqrt"><span class="rd">√</span><span class="rdc"><i>σ</i><sub>0</sub><sup>2</sup><span class="op">+</span>2<i>Dt</i></span></span></span> 增长，而不是线性增长），但面积<b>始终不变</b> —— 粒子一个都没少，只是摊开了。这正是扩散方程的核心特征：<b>粒子数守恒</b>，随机行走使分布按高斯自我相似地展宽。再点「漂移＋扩散」对照：展宽规律分毫不变，只是整体多了一个平移 —— 说明漂移与扩散<b>彼此独立、可以线性叠加</b>。'
+  },
+  {
+    q: '点「漂移＋扩散」预设，再把载流子在<b>电子</b>和<b>空穴</b>之间切换：峰往哪边走？展宽的那部分变了吗？',
+    a: () => { const d = der(); return '峰整体朝一个方向平移（当前 v_d = ' + fmt(d.vd / 1e5, 2) + '×10⁵ cm/s），同时<b>继续展宽</b> —— 平移来自漂移，展宽来自扩散，两者<b>互不干扰地叠加</b>，正好对应漂移–扩散方程 <span class="m">∂<i>n</i><span class="op">/</span>∂<i>t</i><span class="op">=</span><i>D</i>∂<sup>2</sup><i>n</i><span class="op">/</span>∂<i>x</i><sup>2</sup><span class="op">−</span><i>v</i><sub>d</sub>∂<i>n</i><span class="op">/</span>∂<i>x</i></span> 的两项。电子带负电，漂移<b>逆着电场</b>走；空穴<b>顺着电场</b>走（当前：' + (OPT.carrier === 'e' ? '电子' : '空穴') + '）。<b>换载流子时，平移方向和展宽快慢两者都变</b>：方向由电荷符号决定，展宽快慢由 <span class="m"><i>D</i></span> 决定，而 <span class="m"><i>D</i></span> 经爱因斯坦关系随 <span class="m"><i>μ</i></span> 同比缩放 —— Si 室温电子 <span class="m"><i>μ</i></span> = 1400 对空穴 450，<span class="m"><i>D</i></span> 相差 <b>3.1 倍</b>（36.2 对 11.6 cm²/s），峰变宽的快慢也差这么多（t = 100 ps 时 <span class="m"><i>σ</i></span> ≈ 1.17 μm 对 0.93 μm）。真正<b>与电场无关</b>的是扩散：对<b>同一个载流子</b>只拨动电场开关，展宽分毫不变，只是多出一段平移 —— 漂移平移与扩散展宽互不干扰地线性叠加。'; }
+  },
+  {
+    q: '把载流子在<b>电子</b>和<b>空穴</b>之间切换，读面板里的迁移率 <span class="m"><i>μ</i></span>、扩散系数 <span class="m"><i>D</i></span> 与它们的比值 <span class="m"><i>D</i><span class="op">/</span><i>μ</i></span>：哪几个量变了？哪个量始终不变？',
+    a: () => { const d = der(); return '半导体固定在 Si（本工具不换材料），只换载流子就能看出规律：当前<b>' + (OPT.carrier === 'e' ? '电子' : '空穴') + '</b>的 <span class="m"><i>μ</i></span> = ' + fmt(d.mu, 0) + ' cm²/V·s、<span class="m"><i>D</i></span> = ' + fmt(d.D, 1) + ' cm²/s；换成另一种载流子时两者<b>相差好几倍</b>（Si 室温电子 1400 对空穴 450，因为有效质量 0.26 m₀ 对 0.39 m₀）—— <span class="m"><i>μ</i></span> 与 <span class="m"><i>D</i></span> 都受<b>有效质量与散射机制</b>控制。但它们的比值 <b><span class="m"><i>D</i><span class="sl">/</span><i>μ</i></span> = <span class="m"><i>kT</i><span class="sl">/</span><i>q</i></span> = ' + fmt(d.kTq * 1000, 1) + ' mV 始终不变</b>，与材料、与散射机制、与载流子种类完全无关：这就是<b>爱因斯坦关系</b>。漂移和扩散不是两件事，而是<b>同一种热运动</b>在“有电场”和“有浓度梯度”两种条件下的表现。'; }
+  },
+  {
+    q: '分别在「纯扩散」和「纯漂移」预设下读面板里的<b>漂移流 / 扩散流</b>两条数值，再展开「更多读数」看 <span class="m"><i>E</i><sub>eq</sub></span>：要让两者恰好相抵需要多大的电场？这对应半导体中什么真实情形？',
+    a: () => { const d = der(), fl = flows(); return '当前漂移流 ' + fmt(fl.jdrift, 2) + '、扩散流 ' + fmt(fl.jdiff, 2) + '（相对值）：「纯扩散」时扩散流一家独大，「纯漂移」时漂移流后来居上。要让两者相抵，需要 <span class="m"><i>E</i></span> = (<span class="m"><i>kT</i>/<i>q</i></span>)·|<span class="un">d</span>(ln <span class="m"><i>n</i></span>)/<span class="un">d</span><span class="m"><i>x</i></span>|，即「更多读数」里的 <b>E_eq = ' + fmt(d.kTq * fl.relGrad * 1e4 / 1e3, 3) + ' kV/cm</b>；此时净流 ≈ 0，浓度峰几乎停在原地。这正是 <b>pn 结自建电场</b>的形成机制：扩散先把载流子从高浓度推向低浓度，留下的电离杂质产生电场，电场又驱动反向的漂移流，两者恰好相抵时结区就有了内建电势。'; }
+  }
+];
+
+let ANS_EL = [];
+function buildChal() {
+  const grid = $("chalGrid");
+  grid.innerHTML = ""; ANS_EL = [];
+  CHAL.forEach((c, i) => {
+    const d = document.createElement("div");
+    d.className = "chal";
+    d.innerHTML = '<div class="chal-head"><b>' + (i + 1) + ". " + c.q + '</b><span class="chev">▶</span></div>' +
+      '<div class="chal-body"><div class="ans"></div><div class="btn-row"><button>看看答案</button></div></div>';
+    grid.appendChild(d);
+    d.querySelector(".chal-head").onclick = () => d.classList.toggle("open");
+    const ans = d.querySelector(".ans");
+    ANS_EL.push(ans);
+    d.querySelector(".btn-row button").onclick = e => { e.stopPropagation(); ans.classList.toggle("show"); };
+  });
+}
+function refreshAnswers() { ANS_EL.forEach((el, i) => { el.innerHTML = CHAL[i].a(); }); }
+
+/* ---------------- 10. 交互绑定 ---------------- */
+function markActive() {
+  /* 情境按钮的高亮由两个开关的组合推导，而不是记住“上次点了哪个” —— 保证名副其实 */
+  const si = scenIdx();
+  Array.prototype.forEach.call($("presetBtns").children, b => b.classList.toggle("sel", +b.dataset.i === si));
+  Array.prototype.forEach.call($("carBtns").children, b => b.classList.toggle("active", b.dataset.c === OPT.carrier));
+  Array.prototype.forEach.call($("efBtns").children, b => b.classList.toggle("sel", (+b.dataset.e > 0) === (OPT.E > 0)));
+  Array.prototype.forEach.call($("initBtns").children, b => b.classList.toggle("sel", b.dataset.k === OPT.init));
+}
+function syncInputs() {
+  $("spSlider").value = Math.round(OPT.speed * 100);
+  $("ckTrail").checked = OPT.ckTrail; $("ckTrace").checked = OPT.ckTrace; $("ckMean").checked = OPT.ckMean;
+  $("ckField").checked = OPT.ckField; $("ckPde").checked = OPT.ckPde;
+  $("ckHist").checked = OPT.ckHist;
+  const d = der(), si = scenIdx(), S = SCEN[si];
+  $("presetVal").textContent = S.name;
+  $("presetNote").innerHTML = S.note + "（当前：漂移 " + (OPT.E > 0 ? "<b>有</b>" : "无") +
+    " ＋ 扩散 " + (OPT.init === "gauss" ? "<b>有</b>" : "无") + "）";
+  $("matSub").innerHTML = matNow().note;
+  $("carVal").textContent = OPT.carrier === "e" ? "电子" : "空穴";
+  $("eVal").textContent = fmt(Efield() / 1e3, 2) + " kV/cm";
+  $("initVal").textContent = OPT.init === "gauss" ? "高斯" : "均匀";
+  $("spVal").textContent = fmt(OPT.speed, 2) + "×";
+  $("btnPlay").textContent = OPT.playing ? "⏸ 暂停" : "▶ 播放";
+  $("eSub").innerHTML = "当前 v_d = <b>" + fmt(d.vd / 1e5, 2) + "×10⁵ cm/s</b>，v_th/v_d ≈ " +
+    (d.vd > 1 ? fmt(d.vth / d.vd, 0) : "∞") + " 倍；平衡电场参考值 E_eq = " + fmt(d.kTq * flows().relGrad * 10, 3) + " kV/cm。";
+  $("sSub").innerHTML = OPT.init === "uniform" ? "均匀分布没有浓度梯度（峰宽不起作用）。" :
+    "峰越窄，浓度梯度越陡，扩散越快；<span class='m'><i>σ</i><sub>0</sub></span> = " + fmt(OPT.sig, 2) + " μm。";
+  markActive();
+}
+function render() { drawSim(); drawConc(); updateReadout(); refreshAnswers(); }
+
+function bindHover(id, key) {
+  const el = $(id);
+  el.addEventListener("mousemove", e => {
+    const r = el.getBoundingClientRect();
+    HOV[key] = { x: e.clientX - r.left, y: e.clientY - r.top };
+    if (key === "sim") drawSim(); else if (key === "conc") drawConc();
+  });
+  el.addEventListener("mouseleave", () => {
+    HOV[key] = null;
+    if (key === "sim") drawSim(); else if (key === "conc") drawConc();
+  });
+}
+
+function init() {
+  buildLegends(); buildChal();
+  /* 预设 */
+  const pb = $("presetBtns");
+  SCEN.forEach((p, i) => {
+    const b = document.createElement("button");
+    b.textContent = p.name; b.dataset.i = i; b.title = p.note;
+    b.onclick = () => { setScen(i); resetSim(); syncInputs(); render(); };
+    pb.appendChild(b);
+  });
+  /* 开关一：电场（只管漂移） */
+  const eb = $("efBtns");
+  [[0, "无（E = 0）"], [E_STEP, "有（2.0 kV/cm）"]].forEach(([v, lab]) => {
+    const b = document.createElement("button");
+    b.textContent = lab; b.dataset.e = String(v);
+    b.onclick = () => { OPT.E = v; syncInputs(); render(); };
+    eb.appendChild(b);
+  });
+  const ib = $("initBtns");
+  [["gauss", "高斯"], ["uniform", "均匀"]].forEach(([k, lab]) => {
+    const b = document.createElement("button");
+    b.textContent = lab; b.dataset.k = k;
+    b.onclick = () => { OPT.init = k; resetSim(); syncInputs(); render(); };
+    ib.appendChild(b);
+  });
+
+  $("spSlider").oninput = e => { OPT.speed = +e.target.value / 100; syncInputs(); };
+
+  Array.prototype.forEach.call($("carBtns").children, b => {
+    b.onclick = () => { OPT.carrier = b.dataset.c; resetSim(); syncInputs(); render(); };
+  });
+
+  [["ckTrail", "ckTrail"], ["ckTrace", "ckTrace"], ["ckMean", "ckMean"], ["ckField", "ckField"],
+   ["ckPde", "ckPde"], ["ckHist", "ckHist"]].forEach(([id, key]) => {
+    $(id).addEventListener("change", e => { OPT[key] = e.target.checked; render(); });
+  });
+
+  $("btnPlay").onclick = () => { OPT.playing = !OPT.playing; syncInputs(); };
+  $("btnReset").onclick = () => { resetSim(); render(); };
+
+  bindHover("sim", "sim"); bindHover("conc", "conc");
+  /* 折叠区（.fold）：事件委托，新增折叠块不用再逐个绑定。
+     与挑战区的 .chal 完全独立，两者互不影响。 */
+  document.addEventListener("click", e => {
+    const h = e.target.closest ? e.target.closest(".fold-head") : null;
+    if (!h) return;
+    const f = h.parentNode;
+    if (f && f.classList && f.classList.contains("fold")) f.classList.toggle("open");
+  });
+  window.addEventListener("resize", () => { fitAll(); render(); });
+
+  resetSim(); syncInputs(); fitAll(); render();
+  requestAnimationFrame(loop);
+}
+
+/* ---------------- 11. 动画循环 ---------------- */
+let FRAME = 0;
+function loop() {
+  if (OPT.playing) {
+    const nsub = Math.max(1, Math.round(SUB_BASE * OPT.speed));
+    for (let i = 0; i < nsub; i++) stepSim(DT);
+    FRAME++;
+    drawSim(); drawConc(); updateReadout();
+  }
+  requestAnimationFrame(loop);
+}
+
+init();
+
+/* i18n 启动必须在 init() 之后：setLang() 会重跑 syncInputs()/render()，
+   放到 init() 之前会在 fitAll() 之前触发绘制，一旦抛异常整个 init() 就跑不到（挑战与画布会空）。 */
+(function () {
+  try {
+    i18nWatch();
+    ORIG_TITLE = ORIG_TITLE || document.title;
+    var btn = document.getElementById("langBtn");
+    if (btn) btn.onclick = function () { setLang(LANG === "en" ? "zh" : "en"); };
+    if (LANG === "en") setLang("en"); else { document.title = ORIG_TITLE; i18nWalk(document.body); }
+  } catch (e) { }
+})();
+</script>
+</body>
+</html>

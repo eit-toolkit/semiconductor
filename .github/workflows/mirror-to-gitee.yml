@@ -1,0 +1,56 @@
+# Mirror the published subset from GitHub to Gitee.
+#
+# One-time setup (all done in the web UI):
+#   1. Create the empty repo doctorwanghao/semiconductor on Gitee
+#   2. Gitee -> Settings -> Private Tokens: grant the "projects" scope, copy the token
+#   3. This repo on GitHub -> Settings -> Secrets and variables -> Actions
+#      -> New repository secret, create two:
+#         GITEE_USER  = doctorwanghao
+#         GITEE_TOKEN = the token from the previous step
+#
+# Triggers: push to main; or "Run workflow" from the Actions tab.
+# Only the official actions/checkout plus plain git are used - no third-party actions.
+name: Mirror to Gitee
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  mirror:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Push to Gitee
+        env:
+          GITEE_USER: ${{ secrets.GITEE_USER }}
+          GITEE_TOKEN: ${{ secrets.GITEE_TOKEN }}
+        run: |
+          set -e
+          if [ -z "$GITEE_USER" ] || [ -z "$GITEE_TOKEN" ]; then
+            echo "::error::Missing secrets: GITEE_USER / GITEE_TOKEN (GitHub -> Settings -> Secrets and variables -> Actions)"
+            exit 1
+          fi
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git remote add gitee "https://$GITEE_USER:$GITEE_TOKEN@gitee.com/doctorwanghao/semiconductor.git"
+          if ! git ls-remote --exit-code gitee >/dev/null 2>&1; then
+            echo "::error::Cannot reach the Gitee repo: it may not exist, or the token lacks the projects scope"
+            exit 1
+          fi
+          # No --mirror: it deletes refs that are missing on this side, and Gitee
+          # rejects the whole push when its default branch (master) would be
+          # deleted. Push main and tags explicitly, and also mirror them onto
+          # master so Gitee's default branch name works (failure = warning only).
+          git push --force gitee refs/heads/main:refs/heads/main
+          git push --force --tags gitee
+          git push --force gitee refs/heads/main:refs/heads/master \
+            || echo "::warning::master branch not synced (protected or absent), ignoring"
+          echo "mirror done"

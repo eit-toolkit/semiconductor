@@ -1,0 +1,3102 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<!-- SPDX-License-Identifier: MIT -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>塞贝克效应交互教学工具</title>
+<style>
+
+  :root {
+    --bg: #f7f9fb;
+    --panel: #ffffff;
+    --border: #dde4ec;
+    --text: #2c3e50;
+    --text-sub: #6b7a8c;
+    --blue: #1976d2;
+    --blue-light: #e3f0fb;
+    --orange: #ef8c1a;
+    --red: #d94a3d;
+    --teal: #0f9b8e;
+    --green: #2e9e5b;
+    --purple: #7b3fa0;
+    --gray-ref: #9aa5b1;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Microsoft YaHei", "PingFang SC", "Segoe UI", sans-serif;
+    background: var(--bg); color: var(--text); padding: 14px;
+  }
+  header { position: relative; display: flex; align-items: baseline; justify-content: center; gap: 14px; flex-wrap: wrap; text-align: center; margin-bottom: 2px; }
+  .lang-btn { position: absolute; right: 0; top: 0; border: 1px solid var(--border); background: #fff;
+    color: var(--text-sub); padding: 3px 10px; border-radius: 7px; cursor: pointer; font-size: 12px; font-weight: 600; }
+  .lang-btn:hover { border-color: var(--blue); color: var(--blue); }
+  header h1 { font-size: 20px; }
+  header .formula { font-size: 14.5px; color: var(--text-sub); }
+  .sub-note { text-align: center; font-size: 12.5px; color: var(--text-sub); margin-bottom: 12px; line-height: 1.75; }
+  .sub-note b { color: var(--blue); }
+
+  .layout { display: flex; gap: 14px; align-items: flex-start; max-width: 1500px; margin: 0 auto; }
+  .viz { flex: 0 0 64%; min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+  .side { flex: 1; min-width: 310px; display: flex; flex-direction: column; gap: 12px; }
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; }
+  .sec-title { font-size: 13.5px; font-weight: 700; margin: 2px 0 6px; }
+  .sec-title .mtag {
+    display: inline-block; background: var(--blue); color: #fff;
+    font-size: 11px; font-weight: 700; padding: 1.5px 7px;
+    border-radius: 5px; margin-right: 6px; vertical-align: 1.5px; letter-spacing: .3px;
+  }
+  canvas { display: block; width: 100%; border-radius: 6px; touch-action: none; }
+  canvas:focus { outline: 2px solid rgba(25,118,210,.45); outline-offset: 1px; }
+  .chart-wrap { position: relative; }
+  .hint { font-size: 12px; color: var(--text-sub); margin-top: 6px; line-height: 1.6; }
+  .ctrl { margin-bottom: 10px; }
+  .ctrl:last-child { margin-bottom: 0; }
+  .ctrl-head { display: flex; justify-content: space-between; align-items: baseline; font-size: 13px; font-weight: 600; margin-bottom: 2px; gap: 8px; }
+  .ctrl-head .val { color: var(--blue); font-variant-numeric: tabular-nums; font-weight: 700; white-space: nowrap; }
+  .ctrl input[type=range] { width: 100%; accent-color: var(--blue); }
+  .ctrl .sub { font-size: 11.5px; color: var(--text-sub); margin-top: 1px; line-height: 1.5; }
+  .btn-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+  .btn-row button {
+    border: 1px solid var(--border); background: #fff; color: var(--text);
+    padding: 5px 11px; border-radius: 7px; cursor: pointer; font-size: 12.5px;
+  }
+  .btn-row button:hover { border-color: var(--blue); color: var(--blue); }
+  .btn-row.tight button { padding: 4px 9px; font-size: 12px; }
+  .btn-row button.sel { background: var(--blue); border-color: var(--blue); color: #fff; font-weight: 600; }
+  .mode-switch { display: flex; gap: 6px; }
+  .mode-switch button {
+    flex: 1; border: 1px solid var(--border); background: #fff; color: var(--text-sub);
+    padding: 6px 10px; border-radius: 8px; cursor: pointer; font-size: 12.5px; font-weight: 600;
+  }
+  .mode-switch button.active { background: var(--blue); border-color: var(--blue); color: #fff; }
+  .legend { display: flex; gap: 6px 14px; flex-wrap: wrap; align-items: center; font-size: 12px; color: var(--text-sub); margin-top: 6px; }
+  .swatch { display: inline-block; vertical-align: middle; width: 20px; height: 0; border-top: 3px solid currentColor; border-radius: 2px; margin-right: 6px; }
+  .swatch.dash { border-top-style: dashed; }
+  .swatch.sq { width: 11px; height: 11px; border: none; border-radius: 3px; }
+  /* ---- LaTeX 风格数学排版（纯 CSS，无外部库） ---- */
+  .m { font-family: "Cambria Math", "STIX Two Math", "Latin Modern Math", "Times New Roman", Times, serif;
+       font-size: 1.05em; font-style: normal; white-space: nowrap; letter-spacing: .01em; }
+  .m i, .m var { font-style: italic; }
+  .m .rm { font-style: normal; }
+  .m sub, .m sup { font-size: .70em; font-style: normal; line-height: 1; }
+  .m sub { vertical-align: -.28em; }
+  .m sup { vertical-align: .50em; }
+.m .m { font-size: 1em; }   /* 嵌套容器（TEXH 下标转换叠加）不再放大字号 */
+  .m sub i, .m sup i { font-style: italic; }
+  .m .op { font-style: normal; padding: 0 .24em; }
+  .m .sl { font-style: normal; padding: 0 .05em; }
+  .m .un { font-style: normal; padding-left: .16em; }
+  .m .fn { font-style: normal; padding: 0 .18em; }
+  /* √‾‾：根号符号 + 压住被开方式的横线 */
+  .sqrt { display: inline-block; white-space: nowrap; }
+  .sqrt > .rd { display: inline-block; padding-right: .02em; }
+  .sqrt > .rdc { display: inline-block; border-top: .055em solid currentColor; padding: .10em .12em 0 .10em; }
+  /* 分数 a/b */
+  .frac { display: inline-block; vertical-align: -0.52em; text-align: center; font-size: .78em; margin: 0 .12em; }
+  .frac > .num { display: block; padding: 0 .22em; border-bottom: .055em solid currentColor; }
+  .frac > .den { display: block; padding: 0 .22em; }
+  /* ---- 读数区 ---- */
+  .kv { display: grid; grid-template-columns: 1fr; gap: 2px; font-size: 12.5px; }
+  .kv .row { display: flex; justify-content: space-between; gap: 8px; border-bottom: 1px dotted #eef2f7; padding: 2px 0; }
+  .kv .k { color: var(--text-sub); white-space: nowrap; }
+  .kv .v { font-variant-numeric: tabular-nums; text-align: right; }
+  .kv .v b { color: var(--blue); }
+  .kv .hd { grid-column: 1 / -1; font-weight: 700; color: var(--text); font-size: 12px; margin: 6px 0 2px; }
+  .kv .hd:first-child { margin-top: 0; }
+  /* ---- 折叠区（读数「更多」/ 控制面「更多参数」）----
+     独立组件，类名一律 .fold：❌ 不许复用 .chal-head / .chev，
+     否则会被挑战区回归脚本按「挑战题」计数，也会污染挑战区视觉基线。 */
+  .fold { margin-top: 7px; border-top: 1px dotted var(--border); padding-top: 5px; }
+  .fold-head { display: flex; align-items: center; gap: 6px; cursor: pointer;
+    font-size: 12px; font-weight: 600; color: var(--text-sub); user-select: none; }
+  .fold-head:hover { color: var(--blue); }
+  .fold-head .chev { font-size: 11px; transition: transform .15s; display: inline-block; }
+  .fold.open .fold-head .chev { transform: rotate(90deg); }
+  .fold-body { display: none; margin-top: 4px; }
+  .fold.open .fold-body { display: block; }
+  .fold-val { font-weight: 400; color: var(--text-sub); font-size: 11px; margin-left: auto; }
+  /* ---- 引导探究 ---- */
+  .chal-wrap { max-width: 1500px; margin: 14px auto 0; }
+  .chal-bar { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+  .chal-bar b { font-size: 14.5px; }
+  .chal-bar span { font-size: 12px; color: var(--text-sub); }
+  .chal-grid { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+  .chal { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 8px 12px; }
+  .chal-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; cursor: pointer; }
+  .chal-head b { font-size: 13.5px; }
+  .chal-head .chev { color: var(--text-sub); font-size: 12px; transition: transform .15s; display: inline-block; }
+  .chal.open .chal-head .chev { transform: rotate(90deg); }
+  .chal.open { border-color: var(--blue); }
+  .chal-body { display: none; margin-top: 6px; font-size: 12.5px; color: var(--text-sub); line-height: 1.75; }
+  .chal.open .chal-body { display: block; }
+  .chal-body .ans { display: none; margin-top: 6px; padding: 7px 10px; background: var(--blue-light); border-radius: 6px; color: var(--text); }
+  .chal-body .ans.show { display: block; }
+  .chal-body .ans b { color: var(--blue); }
+  .chal-body .btn-row { margin-top: 8px; }
+  @media (max-width: 1100px) {
+    .layout { flex-direction: column; }
+    .viz { flex: 1 1 auto; width: 100%; }
+  }
+  .site-foot { max-width: 1500px; margin: 18px auto 0; padding: 12px 16px 24px;
+    border-top: 1px solid var(--border); color: var(--text-sub);
+    font-size: 12.5px; line-height: 1.8; text-align: center; }
+  .site-foot a { color: var(--blue); text-decoration: none; }
+  .site-foot a:hover { text-decoration: underline; }
+  .cmp-note { font-size: 11.5px; color: var(--text-sub); margin-top: 4px; line-height: 1.55; }
+  /* ---- 图例条目：色块 + 文字 + 线型注 ---- */
+  .legend .lg { display: inline-flex; align-items: center; gap: 5px; }
+  .legend .lg > i { display: inline-block; width: 18px; height: 3px; border-radius: 2px; flex: 0 0 auto; }
+  .legend .lg > em { font-style: normal; color: #adb7c2; font-size: 11px; }
+  .legend .lg.off { opacity: .36; }
+  .legend .lg.cur { font-weight: 700; color: var(--text); }
+  .legend .lg[data-k] { cursor: pointer; }
+  .sqrt > .rdc, .sqrt .rdc { display: inline-block; position: static; font-size: 1em;
+             border-top: .055em solid currentColor; padding: .06em .12em 0 .10em; margin: 0; line-height: 1; }
+
+  /* 公式排版：分式 / 根式 —— 全站统一为「回旋共振 v06」写法（置于末尾，覆盖本文件早期变体） */
+  .frac { display: inline-block; vertical-align: -0.52em; text-align: center; font-size: .78em; margin: 0 .12em; }
+  .frac > .num, .frac .num { display: block; padding: 0 .22em; border-bottom: .055em solid currentColor; line-height: inherit; }
+  .frac > .den, .frac .den { display: block; padding: 0 .22em; line-height: inherit; }
+  .sqrt { display: inline-block; white-space: nowrap; vertical-align: baseline; margin: 0; font-size: 1em; }
+  .sqrt > .rd, .sqrt .rd { display: inline-block; position: static; font-size: 1em; line-height: inherit; padding: 0 .02em 0 0; margin: 0; }
+  .sqrt > .rdc, .sqrt .rdc { display: inline-block; position: static; font-size: 1em;
+             border-top: .055em solid currentColor; padding: .06em .12em 0 .10em; margin: 0; line-height: 1; }
+  .sqrt .rdc:has(sup) { padding-top: .18em; }
+</style>
+</head>
+
+<body>
+
+<header>
+  <button id="langBtn" class="lang-btn" data-noi18n title="中文 / English">EN</button>
+  <h1>塞贝克效应交互教学工具</h1>
+  <div class="formula"><span class="m"><i>S</i><span class="op">=</span><span class="frac"><span class="num">Δ<i>V</i></span><span class="den">Δ<i>T</i></span></span><span class="op">，</span>Δ<i>V</i><span class="op">≡</span><i>V</i><sub>冷</sub><span class="op">−</span><i>V</i><sub>热</sub></span>　·　<span class="m"><i>S</i><span class="op">=</span><span class="op">−</span><span class="frac"><span class="num"><i>k</i><sub>B</sub></span><span class="den"><i>q</i></span></span><span class="op">[</span><span class="frac"><span class="num"><i>E</i><sub>C</sub><span class="op">−</span><i>E</i><sub>F</sub></span><span class="den"><i>k</i><sub>B</sub><i>T</i></span></span><span class="op">+</span><i>A</i><span class="op">]</span><sub>非简并</sub></span>　·　<span class="m"><span class="frac"><span class="num">1</span><span class="den"><i>τ</i></span></span><span class="op">∝</span><i>E</i><sup><i>r</i></sup><span class="op">，</span><i>A</i><span class="op">=</span><i>r</i><span class="op">+</span><span class="frac"><span class="num">5</span><span class="den">2</span></span></span>　·　<span class="m"><i>ZT</i><span class="op">=</span><span class="frac"><span class="num"><i>S</i><sup>2</sup><i>σT</i></span><span class="den"><i>κ</i></span></span></span></div>
+</header>
+<div class="sub-note">
+  把一根半导体棒两端分别接到热源和冷源，两端之间就会出现<b>温差电动势</b>
+  <span class="m">Δ<i>V</i></span>（本工具全程取 <span class="m">Δ<i>V</i><span class="op">≡</span><i>V</i><sub>冷端</sub><span class="op">−</span><i>V</i><sub>热端</sub></span>），
+  比值 <span class="m"><i>S</i><span class="op">=</span>Δ<i>V</i><span class="op">/</span>Δ<i>T</i></span> 就是<b>塞贝克系数</b>
+  （有的教材把 <span class="m">Δ<i>V</i></span> 记成 <span class="m"><i>V</i><sub>热</sub><span class="op">−</span><i>V</i><sub>冷</sub></span>，那里就写成
+  <span class="m"><i>S</i><span class="op">=</span><span class="op">−</span>Δ<i>V</i><span class="op">/</span>Δ<i>T</i></span> —— 两种写法只是 <span class="m">Δ<i>V</i></span> 的定义不同，物理内容一样）。
+  它不是"浓度差"造成的：体内载流子浓度被电中性锁死在掺杂值，真正驱动扩散的是<b>热端的载流子更热</b>。
+  本工具把这条因果链拆成五步看得见的画面：<b>热扩散 → 电荷积累 → 内建电场 → 漂移-扩散平衡 → 温差电动势</b>（模块一、二）→
+  <b>系数的两个来源</b>（模块三）→ <b>随浓度怎么变</b>（模块四）→ <b>为什么存在最优掺杂</b>（模块五）。
+</div>
+
+<div class="layout">
+  <div class="viz">
+
+    <div class="card">
+      <div class="sec-title"><span class="mtag">模块一</span>半导体棒：热扩散、电荷积累与内建电场的建立</div>
+      <div class="chart-wrap"><canvas id="bar" data-h="360" tabindex="0"></canvas></div>
+      <div class="legend" id="legBar"></div>
+      <div class="hint" id="hintBar"></div>
+    </div>
+
+    <div class="card">
+      <div class="sec-title"><span class="mtag">模块二</span>一维分布：温度、载流子浓度与电势沿棒的变化</div>
+      <div class="chart-wrap"><canvas id="prof" data-h="340" tabindex="0"></canvas></div>
+      <div class="legend" id="legProf"></div>
+      <div class="hint" id="hintProf"></div>
+    </div>
+
+  </div>
+
+  <div class="side">
+    <div class="card">
+      <div class="sec-title">控制面板</div>
+
+      <div class="ctrl">
+        <div class="ctrl-head"><span>预设</span><span class="val" id="preVal">n 型 Si</span></div>
+        <div class="btn-row tight" id="preBtns"></div>
+        <div class="sub" id="preSub"></div>
+      </div>
+
+      <div class="ctrl">
+        <div class="ctrl-head"><span>材料</span><span class="val" id="matVal">Si</span></div>
+        <div class="mode-switch" id="matBtns">
+          <button data-m="0">Si</button>
+          <button data-m="1">Ge</button>
+          <button data-m="2">Bi<sub>2</sub>Te<sub>3</sub></button>
+          <button data-m="3">PbTe</button>
+        </div>
+        <div class="sub" id="matSub"></div>
+      </div>
+
+      <div class="ctrl">
+        <div class="ctrl-head"><span>导电类型</span><span class="val" id="typVal">n 型</span></div>
+        <div class="mode-switch" id="typBtns">
+          <button data-m="0">n 型</button>
+          <button data-m="1">p 型</button>
+        </div>
+        <div class="sub" id="typSub"></div>
+      </div>
+
+      <div class="ctrl">
+        <div class="ctrl-head"><span>散射机制（决定 <span class="m"><i>A</i><span class="op">=</span><i>r</i><span class="op">+</span>5/2</span>）</span><span class="val" id="scaVal">声学声子</span></div>
+        <div class="mode-switch" id="scaBtns">
+          <button data-m="0">声学声子</button>
+          <button data-m="1">常数 <span class="m"><i>τ</i></span></button>
+          <button data-m="2">电离杂质</button>
+        </div>
+        <div class="sub" id="scaSub"></div>
+      </div>
+
+      <div class="ctrl">
+        <div class="ctrl-head"><span>载流子浓度 <span class="m"><i>n</i></span></span><span class="val" id="nVal">1.0×10<sup>17</sup> cm<sup>−3</sup></span></div>
+        <input type="range" id="nSlider" min="1500" max="2100" step="5" value="1700">
+        <div class="sub" id="nSub"></div>
+      </div>
+
+      <div class="ctrl">
+        <div class="ctrl-head"><span>热端温度 <span class="m"><i>T</i><sub>H</sub></span></span><span class="val" id="thVal">350 K</span></div>
+        <input type="range" id="thSlider" min="120" max="800" step="5" value="350">
+        <div class="sub" id="thSub"></div>
+      </div>
+
+      <div class="ctrl">
+        <div class="ctrl-head"><span>冷端温度 <span class="m"><i>T</i><sub>L</sub></span></span><span class="val" id="tlVal">300 K</span></div>
+        <input type="range" id="tlSlider" min="100" max="780" step="5" value="300">
+        <div class="sub" id="tlSub"></div>
+      </div>
+
+      <div class="ctrl">
+        <div class="ctrl-head"><span>固定参量</span></div>
+        <div class="sub" id="fixVal"></div>
+        <div class="sub" id="fixSub" style="margin-top:6px;"></div>
+      </div>
+
+      <div class="ctrl">
+        <div class="ctrl-head"><span>动画</span></div>
+        <div class="btn-row tight">
+          <button id="btnPlay">⏸ 暂停</button>
+          <button id="btnReset">↺ 重置建立过程</button>
+        </div>
+      </div>
+
+      <div class="ctrl">
+        <div class="ctrl-head"><span>显示</span></div>
+        <div class="btn-row tight" id="ckRow"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="sec-title"><span class="mtag">模块三</span>塞贝克系数的两个来源：能级项与输运项</div>
+      <div class="chart-wrap"><canvas id="terms" data-h="200" tabindex="0"></canvas></div>
+      <div class="legend" id="legTerms"></div>
+      <div class="hint" id="hintTerms"></div>
+    </div>
+
+    <div class="card">
+      <div class="sec-title"><span class="mtag">模块四</span>塞贝克系数随载流子浓度的变化</div>
+      <div class="chart-wrap"><canvas id="scurve" data-h="250" tabindex="0"></canvas></div>
+      <div class="legend" id="legS"></div>
+      <div class="hint" id="hintS"></div>
+    </div>
+
+    <div class="card">
+      <div class="sec-title"><span class="mtag">模块五</span>热电优值：<span class="m"><i>S</i></span>、<span class="m"><i>σ</i></span>、<span class="m"><i>κ</i></span> 的三方博弈</div>
+      <div class="chart-wrap"><canvas id="zt" data-h="250" tabindex="0"></canvas></div>
+      <div class="legend" id="legZt"></div>
+      <div class="hint" id="hintZt"></div>
+    </div>
+
+    <div class="card">
+      <div class="sec-title">读数面板</div>
+      <div class="kv" id="readout"></div>
+      <div class="fold" id="foldRo">
+        <div class="fold-head"><span class="chev">▶</span><span>更多读数（材料、公式分解、载流子与热导）</span></div>
+        <div class="fold-body"><div class="kv" id="readoutMore"></div></div>
+      </div>
+      <div class="cmp-note">本工具用<b>单带抛物线 + 弛豫时间近似</b>精确数值积分费米–狄拉克函数，未计入能带非抛物性、多谷简并、谷间散射与声子拖拽，
+        因此给出的是<b>量级与趋势正确</b>的估计，不是材料数据库的实测值。真实 <span class="m">Bi<sub>2</sub>Te<sub>3</sub></span> 的
+        <span class="m"><i>ZT</i> ≈ 1</span>，本工具算出的数值与之同量级即属正常。</div>
+    </div>
+  </div>
+</div>
+
+<div class="chal-wrap">
+  <div class="card">
+    <div class="chal-bar">
+      <b>引导探究（点击展开，先自己试一试再看答案）</b>
+      <span>挑战任务</span>
+    </div>
+    <div class="chal-grid" id="chalGrid"></div>
+  </div>
+</div>
+
+<div class="site-foot">本工具是 EIT-SP（半导体物理交互式教学工具箱）的一部分（武汉大学物理学院《半导体物理》智慧课程），以 MIT 协议开源，可自由使用与二次开发；转载请保留出处。反馈意见 <a href="mailto:doctorwanghao@qq.com">doctorwanghao@qq.com</a></div>
+
+<script>
+/* ==================================================================
+   i18n（C1 单文件双语：物理代码仍然只有一份）
+   LANG 取值优先级：URL ?lang=en / ?lang=zh  >  localStorage('opl_lang')  >  默认中文。
+   不做 location 跳转——保住「单文件拷走也能用」。
+   三个注入点，**业务字符串一个都不改**：
+     ① partsOf()   画布 token：带 i/sub/sup/un 标记的是物理量、下标与单位，跳过
+     ② fillText/measureText 原型挂钩：兜住直接写进画布的中文串
+     ③ DOM 文本节点：静态 HTML 与 JS 写进来的 innerHTML，用 MutationObserver 兜住新增节点
+   T() 先查整句词典，未命中再按「最长优先」做短语替换，因此拼接串也能翻。
+   漏翻会被记进 window.__MISS，可导出核对。 */
+var LANG = (function () {
+  var m = /[?&]lang=([a-zA-Z]+)/.exec(location.search);
+  var q = m ? m[1].toLowerCase() : "";
+  if (q === "en" || q === "zh") return q;
+  var s = "";
+  try { s = localStorage.getItem("opl_lang") || ""; } catch (e) { }
+  return (s === "en" || s === "zh") ? s : "zh";
+})();
+var ORIG_TITLE = document.title;
+var __MISS = [];
+try { window.__MISS = __MISS; } catch (e) { }
+function noteMiss(s) { if (__MISS.indexOf(s) < 0) __MISS.push(s); }
+function TSoft(s) {
+  if (!T._K) T._K = Object.keys(I18N).sort(function (a, b) { return b.length - a.length; });
+  var out = s, i, k, orig = s;
+  /* 两遍：第一遍只吃长度 ≥ 2 的短语，第二遍才让单字 key 上场。
+     否则「下」会先被翻掉，把「留不下净电荷」「1 T 下输出」这类整句切碎。
+     ⚠️ 第二遍仍有硬门槛：单字 key 只在「传进来的整串恰好等于这一个字」时才生效
+     （弱门槛 `pass === 0` 会被基座里的 "个"→bound states、"上"→upper、"高"→high
+       这类污染词条钻空子，把「耗尽区几乎全在…」切得七零八落。2026-10-21 踩过。） */
+  for (var pass = 0; pass < 2; pass++) {
+    for (i = 0; i < T._K.length; i++) {
+      k = T._K[i];
+      if (k.length < 2 && (pass === 0 || orig !== k)) continue;
+      if (out.indexOf(k) < 0) continue;
+      /* 中文片段之间没有空格：前一片段已翻成英文时，本片段英文直连进去会粘连
+         （「更深」「或」「更浅」逐段替换成 deeper、or、shallower 会拼出 deeperor），
+         所以替换时看上下文：key 以中文开头、前一字符已是英文 ⇒ 前面补一个空格。 */
+      out = out.replace(new RegExp(k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "g"), function (m, off, str) {
+        var v = I18N[k];
+        var pre = off > 0 ? str.charAt(off - 1) : "";
+        if (/[A-Za-z0-9]/.test(pre) && /^[A-Za-z0-9(]/.test(v) && /[\u3400-\u9FFF]/.test(k.charAt(0))) v = " " + v;
+        return v;
+      });
+    }
+  }
+  return out;
+}
+/* 同一句被 DOM 切成好几个文本节点时，首尾空格会随机落在 data 里；
+   所以除了「整句命中」，再试一次「去空格后命中」并原样补回首尾空白。 */
+function trimMap() {
+  if (T._TM) return T._TM;
+  var m = {};
+  for (var k in I18N) if (Object.prototype.hasOwnProperty.call(I18N, k)) {
+    var t = k.replace(/^\s+|\s+$/g, "");
+    if (t && m[t] === undefined) m[t] = I18N[k];
+  }
+  T._TM = m;
+  return m;
+}
+/* eslint-disable no-use-before-define */
+function T(s) {
+  if (LANG !== "en" || typeof s !== "string" || !s) return s;
+  if (!/[一-鿿]/.test(s)) return s;
+  if (Object.prototype.hasOwnProperty.call(I18N, s)) return I18N[s];
+  var tm = trimMap(), core = s.replace(/^\s+|\s+$/g, "");
+  if (core && tm[core] !== undefined) {
+    var lead = s.slice(0, s.length - s.replace(/^\s+/, "").length);
+    var tail = s.slice(s.replace(/\s+$/, "").length);
+    return lead + tm[core] + tail;
+  }
+  var v = TSoft(s);
+  if (v === s) noteMiss(s);
+  return v;
+}
+var I18N = {
+  /* ---- 词典：中文原文 → 英文。key 禁含运行时数字（换个参数就漏），数字前后要拆开 ---- */
+  "格": "cells",
+  "模块一": "Module 1",
+  "控制面板": "Control Panel",
+  "费米能级 ": "Fermi level ",
+  "挑战任务": "Challenges",
+  "看看答案": "Show answer",
+  "？": "?",
+  "，": ", ",
+  "、": ", ",
+  "：": ": ",
+  "；": "; ",
+  "（": " (",
+  "）": ")",
+  "本工具是 EIT-SP（半导体物理交互式教学工具箱）的一部分（武汉大学物理学院《半导体物理》智慧课程），以 MIT 协议开源，可自由使用与二次开发；转载请保留出处。": "This tool is part of EIT-SP, the Educational Interactive Toolkit for Semiconductor Physics (School of Physics and Technology, Wuhan University). Released under the MIT licence: free to use, modify and redistribute, including commercially. Please keep this attribution.",
+  "反馈意见": " Feedback",
+  "材料": "Material",
+  "读数面板": "Readout Panel",
+  "空": "empty",
+  "能量": "energy",
+  "看答案": "Show answer",
+  "从 ": " from ",
+  "），": "), and ",
+  "）；": "); ",
+  "。把": ". Drag the ",
+  " ⇒ ": " ⇒ ",
+  "几乎": "almost ",
+  "预设": "Preset",
+  "温度 ": "Temperature ",
+  " / ": " / ",
+  "杂质": "impurity",
+  " 的": " ",
+  " 与": " and ",
+  "怎么变？": " change?",
+  "本工具是 EIT-SP（半导体物理交互式教学工具箱）的一部分（武汉大学物理学院《半导体物理》智慧课程），以 MIT 协议开源，可自由使用与二次开发；转载请保留出处。反馈意见": "This tool is part of EIT-SP, the Educational Interactive Toolkit for Semiconductor Physics (School of Physics and Technology, Wuhan University). Released under the MIT licence: free to use, modify and redistribute, including commercially. Please keep this attribution. Feedback",
+  "本工具是": "This tool is part of",
+  "（半导体物理交互式教学工具箱）的一部分（武汉大学物理学院《半导体物理》智慧课程），以": ", the Educational Interactive Toolkit for Semiconductor Physics (School of Physics and Technology, Wuhan University). Released under the",
+  "协议开源，可自由使用与二次开发；转载请保留出处。反馈意见": "licence: free to use, modify and redistribute, including commercially. Please keep this attribution. Feedback",
+  "协议开源，可自由使用与二次开发；转载请保留出处。": "licence: free to use, modify and redistribute, including commercially. Please keep this attribution.",
+  "。当前": ". Current",
+  "，所以": ", so",
+  "方向": "direction",
+  "温度": "temperature",
+  "注意": "note",
+  "参数": "parameters",
+  "相对": "relative",
+  "×": " × ",
+  "到": "to",
+  "还是": "or",
+  "；而": "; whereas ",
+  "，这就是": ", and this is the ",
+  " 就是": " means ",
+  "开": "on",
+  "关": "Off",
+  "现在": "Now",
+  "虚线": "Dashed line",
+  "平衡": "equilibrium",
+  "只有": "only",
+  "平衡态": "Equilibrium",
+  "费米能": "Fermi energy",
+  "是": "is",
+  "比": "than",
+  "随": "varies with",
+  " 看 ": "Look at the ",
+  "差 ": "a factor of ",
+  "同时": "at the same time",
+  "线性": "linearly",
+  "为什么": "why",
+  "，当前": ", currently",
+  "电离": "ionisation",
+  "峰": "peak",
+  "时": "when",
+  "浓度": "concentration",
+  "费米能级": "Fermi level",
+  "本征": "Intrinsic",
+  "载流子": "carrier",
+  "）的": ") of the ",
+  "挑战": "Challenge",
+  "和": " and ",
+  "或": "or",
+  "，把": " and push the ",
+  "，不是": ", not ",
+  "电荷": "charge",
+  "，而": ", while",
+  "，当": ", when",
+  "大": "larger",
+  "对数": "the logarithm",
+  "差": "differ by",
+  "能": "Energy",
+  "量": " ",
+  "原": "origin",
+  "点": "",
+  "导": "conduction",
+  "子": "quantum",
+  "几": "almost",
+  "乎": " ",
+  "全": "",
+  "没": "no ",
+  "的": "",
+  "占": "Occupation",
+  "据": " ",
+  "率": "probability",
+  "）。": ").",
+  "漂移": "Drift",
+  "扩散": "+ diffusion",
+  "对数刻度": "Logarithmic scale",
+  "倍": " times",
+  "下": "lower",
+  "能带": "band",
+  " 随掺杂": " varies with the doping as a ",
+  "内建电势 ": "Built-in potential ",
+  "正": "positive",
+  "常数": "constant",
+  "抛物线": "parabola",
+  "负": "negative",
+  "，而是": ", but are",
+  "模块二": "Module 2",
+  "取": "Take ",
+  "显示": "Display",
+  "无关": "independent",
+  "反向": "opposite direction",
+  "下方": "below",
+  "，即 ": ", i.e. ",
+  "，实线": ", solid line",
+  "，虚线": ", dashed line",
+  "实线": "Solid line",
+  "右侧": "right side",
+  "净电流为零": "the net current is zero",
+  "相反": "opposite to the field",
+  "无关）": " in this simplification)",
+  "状态": "state",
+  "重置": "Reset",
+  " 载流子": " Carriers",
+  "调到": "to",
+  "底": "bottom",
+  "电流": "current",
+  "内建电场": "built-in field",
+  "平衡值": "equilibrium value",
+  "不含": "does not include",
+  "。它": ". It ",
+  "，因为": ", because ",
+  "。而 ": ". And ",
+  "）—— ": "). ",
+  "⏸ 暂停": "⏸ Pause",
+  "扩散 = 漂移": "diffusion = drift",
+  "到 ": "to ",
+  "浓度差": "concentration difference",
+  "模块三": "Module 3",
+  "，故 ": ", so ",
+  "更低": "lower than in the infinite well",
+  "个": "bound states",
+  "动画": "Animation",
+  " 曲线": " curve",
+  "有 ": " ",
+  "声子": "phonon",
+  "长 ": "length ",
+  "。注意": ". Note that the ",
+  "拉到": "to",
+  "只是": "are just",
+  "蓝色": "Blue",
+  "暂停": "Pause",
+  "曲线": "curve",
+  "声学": "acoustic",
+  "只由": "only by",
+  "实测 ": "Measured ",
+  " 里": ", ",
+  "↺ 重置": "↺ Reset",
+  "当前工作点": "Current working point",
+  "热扩散": "thermal diffusion",
+  "温度梯度": "temperature gradient",
+  "计入": "counts in",
+  "（当前": " (currently",
+  "（决定": " (sets",
+  "大。": " larger.",
+  "实测": "measured",
+  "速度": "a velocity",
+  "不变": "constant",
+  "（与": " (with",
+  "（在 ": " (at ",
+  " 是 ": " is ",
+  " 上升": " rises towards both sides",
+  " 下降": " towards both sides",
+  "常数（": "constant (",
+  "，是": ", which is",
+  "电离杂质散射": "Ionised impurity scattering",
+  "形变势散射": "Deformation-potential scattering",
+  "幅度": "Amplitude",
+  "材料的": "of the material",
+  "形变势": "Deformation potential",
+  "交叉": "crossover",
+  "决定": "set by",
+  "往上": "upwards",
+  " 按": " varies as",
+  "，观察": "and watch how",
+  "态密度": "Density of states",
+  "乘积": "Product",
+  "（重": "(heavily",
+  "切换": "Switch between",
+  "模块四": "Module 4",
+  "模块五": "Module 5",
+  "，但 ": ", but ",
+  "本身": "itself",
+  "，但": ", but",
+  "符号": "sign",
+  "横轴是": "The horizontal axis is ",
+  "电场 ": "Electric field ",
+  "散射": "scattering",
+  "；简并极限 ": "; degenerate limit ",
+  "合计": "total",
+  "电导": "conductivity",
+  "工作点": "Operating point",
+  "电导率 ": "Conductivity ",
+  "洛伦兹数 ": "Lorenz number ",
+  "等大反向": "equal in magnitude and opposite in sign to the drive term",
+  "净流": "net flow",
+  "就是": "is exactly",
+  "直线": "straight",
+  "平均动能": "mean kinetic energy",
+  "声子散射": "phonon scattering",
+  "上升": "rises",
+  "下降": "falls",
+  "谷": "valley",
+  " 会": " would ",
+  "电子（": "Electrons (",
+  "稳态": "steady state",
+  "n 型 ": "n-type ",
+  "p 型 ": "p-type ",
+  "从": "from",
+  "合计 ": "Total ",
+  "一": "one",
+  "不": "not",
+  "个数量级": " orders of magnitude",
+  "扩散流": "Diffusion flux",
+  "漂移流": "Drift flux",
+  "看得见": "visible",
+  " 无": " off",
+  "n 型 Si": "n-type Si",
+  "导电类型": "Conduction type",
+  "电阻率 ": "Resistivity ",
+  "p 型 Si": "p-type Si",
+  "上": "upper",
+  "高": "high",
+  "峰值 ": "Peak ",
+  "时间": "Time",
+  "真实 ": "Actual ",
+  "介电弛豫": "dielectric relaxation",
+  " 由": " set by",
+  "比值": "ratio",
+  "分布": "The distribution",
+  "平的": "flat",
+  "）或": ") or ",
+  "塞贝克效应交互教学工具": "Seebeck Effect — Interactive Teaching Tool",
+  "冷": "cold",
+  "热": "hot",
+  "非简并": "non-degenerate",
+  "\n  把一根半导体棒两端分别接到热源和冷源，两端之间就会出现": "\n  Connect the two ends of a semiconductor bar to a hot reservoir and a cold one, and a ",
+  "温差电动势": "thermoelectric voltage",
+  "（本工具全程取 ": " (throughout this tool we take ",
+  "冷端": "cold end",
+  "热端": "hot end",
+  "塞贝克系数": "Seebeck coefficient",
+  "\n  （有的教材把 ": "\n  (some textbooks define ",
+  " 记成 ": " as ",
+  "，那里就写成\n  ": ", in which case one writes\n  ",
+  " —— 两种写法只是 ": " — the two conventions differ only in how ",
+  " 的定义不同，物理内容一样）。\n  它不是\"浓度差\"造成的：体内载流子浓度被电中性锁死在掺杂值，真正驱动扩散的是": " is defined; the physics is identical).\n  It is not caused by a \"concentration difference\": the bulk carrier concentration is pinned to the doping by charge neutrality, and what actually drives the diffusion is that ",
+  "热端的载流子更热": "the carriers at the hot end are hotter",
+  "。\n  本工具把这条因果链拆成五步看得见的画面：": ".\n  This tool breaks this causal chain into five scenes you can watch: ",
+  "热扩散 → 电荷积累 → 内建电场 → 漂移-扩散平衡 → 温差电动势": "thermal diffusion → charge accumulation → built-in field → drift–diffusion balance → thermoelectric voltage",
+  "（模块一、二）→\n  ": " (Modules 1 and 2) →\n  ",
+  "系数的两个来源": "the two contributions to the coefficient",
+  "随浓度怎么变": "how it varies with concentration",
+  "为什么存在最优掺杂": "why an optimal doping exists",
+  "半导体棒：热扩散、电荷积累与内建电场的建立": "The semiconductor bar: thermal diffusion, charge accumulation and the build-up of the built-in field",
+  "一维分布：温度、载流子浓度与电势沿棒的变化": "One-dimensional profiles: temperature, carrier concentration and potential along the bar",
+  "n 型": "n-type",
+  "p 型": "p-type",
+  "散射机制（决定 ": "Scattering mechanism (which sets ",
+  "热端温度 ": "Hot-end temperature ",
+  "冷端温度 ": "Cold-end temperature ",
+  "晶格热导 ": "Lattice thermal conductivity ",
+  " 缩放": " scaling",
+  "↺ 重置建立过程": "↺ Reset the build-up",
+  "塞贝克系数的两个来源：能级项与输运项": "The two contributions to the Seebeck coefficient: the energy term and the transport term",
+  "塞贝克系数随载流子浓度的变化": "Seebeck coefficient versus carrier concentration",
+  "热电优值：": "Figure of merit: ",
+  " 的三方博弈": " in a three-way tug of war",
+  "本工具用": "This tool uses a ",
+  "单带抛物线 + 弛豫时间近似": "single parabolic band plus the relaxation-time approximation",
+  "精确数值积分费米–狄拉克函数，未计入能带非抛物性、多谷简并、谷间散射与声子拖拽，\n        因此给出的是": " and evaluates the Fermi–Dirac functions by exact numerical integration; band non-parabolicity, multi-valley degeneracy, intervalley scattering and phonon drag are not included,\n        so what it gives is an estimate with ",
+  "量级与趋势正确": "the right order of magnitude and the right trend",
+  "的估计，不是材料数据库的实测值。真实 ": ", not a measured value from a materials database. For a real ",
+  "，本工具算出的数值与之同量级即属正常。": " it is perfectly normal for the number computed here merely to be of the same order of magnitude.",
+  "引导探究（点击展开，先自己试一试再看答案）": "Guided inquiry (click to expand; try it yourself before you read the answers)",
+  "多数载流子是": "The majority carriers are ",
+  "电子": "electrons",
+  "（圆形），冷端积累负电荷，": " (circles), negative charge accumulates at the cold end, ",
+  "声学波形变势散射，": "acoustic-phonon deformation-potential scattering, ",
+  " = 2。当前输运项 ": " = 2. Present transport term ",
+  "，它": ", which ",
+  "不随浓度变化": "does not change with concentration",
+  "决定能级项 ": "sets the energy term ",
+  "（非简并），": " (non-degenerate), ",
+  "（低掺杂极限 1350）。": " (low-doping limit 1350).",
+  "热端温度。温差 ": "Hot-end temperature. The temperature difference ",
+  "，电动势 ": ", and the voltage ",
+  "冷端温度。会自动被压到不超过 ": "Cold-end temperature. It is automatically clamped to no more than ",
+  "。当前平均温度 ": ". Present mean temperature ",
+  "不影响": "does not affect",
+  "不与 ": "is not coupled to ",
+  " 绑定": " in any way",
+  " = 50 K：标准教学工况，": " = 50 K: the standard teaching case, ",
+  "小温差 10 K": "Small ΔT = 10 K",
+  "大温差 200 K": "Large ΔT = 200 K",
+  " 热电材料": " thermoelectric material",
+  "重掺杂": "Heavy doping",
+  "轻掺杂": "Light doping",
+  "低热导极限": "Low thermal conductivity limit",
+  "积累电荷": "Accumulated charge",
+  "本征激发": "Intrinsic excitation",
+  "电子（圆形）": "Electrons (circles)",
+  "少数载流子（空心）": "Minority carriers (hollow)",
+  "热扩散流": "Thermal diffusion flow",
+  "积累层相对浓度只有 ": "The relative concentration in the accumulation layer is only ",
+  "（现算），为可见已大幅放大": " (computed live), greatly exaggerated so that it is visible",
+  "稳态实际 ": "Actual steady state ",
+  "（电中性锁死）": " (pinned by charge neutrality)",
+  "局部平衡 ": "Local equilibrium ",
+  "电势 ": "Potential ",
+  "（热端）": " (hot end)",
+  "两条浓度曲线的落差就是「想扩散的冲动」": "The gap between the two concentration curves is the \"urge to diffuse\"",
+  "① 能级项 ": "① Energy term ",
+  "② 输运项 ": "② Transport term ",
+  "（非简并 → ": " (non-degenerate → ",
+  "零线两侧相消；合计 × ": " the two bars cancel across the zero line; total × ",
+  " 多数载流子的 ": " of the majority carriers ",
+  "p 型（": "p-type (",
+  "n 型（S < 0）": "n-type (S < 0)",
+  "当前类型实线，另一型虚线": "The present type is solid, the other type dashed",
+  "ZT（左轴，实线）": "ZT (left axis, solid)",
+  "功率因子 ": "Power factor ",
+  "（归一化，虚线）": " (normalised, dashed)",
+  "热导率 ": "Thermal conductivity ",
+  "（归一化，点线）": " (normalised, dotted)",
+  "后两条只画形状，峰值数值标在图下方": "The last two show shape only; their peak values are printed below the plot",
+  "── 材料与状态 ──": "── Material and state ──",
+  "（多数＝电子，圆形）": " (majority = electrons, circles)",
+  "散射机制": "Scattering mechanism",
+  "── 塞贝克系数与电动势 ──": "── Seebeck coefficient and voltage ──",
+  " 处）": ")",
+  "（非简并值 2.00）、": " (non-degenerate value 2.00), ",
+  "（积分平均）": " (integral average)",
+  "　（与中点值一致）": "　(identical to the mid-point value)",
+  "温差电动势 ": "Thermoelectric voltage ",
+  "）　冷端电势更": ")　the cold end is more ",
+  "低": "negative",
+  "，方向 热 → 冷）": ", direction hot → cold)",
+  "冷端积累": "Cold-end accumulation",
+  "（带负电，故 ": " (negatively charged, so ",
+  "── 载流子与费米能级 ──": "── Carriers and Fermi level ──",
+  "掺杂 / 多数浓度": "Doping / majority concentration",
+  "少数浓度": "Minority concentration",
+  "简约费米能级 ": "Reduced Fermi level ",
+  " < 0 非简并；> 0 已简并）": " < 0 non-degenerate; > 0 already degenerate)",
+  "迁移率": "Mobility",
+  "/V·s　（已含重掺杂退化；低掺杂极限 1350 / 480）": "/V·s　(includes heavy-doping degradation; low-doping limit 1350 / 480)",
+  "── 输运与热导 ──": "── Transport and thermal conduction ──",
+  "　（非简并极限 ": "　(non-degenerate limit ",
+  "电子热导占比": "Electronic thermal conductivity share",
+  "更多读数（材料、公式分解、载流子与热导）": "More readings (material, formula breakdown, carriers and thermal conductivity)",
+  "　与中点值差 ": "　differs from the mid-point value by ",
+  "，当前偏轻": ", currently on the light side",
+  "，当前偏重": ", currently on the heavy side",
+  "，就在峰附近": ", right next to the peak",
+  "　电子热导占比 ": "　electronic share ",
+  "── 热电性能 ──": "── Thermoelectric performance ──",
+  " 附近）": ")",
+  "热电优值 ": "Figure of merit ",
+  "　峰值 ": "　peak ",
+  "　当前 / 峰值 = ": "　present / peak = ",
+  "最优掺杂": "Optimal doping",
+  "　（当前偏轻：": "　(present value is on the light side: ",
+  " 太小）": " is too small)",
+  "（热 → 冷）": " (hot → cold)",
+  "（热": " (hot",
+  "冷）": " cold)",
+  "热扩散流（热 → 冷）": "Thermal diffusion flow (hot → cold)",
+  "热扩散流（热": "Thermal diffusion flow (hot",
+  "漂移流（被电场拉回热端）": "Drift flow (pulled back to the hot end by the field)",
+  "冷端积累电子 ⇒ 带负电": "Electrons accumulate at the cold end ⇒ it is negatively charged",
+  "冷端积累电子": "Electrons accumulate at the cold end",
+  "带负电": "negatively charged",
+  "① 热端载流子更热": "① The carriers at the hot end are hotter",
+  "② 冷端积累电荷": "② Charge accumulates at the cold end",
+  "③ 内建电场建立": "③ The built-in field is established",
+  "建立进度 ": "Build-up progress ",
+  "%　（真实介电弛豫 τ_D ≈ 10": "%　(the real dielectric relaxation time τ_D ≈ 10",
+  "建立进度": "Build-up progress",
+  "　（真实介电弛豫": "　(the real dielectric relaxation",
+  "，此处放慢到": ", slowed down here to",
+  ") 与局部平衡值": ") and the local-equilibrium value",
+  "与局部平衡值": "and the local-equilibrium value",
+  "n_eq（若各处孤立平衡）": "n_eq (if each point equilibrated in isolation)",
+  "（若各处孤立平衡）": " (if each point equilibrated in isolation)",
+  "稳态实际 n(x) ≡ 掺杂值（电中性）": "Actual steady state n(x) ≡ doping (charge neutrality)",
+  "稳态实际": "Actual steady state",
+  "掺杂值（电中性）": "doping value (charge neutrality)",
+  "两端积累层只有相对 ": "The accumulation layers at the two ends differ only by a relative ",
+  "，肉眼不可见": ", invisible to the eye",
+  "两端积累层只有相对": "The accumulation layers at the two ends differ only by a relative",
+  "(热端)　冷端电势更低": " (hot end)　the cold-end potential is lower",
+  "　冷端电势更低": "　the cold-end potential is lower",
+  "① 能级项": "① Energy term",
+  "能级项": "Energy term",
+  "② 输运项": "② Transport term",
+  "输运项": "Transport term",
+  "① = −η 随掺杂变小（简并可负）；② = A(η) ": "① = −η shrinks with doping (it can go negative when degenerate); ② = A(η) ",
+  "≈ 非简并值 2.00": "≈ the non-degenerate value 2.00",
+  "随掺杂变小（简并可负）；": " shrinks with doping (it can go negative when degenerate); ",
+  "非简并值": "non-degenerate value",
+  "型": "-type",
+  "当前 ": "Present ",
+  "当前": "Present",
+  "每 +1 个数量级：非简并 −200 μV/K，当前实测 ": "Per +1 decade: −200 μV/K when non-degenerate; measured here ",
+  "每": "Per",
+  "个数量级：非简并": " decade: non-degenerate ",
+  "（左轴）": " (left axis)",
+  "最优 ": "Optimal ",
+  "最优": "Optimal",
+  "峰值": "Peak",
+  "积累层相对浓度极小（数值随参数变），为可见已大幅放大": "The relative concentration in the accumulation layer is tiny (the number changes with the parameters) and is greatly exaggerated so that it is visible",
+  "把温差从 0 调到 200 K，观察半导体棒里发生了什么。热端的载流子往哪边跑？冷端积累的是什么电荷？内建电场指向哪边？稳态时扩散流和漂移流是什么关系？": "Raise the temperature difference from 0 to 200 K and watch what happens inside the bar. Which way do the carriers at the hot end run? What charge accumulates at the cold end? Which way does the built-in field point? At steady state, how are the diffusion and drift flows related?",
+  "热端跑向冷端": "from the hot end towards the cold end",
+  "（热扩散）。n 型跑的是电子，冷端积累": " (thermal diffusion). In n-type the runners are electrons and the cold end accumulates ",
+  "电荷；p 型跑的是空穴，冷端积累": " charge; in p-type the runners are holes and the cold end accumulates ",
+  "电荷。内建电场的任务永远是": " charge. The job of the built-in field is always to ",
+  "把载流子拉回热端": "pull the carriers back to the hot end",
+  "：n 型电场由热指向冷（电子受力向热），p 型电场由冷指向热（空穴受力向热）。稳态时两股流": ": in n-type the field points from hot to cold (the force on the electron is towards the hot end), in p-type from cold to hot (the force on the hole is towards the hot end). At steady state the two flows are ",
+  "，净电流为零，但各自都不为零 —— 天平符号就是在说这件事。顺带一提：真正驱动扩散的不是浓度差（体内浓度被电中性锁死，见模块二的实线），而是": ", the net current is zero but neither flow is — that is what the balance symbol is telling you. Incidentally, what really drives the diffusion is not a concentration difference (the bulk concentration is pinned by charge neutrality, see the solid line in Module 2) but the fact that ",
+  "热端载流子更热": "the carriers at the hot end are hotter",
+  "在 n 型和 p 型之间来回切换。两种情况下扩散流的方向变了吗？积累的电荷极性变了吗？塞贝克系数的符号呢？为什么？": "Switch back and forth between n-type and p-type. Does the direction of the diffusion flow change? Does the sign of the accumulated charge change? What about the sign of the Seebeck coefficient? Why?",
+  " —— 无论什么载流子，都是从热端往冷端跑，因为驱动力是温度梯度。变的是": " — whatever the carrier, it always runs from the hot end to the cold end, because the driving force is the temperature gradient. What changes is ",
+  "搬的是什么电荷": "which charge is being carried",
+  "：n 型搬负电荷，p 型搬正电荷，所以冷端的极性相反、电势差的符号相反，塞贝克系数也就一负一正。这就是 ": ": n-type carries negative charge and p-type positive, so the polarity at the cold end is opposite, the sign of the voltage difference is opposite, and the Seebeck coefficient is negative in one case and positive in the other. That is why ",
+  " 能当「载流子类型探针」的原因：": " can serve as a \"carrier-type probe\": ",
+  "测出 ΔV 的正负，就知道材料是 n 型还是 p 型": "measure the sign of ΔV and you know whether the material is n-type or p-type",
+  "把载流子浓度从 10": "Drag the carrier concentration from 10",
+  " 拖到 10": " to 10",
+  "，同时盯住模块四的 S 曲线和读数里的 ": " while watching the S curve in Module 4 and the ",
+  " 怎么变？为什么重掺杂「提高 ": " in the readout. How does it change? Why does heavy doping \"raise ",
+  " 却降低 S」？": " yet lower S\"?",
+  " 近似": " is approximately ",
+  "线性地随 lg n 下降": "linear in lg n, falling",
+  "非简并区": "in the non-degenerate region",
+  "每高一个数量级掉约 86·ln10 ≈ 200 μV/K（": " it drops by about 86·ln10 ≈ 200 μV/K per decade (",
+  "简并端会明显变平": "it flattens out markedly at the degenerate end",
+  " 附近只剩 −95、10": " only −95 remains near 10",
+  " 只有 −23 μV/K；本征端则被双极项拉向零 —— 模块四图注给出当前工作点的实测斜率）。原因是 ": " and only −23 μV/K at 10; at the intrinsic end the bipolar term pulls it towards zero — the Module 4 caption gives the measured slope at the present operating point). The reason is ",
+  "：掺杂越重，费米能级越靠近（甚至进入）能带，每个载流子平均携带的熵就越小。而 ": ": the heavier the doping, the closer the Fermi level sits to (or even enters) the band, and the less entropy each carrier carries on average. Meanwhile ",
+  " 随 n 上升（虽然重掺杂会让 ": " rises with n (although heavy doping degrades ",
+  " 退化，但乘积仍上升）。两者对 n 的依赖": ", the product still rises). Their dependence on n has ",
+  "，这就是热电材料最根本的权衡。": ", and this is the most fundamental trade-off of thermoelectric materials.",
+  "盯住模块三的两根条。拖动载流子浓度，第一项怎么变？切换散射机制，第二项怎么变？在典型掺杂下哪一项说了算？": "Watch the two bars in Module 3. Drag the carrier concentration — how does the first term change? Switch the scattering mechanism — how does the second term change? Under typical doping, which one decides?",
+  "第一项（能级项）": "The first term (energy term)",
+  "随掺杂升高而": " as the doping rises",
+  "减小": "decreases",
+  "，轻掺杂时可以到 5 以上，重掺杂时压到 1 甚至变负（简并）。": ": it can reach 5 or more at light doping, and is squeezed down to 1 or even goes negative (degenerate) at heavy doping.",
+  "第二项（输运项）": "The second term (transport term)",
+  "在": "in the ",
+  "时只由散射机制定，与浓度": " case is set only by the scattering mechanism and is ",
+  " 时 A = 5/2，电离杂质散射 A = 4；但": " A = 5/2, and ionised-impurity scattering gives A = 4; but ",
+  "简并之后 A(": "once it is degenerate, A(",
+  ") 会跟着 ": ") grows together with ",
+  " 一起长": " ",
+  "，不再是常数（10": ", it is no longer a constant (10",
+  " 附近已到 5 以上）。典型掺杂（10": " it has already reached 5 or more). Under typical doping (10",
+  "）下第一项通常 2 ~ 5，与 A 同量级，": ") the first term is usually 2 ~ 5, the same order as A, so ",
+  "两项都重要": "both terms matter",
+  "；到重掺杂简并区，① 变负、② 同步变长，两根条": "; in the heavily doped degenerate region ① goes negative and ② grows in step, so the two bars ",
+  "几乎抵消": "almost cancel",
+  "，剩下的差值才是 |S| —— 这就是重掺杂 |S| 塌下去的机制。（切换散射机构改的是 A 的那个系数，": ", and only the remaining difference is |S| — that is the mechanism by which |S| collapses under heavy doping. (Switching the scattering mechanism changes the coefficient in A, while ",
+  " 不受影响 —— 两条路径是分开的。）": " is unaffected — the two routes are separate.)",
+  "看模块五的 ZT 曲线。ZT 在什么浓度达到峰值？为什么存在一个最优浓度？如果只追求高 S（轻掺杂）或只追求高 ": "Look at the ZT curve in Module 5. At what concentration does ZT peak? Why is there an optimal concentration? What happens to ZT if you chase only a high S (light doping) or only a high ",
+  "（重掺杂），ZT 会怎样？": " (heavy doping)?",
+  "峰值通常在 ": "The peak usually lies near ",
+  " 附近（本工具中 Bi": " (in this tool Bi",
+  " 约在此处）。左侧是": " sits about there). On the left ",
+  " 不够": " is insufficient",
+  "：S 虽大，但 S": ": S is large, but the ",
+  " 太小；右侧是": " in S²σ is too small; on the right ",
+  "|S| 不够": "|S| is insufficient",
+  " 虽大，但 S": " is large, but S² ",
+  " 掉得更快，而且电子热导 ": " falls faster, and moreover the electronic thermal conductivity ",
+  " 按维德曼–弗兰兹律随 ": " rises with ",
+  " 一起涨，把增益又吃掉一部分。两头都不划算，中间必然有个最优。想突破这个天花板只有一条路 —— ": " according to the Wiedemann–Franz law and eats part of the gain again. Neither end pays off, so there must be an optimum in between. There is only one way past this ceiling — ",
+  "降低晶格热导 ": "lowering the lattice thermal conductivity ",
+  "，因为它跟 S、": ", because unlike S and ",
+  " 都": " it is ",
+  "⑧ 热电优值": "⑧ Figure of merit",
+  "两端接上不同温度的热库，棒内出现温度梯度。热端的载流子": "Thermal reservoirs at different temperatures are attached to the two ends and a temperature gradient appears along the bar. The carriers at the hot end are ",
+  "更热": "hotter",
+  " —— 平均动能更高、速度分布更宽，于是越过任意截面的净流都更大。注意这不是「浓度差」造成的：体内浓度被电中性锁死在掺杂值，真正驱动扩散的是温度梯度本身（热扩散 / Soret 效应）。": " — their mean kinetic energy is higher and their velocity distribution wider, so the net flow across any cross-section is larger. Note that this is not caused by a \"concentration difference\": the bulk concentration is pinned to the doping by charge neutrality, and what really drives the diffusion is the temperature gradient itself (thermal diffusion / the Soret effect).",
+  "棒内颜色是": "The colour inside the bar is ",
+  "，不是浓度。载流子的抖动幅度按 ": ", not the concentration. The jitter amplitude of the carriers is set by ",
+  " 定 —— 热端抖得厉害，这就是「更热」的字面意思。冷端那几个符号是积累的": " — the hot end jitters more, which is the literal meaning of \"hotter\". The symbols at the cold end are the accumulated ",
+  "，它们造出内建电场，把载流子往回拉，直到扩散与漂移": ", and they create the built-in field that pulls the carriers back until diffusion and drift ",
+  "精确抵消": "cancel exactly",
+  "。底部四格显示建立过程：真实材料的介电弛豫只有 10": ". The four panels at the bottom show the build-up: in a real material the dielectric relaxation time is only 10",
+  " s，这里放慢到 ": " s, slowed down here to ",
+  " s。当前 ": " s. At present ",
+  "上半部分是这张图最该看的地方：": "The upper half is the part of this plot that matters most: ",
+  "蓝色实线是真实的稳态浓度": "the blue solid line is the true steady-state concentration",
+  " —— 它": " — it ",
+  "。体内载流子浓度被电中性死死锁在掺杂值上，温度梯度并没有真的改变它。": ". The bulk carrier concentration is locked rigidly to the doping value by charge neutrality, and the temperature gradient does not really change it.",
+  "橙色虚线": "The orange dashed line",
+  "是一个反事实：假设电荷": " is a counterfactual: suppose the charge ",
+  "不重新分布": "did not redistribute",
+  "去建立电场（化学势停在中点值），各处只按当地温度 ": " to build up the field (the chemical potential stays at its mid-point value); the equilibrium concentration at each point, computed from the local temperature ",
+  " 算出的平衡浓度，它从热端到冷端差着好几倍。两条线的落差，就是系统": ", then differs by several times between the hot and cold ends. The gap between the two lines is the system's ",
+  "想扩散的冲动": "urge to diffuse",
+  "；而实线之所以是平的，正因为电荷重新分布建立起的电场把化学势沿程推着走，把这个冲动": "; and the reason the solid line is flat is precisely that the field built up by the redistributed charge pushes the chemical potential along and ",
+  "立刻抵消了": "cancels this urge at once",
+  "（这条虚线是反事实，所以": " (this dashed line is a counterfactual, so it ",
+  " 的能带弯曲 —— 把它加进去反而会落回蓝色实线，那时就没有对照了）。下半部分是电势：": " the band bending of the built-in potential — add it and you fall back onto the blue solid line, and then there is nothing to compare against). The lower half is the potential: ",
+  " 沿程积分得到，所以温差大时它不是严格线性。": " is obtained by integrating along the bar, so for a large temperature difference it is not strictly linear.",
+  "塞贝克系数由": "The Seebeck coefficient is ",
+  "两项相加": "the sum of two terms",
+  "再乘 ": " multiplied by ",
+  "蓝条": "The blue bar",
+  "是能级项 ": " is the energy term ",
+  "（费米能级离带边多远）；": " (how far the Fermi level lies from the band edge); ",
+  "橙条": "the orange bar",
+  "是输运项 ": " is the transport term ",
+  "时它退化成 ": " it reduces to ",
+  " = 2.00（只由散射机制定，与浓度无关），": " = 2.00 (set only by the scattering mechanism, independent of concentration), ",
+  "简并": "degenerate",
+  "时它随 ": " it grows with ",
+  " 一起长（现在 ": " grows with it (now ",
+  "）⇒ 两根条几乎抵消，这就是重掺杂 ": ") ⇒ the two bars almost cancel, and that is why heavy doping makes ",
+  " 塌下去的原因。教材里常见的「": " collapse. The form commonly seen in textbooks, \"",
+  "另一种加权": "a different weighting",
+  "：按": ": using ",
+  "（权重 ": " (weight ",
+  "）算平均能量得 ": ") to average the energy gives ",
+  "，没有计入 ": ", which does not include the two extra weights ",
+  " 这两个额外权重；本工具按": "; this tool weights by ",
+  "加权（权重 ": " (weight ",
+  "），故为 ": "), and therefore obtains ",
+  " —— 两者正好差 ": " — the two differ by exactly ",
+  "两条曲线一正一负，形状几乎": "The two curves are one positive and one negative, and their shapes are almost ",
+  "镜像": "mirror images",
+  "：p 型在上（": ": p-type on top (",
+  "），n 型在下（": "), n-type below (",
+  "）。横轴是对数刻度，所以两条": "). The horizontal axis is logarithmic, so the two ",
+  "近似直线": "are almost straight lines",
+  " —— 这正对应": " — which corresponds exactly to ",
+  " 的对数依赖。高温时曲线的": " being logarithmic. At high temperature the ",
+  "右端会翘起来": "right-hand end curls up",
+  "（本征激发，双极效应把 S 拉向零）—— 把温度拉到 600 K 看 Bi": " (intrinsic excitation: the bipolar effect pulls S towards zero) — push the temperature up to 600 K and look at Bi",
+  "。峰值 |S| 出现在最轻掺杂处：": ". The peak |S| occurs at the lightest doping: ",
+  "蓝实线是 ZT": "The blue solid line is ZT",
+  "（左轴有数值），橙虚线与绿点线只画形状（各自归一化，峰值标在图下方）。功率因子先升后降 —— 左端 ": " (with numbers on the left axis); the orange dashed and green dotted lines show shape only (each normalised, with the peak printed below the plot). The power factor rises and then falls — on the left ",
+  " 不够、右端 |S| 不够；热导率单调上升 —— 电子热导跟着 ": " is insufficient, on the right |S| is insufficient; the thermal conductivity rises monotonically — the electronic part follows ",
+  " 一起涨。两条曲线一交叉就在中间造出一个": " upwards. Where the two curves cross they create an optimum in the middle, ",
+  "，这里是 ": ", and here it is ",
+  "晶格热导": "the lattice thermal conductivity",
+  "▶ 播放": "▶ Play",
+  "声学声子": "Acoustic phonons",
+  "常数 τ": "Constant τ",
+  "常数 ": "Constant ",
+  "电离杂质": "Ionised impurities",
+  "空穴": "holes",
+  "ΔT = 0：两端同温，没有热扩散，什么都建不起来。": "ΔT = 0: both ends at the same temperature, no thermal diffusion, nothing can build up.",
+  "ΔT = 10 K：电动势只有几毫伏，形状已经完全成型。": "ΔT = 10 K: the voltage is only a few millivolts, but the shape is already fully formed.",
+  " = 200 K：|": " = 200 K: |",
+  " | 沿程变化明显，积分平均与中点值开始不同。": " | varies noticeably along the bar, so the integral average and the mid-point value begin to differ.",
+  " = 10¹⁷ cm⁻³，": " = 10¹⁷ cm⁻³, ",
+  " ≈ −660 μV/K。": " ≈ −660 μV/K.",
+  "换成 p 型：载流子扩散方向不变，但积累的是正电荷，": "Switch to p-type: the direction of carrier diffusion is unchanged, but positive charge accumulates and ",
+  " 反号。": " flips sign.",
+  "低热导 + 高迁移率：ZT 接近 1。注意本征激发已经在拖后腿。": "Low thermal conductivity plus high mobility: ZT approaches 1. Note that intrinsic excitation is already dragging it down.",
+  " = 10²⁰ cm⁻³：": " = 10²⁰ cm⁻³: ",
+  " 上去了，|S| 塌到 100 μV/K 以下，ZT 反而掉。": " goes up, |S| collapses below 100 μV/K, and ZT falls instead.",
+  " = 10¹⁵ cm⁻³：|S| 很大，但 ": " = 10¹⁵ cm⁻³: |S| is large, but ",
+  " 太小，功率因子照样上不去。": " is too small and the power factor still cannot rise.",
+  "压到 0.2 倍：ZT 立刻翻几番 —— 这就是纳米结构的思路。": "squeezed to 0.2: ZT jumps several-fold at once — that is the idea behind nanostructuring.",
+  "已手动改动参数。": "Parameters have been changed by hand.",
+  "电场": "field",
+  "掺杂": "doping",
+  "电导率": "conductivity",
+  "温差": "temperature difference",
+  "电动势": "voltage",
+  "热导率 κ": "thermal conductivity κ",
+  "　（双极修正 ⇒ ": "　(bipolar correction ⇒ ",
+  "已随 ": "has grown with ",
+  " 长到 ": " up to ",
+  "已简并，变平": "already degenerate, flattened",
+  "本征区": "intrinsic region",
+  "　本征区，双极效应显著": "　intrinsic region, the bipolar effect is significant",
+  "区，": " region, ",
+  "　与上式差 ": "　differs from the expression above by ",
+  " 非线性": " is non-linear",
+  "　（本征激发多出 ": "　(intrinsic excitation adds a further ",
+  "　（双极热导已超过普通电子热导！）": "　(the bipolar thermal conductivity has already overtaken the ordinary electronic thermal conductivity!)",
+  "（低掺杂极限 ": " (low-doping limit ",
+  "低掺杂": "low-doping",
+  "退化": "degradation",
+  "已简并": "already degenerate",
+  "已进入能带": "has already entered the band",
+  "进入能带": "enters the band",
+  "当前偏重": "currently on the heavy side",
+  "偏重": "on the heavy side",
+  "弛豫时间": "relaxation time",
+  "只由散射机制定，与浓度": "is set only by the scattering mechanism and is",
+  "与浓度无关": "independent of the concentration",
+  "空穴（方形）": "Holes (squares)",
+  "正电荷": "positive charge",
+  "冷端积累空穴": "Holes accumulate at the cold end",
+  "（带正电，故 ": " (positively charged, so ",
+  "两端同温": "Both ends at the same temperature",
+  "没有": "no",
+  "，也就没有": ", and hence no",
+  "电势更高": "the potential is higher",
+  "冷端电势更高": "the cold-end potential is higher",
+  "（冷 → 热）": " (cold → hot)",
+  "（冷": " (cold",
+  "热）": " hot)",
+  "」是": "\" is",
+  "把 ": "Drag ",
+  "　（就在峰附近）": "　(right next to the peak)",
+  "载流子从": "carriers from",
+  "本征端": "intrinsic end",
+  "两端接上": "Attach",
+  "自定义": "Custom",
+  "很大": "very large",
+  "。当前工作点的 ZT 是 ": ". The ZT at the present working point is ",
+  "费米能级越靠近（甚至进入）能带": "the Fermi level moves closer to (and even into) the band",
+  "（甚至进入）能带": " (and even enters) the band",
+  "极限": "limit",
+  "冷 → 热": "cold → hot",
+  "（方形），冷端积累正电荷，": " (squares), positive charge accumulates at the cold end, ",
+  "（多数＝空穴，方形）": " (majority = holes, squares)",
+  "　V−V_热 = ": "　V − V_hot = ",
+  "带正电": "positively charged",
+  "，direction": ", direction",
+  "热 → 冷": "hot → cold",
+  "是平的": "is flat",
+  "已含": "including",
+  "进了能带": "has entered the band",
+  "进了": "has entered",
+  "固定参量": "Fixed parameters",
+  "这两项": "These two ",
+  "没有滑块": "have no sliders",
+  " 是纯几何量，只影响电场 ": " is pure geometry: it only affects the field ",
+  " 与 Δ": " or Δ",
+  " 本身（当前 ": " itself (currently ",
+  " 缩放 ": " scaling ",
+  "　（当前 ": "　(currently ",
+  "，是改善 ": ", the one free parameter for improving ",
+  " 唯一能独立下手的参数 —— 由「预设 → 低热导极限」压到 0.2 倍（当前 ": " alone — squeeze it to 0.2× via the preset \"Low thermal conductivity limit\" (currently ",
+  "：切到「预设 → 低热导极限」把 ": ": switch to the preset \"Low thermal conductivity limit\" and squeeze ",
+  " 压到 0.2 倍，ZT 会立刻改观。": " down to 0.2×, and ZT improves at once.",
+  "绑定。切到「预设 → 低热导极限」（": "bound. Switch to the preset \"Low thermal conductivity limit\" (",
+  " 压到 0.2 倍）看看。": " to 0.2×) and see.",
+  "。想再往上走，唯一的自由是": ". The only free parameter left is ",
+};
+
+/* 注入点②：画布直写字符串。老工具直接调 g.fillText()（描边文字走 g.strokeText()），这里在原型上兜住。
+   measureText 必须一起挂钩，否则「量的宽度」和「量的文字」用的不是同一个串。 */
+(function () {
+  if (typeof CanvasRenderingContext2D === "undefined") return;
+  var ft = CanvasRenderingContext2D.prototype.fillText;
+  CanvasRenderingContext2D.prototype.fillText = function (s, x, y) {
+    if (typeof s === "string") arguments[0] = T(s);
+    return ft.apply(this, arguments);
+  };
+  /* 描边文字（白边包字）走 strokeText，同样要过 T()，否则画布标签漏翻 */
+  var stx = CanvasRenderingContext2D.prototype.strokeText;
+  CanvasRenderingContext2D.prototype.strokeText = function (s, x, y) {
+    if (typeof s === "string") arguments[0] = T(s);
+    return stx.apply(this, arguments);
+  };
+  var mt = CanvasRenderingContext2D.prototype.measureText;
+  CanvasRenderingContext2D.prototype.measureText = function (s) {
+    return mt.call(this, typeof s === "string" ? T(s) : s);
+  };
+})();
+
+/* 注入点④：逐字绘制的画布串。drawMath 一类把中文按单字拆成 token 再逐个 fillText，
+   T() 每次只见到一个汉字 ⇒ 整句词条永远命中不了。这里在整串进入分词之前先整体翻译，
+   于是画布标注也走「整句优先」，与 DOM 同一个口径。没有这些函数的工具自动跳过。
+   ⚠️ 签名坑：drawMath / measureMath 的第一个参数是 canvas context（对象），文本在第
+   二位；早期版本照着 arguments[0] 翻，等于把 context 送去 T()，补丁全程空转。
+   这里改为「找到第一个含中文的字符串参数」再翻，既躲开 context，也不会误伤
+   align / weight 之类以英文字符串传的选项。 */
+(function () {
+  ["drawMath", "drawMathHalo", "measureMath"].forEach(function (n) {
+    var f = window[n];
+    if (typeof f !== "function") return;
+    window[n] = function () {
+      for (var i = 0; i < arguments.length; i++) {
+        if (typeof arguments[i] === "string" && /[\u3400-\u9FFF]/.test(arguments[i])) {
+          arguments[i] = T(arguments[i]);
+          break;
+        }
+      }
+      return f.apply(this, arguments);
+    };
+  });
+})();
+
+/* ---- DOM 文本节点 ---- */
+function i18nNode(n) {
+  var el = n.parentElement;
+  if (!el) return;
+  var tag = el.tagName;
+  if (tag === "SCRIPT" || tag === "STYLE") return;
+  if (el.closest && el.closest("[data-noi18n]")) return;
+  var cur = n.nodeValue;
+  if (n.__orig === undefined || (cur !== n.__last && cur !== n.__orig)) n.__orig = cur;
+  var want = LANG === "en" ? T(n.__orig) : n.__orig;
+  if (want !== cur) n.nodeValue = want;
+  n.__last = want;
+}
+/* 属性（title / placeholder / optgroup label …）不是文本节点，MutationObserver 覆盖不到，
+   必须单独过一遍：否则悬停提示、下拉分组名会残留中文。原文缓存在元素 expando 上，
+   切回中文时原样写回。改属性不会触发 childList/characterData 观察器，不会递归。 */
+var I18N_ATTRS = ["title", "placeholder", "aria-label", "alt", "label"];
+function i18nAttrs(root) {
+  var els = [root], i, j;
+  if (root.querySelectorAll) els = els.concat(Array.prototype.slice.call(root.querySelectorAll("*")));
+  for (i = 0; i < els.length; i++) {
+    var el = els[i];
+    if (!el.getAttribute) continue;
+    if (el.closest && el.closest("[data-noi18n]")) continue;
+    for (j = 0; j < I18N_ATTRS.length; j++) {
+      var a = I18N_ATTRS[j];
+      if (!el.hasAttribute(a)) continue;
+      var key = "__a_" + a;
+      if (el[key] === undefined) el[key] = el.getAttribute(a);
+      var want = LANG === "en" ? T(el[key]) : el[key];
+      if (want !== el.getAttribute(a)) el.setAttribute(a, want);
+    }
+  }
+}
+/* 英文补空格（跨节点）：中文片段被行内标签切开时，各自翻成英文后直连会粘连。
+   判定用 DOM 结构而不是渲染矩形——折叠区（挑战答案）矩形为零，矩形法会漏。
+   两文本节点在文档序里紧邻（中间没有任何文本节点，包括空格节点）、
+   前段末尾与后段开头都是字母、双方词条都没自带空格、且不在上下标里 ⇒ 插一个空格。
+   空格节点记录在案，切回中文时移除。只动 i18n 注入层，不改业务文本。 */
+function fixGlue(root) {
+  var all = [];
+  var w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null, false), n;
+  while ((n = w.nextNode())) all.push(n);
+  function subbed(el) {
+    while (el) { var t = el.tagName; if (t === "SUB" || t === "SUP") return true; el = el.parentElement; }
+    return false;
+  }
+  for (var i = 0; i + 1 < all.length; i++) {
+    var a = all[i], b = all[i + 1];
+    if (!a.nodeValue || !b.nodeValue) continue;
+    if (/\s$/.test(a.nodeValue) || /^\s/.test(b.nodeValue)) continue;
+    if (!/[A-Za-z0-9]$/.test(a.nodeValue) || !/^[A-Za-z]/.test(b.nodeValue)) continue;
+    var pa = a.parentElement, pb = b.parentElement;
+    if (!pa || !pb || subbed(pa) || subbed(pb)) continue;
+    var sp = document.createTextNode(" ");
+    sp.__glue = 1;
+    (fixGlue._n = fixGlue._n || []).push(sp);
+    b.parentNode.insertBefore(sp, b);
+  }
+}
+function removeGlue() {
+  if (!fixGlue._n) return;
+  for (var i = 0; i < fixGlue._n.length; i++) { var g = fixGlue._n[i]; if (g.parentNode) g.parentNode.removeChild(g); }
+  fixGlue._n = [];
+}
+/* 全局防抖补空格：挑战答案这类「点击时才重建」的区域，observer 回调里对子树跑
+   fixGlue 的时机不全（答案重写、延迟渲染都会错过）。任何 DOM 变更后 60ms
+   对整页补一次；空格本身不触发新插入，收敛。 */
+var _glueTimer = null;
+function _glueKick() {
+  if (LANG !== "en") return;
+  if (_glueTimer) clearTimeout(_glueTimer);
+  _glueTimer = setTimeout(function () {
+    _glueTimer = null;
+    if (LANG === "en") fixGlue(document.body);
+  }, 60);
+}
+function i18nWalk(root) {
+  var w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null, false), n, c = 0;
+  while ((n = w.nextNode())) { i18nNode(n); c++; }
+  i18nAttrs(root);
+  if (LANG === "en") fixGlue(root === document ? document.body : root);
+  return c;
+}
+var _i18nBusy = false;
+function i18nWatch() {
+  if (typeof MutationObserver === "undefined") return;
+  var mo = new MutationObserver(function (ms) {
+    if (_i18nBusy) return;
+    _i18nBusy = true;
+    try {
+      for (var i = 0; i < ms.length; i++) {
+        var m = ms[i];
+        if (m.type === "childList") {
+          for (var j = 0; j < m.addedNodes.length; j++) {
+            var nd = m.addedNodes[j];
+            if (nd.nodeType === 3) i18nNode(nd);
+            else if (nd.nodeType === 1) i18nWalk(nd);
+          }
+        } else if (m.type === "characterData") i18nNode(m.target);
+      }
+    } finally { _i18nBusy = false; }
+    _glueKick();
+  });
+  mo.observe(document.body, { childList: true, subtree: true, characterData: true });
+}
+function setLang(l) {
+  LANG = l;
+  try { localStorage.setItem("opl_lang", l); } catch (e) { }
+  document.documentElement.lang = l === "en" ? "en" : "zh-CN";
+  var btn = document.getElementById("langBtn");
+  if (btn) btn.textContent = l === "en" ? "中文" : "EN";
+  document.title = l === "en" ? T(ORIG_TITLE) : ORIG_TITLE;
+  if (l !== "en") removeGlue();
+  i18nWalk(document.body);
+  _glueKick();
+  if (typeof syncInputs === "function") syncInputs();
+  if (typeof render === "function") render();
+}
+
+
+
+/* ---------------- 直接 fillText / strokeText 的自动排版钩子 ----------------
+   有些标注不走 txt() 而是直接 g.fillText()（状态徽标、能带边等），
+   这里在原型层统一处理：含数学记法的字符串先按 LaTeX 规则拆段再绘制，
+   measureText 同步返回拆段总宽，白底框长度自动跟着变。 */
+const NEED_MATH_HM = /[\u2070-\u209C\u00B2\u00B3\u00B9]|_\{?[A-Za-z0-9\u0370-\u03ff]|\^\{?[\d(\-]|\d(\.\d+)?[eE][+\-]\d|\u221A/;
+/* 原生 measureText：mathSegsHM 内部量宽必须走这一条，
+   否则 measureText 被钩子接管后会 self-recursion（RangeError）。 */
+var _mRawHM = null;
+function measureRawHM(g, s) { return (_mRawHM ? _mRawHM : g.measureText).call(g, s).width; }
+function mathSegsHM(g, s) {
+  const f = String(g.font || "");
+  const mm = /(\d+(?:\.\d+)?)px/.exec(f);
+  const size = mm ? parseFloat(mm[1]) : 12;
+  const family = f.replace(/^(?:\s*(?:italic|oblique|bold|[1-9]00)\s*)*\d+(?:\.\d+)?px\s*/, "");
+  const style = /italic|oblique/.test(f) ? "italic " : (/bold|[6-9]00/.test(f) ? "bold " : "");
+  const parts = AUTO(s), laid = [];
+  let w = 0;
+  for (const p of parts) {
+    const small = !!(p.sup || p.sub);
+    const fs = style + (small ? (size * 0.74).toFixed(2) : size.toFixed(2)) + "px " + family;
+    g.font = fs;
+    const tw = measureRawHM(g, p.s);
+    laid.push({ s: p.s, w: tw, fs: fs, dy: small ? (p.sup ? -size * 0.40 : size * 0.22) : 0 });
+    w += tw;
+  }
+  return { laid: laid, w: w, family: family, style: style, size: size };
+}
+(function hookMathHM() {
+  if (window.__MATH_HOOK) return; window.__MATH_HOOK = 1;
+  const P = CanvasRenderingContext2D.prototype;
+  const _fill = P.fillText, _stroke = P.strokeText, _measure = P.measureText;
+  function draw(drawRaw, g, s, x, y, rest) {
+    const info = mathSegsHM(g, s);
+    const al = g.textAlign, bl = g.textBaseline;
+    const cx = al === "right" ? x - info.w : (al === "center" ? x - info.w / 2 : x);
+    g.textAlign = "left";
+    let px = cx;
+    for (const L of info.laid) {
+      g.font = L.fs;
+      drawRaw.call(g, L.s, px, y + L.dy, ...rest);
+      px += L.w;
+    }
+    g.textAlign = al; g.textBaseline = bl;
+    g.font = info.style + info.size.toFixed(2) + "px " + info.family;
+    return info;
+  }
+  /* __HM_SQRT：根号例程 mDrawSqrt 正在画 √ 字形，它是根号的一部分
+     （紧接着会补一条压住被开方式的横线），不能再被自动排版钩子接管，
+     否则会被误判成「裸 √」。 */
+  P.fillText = function (s, x, y) {
+    if (window.__HM_SQRT || typeof s !== "string" || !NEED_MATH_HM.test(s)) return _fill.apply(this, arguments);
+    draw(_fill, this, s, x, y, Array.prototype.slice.call(arguments, 3));
+  };
+  P.strokeText = function (s, x, y) {
+    if (window.__HM_SQRT || typeof s !== "string" || !NEED_MATH_HM.test(s)) return _stroke.apply(this, arguments);
+    draw(_stroke, this, s, x, y, Array.prototype.slice.call(arguments, 3));
+  };
+  if (!_mRawHM) _mRawHM = _measure;
+  P.measureText = function (s) {
+    if (window.__HM_IN || typeof s !== "string" || !NEED_MATH_HM.test(s)) return _measure.call(this, s);
+    window.__HM_IN = 1;
+    const save = this.font;
+    let info;
+    try { info = mathSegsHM(this, s); } finally { window.__HM_IN = 0; }
+    this.font = save;
+    return { width: info.w, get actualBoundingBoxLeft() { return 0; }, get actualBoundingBoxRight() { return info.w; } };
+  };
+})();
+
+/* ---------------- HTML 侧自动 LaTeX 排版 ----------------
+   读数 / 说明 / 按钮名里由 JS 拼出来的 cm⁻³、E_c、2.5e+8，
+   在写进 innerHTML 之前转成真 <sup>/<sub>；标签与属性原样放过（title 不会被塞进尖括号）。
+   与画布侧 AUTO() 对偶，保证网页和画布按同一套规则排版。 */
+const AUTOH_SUP = { "⁰": "0", "¹": "1", "²": "2", "³": "3", "⁴": "4", "⁵": "5", "⁶": "6",
+  "⁷": "7", "⁸": "8", "⁹": "9", "⁺": "+", "⁻": "−", "⁼": "=", "⁽": "(", "⁾": ")", "ⁿ": "n", "ⁱ": "i" };
+const AUTOH_SUB = { "₀": "0", "₁": "1", "₂": "2", "₃": "3", "₄": "4", "₅": "5", "₆": "6",
+  "₇": "7", "₈": "8", "₉": "9", "₊": "+", "₋": "−", "₌": "=", "₍": "(", "₎": ")",
+  "ₐ": "a", "ₑ": "e", "ₒ": "o", "ₓ": "x", "ₔ": "ə", "ₕ": "h", "ₖ": "k", "ₗ": "l",
+  "ₘ": "m", "ₙ": "n", "ₚ": "p", "ₛ": "s", "ₜ": "t", "ᵣ": "r", "ᵤ": "u", "ᵥ": "v" };
+const TEXH_NEED = /[\u2070-\u209C\u00B2\u00B3\u00B9]|_\{?[A-Za-z0-9\u0370-\u03ff]|\^\{?[\d(\-]|\d(\.\d+)?[eE][+\-]\d|\u221A/;
+/* 从 i 处（必须是 '<'）扫出一个"完整元素"的结束下标（含嵌套），失败返回 -1 */
+function TEXH_elemEnd(h, i) {
+  if (h.charAt(i) !== "<") return -1;
+  let depth = 0, j = i, guard = 0;
+  while (j < h.length && guard++ < 4000) {
+    if (h.charAt(j) !== "<") { j++; continue; }
+    const e = TEXH_tagEnd(h, j);
+    if (e < 0) return -1;
+    const isClose = h.charAt(j + 1) === "/";
+    const selfClose = h.charAt(e - 2) === "/";
+    if (isClose) { depth--; j = e; if (depth <= 0) return j; }
+    else if (selfClose) { j = e; if (depth === 0) return j; }
+    else { depth++; j = e; }
+  }
+  return -1;
+}
+/* √ 后面直接跟一个元素：√<i>E</i> → √‾E（前两条规则只吃 √(A) 与 √字母串） */
+function TEXHsqrtElem(s) {
+  let out = "", i = 0, guard = 0;
+  while (guard++ < 400) {
+    const k = s.indexOf("\u221A", i);
+    if (k < 0) break;
+    out += s.slice(i, k);
+    /* 守卫：√ 后面已是闭标签 ⇒ 该 √ 已排版过（对整段 HTML 重复跑 TEXH 会把 </span> 当成被开方式，
+       层层包出空壳根号，视觉上变成 √−3 / √−E），原样输出不再包裹 */
+    if (s.charAt(k + 1) === "<" && s.charAt(k + 2) === "/") { out += "\u221A"; i = k + 1; continue; }
+    let rad = null, end = k + 1;
+    if (s.charAt(k + 1) === "(") {
+      /* √(…) ：被开方式里常有标签，括号本身不在同一个文本片段里，必须整串扫 */
+      let depth = 0, p = k + 1;
+      while (p < s.length) {
+        const c = s.charAt(p);
+        if (c === "(") depth++;
+        else if (c === ")") { depth--; if (depth === 0) { rad = s.slice(k + 2, p); end = p + 1; break; } }
+        p++;
+      }
+    } else {
+      const e = TEXH_elemEnd(s, k + 1);
+      if (e > 0 && e - k < 500) { rad = s.slice(k + 1, e); end = e; }
+    }
+    if (rad !== null && rad.length) {
+      out += "<span class=\"sqrt\"><span class=\"rd\">\u221A</span><span class=\"rdc\">" + rad + "</span></span>";
+      i = end;
+    } else { out += "\u221A"; i = k + 1; }
+  }
+  return out + s.slice(i);
+}
+function TEXHpart(t) {
+  let s = t;
+  /* 根号：√ 或 √(A) → <span class="sqrt">√<span class="rd"><span class="rdc">A</span></span></span>（A 内不含嵌套括号） */
+  s = s.replace(/<span class="(?:op|rm|fn|v|u)">\u221A<\/span>/g, "\u221A");
+  s = s.replace(/\u221A<span class="(?:op|rm)">\(<\/span>([^()]{1,120}?)<span class="(?:op|rm)">\)<\/span>/g, function (m, a) {
+    return "<span class=\"sqrt\"><span class=\"rd\">\u221A</span><span class=\"rdc\">" + a + "</span></span>";
+  });
+  s = s.replace(/\u221A\(([^()]{1,120})\)/g, function (m, a) {
+    return "<span class=\"sqrt\"><span class=\"rd\">\u221A</span><span class=\"rdc\">" + a + "</span></span>";
+  });
+  s = s.replace(/\u221A([A-Za-z0-9\u0370-\u03ff]{1,6})/g, function (m, a) {
+    return "<span class=\"sqrt\"><span class=\"rd\">\u221A</span><span class=\"rdc\">" + a + "</span></span>";
+  });
+  s = s.replace(/(\d(?:\.\d+)?)e([+-])(\d+)/g, function (m, a, sg, e) {
+    return a + "\u00d710<sup>" + (sg === "-" ? "\u2212" : "") + e + "</sup>";
+  });
+  s = s.replace(/([A-Za-z\u0370-\u03ff)\]])\^\{([^{}]{1,12})\}/g, "$1<sup>$2</sup>");
+  s = s.replace(/([A-Za-z\u0370-\u03ff)\]])\^(\d+(?:\.\d+)?)/g, "$1<sup>$2</sup>");
+  s = s.replace(/([A-Za-z\u0370-\u03ff])_\{([A-Za-z0-9\u0370-\u03ff+\-]{1,8})\}/g, "<span class='m'><i>$1</i><sub>$2</sub></span>");
+  s = s.replace(/([A-Za-z\u0370-\u03ff])_([A-Za-z0-9\u0370-\u03ff]{1,6})(?![A-Za-z0-9])/g, "<span class='m'><i>$1</i><sub>$2</sub></span>");
+  if (/[\u2070-\u209C\u00B2\u00B3\u00B9]/.test(s)) {
+    let out = "", i = 0;
+    while (i < s.length) {
+      const ch = s[i];
+      if (AUTOH_SUP[ch] !== undefined || AUTOH_SUB[ch] !== undefined) {
+        const isSup = AUTOH_SUP[ch] !== undefined, tab = isSup ? AUTOH_SUP : AUTOH_SUB;
+        let j = i, buf = "";
+        while (j < s.length && (isSup ? AUTOH_SUP[s[j]] !== undefined : AUTOH_SUB[s[j]] !== undefined)) {
+          buf += tab[s[j]]; j++;
+        }
+        out += "<" + (isSup ? "sup" : "sub") + ">" + buf + "</" + (isSup ? "sup" : "sub") + ">";
+        i = j;
+      } else { out += ch; i++; }
+    }
+    s = out;
+  }
+  return s.indexOf("\u221A") >= 0 ? TEXHsqrtElem(s) : s;
+}
+/* 只有真正的标签才整段跳过：正文里裸写的 '<'（如 "t₂ < 0"）必须当普通字符，
+   否则 indexOf('>') 会一路吞掉后面整段，E₂⁰ 这类记法就漏排了。 */
+function TEXH_tagEnd(h, i) {
+  if (h.charAt(i) !== "<") return -1;
+  const c = h.charAt(i + 1);
+  if (c === "!" || c === "/") { const j = h.indexOf(">", i); return (j >= 0 && j - i < 300) ? j + 1 : -1; }
+  if (!/[A-Za-z]/.test(c)) return -1;
+  let j = i + 1;
+  while (j < h.length && /[A-Za-z0-9]/.test(h.charAt(j))) j++;
+  if (j === i + 1) return -1;
+  if (h.charAt(j) === ">") return j + 1;
+  if (h.charAt(j) !== " " && h.charAt(j) !== "\n" && h.charAt(j) !== "\t") return -1;
+  const g = h.indexOf(">", j), nx = h.indexOf("<", j);
+  if (g < 0 || g - i > 300) return -1;
+  if (nx >= 0 && nx < g) return -1;
+  return g + 1;
+}
+function TEXH(h) {
+  if (typeof h !== "string" || !TEXH_NEED.test(h)) return h;
+  if (h.indexOf("\u221A") >= 0) h = h.replace(/<span class="(?:op|rm|fn|v|u)">\u221A<\/span>/g, "\u221A");
+  if (h.indexOf("<") < 0) return TEXHpart(h);
+  let out = "", i = 0, n = h.length, guard = 0;
+  while (i < n && guard++ < 40000) {
+    const e = TEXH_tagEnd(h, i);
+    if (e > 0) { out += h.slice(i, e); i = e; continue; }
+    let j = i;
+    while (j < n && TEXH_tagEnd(h, j) <= 0) j++;
+    out += TEXHpart(h.slice(i, j)); i = j;
+  }
+  const r = out + h.slice(i);
+  return r.indexOf("\u221A") >= 0 ? TEXHsqrtElem(r) : r;
+}
+(function hookHTML() {
+  if (window.__TEXH_HOOK) return; window.__TEXH_HOOK = 1;
+  const d = Object.getOwnPropertyDescriptor(Element.prototype, "innerHTML");
+  if (!d || !d.set) return;
+  Object.defineProperty(Element.prototype, "innerHTML", {
+    configurable: true, get: d.get,
+    set: function (v) { d.set.call(this, typeof v === "string" ? TEXH(v) : v); }
+  });
+  /* insertAdjacentHTML 也会被用到 */
+  const ia = Element.prototype.insertAdjacentHTML;
+  Element.prototype.insertAdjacentHTML = function (pos, v) {
+    return ia.call(this, pos, typeof v === "string" ? TEXH(v) : v);
+  };
+})();
+
+/* ---------------- 画布自动 LaTeX 排版 ----------------
+   老调用点 txt(g, "cm⁻³") / txt(g, "E_c") / txt(g, "2.5e+8") 一行都不用改，
+   只要在绘制前把字符串解析成分段零件即可。规则与网页侧一致：
+   物理量斜体、描述性下标与单位正体、幂次用真上标（不用 Unicode 伪字符）。 */
+const SUPMAP = { "⁰": "0", "¹": "1", "²": "2", "³": "3", "⁴": "4", "⁵": "5", "⁶": "6",
+  "⁷": "7", "⁸": "8", "⁹": "9", "⁺": "+", "⁻": "−", "⁼": "=", "⁽": "(", "⁾": ")", "ⁿ": "n", "ⁱ": "i" };
+const SUBMAP = { "₀": "0", "₁": "1", "₂": "2", "₃": "3", "₄": "4", "₅": "5", "₆": "6",
+  "₇": "7", "₈": "8", "₉": "9", "₊": "+", "₋": "−", "₌": "=", "₍": "(", "₎": ")",
+  "ₐ": "a", "ₑ": "e", "ₒ": "o", "ₓ": "x", "ₔ": "ə", "ₕ": "h", "ₖ": "k", "ₗ": "l",
+  "ₘ": "m", "ₙ": "n", "ₚ": "p", "ₛ": "s", "ₜ": "t", "ᵣ": "r", "ᵤ": "u", "ᵥ": "v" };
+const MATH_IDCH = /[A-Za-z\u0370-\u03ff]/;
+const NEED_MATH = /[\u2070-\u209C\u00B2\u00B3\u00B9]|_\{?[A-Za-z0-9\u0370-\u03ff]|\^\{?[\d(\-]|\d(\.\d+)?[eE][+\-]\d/;
+function AUTO(s) {
+  const out = [];
+  let buf = "", mode = 0;
+  const emit = (t, kind) => {
+    if (!t) return;
+    if (kind === 1) out.push({ s: t, sup: true });
+    else if (kind === -1) out.push({ s: t, sub: true });
+    else out.push({ s: t });
+  };
+  let i = 0, italicAll = false;
+  while (i < s.length) {
+    const ch = s[i];
+    if (SUPMAP[ch] !== undefined) { if (mode !== 1) { emit(buf, mode); buf = ""; mode = 1; } buf += SUPMAP[ch]; i++; continue; }
+    if (SUBMAP[ch] !== undefined) { if (mode !== -1) { emit(buf, mode); buf = ""; mode = -1; } buf += SUBMAP[ch]; i++; continue; }
+    if (mode) { emit(buf, mode); buf = ""; mode = 0; }
+    const rest = s.slice(i);
+    const sc = /^\d(\.\d+)?[eE][+\-]\d{1,3}/.exec(rest);       /* ASCII 伪科学计数 2.5e+8 */
+    if (sc) {
+      const parts = sc[0].split(/[eE]/);
+      emit(parts[0] + "\u00d710", 0); emit(String(+parts[1]).replace("-", "\u2212"), 1);
+      i += sc[0].length; continue;
+    }
+    if (MATH_IDCH.test(ch) && i + 1 < s.length && (s[i + 1] === "_" || s[i + 1] === "^")) {
+      const sup = s[i + 1] === "^";
+      let j = i + 2, grp = "";
+      if (s[j] === "{") { const e = s.indexOf("}", j); if (e > 0) { grp = s.slice(j + 1, e); j = e + 1; } }
+      else {
+        const RCJK = /[\u2E80-\u9FFF]/, RASC = /[A-Za-z0-9\u0370-\u03ff+\-]/;
+        if (RCJK.test(s[j])) { while (j < s.length && RCJK.test(s[j]) && j - i < 8) j++; }   /* 中文描述性下标：τ_直接、E_声子 */
+        else { while (j < s.length && RASC.test(s[j])) j++; }
+        grp = s.slice(i + 2, j);
+      }
+      if (grp) {
+        emit(ch, 0);
+        if (italicAll || /^[A-Za-z\u0370-\u03ff]$/.test(ch)) out[out.length - 1].i = true;
+        emit(sup ? grp.replace(/-/g, "\u2212") : grp, sup ? 1 : -1);
+        i = j; continue;
+      }
+    }
+    buf += ch; i++;
+  }
+  emit(buf, mode);
+  return out;
+}
+function fontInfo(font, dflt) {
+  const f = String(font || "");
+  const m = /(\d+(?:\.\d+)?)px/.exec(f);
+  return { fp: m ? parseFloat(m[1]) : (dflt || 12), bd: /bold|70\d|600/.test(f), it: /italic|oblique/.test(f) };
+}
+
+/* ---------------- HTML 字符串 → 画布零件（网页与画布共用同一份排版） ----------------
+   mtxt(g, TX(H_NA), x, y, col, fp) —— H_* 常量本来就在喂 innerHTML，
+   再喂给 TX() 就不会出现「网页斜体、画布正体」的两边不一致。
+   <i> 斜体、<sub> 下标、<sup> 上标；<span class="op|un|rm|sqrt|frac"> 只剥标签（保持正体）。 */
+const catA = (...a) => [].concat(...a);
+function TX(h) {
+  const t = String(h == null ? "" : h)
+    .replace(/<span\b[^>]*>/g, "").replace(/<\/span>/g, "")
+    .replace(/<i\b[^>]*>/g, "<i>").replace(/<b\b[^>]*>/g, "").replace(/<\/b>/g, "")
+    .replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&").replace(/&nbsp;/g, " ");
+  const out = [], re = /<i>([\s\S]*?)<\/i>|<sub>([\s\S]*?)<\/sub>|<sup>([\s\S]*?)<\/sup>|([^<]+)/g;
+  let m;
+  while ((m = re.exec(t))) {
+    const raw = s => s == null ? null : s.replace(/<[^>]*>/g, "");
+    if (m[1] != null) out.push({ s: raw(m[1]), i: true });
+    else if (m[2] != null) out.push({ s: raw(m[2]), sub: true });
+    else if (m[3] != null) out.push({ s: raw(m[3]), sup: true });
+    else if (m[4]) out.push({ s: m[4] });
+  }
+  return out;
+}
+function TXof(...a) { return catA(...a.map(TX)); }
+
+/* ---------------- 0. 小工具 ---------------- */
+const $ = id => document.getElementById(id);
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const fmt = (v, n) => (isFinite(v) ? v.toFixed(n === undefined ? 2 : n) : "—");
+const MM = h => '<span class="m">' + h + "</span>";
+const SEP2 = "　·　";                       /* 「固定参量」行内分隔符（纯符号，不进 i18n） */
+function sciH(v, n) {
+  if (!isFinite(v) || v === 0) return "0";
+  const e = Math.floor(Math.log10(Math.abs(v)));
+  const m = (v / Math.pow(10, e)).toFixed(n === undefined ? 1 : n);
+  /* 1 ≦ |v| < 10 时直接写尾数，不再拖一个 ×10⁰ */
+  if (e === 0) return m;
+  /* 指数里的负号用 U+2212（LaTeX 减号），不用 ASCII 连字符 */
+  return m + "×10<sup>" + String(e).replace("-", "\u2212") + "</sup>";
+}
+function stripTags(h) {
+  /* 原生 title tooltip 只吃纯文本，所以先把排版还原成可读的线性写法：
+     frac → A/B、sub → _x、sup → ^x，最后用临时 span 的 textContent 剥标签
+     （不能用正则剥：< 这类实体会原样留下）。 */
+  var s0 = String(h === undefined || h === null ? "" : h)
+    .replace(/<span class=[^>]*sqrt[^>]*>\s*<span class=[^>]*rd[^>]*>√<\/span><span class=[^>]*rdc[^>]*>([\s\S]*?)<\/span><\/span>/g, "√$1")
+    .replace(/<span class=[^>]*frac[^>]*>\s*<span class=[^>]*num[^>]*>([\s\S]*?)<\/span><span class=[^>]*den[^>]*>([\s\S]*?)<\/span><\/span>/g, "$1/$2")
+    .replace(/([\u2070\u00B9\u00B2\u00B3\u2074-\u2079\u207A\u207B\u207D\u207E\u2071\u207F]+)/g, function (m) { return "^" + m.replace(/[\u2070-\u209C\u00B2\u00B3\u00B9]/g, function (c) { return AUTOH_SUP[c] || c; }); })
+    .replace(/([\u2080-\u2089\u208A\u208B\u208C\u208D\u208E\u2090-\u209C]+)/g, function (m) { return "_" + m.replace(/[\u2070-\u209C]/g, function (c) { return AUTOH_SUB[c] || c; }); })
+    .replace(/<sub>([\s\S]*?)<\/sub>/g, "_$1")
+    .replace(/<sup>([\s\S]*?)<\/sup>/g, "^$1");
+  var t = document.createElement("span"); t.innerHTML = s0;
+  return t.textContent.replace(/\s+/g, " ").trim();
+}
+
+/* ---------------- 1. 画布与画布内排版 ---------------- */
+const CV = {};
+function fitCanvas(id) {
+  const el = $(id);
+  if (!el || !el.clientWidth) return null;
+  const w = el.clientWidth, h = +el.dataset.h;
+  const dpr = window.devicePixelRatio || 1;
+  el.width = Math.round(w * dpr); el.height = Math.round(h * dpr);
+  el.style.height = h + "px";
+  const g = el.getContext("2d");
+  g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  CV[id] = { g: g, W: w, H: h, el: el };
+  return CV[id];
+}
+
+const FONT = "\"Microsoft YaHei\",\"PingFang SC\",sans-serif";
+const FONTM = "\"Cambria Math\",\"Times New Roman\",Times,serif";
+const SUBR = 0.74, SUBDY = 0.22, SUPDY = 0.40;
+
+/* 颜色：正电荷红 / 负电荷蓝（与霍尔工具的积累符号一致）；
+   能带 E_c 红、E_v 蓝、E_i 灰虚、E_F 青实；E(x) 绿、V(x) 紫（对应参考图） */
+const C_POS = "#d94a3d", C_NEG = "#1976d2";
+const C_EC = "#c9483c", C_EV = "#1976d2", C_EI = "#8a97a5", C_EF = "#0f9b8e";
+const C_E = "#2e9e5b", C_V = "#7b3fa0";
+const C_SUB = "#6b7a8c", C_GRID = "#e7edf4", C_REF = "#9aa5b1", C_DASH = "#5a6b7d";
+
+function txt(g, s, x, y, col, font, align, base) {
+  g.fillStyle = col; g.font = font || "12px " + FONT;
+  g.textAlign = align || "left"; g.textBaseline = base || "middle";
+  if (typeof s === "string" && NEED_MATH.test(s)) {
+    const fi = fontInfo(font, 12);
+    mRun(g, AUTO(s), x, y, fi.fp, fi.bd, align || "left", false);
+    return;
+  }
+  g.fillText(s, x, y);
+}
+function isCJKch(ch) {
+  const c = ch.codePointAt(0);
+  return (c >= 0x2E80 && c <= 0x9FFF) || (c >= 0xF900 && c <= 0xFAFF) ||
+    (c >= 0xFF00 && c <= 0xFF60) || c === 0x2014 || c === 0x2015 || c === 0x2026;
+}
+function segRuns(s) {
+  const out = []; let cur = "", curC = null;
+  for (const ch of s) {
+    const c = isCJKch(ch);
+    if (curC === null) { cur = ch; curC = c; }
+    else if (c === curC) cur += ch;
+    else { out.push({ s: cur, cjk: curC }); cur = ch; curC = c; }
+  }
+  if (cur) out.push({ s: cur, cjk: curC });
+  return out;
+}
+function pFont(q, fp, bd, cjk) {
+  const sz = fp * ((q.sub || q.sup) ? SUBR : 1);
+  return (bd ? "bold " : "") + (!cjk && q.i ? "italic " : "") + sz.toFixed(2) + "px " + (cjk ? FONT : FONTM);
+}
+/* 允许整体传字符串（"0"、"拖动可旋转视角" 这类纯文本），不必到处写 [{s:…}] */
+/* i18n 注入点①：画布 token。带 i / sub / sup / un 标记的是物理量、下标与单位，一律不动；
+   没有这些标记的 token 才是自然语言，交给 T() —— 所以这里的判断只看标记，不看内容。 */
+const partsOf = p => (typeof p === "string" ? [{ s: p }] : p).map(q => {
+  const o = (typeof q === "string" ? { s: q } : q);
+  const natural = !(o.i || o.sub || o.sup || o.un);
+  if (LANG === "en" && natural && typeof o.s === "string" && /[\u4E00-\u9FFF]/.test(o.s)) {
+    const t = T(o.s);
+    return t === o.s ? o : Object.assign({}, o, { s: t });
+  }
+  return o;
+});
+/* √ 符号比正文略大（与网页端 .rd 的字号对齐） */
+function mSqrtW(g, fp) {
+  const sv = g.font;
+  g.font = (fp * 1.20).toFixed(2) + "px " + FONTM;
+  const w = g.measureText("\u221A").width;
+  g.font = sv;
+  return w;
+}
+function mMeasure(g, parts, fp, bd) {
+  let w = 0;
+  for (const q of partsOf(parts)) {
+    if (q.sqrt) { w += mSqrtW(g, fp) + 2 + mMeasure(g, q.sqrt, fp, bd) + 2; continue; }
+    for (const sg of segRuns(q.s)) { g.font = pFont(q, fp, bd, sg.cjk); w += g.measureText(sg.s).width; }
+  }
+  return w;
+}
+/* 画布版 \sqrt{}：√ 字形 + 压住被开方式的一条横线 */
+function mDrawSqrt(g, sub, cx, y, fp, bd, stroke) {
+  const sv = g.font, col = stroke ? g.strokeStyle : g.fillStyle;
+  const sq = "\u221A";
+  g.font = (fp * 1.20).toFixed(2) + "px " + FONTM;
+  /* √ 是根号的一部分（下面马上补横线），不让自动排版钩子插手 */
+  window.__HM_SQRT = 1;
+  try { if (stroke) g.strokeText(sq, cx, y + fp * 0.04); else g.fillText(sq, cx, y + fp * 0.04); }
+  finally { window.__HM_SQRT = 0; }
+  cx += g.measureText(sq).width + 1;
+  const sw = mMeasure(g, sub, fp, bd);
+  mRun(g, sub, cx, y, fp, bd, "left", stroke);
+  line(g, cx - 1, y - fp * 0.46, cx + sw + 1, y - fp * 0.46, col, 1);
+  g.font = sv;
+  return cx + sw + 2;
+}
+function mRun(g, parts, x, y, fp, bd, align, stroke) {
+  const ps = partsOf(parts), w = mMeasure(g, ps, fp, bd);
+  let cx = align === "right" ? x - w : (align === "center" ? x - w / 2 : x);
+  g.textAlign = "left"; g.textBaseline = "middle"; g.lineJoin = "round";
+  for (const q of ps) {
+    if (q.sqrt) { cx = mDrawSqrt(g, q.sqrt, cx, y, fp, bd, stroke); continue; }
+    const dy = q.sub ? fp * SUBDY : (q.sup ? -fp * SUPDY : 0);
+    for (const sg of segRuns(q.s)) {
+      g.font = pFont(q, fp, bd, sg.cjk);
+      if (stroke) { g.lineWidth = (q.sub || q.sup) ? 2.4 : 3.2; g.strokeText(sg.s, cx, y + dy); }
+      else g.fillText(sg.s, cx, y + dy);
+      cx += g.measureText(sg.s).width;
+    }
+  }
+}
+function mtxt(g, parts, x, y, col, fp, align, bd) {
+  g.fillStyle = col; mRun(g, parts, x, y, fp, bd || false, align, false);
+}
+function mtxtHalo(g, parts, x, y, col, fp, align, bd) {
+  g.strokeStyle = "rgba(255,255,255,0.94)";
+  mRun(g, parts, x, y, fp, bd || false, align, true);
+  mtxt(g, parts, x, y, col, fp, align, bd);
+}
+function line(g, x1, y1, x2, y2, col, lw, dash) {
+  g.save();
+  g.strokeStyle = col; g.lineWidth = lw || 1;
+  if (dash) g.setLineDash(dash);
+  g.beginPath(); g.moveTo(x1, y1); g.lineTo(x2, y2); g.stroke();
+  g.restore();
+}
+function arrowHead(g, x, y, ang, sz, col) {
+  g.save(); g.translate(x, y); g.rotate(ang);
+  g.beginPath(); g.moveTo(0, 0); g.lineTo(-sz, sz * 0.42); g.lineTo(-sz, -sz * 0.42);
+  g.closePath(); g.fillStyle = col; g.fill(); g.restore();
+}
+function arrow(g, x1, y1, x2, y2, col, lw, sz) {
+  const dx = x2 - x1, dy = y2 - y1, L = Math.hypot(dx, dy);
+  if (L < 0.5) return;
+  line(g, x1, y1, x2, y2, col, lw || 1.4);
+  arrowHead(g, x2, y2, Math.atan2(dy, dx), sz || 6, col);
+}
+function arrow2(g, x1, y1, x2, y2, col, lw, sz) {   // 双向箭头
+  arrow(g, x1, y1, x2, y2, col, lw, sz);
+  arrow(g, x2, y2, x1, y1, col, lw, sz);
+}
+function chipM(g, parts, x, y, col, fp, align, W) {
+  const ps = partsOf(parts);
+  g.font = fp.toFixed(2) + "px " + FONTM;
+  const w = mMeasure(g, ps, fp, false), al = align || "left";
+  let bx = al === "right" ? x - w : (al === "center" ? x - w / 2 : x);
+  if (W) bx = clamp(bx, 4, W - w - 4);
+  const rx = bx - 5, ry = y - fp * 0.72, rw = w + 10, rh = fp * 1.44;
+  g.fillStyle = "rgba(255,255,255,0.95)"; g.strokeStyle = "#dfe6ee"; g.lineWidth = 1;
+  g.beginPath();
+  if (g.roundRect) { g.roundRect(rx, ry, rw, rh, 4); g.fill(); g.stroke(); }
+  else { g.fillRect(rx, ry, rw, rh); g.strokeRect(rx, ry, rw, rh); }
+  mtxt(g, ps, bx, y, col, fp, "left", false);
+}
+
+/* ---------------- 2. 公式零件 ---------------- */
+const cat = (...a) => [].concat(...a);
+const PSym = (s, sub) => [{ s: s, i: true }, { s: sub, sub: true }];
+function PSci(v, n) {
+  if (!isFinite(v) || v === 0) return [{ s: "0" }];
+  const e = Math.floor(Math.log10(Math.abs(v)));
+  const m = (v / Math.pow(10, e)).toFixed(n === undefined ? 1 : n);
+  /* 1 ≦ |v| < 10 时直接写尾数，不再拖一个 ×10⁰（与 sciH 一致） */
+  if (e === 0) return [{ s: m }];
+  /* 指数负号用 U+2212（与 MIS / 直接带隙工具已有的写法一致） */
+  return [{ s: m + "\u00d710" },
+          { s: String(e).replace("-", "\u2212"), sup: true }];
+}
+/* 单位零件：一律正体，幂次用真上标 */
+const U_V    = [{ s: " V", un: true }];
+const U_MV   = [{ s: " mV", un: true }];
+const U_K    = [{ s: " K", un: true }];
+const U_CM3  = [{ s: " cm", un: true }, { s: "−3", sup: true, un: true }];
+const U_VCM  = [{ s: " V/cm", un: true }];
+const U_CCM3 = [{ s: " C/cm", un: true }, { s: "3", sup: true, un: true }];
+const U_CCM2 = [{ s: " C/cm", un: true }, { s: "2", sup: true, un: true }];
+const U_UM   = [{ s: " μm", un: true }];
+/* ==================================================================
+   塞贝克效应交互教学工具 · 业务层
+   物理内核：费米–狄拉克积分数值求解（弛豫时间近似 τ ∝ E^r）
+   ================================================================== */
+
+const Q = 1.602176634e-19, KB = 1.380649e-23;
+const KBQ = KB / Q;                /* k/q = 8.617e-5 V/K */
+const G15 = 0.8862269254527580;    /* Γ(3/2) = √π/2 */
+const RS = [-0.5, 0, 1.5];         /* 散射参数 r：声学声子 / 常数 τ / 电离杂质 */
+const SCA_NAME = ["声学声子散射", "常数弛豫时间", "电离杂质散射"];
+const SCA_SUB = ["声学波形变势散射，<span class='m'><i>τ</i><span class='op'>∝</span><i>E</i><sup><span class='op'>−</span>1/2</sup></span>，<span class='m'><i>A</i></span> = 2",
+                 "<span class='m'><i>τ</i></span> 与能量无关，<span class='m'><i>A</i></span> = 5/2",
+                 "电离杂质散射，<span class='m'><i>τ</i><span class='op'>∝</span><i>E</i><sup>+3/2</sup></span>，<span class='m'><i>A</i></span> = 4"];
+
+/* 材料：nc / nv 为 300 K 的导带 / 价带有效态密度 cm⁻³；kl 为晶格热导 W/(m·K) */
+const MATS = [
+  { n: "Si",       eg: 1.120, nc: 2.80e19, nv: 1.04e19, mun: 1350, mup: 480,  kl: 148.0, nref: 1.0e17, alp: 0.72, er: 11.7 },
+  { n: "Ge",       eg: 0.660, nc: 1.04e19, nv: 6.00e18, mun: 3900, mup: 1900, kl: 60.0,  nref: 1.0e17, alp: 0.72, er: 16.0 },
+  { n: "Bi₂Te₃",   eg: 0.150, nc: 1.20e19, nv: 1.00e19, mun: 700,  mup: 350,  kl: 1.20,  nref: 5.0e18, alp: 0.80, er: 80.0 },
+  { n: "PbTe",     eg: 0.320, nc: 3.00e18, nv: 3.00e18, mun: 1600, mup: 800,  kl: 1.80,  nref: 5.0e17, alp: 0.70, er: 30.0 }
+];
+
+const OPT = {
+  mat: 0, preset: 3,
+  type: 0, scat: 0,
+  n: 1e17, TH: 350, TL: 300, L: 10.0, kl: 1.0, play: true
+};
+/* 非核心参量固定：棒长是纯几何量（只影响电场 E = |ΔV|/L 与积累电荷比，不影响 S 与 ΔV 本身）。
+   κ_L 缩放是 ZT 唯一的独立自由度，不设滑块，只由「预设 → 低热导极限」切到 0.2 倍。 */
+const LFIX_MM = 10.0;
+OPT.L = LFIX_MM;
+const CK = { tmp: true, car: true, dif: true, drf: true, acc: true, fld: true, eq: true, bip: true };
+
+let ANIM = 0;                      /* 墙钟累计秒 */
+const TAU_D = 1.7;                 /* 介电弛豫的特征时间（建立过程）：0.95 需要 ~5.1 s，教学节奏刚好 */
+
+/* ================= 费米–狄拉克积分 =================
+   F_j(η) = ∫₀^∞ x^j /(1 + e^(x−η)) dx
+   变量替换 x = t² 后在 t 上做 Simpson，避开了 x^j 在 x = 0 处的导数奇点。
+   非简并极限 F_j → Γ(j+1)·e^η。
+   ==================================================== */
+function Fset(eta, js) {
+  const u = Math.max(eta + 60, 60);
+  const T = Math.sqrt(u);
+  const N = 160, h = T / N, m = js.length;
+  const out = new Array(m), pw = new Array(m);
+  for (let k = 0; k < m; k++) { out[k] = 0; pw[k] = 2 * js[k] + 1; }
+  for (let i = 0; i <= N; i++) {
+    const t = i * h, x = t * t;
+    const w = (i === 0 || i === N) ? 1 : (i % 2 ? 4 : 2);
+    const den = 1 / (1 + Math.exp(x - eta));
+    for (let k = 0; k < m; k++) out[k] = out[k] + w * 2 * Math.pow(t, pw[k]) * den;
+  }
+  for (let k = 0; k < m; k++) out[k] = out[k] * h / 3;
+  return out;
+}
+function F05(eta) { return Fset(eta, [0.5])[0]; }
+/* 由浓度反解简约费米能级 η（F05 单调，二分即可） */
+function etaOf(c, ND) {
+  const tgt = c / ND;
+  if (!(tgt > 0)) return -40;
+  let lo = -40, hi = 40;
+  for (let i = 0; i < 36; i++) {
+    const mid = 0.5 * (lo + hi);
+    if (F05(mid) / G15 < tgt) lo = mid; else hi = mid;
+  }
+  return 0.5 * (lo + hi);
+}
+
+/* ================= 基础材料量 ================= */
+function mat() { return MATS[OPT.mat]; }
+function scatR() { return RS[OPT.scat]; }
+function Acf() { return scatR() + 2.5; }
+function ncT(T) { return mat().nc * Math.pow(T / 300, 1.5); }
+function nvT(T) { return mat().nv * Math.pow(T / 300, 1.5); }
+function niT(T) { return Math.sqrt(ncT(T) * nvT(T)) * Math.exp(-mat().eg / (2 * KBQ * T)); }
+/* 迁移率的重掺杂退化：Caughey–Thomas 型。c 缺省时用当前掺杂（读数用），
+   曲线扫描时必须显式传入该点的浓度，否则整条曲线共用一个 μ。 */
+function muOf(kind, c) {
+  const M = mat();
+  const mu0 = kind === 0 ? M.mun : M.mup;
+  const mn = mu0 / 20;
+  const cc = c === undefined ? OPT.n : c;
+  return mn + (mu0 - mn) / (1 + Math.pow(cc / M.nref, M.alp));
+}
+
+/* 单一载流子种类的塞贝克系数（V/K）。kind: 0 = 电子（导带），1 = 空穴（价带）
+   η 对电子取 (E_F − E_C)/kT，对空穴取 (E_V − E_F)/kT */
+/* 输运项 A(η) ≡ ⟨E⟩_σ/kT（按**电导**加权的平均能量，权重 ∝ E^{r+3/2}）：
+      A(η) = ((r+5/2)/(r+3/2))·F_{r+3/2}(η)/F_{r+1/2}(η)
+   非简并极限 A → r+5/2（与 η 无关的常数，只由散射机制定）；
+   简并极限 A → η（于是 A−η 只剩 π²/3·(r+3/2)/η，|S| 被压低 —— 这就是重掺杂 |S| 塌下去的原因）。
+   模块三、读数面板必须都用这一个函数，否则「①+② = S」的链条不闭合。 */
+function AtOf(eta) {
+  const r = scatR();
+  const F = Fset(eta, [r + 0.5, r + 1.5, r + 2.5]);
+  return ((r + 2.5) / (r + 1.5)) * F[1] / F[0];
+}
+function seebeckCarrier(eta, kind) {
+  const At = AtOf(eta);
+  return (kind === 0 ? -KBQ : KBQ) * (At - eta);
+}
+/* 洛伦兹数（W·Ω/K²），非简并极限 → (r + 5/2)(k/q)²，简并极限 → π²/3·(k/q)² */
+function lorenzOf(eta) {
+  const r = scatR();
+  const F = Fset(eta, [r + 0.5, r + 1.5, r + 2.5]);
+  const At = ((r + 2.5) / (r + 1.5)) * F[1] / F[0];
+  const Bt = ((r + 3.5) / (r + 1.5)) * F[2] / F[0];
+  return KBQ * KBQ * (Bt - At * At);
+}
+
+/* ================= 完整状态 =================
+   dop = 净掺杂浓度，kind = 0 (n 型) / 1 (p 型)，T = 温度
+   本征激发由中性条件 n − p = N_D、np = n_i² 精确解出。
+   ============================================ */
+function stateAt(T, dop, kind) {
+  const M = mat();
+  const ni = CK.bip ? niT(T) : 0;
+  const maj = 0.5 * (dop + Math.sqrt(dop * dop + 4 * ni * ni));
+  const min = ni > 0 ? (ni * ni) / maj : 0;
+  const NDm = kind === 0 ? ncT(T) : nvT(T);
+  const NDi = kind === 0 ? nvT(T) : ncT(T);
+  const etaM = etaOf(maj, NDm);
+  const etaI = min > 1e-30 ? etaOf(min, NDi) : -40;
+  const SM = seebeckCarrier(etaM, kind);
+  const SI = seebeckCarrier(etaI, 1 - kind);
+  const muM = muOf(kind, maj), muI = muOf(1 - kind, min);
+  const sM = Q * muM * maj * 100;          /* S/m */
+  const sI = Q * muI * min * 100;
+  const sig = sM + sI;
+  const S = sig > 0 ? (sM * SM + sI * SI) / sig : 0;
+  const Lz = lorenzOf(etaM);
+  const ke = Lz * sig * T;
+  const kb = sig > 0 ? T * sM * sI * (SI - SM) * (SI - SM) / sig : 0;
+  const kl = M.kl * OPT.kl;
+  const kap = kl + ke + kb;
+  const PF = S * S * sig;
+  return { T: T, maj: maj, min: min, etaM: etaM, etaI: etaI, SM: SM, SI: SI,
+           muM: muM, sM: sM, sI: sI, S: S, sig: sig, Lz: Lz,
+           ke: ke, kb: kb, kl: kl, kap: kap, PF: PF, ZT: PF * T / Math.max(kap, 1e-30) };
+}
+
+/* ================= 温差与空间分布 ================= */
+function tAvg() { return 0.5 * (OPT.TH + OPT.TL); }
+function dT() { return OPT.TH - OPT.TL; }
+function tempAt(u) { return OPT.TH - dT() * u; }        /* u ∈ [0,1]，0 = 热端 */
+function lCm() { return OPT.L * 0.1; }                  /* mm → cm */
+
+/* ΔV = ∫_{T_L}^{T_H} S(T) dT（Simpson）；同时返回沿 T 的累积积分 */
+let DVC = { key: "", dv: 0, ts: null, cs: null, seff: 0 };
+function dvCalc() {
+  const key = [OPT.mat, OPT.type, OPT.scat, OPT.n, OPT.TH, OPT.TL, CK.bip].join("|");
+  if (DVC.key === key) return DVC;
+  const n = 24, h = dT() / n;
+  const ts = new Array(n + 1), cs = new Array(n + 1);
+  const ss = new Array(n + 1);
+  for (let i = 0; i <= n; i++) {
+    ts[i] = OPT.TL + h * i;
+    ss[i] = stateAt(ts[i], OPT.n, OPT.type).S;
+  }
+  cs[0] = 0;
+  for (let i = 1; i <= n; i++) {
+    const a = ss[i - 1], m = seebeckMid(ts[i - 1], ts[i]), b = ss[i];
+    cs[i] = cs[i - 1] + (h / 6) * (a + 4 * m + b);
+  }
+  DVC = { key: key, dv: cs[n], ts: ts, cs: cs, seff: dT() > 0 ? cs[n] / dT() : ss[0] };
+  return DVC;
+}
+function seebeckMid(T1, T2) { return stateAt(0.5 * (T1 + T2), OPT.n, OPT.type).S; }
+function deltaV() { return dvCalc().dv; }
+function sEff() { return dvCalc().seff; }
+/* V(x) − V(热端) = ΔV − ∫_{T_L}^{T(x)} S dT */
+function voltAt(u) {
+  const D = dvCalc();
+  const T = tempAt(u);
+  return D.dv - interpC(T);
+}
+function interpC(T) {
+  const D = dvCalc();
+  if (!D.ts) return 0;
+  const n = D.ts.length - 1, h = dT() / n;
+  let i = Math.floor((T - OPT.TL) / h);
+  i = clamp(i, 0, n - 1);
+  const f = clamp((T - D.ts[i]) / h, 0, 1);
+  return D.cs[i] + (D.cs[i + 1] - D.cs[i]) * f;
+}
+function fieldVcm() {
+  const L = lCm();
+  return L > 0 ? -deltaV() / L : 0;      /* E = −dV/dx；V 沿 −x 降时 E > 0 */
+}
+/* 冷端积累电荷的**相对**量级：面积累电荷 ε|E| = ε|ΔV|/L，除以体内载流子的面电荷 q·n·L
+   ⇒ ε|ΔV|/(q n L²)。原来写死「10⁻¹³ 量级」，实测随材料 / 掺杂跨 10⁻¹⁵ … 10⁻¹²，必须现算。 */
+const EPS0_SI = 8.8541878128e-12;        /* F/m */
+function accRatio() {
+  const st = state(), M = mat();
+  const L = lCm() * 0.01;                /* cm → m */
+  const nSI = Math.max(st.maj, 1) * 1e6; /* m⁻³ */
+  if (!(L > 0) || !(nSI > 0)) return 0;
+  return M.er * EPS0_SI * Math.abs(deltaV()) / (Q * nSI * L * L);
+}
+/* 局部平衡浓度：若每一小段各自与温度 T(x) 的热库平衡、却不允许电荷流动。
+   带边相对 E_F 的距离 dE 固定，只是 kT 与有效态密度随 x 变 —— 用精确的
+   费米–狄拉克表达式，保证 T = T_avg 处与真实浓度严格重合。 */
+function neqAt(u) {
+  const st = state();
+  const T = tempAt(u);
+  const dE = -st.etaM * KBQ * tAvg();       /* E_C − E_F（n 型）或 E_F − E_V（p 型） */
+  const ND = OPT.type === 0 ? ncT(T) : nvT(T);
+  return ND * F05(-dE / (KBQ * T)) / G15;
+}
+let STC = { key: "", v: null };
+function state() {
+  /* 注意：κ_L 缩放会影响 kap 与 ZT，必须进 key */
+  const key = [OPT.mat, OPT.type, OPT.scat, OPT.n, tAvg(), OPT.kl, CK.bip].join("|");
+  if (STC.key === key) return STC.v;
+  const v = stateAt(tAvg(), OPT.n, OPT.type);
+  STC = { key: key, v: v };
+  return v;
+}
+
+/* ================= 曲线缓存 ================= */
+const NL = 15.0, NH = 21.0, NCV = 96;
+let CC = { key: "", lg: null, sn: null, sp: null, pf: null, kap: null, zt: null,
+           pfm: 1, kapm: 1, ztm: 1, nopt: 1e19, ztmax: 0 };
+function curves() {
+  const key = [OPT.mat, OPT.type, OPT.scat, tAvg(), OPT.kl, CK.bip].join("|");
+  if (CC.key === key) return CC;
+  const lg = new Array(NCV), sn = new Array(NCV), sp = new Array(NCV);
+  const pf = new Array(NCV), kap = new Array(NCV), zt = new Array(NCV);
+  const T = tAvg();
+  let pfm = 0, kapm = 0, ztm = 0, nopt = 1e19;
+  for (let i = 0; i < NCV; i++) {
+    const L = NL + (NH - NL) * i / (NCV - 1);
+    lg[i] = L;
+    const a = stateAt(T, Math.pow(10, L), 0);
+    const b = stateAt(T, Math.pow(10, L), 1);
+    sn[i] = a.S; sp[i] = b.S;
+    const st = OPT.type === 0 ? a : b;
+    pf[i] = st.PF; kap[i] = st.kap; zt[i] = st.ZT;
+    if (pf[i] > pfm) pfm = pf[i];
+    if (kap[i] > kapm) kapm = kap[i];
+    if (zt[i] > ztm) { ztm = zt[i]; nopt = Math.pow(10, L); }
+  }
+  CC = { key: key, lg: lg, sn: sn, sp: sp, pf: pf, kap: kap, zt: zt,
+         pfm: pfm > 0 ? pfm : 1, kapm: kapm > 0 ? kapm : 1, ztm: ztm > 0 ? ztm : 1,
+         nopt: nopt, ztmax: ztm };
+  return CC;
+}
+
+/* ================= 画布零件与单位 ================= */
+const P_S   = [{ s: "S", i: true }];
+const P_T   = [{ s: "T", i: true }];
+const P_TH  = [{ s: "T", i: true }, { s: "H", sub: true }];
+const P_TL  = [{ s: "T", i: true }, { s: "L", sub: true }];
+const P_DT  = [{ s: "Δ" }, { s: "T", i: true }];
+const P_DV  = [{ s: "Δ" }, { s: "V", i: true }];
+const P_VV  = [{ s: "V", i: true }];
+const P_NN  = [{ s: "n", i: true }];
+const P_PP  = [{ s: "p", i: true }];
+const P_NI  = [{ s: "n", i: true }, { s: "i", sub: true }];
+const P_NC  = [{ s: "N", i: true }, { s: "C", sub: true }];
+const P_NV  = [{ s: "N", i: true }, { s: "V", sub: true }];
+const P_EC  = [{ s: "E", i: true }, { s: "C", sub: true }];
+const P_EV  = [{ s: "E", i: true }, { s: "V", sub: true }];
+const P_EF  = [{ s: "E", i: true }, { s: "F", sub: true }];
+const P_EG  = [{ s: "E", i: true }, { s: "g", sub: true }];
+const P_MUN = [{ s: "μ", i: true }, { s: "n", sub: true }];
+const P_MUP = [{ s: "μ", i: true }, { s: "p", sub: true }];
+const P_SIG = [{ s: "σ", i: true }];
+const P_KAP = [{ s: "κ", i: true }];
+const P_KL  = [{ s: "κ", i: true }, { s: "L", sub: true }];
+const P_KE  = [{ s: "κ", i: true }, { s: "e", sub: true }];
+const P_KB  = [{ s: "κ", i: true }, { s: "bip", sub: true }];
+const P_EE  = [{ s: "E", i: true }];
+const P_LL  = [{ s: "L", i: true }];
+const P_ETA = [{ s: "η", i: true }];
+const P_AA  = [{ s: "A", i: true }];
+const P_RR  = [{ s: "r", i: true }];
+const P_XX  = [{ s: "x", i: true }];
+const P_QQ  = [{ s: "q", i: true }];
+const P_KBQ = [{ s: "k", i: true }, { s: "B", sub: true }];
+const P_ZT  = [{ s: "Z", i: false }, { s: "T", i: false }];
+const P_PF2 = [{ s: "S", i: true }, { s: "2", sup: true }, { s: "σ", i: true }];
+
+const U_EV    = [{ s: " eV", un: true }];
+const U_UVK   = [{ s: " μV/K", un: true }];
+const U_SCM   = [{ s: " S/cm", un: true }];
+const U_SPM   = [{ s: " S/m", un: true }];
+const U_CMS   = [{ s: " cm/s", un: true }];
+const U_WMK   = [{ s: " W/(m·K)", un: true }];
+const U_MWMK  = [{ s: " mW/(m·K)", un: true }, { s: "2", sup: true, un: true }];
+const U_CM2VS = [{ s: " cm", un: true }, { s: "2", sup: true, un: true }, { s: "/V·s", un: true }];
+const U_MM    = [{ s: " mm", un: true }];
+const U_OHMCM = [{ s: " Ω·cm", un: true }];
+
+function pSci(v, n) { return PSci(v, n === undefined ? 2 : n); }
+function sciOf(v, n) { return sciH(v, n === undefined ? 2 : n); }
+
+/* ================= 小工具 ================= */
+function mixCol(c1, c2, t) {
+  t = clamp(t, 0, 1);
+  const p = h => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)];
+  const A = p(c1), B = p(c2);
+  return "rgb(" + Math.round(A[0] + (B[0] - A[0]) * t) + "," +
+                  Math.round(A[1] + (B[1] - A[1]) * t) + "," +
+                  Math.round(A[2] + (B[2] - A[2]) * t) + ")";
+}
+function dot(g, x, y, col, r, shape) {
+  g.save();
+  g.fillStyle = col;
+  if (shape === "s") { g.fillRect(x - r, y - r, 2 * r, 2 * r); }
+  else { g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.fill(); }
+  g.restore();
+}
+function hollowDot(g, x, y, col, r, shape) {
+  g.save();
+  g.strokeStyle = col; g.lineWidth = 1.2; g.fillStyle = "#ffffff";
+  if (shape === "s") { g.fillRect(x - r, y - r, 2 * r, 2 * r); g.strokeRect(x - r, y - r, 2 * r, 2 * r); }
+  else { g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.fill(); g.stroke(); }
+  g.restore();
+}
+/* 温度色：冷端蓝 → 热端红 */
+function tempCol(u) { return mixCol("#1976d2", "#d94a3d", clamp(u, 0, 1)); }
+function buildProg() { return 1 - Math.exp(-ANIM / TAU_D); }
+
+/* 粒子（固定种子，保证每次载入一致） */
+const NP = 58;
+const PART = [];
+for (let i = 0; i < NP; i++) {
+  const s = Math.sin(i * 12.9898) * 43758.5453;
+  const s2 = Math.sin(i * 78.233 + 1.7) * 12345.6789;
+  PART.push({ u: (i + 0.5) / NP,
+              ph: (s - Math.floor(s)) * 6.2832,
+              f: 0.8 + (s2 - Math.floor(s2)) * 1.5,
+              y: (Math.sin(i * 3.1) + 1) * 0.5 });
+}
+
+/* ================= 模块一：半导体棒 ================= */
+const BM = { x0: 62, tTop: 30, tH: 58, bTop: 116, bH: 104 };
+function drawBar() {
+  const cv = CV.bar; if (!cv) return;
+  const g = cv.g, W = cv.W, H = cv.H;
+  g.clearRect(0, 0, W, H);
+  const st = state(), x0 = BM.x0, x1 = W - 62;
+  const yT = BM.tTop, yB = yT + BM.tH, yS = BM.bTop, yE = yS + BM.bH;
+  const bp = buildProg();
+
+  /* ---- 温度剖面 T(x) ---- */
+  const tLo = OPT.TL - 8, tHi = OPT.TH + 8;
+  const YT = T => yB - (T - tLo) / Math.max(tHi - tLo, 1) * BM.tH;
+  if (CK.tmp) {
+    g.save();
+    g.beginPath(); g.moveTo(x0, YT(tempAt(0)));
+    for (let i = 1; i <= 60; i++) { const u = i / 60; g.lineTo(x0 + (x1 - x0) * u, YT(tempAt(u))); }
+    g.lineTo(x1, yB); g.lineTo(x0, yB); g.closePath();
+    const gr = g.createLinearGradient(x0, 0, x1, 0);
+    gr.addColorStop(0, "rgba(217,74,61,0.20)");
+    gr.addColorStop(1, "rgba(25,118,210,0.20)");
+    g.fillStyle = gr; g.fill();
+    g.restore();
+    line(g, x0, YT(tempAt(0)), x1, YT(tempAt(1)), "#d94a3d", 2);
+    for (let i = 0; i <= 60; i++) {
+      const u = i / 60, x = x0 + (x1 - x0) * u;
+      g.fillStyle = tempCol(u); g.globalAlpha = 0.55;
+      g.fillRect(x, YT(tempAt(u)) - 2, (x1 - x0) / 60 + 0.8, 4);
+      g.globalAlpha = 1;
+    }
+    mtxt(g, cat(P_T, [{ s: "(" }], P_XX, [{ s: ")　" }], P_TH, [{ s: " → " }], P_TL),
+         x0, yT - 4, "#2c3e50", 10.5, "left");
+    mtxt(g, cat([{ s: fmt(OPT.TH, 0) }], U_K), x0 - 6, YT(tempAt(0)), "#d94a3d", 10.5, "right");
+    mtxt(g, cat([{ s: fmt(OPT.TL, 0) }], U_K), x1 + 6, YT(tempAt(1)), "#1976d2", 10.5, "left");
+  }
+
+  /* ---- 半导体棒：按温度着色 ---- */
+  for (let i = 0; i < 60; i++) {
+    const u = i / 60;
+    g.fillStyle = tempCol(u);
+    g.globalAlpha = 0.16;
+    g.fillRect(x0 + (x1 - x0) * u, yS, (x1 - x0) / 60 + 0.8, BM.bH);
+    g.globalAlpha = 1;
+  }
+  g.strokeStyle = "#7b8794"; g.lineWidth = 1.6;
+  g.strokeRect(x0, yS, x1 - x0, BM.bH);
+
+  /* 热端 / 冷端标记 */
+  mtxt(g, [{ s: "热端" }], x0, yS - 6, "#d94a3d", 11, "center");
+  mtxt(g, [{ s: "冷端" }], x1, yS - 6, "#1976d2", 11, "center");
+  mtxt(g, cat(P_TH, [{ s: " = " + fmt(OPT.TH, 0) }], U_K), x0, yE + 12, "#d94a3d", 10.5, "center");
+  mtxt(g, cat(P_TL, [{ s: " = " + fmt(OPT.TL, 0) }], U_K), x1, yE + 12, "#1976d2", 10.5, "center");
+
+  /* ---- 载流子 ---- */
+  if (CK.car) {
+    const majShape = OPT.type === 0 ? "c" : "s";
+    const minShape = OPT.type === 0 ? "s" : "c";
+    const cMaj = OPT.type === 0 ? "#1976d2" : "#d94a3d";
+    const cMin = OPT.type === 0 ? "#d94a3d" : "#1976d2";
+    const acc = 0.07 * bp;
+    for (let i = 0; i < NP; i++) {
+      const p = PART[i];
+      const u = clamp(p.u + 4 * acc * p.u * (1 - p.u), 0, 1);
+      const T = tempAt(u);
+      const amp = 4.2 * Math.sqrt(T / 350);
+      const yy = yS + 12 + (BM.bH - 24) * p.y
+                 + amp * (0.62 * Math.sin(ANIM * p.f * 2.2 + p.ph)
+                        + 0.38 * Math.sin(ANIM * p.f * 3.9 + p.ph * 1.7));
+      dot(g, x0 + (x1 - x0) * u, yy, cMaj, 3.1, majShape);
+    }
+    const nMinor = Math.round(clamp(NP * Math.min(st.min / Math.max(st.maj, 1), 0.35), 0, 18));
+    for (let i = 0; i < nMinor; i++) {
+      const p = PART[(i * 7 + 3) % NP];
+      const u = clamp(p.u + 4 * acc * p.u * (1 - p.u), 0, 1);
+      const T = tempAt(u);
+      const amp = 4.2 * Math.sqrt(T / 350);
+      const yy = yS + 16 + (BM.bH - 32) * (1 - p.y)
+                 + amp * (0.62 * Math.sin(ANIM * p.f * 1.9 + p.ph * 2.3)
+                        + 0.38 * Math.sin(ANIM * p.f * 3.3 + p.ph));
+      hollowDot(g, x0 + (x1 - x0) * u, yy, cMin, 2.6, minShape);
+    }
+  }
+
+  /* ---- 内建电场箭头 ---- */
+  if (CK.fld && dT() > 0) {
+    const E = fieldVcm();
+    const dir = E >= 0 ? 1 : -1;
+    const nA = 9, yf = yS + BM.bH - 12;
+    for (let i = 0; i < nA; i++) {
+      const x = x0 + (x1 - x0) * (i + 0.5) / nA;
+      const s = (x1 - x0) / (nA * 2.6) * clamp(Math.abs(E) / 0.05, 0.25, 1.6);
+      arrow(g, x - dir * s, yf, x + dir * s, yf, "rgba(46,158,91,0.75)", 1.6, 4.5);
+    }
+    mtxt(g, cat(P_EE, [{ s: " = " + fmt(Math.abs(E), 3) }], U_VCM,
+                [{ s: "（" + (dir > 0 ? "热 → 冷" : "冷 → 热") + "）" }]),
+         0.5 * (x0 + x1), yS + BM.bH + 0, "#2e9e5b", 10.5, "center");
+  } else if (dT() <= 0) {
+    mtxt(g, [{ s: "两端同温 ⇒ 没有内建电场" }], 0.5 * (x0 + x1), yS + BM.bH + 0, C_SUB, 10.5, "center");
+  }
+
+  /* ---- 扩散流 / 漂移流 ---- */
+  const yFl = yE + 34;
+  if (dT() > 0) {
+    const half = (x1 - x0) * 0.20;
+    const cx = 0.5 * (x0 + x1);
+    if (CK.dif) {
+      arrow(g, cx - half, yFl, cx + half, yFl, "#ef8c1a", 2.6, 8);
+      mtxt(g, [{ s: "热扩散流（热 → 冷）" }], cx, yFl - 12, "#ef8c1a", 10.5, "center");
+    }
+    if (CK.drf) {
+      /* 漂移流：载流子在电场下被拉回热端，稳态时与扩散流等大反向 */
+      const ddir = fieldVcm() >= 0 ? -1 : 1;
+      const yDr = yFl + 22;
+      arrow(g, cx - ddir * half, yDr, cx + ddir * half, yDr, "#1976d2", 2.6, 8);
+      mtxt(g, [{ s: "漂移流（被电场拉回热端）" }], cx, yDr + 20, "#1976d2", 10.5, "center");
+    }
+    /* 天平 */
+    if (CK.dif && CK.drf) {
+      const yb = yFl + 44, bw = 46;
+      line(g, cx - bw, yb, cx + bw, yb, "#2c3e50", 2.2);
+      line(g, cx, yb - 14, cx, yb, "#2c3e50", 2.2);
+      line(g, cx - 16, yb - 14, cx + 16, yb - 14, "#2c3e50", 1.6);
+      line(g, cx - 16, yb - 14, cx - 22, yb - 4, "#2c3e50", 1.3);
+      line(g, cx + 16, yb - 14, cx + 22, yb - 4, "#2c3e50", 1.3);
+      line(g, cx - 22, yb - 4, cx + 22, yb - 4, "#2c3e50", 1.3);
+      mtxt(g, [{ s: "扩散 = 漂移，净电流为零" }], cx, yb + 14, "#2c3e50", 10.5, "center");
+    }
+  } else {
+    mtxt(g, [{ s: "ΔT = 0：没有热扩散，也就没有温差电动势" }], 0.5 * (x0 + x1), yFl, C_SUB, 11, "center");
+  }
+
+  /* ---- 冷端积累电荷 ---- */
+  if (CK.acc && dT() > 0) {
+    const sgn = OPT.type === 0 ? "−" : "+";
+    const col = OPT.type === 0 ? "#1976d2" : "#d94a3d";
+    const nx = Math.round(2 + 4 * bp);
+    for (let i = 0; i < nx; i++) {
+      const yy = yS + 16 + i * (BM.bH - 32) / Math.max(nx - 1, 1);
+      txt(g, sgn, x1 + 10, yy + 4, col, "bold 15px " + FONT, "center");
+    }
+    /* 这行有 11 个汉字（≈115 px），而右边只剩 62 px：原来画在 x1+26 会被右边界裁掉，
+       压到「冷端」那一行又会压字 —— 改到更上一行、右对齐贴边（正好在积累符号上方）。 */
+    mtxt(g, [{ s: "冷端积累" + (OPT.type === 0 ? "电子" : "空穴") + " ⇒ 带" + (OPT.type === 0 ? "负" : "正") + "电" }],
+         W - 4, yS - 20, col, 10.5, "right");
+  }
+
+  /* ---- 电压表 ---- */
+  const dv = deltaV();
+  const vcx = x0 - 30, vcy = 0.5 * (yS + yE);
+  g.save();
+  g.strokeStyle = "#2c3e50"; g.lineWidth = 1.6; g.fillStyle = "#ffffff";
+  g.beginPath(); g.arc(vcx, vcy, 15, 0, Math.PI * 2); g.fill(); g.stroke();
+  g.restore();
+  txt(g, "V", vcx, vcy + 4, "#2c3e50", "bold 12px " + FONTM, "center");
+  /* 电压表贴在画布最左边（vcx = 62−30 = 32），两行读数居中对齐 ⇒ 稍微长一点就被左边界裁掉，夹一下 */
+  const cxIn = p => {
+    const w = mMeasure(g, partsOf(p), 10.5, false);
+    return clamp(vcx, w / 2 + 4, Math.max(w / 2 + 4, W - w / 2 - 4));
+  };
+  const l1 = cat(P_DV, [{ s: " = " }], pSci(dv * 1e3, 2), U_MV);
+  const l2 = cat(P_S, [{ s: " = " + fmt(state().S * 1e6, 1) }], U_UVK);
+  mtxt(g, l1, cxIn(l1), vcy + 30, "#2c3e50", 10.5, "center");
+  mtxt(g, l2, cxIn(l2), vcy + 44, "#2c3e50", 10.5, "center");
+
+  /* ---- 建立过程四阶段 ---- */
+  const yp = H - 30;
+  const steps = ["① 热端载流子更热", "② 冷端积累电荷", "③ 内建电场建立", "④ 漂移 = 扩散"];
+  const thr = [0.02, 0.18, 0.45, 0.80];
+  const bw = (W - 30) / 4;
+  for (let i = 0; i < 4; i++) {
+    const bx = 15 + bw * i;
+    const on = bp >= thr[i];
+    g.fillStyle = on ? "#1976d2" : "#e7edf4";
+    g.fillRect(bx + 3, yp, bw - 8, 16);
+    txt(g, steps[i], bx + 3 + (bw - 8) / 2, yp + 12,
+        on ? "#ffffff" : "#6b7a8c", (on ? "bold " : "") + "10px " + FONT, "center");
+  }
+  mtxt(g, cat([{ s: "建立进度 " + fmt(100 * bp, 0) + "%　（真实介电弛豫 τ_D ≈ 10" }],
+              [{ s: "\u2212", sup: true }, { s: "12", sup: true }],
+              [{ s: " s，此处放慢到 " + fmt(TAU_D, 1) + " s）" }]),
+       15, yp - 6, C_SUB, 10, "left");
+}
+
+/* ================= 模块二：一维分布 ================= */
+function drawProf() {
+  const cv = CV.prof; if (!cv) return;
+  const g = cv.g, W = cv.W, H = cv.H;
+  g.clearRect(0, 0, W, H);
+  const st = state();
+  const x0 = 52, x1 = W - 56;
+  const yA0 = 26, yA1 = 26 + 132;      /* 上半：浓度 */
+  const yB0 = 186, yB1 = 186 + 120;    /* 下半：电势 */
+  const X = u => x0 + (x1 - x0) * u;
+
+  /* ---- 上半：载流子浓度（对数轴） ---- */
+  const c0 = OPT.n;
+  let lo = c0 / 12, hi = c0 * 12;
+  if (CK.eq) {
+    for (let i = 0; i <= 40; i++) {
+      const v = neqAt(i / 40);
+      if (v > hi) hi = v * 1.15;
+      if (v < lo) lo = v / 1.15;
+    }
+  }
+  const l0 = Math.log10(Math.max(lo, 1e8)), l1 = Math.log10(hi);
+  const YN = v => yA1 - (Math.log10(Math.max(v, 1e8)) - l0) / Math.max(l1 - l0, 0.01) * (yA1 - yA0);
+  for (let e = Math.ceil(l0); e <= Math.floor(l1); e++) {
+    const yy = YN(Math.pow(10, e));
+    line(g, x0, yy, x1, yy, C_GRID, 1);
+    mtxt(g, cat([{ s: "10" }, { s: String(e).replace("-", "\u2212"), sup: true }]),
+         x0 - 6, yy + 3, C_REF, 9.5, "right");
+  }
+  /* 单位标签原来左对齐贴 x=4，会和同一行的「n(x) 与局部平衡值」压在一起；
+     改成同行右对齐到 x1−4（左端那条标题占 52 px，右边是空的） */
+  mtxt(g, [{ s: "浓度 / cm" }, { s: "\u22123", sup: true }], x1 - 4, yA0 - 8, C_REF, 10, "right");
+  mtxt(g, cat(P_NN, [{ s: "(" }], P_XX, [{ s: ") 与局部平衡值" }]), x0, yA0 - 8, "#2c3e50", 11, "left");
+
+  if (CK.eq) {
+    g.save();
+    g.strokeStyle = "#ef8c1a"; g.lineWidth = 1.8; g.setLineDash([6, 4]);
+    g.beginPath();
+    for (let i = 0; i <= 80; i++) { const u = i / 80; if (i === 0) g.moveTo(X(u), YN(neqAt(u))); else g.lineTo(X(u), YN(neqAt(u))); }
+    g.stroke(); g.restore();
+    /* y 要夹在绘图区内：本征档这条虚线会顶到上边界，标签会撞到表头行 */
+    mtxt(g, [{ s: "n_eq（若各处孤立平衡）" }], X(0.02),
+         clamp(YN(neqAt(0.02)) - 8, yA0 + 11, yA1 - 6), "#ef8c1a", 10, "left");
+  }
+  /* 稳态实际浓度：电中性锁死，几乎水平 */
+  line(g, x0, YN(c0), x1, YN(c0), "#1976d2", 2.6);
+  mtxt(g, [{ s: "稳态实际 n(x) ≡ 掺杂值（电中性）" }], x1 - 4, YN(c0) - 9, "#1976d2", 10, "right");
+  /* 这个指数同样是现算的（ε|ΔV|/(qnL²)），写死 10⁻¹³ 在多数档位差一到两个数量级 */
+  mtxt(g, cat([{ s: "两端积累层只有相对 " }], pSci(accRatio(), 1),
+              [{ s: "，肉眼不可见" }]), x1 - 4, YN(c0) + 14, C_SUB, 9.5, "right");
+
+  /* ---- 下半：电势 V(x) ---- */
+  const vm = Math.max(Math.abs(deltaV()), 1e-9);
+  const yMid = 0.5 * (yB0 + yB1);
+  const YV = v => yMid - v / vm * (yB1 - yB0) * 0.38;
+  line(g, x0, yMid, x1, yMid, C_GRID, 1.4);
+  const dv = deltaV();
+  if (dT() > 0) {
+    const p0 = YV(0), p1 = YV(dv);
+    g.save();
+    g.fillStyle = OPT.type === 0 ? "rgba(25,118,210,0.14)" : "rgba(217,74,61,0.14)";
+    g.beginPath(); g.moveTo(x0, yMid); g.lineTo(x0, p0); g.lineTo(x1, p1); g.lineTo(x1, yMid);
+    g.closePath(); g.fill(); g.restore();
+    line(g, x0, p0, x1, p1, "#7b3fa0", 2.6);
+    arrow2(g, x1 + 16, p0, x1 + 16, p1, "#7b3fa0", 1.6, 6);
+    /* 箭头右边只剩 36 px，放不下「ΔV = −33 mV」；改成画在箭头左侧、带白底 halo 压在曲线上也读得清 */
+    mtxtHalo(g, cat(P_DV, [{ s: " = " }], pSci(dv * 1e3, 2), [{ s: " mV" }]),
+             x1 - 8, 0.5 * (p0 + p1), "#7b3fa0", 10.5, "right");
+  } else {
+    line(g, x0, yMid, x1, yMid, "#7b3fa0", 2.6);
+    mtxt(g, [{ s: "ΔT = 0 ⇒ ΔV = 0" }], 0.5 * (x0 + x1), yMid - 10, C_SUB, 10.5, "center");
+  }
+  mtxt(g, cat(P_VV, [{ s: "(" }], P_XX, [{ s: ") − " }], P_VV, [{ s: "(热端)　冷端电势更" + (dv < 0 ? "低" : "高") }]),
+       x0, yB0 - 8, "#2c3e50", 11, "left");
+  mtxt(g, [{ s: "热端" }], x0, yB1 + 12, "#d94a3d", 10, "center");
+  mtxt(g, [{ s: "冷端" }], x1, yB1 + 12, "#1976d2", 10, "center");
+  mtxt(g, cat(P_XX, [{ s: " = 0 → " }], P_LL), 0.5 * (x0 + x1), yB1 + 12, C_SUB, 10, "center");
+
+  /* 悬停读数 */
+  if (HOV.on && HOV.id === "prof" && HOV.x >= x0 - 4 && HOV.x <= x1 + 4) {
+    const u = clamp((HOV.x - x0) / (x1 - x0), 0, 1);
+    const xx = X(u);
+    line(g, xx, yA0, xx, yA1, "#c9483c", 1, [4, 3]);
+    line(g, xx, yB0, xx, yB1, "#c9483c", 1, [4, 3]);
+    const T = tempAt(u), nv = neqAt(u), vv = voltAt(u);
+    const lab = cat([{ s: "x/L = " + fmt(u, 2) + "　" }], P_T, [{ s: " = " + fmt(T, 1) }], U_K,
+                    [{ s: "　" }], P_NN, [{ s: " = " }], pSci(c0, 3),
+                    [{ s: "　n_eq = " }], pSci(nv, 3),
+                    [{ s: "　V−V_热 = " + fmt(vv * 1e3, 4) + " mV" }]);
+    chipM(g, lab, clamp(xx, x0 + 30, x1 - 30), yA0 + 12, "#2c3e50", 10, "center", x1 - x0 - 20);
+  }
+}
+
+/* ================= 模块三：两项分解 =================
+   两项必须来自**同一套费米积分**：S_maj = ∓(k/q)[A(η) − η]。
+   若把 ② 写成非简并常数 r+5/2，重掺杂简并档就会出现「①+② ≠ 面板 S」的自相矛盾
+   （n = 10²⁰ 时 ① = −4.39、② = 2 给出 −206 μV/K，而真值只有 −62.6 μV/K）。
+   布局也从「按 tot 归一」改成**正负分轴**：零线由数据范围定位，条宽一律取 |v|·sc。
+   原来 sc = bw/max(tot,1e-6) 在 tot ≤ 0（简并档）时会变成 bw×10⁶，
+   条宽达到 10⁸~10⁹ px，整块画布被两片纯色涂死。 */
+function drawTerms() {
+  const cv = CV.terms; if (!cv) return;
+  const g = cv.g, W = cv.W, H = cv.H;
+  g.clearRect(0, 0, W, H);
+  const st = state();
+  const t1 = -st.etaM;                 /* (E_C − E_F)/kT（n 型）或 (E_F − E_V)/kT（p 型）= −η */
+  const t2 = AtOf(st.etaM);            /* 输运项 A(η)，非简并时 → r + 5/2 */
+  const tot = t1 + t2;                 /* = A(η) − η = |S_maj|/(k_B/q)，恒 > 0 */
+  const sMaj = Math.abs(st.SM) * 1e6;  /* 多数载流子项给出的 |S|（双极修正之前） */
+  const sAbs = Math.abs(st.S) * 1e6;   /* 面板读数（含双极修正） */
+  const degen = st.etaM > 0;
+
+  const bx = 96, bw = W - 96 - 96, by = 40, bh = 24, gap = 42;
+  /* 零点位置 + 比例尺：span 恒为正（t2 = A(η) > 0），不可能爆炸 */
+  const lo = Math.min(0, t1), hi = Math.max(t2, tot, 0);
+  const span = Math.max(hi - lo, 1e-3);
+  const sc = bw / span;
+  const zx = bx - lo * sc;
+  const bar = (v, yy, col) => {
+    const a = zx, b = zx + v * sc;
+    g.fillStyle = col; g.fillRect(Math.min(a, b), yy, Math.abs(b - a), bh);
+  };
+
+  const rows = [
+    { k: "① 能级项", v: t1, c: "#1976d2", s: OPT.type === 0 ? "(E_C−E_F)/kT" : "(E_F−E_V)/kT" },
+    { k: "② 输运项", v: t2, c: "#ef8c1a", s: "A(η)" },
+    { k: "合计", v: tot, c: "#546e7a", s: "①+②" }
+  ];
+  rows.forEach((r, i) => {
+    const yy = by + i * gap;
+    mtxt(g, [{ s: r.k }], bx - 8, yy + bh / 2 + 3, r.c, 10.5, "right");
+    g.fillStyle = "#f2f5f8"; g.fillRect(bx, yy, bw, bh);
+    bar(r.v, yy, r.c);
+    g.strokeStyle = i === 2 ? "#6b7a8c" : "#cfd8e3"; g.lineWidth = i === 2 ? 1.4 : 1;
+    g.strokeRect(bx, yy, bw, bh);
+    /* 数值一律放到右侧留白里（条可能是负的、也可能盖住左侧），不会与条重叠；
+       留白只有 96 px，所以这里只写「= 数值」，式子的含义交给下方说明与提示 */
+    mtxt(g, cat([{ s: "= " }], [{ s: fmt(r.v, 3).replace("-", "\u2212") }]),
+         bx + bw + 8, yy + bh / 2 + 3.5, r.c, 10.5, "left");
+  });
+  /* 零线：三行共用，标出正负的分界 */
+  const yTop = by, yBot = by + 2 * gap + bh;
+  line(g, zx, yTop - 4, zx, yBot + 4, "#8b98a8", 1, [3, 3]);
+
+  const yy = by + 2 * gap;
+  const gapBip = Math.abs(sAbs - sMaj);   /* 少数载流子那一路只在真起作用时才写出来 */
+  mtxt(g, cat([{ s: "× (" }], P_KBQ, [{ s: "/" }], P_QQ, [{ s: ") = 86.17 μV/K　⇒　|S_maj| = " }],
+              [{ s: fmt(sMaj, 1) }], U_UVK,
+              [{ s: gapBip > 0.3 ? "　（双极修正 ⇒ " + fmt(sAbs, 1) + "）" : "" }]),
+       bx, yy + bh + 20, "#2c3e50", 11.5, "left");
+  mtxt(g, cat([{ s: "① = −η 随掺杂变小（简并可负）；② = A(η) " }],
+              [{ s: degen ? "已随 <span class='m'><i>η</i></span> 长到 " + fmt(t2, 2) : "≈ 非简并值 " + fmt(Acf(), 2) }]),
+       bx, H - 10, C_SUB, 10, "left");
+}
+
+/* ================= 模块四：S 随浓度变化 ================= */
+const SCV = { x0: 56, y0: 26 };
+function drawS() {
+  const cv = CV.scurve; if (!cv) return;
+  const g = cv.g, W = cv.W, H = cv.H;
+  g.clearRect(0, 0, W, H);
+  const C = curves(), st = state();
+  const x0 = SCV.x0, x1 = W - 20, y0 = SCV.y0, y1 = H - 30;
+  let vmax = 0;
+  for (let i = 0; i < NCV; i++) {
+    vmax = Math.max(vmax, Math.abs(C.sn[i]) * 1e6, Math.abs(C.sp[i]) * 1e6);
+  }
+  vmax = Math.max(vmax * 1.12, 10);
+  const X = L => x0 + (x1 - x0) * (L - NL) / (NH - NL);
+  const Y = v => 0.5 * (y0 + y1) - v / vmax * (y1 - y0) * 0.5;
+
+  for (let L = Math.ceil(NL); L <= Math.floor(NH); L++) {
+    const xx = X(L);
+    line(g, xx, y0, xx, y1, C_GRID, 1);
+    mtxt(g, cat([{ s: "10" }, { s: String(L).replace("-", "\u2212"), sup: true }]),
+         xx, y1 + 14, C_REF, 9.5, "center");
+  }
+  mtxt(g, [{ s: "载流子浓度 / cm" }, { s: "\u22123", sup: true }], x1, y1 + 26, C_REF, 10, "right");
+  /* 纵轴一律用 **μV/K**：vmax 就是 μV 数值，Y() 也吃 μV 数值。
+     原来刻度传 Y(v×10⁻⁶)、曲线传 Y(S)（V/K ≈ 10⁻⁴），比值 10⁻⁷ ⇒ 曲线与刻度全塌在中线上。 */
+  const tv = Math.ceil(vmax / 200) * 100;
+  for (let v = -tv; v <= tv; v += tv / 2) {
+    const yy = Y(v);
+    line(g, x0, yy, x1, yy, v === 0 ? "#b6c0cc" : C_GRID, v === 0 ? 1.4 : 1);
+    txt(g, String(v), x0 - 6, yy + 3, C_REF, "9.5px " + FONT, "right");
+  }
+  mtxt(g, cat(P_S, [{ s: " / μV·K" }, { s: "\u22121", sup: true }]), x0, y0 - 8, C_REF, 10, "left");
+
+  const plot = (arr, col, lw, dash) => {
+    g.save();
+    g.strokeStyle = col; g.lineWidth = lw;
+    if (dash) g.setLineDash(dash);
+    g.beginPath();
+    for (let i = 0; i < NCV; i++) {
+      const xx = X(C.lg[i]), yy = Y(arr[i] * 1e6);      /* arr 是 V/K，Y 吃 μV/K */
+      if (i === 0) g.moveTo(xx, yy); else g.lineTo(xx, yy);
+    }
+    g.stroke(); g.restore();
+  };
+  plot(C.sp, "#d94a3d", OPT.type === 1 ? 2.8 : 1.8, OPT.type === 1 ? null : [5, 4]);
+  plot(C.sn, "#1976d2", OPT.type === 0 ? 2.8 : 1.8, OPT.type === 0 ? null : [5, 4]);
+  /* 曲线名做成右上角图例。原来贴在曲线左端：重掺杂/本征档 p、n 两曲线几乎重合，
+     两个标签彼此相撞，还会被工作点读数（带白底 halo）压住。 */
+  const LG = [[[{ s: "n 型" }], "#1976d2", OPT.type === 0 ? null : [5, 4]],
+              [[{ s: "p 型" }], "#d94a3d", OPT.type === 1 ? null : [5, 4]]];
+  let ltot = 0;
+  for (const it of LG) ltot += 16 + 4 + mMeasure(g, it[0], 10, false) + 14;
+  let lx = x1 - ltot + 14;
+  for (const it of LG) {
+    g.save();
+    g.strokeStyle = it[1]; g.lineWidth = 2.2; if (it[2]) g.setLineDash(it[2]);
+    g.beginPath(); g.moveTo(lx, y0 - 8); g.lineTo(lx + 16, y0 - 8); g.stroke();
+    g.restore();
+    mtxt(g, it[0], lx + 20, y0 - 8, it[1], 10, "left");
+    lx += 16 + 4 + mMeasure(g, it[0], 10, false) + 14;
+  }
+
+  /* 工作点 */
+  const Ln = Math.log10(OPT.n), xx = X(Ln);
+  line(g, xx, y0, xx, y1, "#c9483c", 1.2, [4, 3]);
+  const yy = Y(st.S * 1e6);
+  dot(g, xx, yy, "#c9483c", 4.6, "c");
+  /* 夹边宽度按实测字宽算，别写死 34/40（读数串比它宽时会溢出绘图区） */
+  const lbS = cat([{ s: fmt(st.S * 1e6, 1) }], U_UVK);
+  const wS = mMeasure(g, lbS, 10.5, false);
+  mtxtHalo(g, lbS, clamp(xx, x0 + wS / 2 + 2, x1 - wS / 2 - 2), yy - 12, "#c9483c", 10.5, "center");
+  const lbN = cat([{ s: "当前 " }], pSci(OPT.n, 1), [{ s: " cm" }, { s: "\u22123", sup: true }]);
+  const wN = mMeasure(g, lbN, 10, false);
+  mtxtHalo(g, lbN, clamp(xx, x0 + wN / 2 + 2, x1 - wN / 2 - 2), y1 - 6, "#c9483c", 10, "center");
+
+  /* d|S|/d(lg n) = ∓(k/q)ln10 ≈ 200 μV/K **只在非简并区成立**：
+     重掺杂简并端会明显变平（实测 10²⁰ → −95、10²¹ → −23），本征端甚至反向。
+     所以图注必须给「当前工作点附近实测值」，不能无条件写 200。 */
+  const sl = slopePerDecade();
+  const off = Math.abs(sl + 200) > 45;
+  mtxt(g, cat([{ s: "每 +1 个数量级：非简并 −200 μV/K，当前实测 " }],
+              [{ s: fmt(sl, 0) }],
+              [{ s: off ? "（" + (st.etaM > 0 ? "已简并，变平" : "本征区") + "）" : "" }]),
+       x0, H - 6, C_SUB, 10, "left");
+}
+/* |S| 对 lg n 的局部斜率（μV/K / 数量级），取当前工作点两侧的相邻网格点 */
+function slopePerDecade() {
+  const C = curves(), arr = OPT.type === 0 ? C.sn : C.sp;
+  const Ln = clamp(Math.log10(Math.max(OPT.n, 1)), NL, NH);
+  let i = 0;
+  for (let k = 0; k < NCV; k++) if (Math.abs(C.lg[k] - Ln) < Math.abs(C.lg[i] - Ln)) i = k;
+  const i1 = Math.max(0, i - 1), i2 = Math.min(NCV - 1, i + 1);
+  if (i2 === i1) return 0;
+  return (Math.abs(arr[i2]) - Math.abs(arr[i1])) / (C.lg[i2] - C.lg[i1]) * 1e6;
+}
+
+/* ================= 模块五：ZT 优化 ================= */
+const ZTV = { x0: 56, y0: 24 };
+function drawZT() {
+  const cv = CV.zt; if (!cv) return;
+  const g = cv.g, W = cv.W, H = cv.H;
+  g.clearRect(0, 0, W, H);
+  const C = curves(), st = state();
+  const x0 = ZTV.x0, x1 = W - 20, y0 = ZTV.y0, y1 = H - 30;
+  const X = L => x0 + (x1 - x0) * (L - NL) / (NH - NL);
+  const Y = f => y1 - f * (y1 - y0);
+
+  for (let L = Math.ceil(NL); L <= Math.floor(NH); L++) {
+    const xx = X(L);
+    line(g, xx, y0, xx, y1, C_GRID, 1);
+    mtxt(g, cat([{ s: "10" }, { s: String(L).replace("-", "\u2212"), sup: true }]),
+         xx, y1 + 14, C_REF, 9.5, "center");
+  }
+  mtxt(g, [{ s: "载流子浓度 / cm" }, { s: "\u22123", sup: true }], x1, y1 + 26, C_REF, 10, "right");
+
+  const ztm = C.ztm;
+  for (let k = 0; k <= 4; k++) {
+    const yy = Y(k / 4);
+    line(g, x0, yy, x1, yy, k === 0 ? "#b6c0cc" : C_GRID, 1);
+    txt(g, fmt(ztm * k / 4, ztm < 0.1 ? 4 : 3), x0 - 6, yy + 3, C_REF, "9.5px " + FONT, "right");
+  }
+  mtxt(g, cat(P_ZT, [{ s: "（左轴）" }]), x0, y0 - 8, "#1976d2", 10, "left");
+
+  const plotN = (arr, mx, col, lw, dash) => {
+    g.save();
+    g.strokeStyle = col; g.lineWidth = lw;
+    if (dash) g.setLineDash(dash);
+    g.beginPath();
+    for (let i = 0; i < NCV; i++) {
+      const xx = X(C.lg[i]), yy = Y(arr[i] / mx);
+      if (i === 0) g.moveTo(xx, yy); else g.lineTo(xx, yy);
+    }
+    g.stroke(); g.restore();
+  };
+  plotN(C.pf, C.pfm, "#ef8c1a", 1.8, [6, 4]);
+  plotN(C.kap, C.kapm, "#2e9e5b", 1.8, [2, 3]);
+  plotN(C.zt, ztm, "#1976d2", 2.8, null);
+
+  /* ZT 峰值 */
+  const Lp = Math.log10(C.nopt), xp = X(Lp), yp = Y(1);
+  line(g, xp, y0, xp, y1, "#1976d2", 1.2, [3, 3]);
+  dot(g, xp, yp, "#1976d2", 4.4, "c");
+  const lbP = cat([{ s: "最优 " }], pSci(C.nopt, 2), [{ s: "，ZT = " + fmt(C.ztmax, 3) }]);
+  const wP = mMeasure(g, lbP, 10.5, false);
+  mtxtHalo(g, lbP, clamp(xp, x0 + wP / 2 + 2, x1 - wP / 2 - 2), y0 + 10, "#1976d2", 10.5, "center");
+
+  /* 当前工作点 */
+  const Ln = Math.log10(OPT.n), xx = X(Ln);
+  line(g, xx, y0, xx, y1, "#c9483c", 1.2, [4, 3]);
+  const yc = Y(clamp(st.ZT / ztm, 0, 1));
+  dot(g, xx, yc, "#c9483c", 4.6, "c");
+  /* 工作点接近最优时，这个读数会撞上顶部「最优…ZT = …」那行 ⇒ 依次往下让位 */
+  const lbZ = cat([{ s: "ZT = " + fmt(st.ZT, st.ZT < 0.01 ? 5 : 4) }]);
+  const wZ = mMeasure(g, lbZ, 10.5, false);
+  const inBand = y => y > y0 - 10 && y < y0 + 23;
+  let ly = yc - 11;
+  if (inBand(ly)) ly = yc + 15;
+  if (inBand(ly)) ly = y0 + 38;
+  mtxtHalo(g, lbZ, clamp(xx, x0 + wZ / 2 + 2, x1 - wZ / 2 - 2), clamp(ly, y0 + 8, y1 - 2), "#c9483c", 10.5, "center");
+
+  mtxt(g, cat(P_PF2, [{ s: " 峰值 " + fmt(C.pfm * 1e3, 3) }], U_MWMK,
+              [{ s: "　κ 峰值 " + fmt(C.kapm, 3) }], U_WMK),
+       x0, H - 6, C_SUB, 10, "left");
+}
+
+/* ================= 读数 ================= */
+function kvRow(k, v) {
+  if (v === "") return '<div class="row"><div class="hd">' + k + "</div></div>";
+  return '<div class="row"><div class="k">' + k + '</div><div class="v">' + v + "</div></div>";
+}
+function sciV(v, n) { return MM(sciH(v, n === undefined ? 2 : n)); }
+const H_S   = MM("<i>S</i>");
+const H_SE  = MM("<i>S</i><sub>eff</sub>");
+const H_DV  = MM("Δ<i>V</i>");
+const H_DT  = MM("Δ<i>T</i>");
+const H_TH  = MM("<i>T</i><sub>H</sub>");
+const H_TL  = MM("<i>T</i><sub>L</sub>");
+const H_TA  = MM("<i>T</i><sub>avg</sub>");
+const H_NN  = MM("<i>n</i>");
+const H_PP  = MM("<i>p</i>");
+const H_NI  = MM("<i>n</i><sub>i</sub>");
+const H_NC  = MM("<i>N</i><sub>C</sub>");
+const H_NV  = MM("<i>N</i><sub>V</sub>");
+const H_EC  = MM("<i>E</i><sub>C</sub>");
+const H_EV  = MM("<i>E</i><sub>V</sub>");
+const H_EF  = MM("<i>E</i><sub>F</sub>");
+const H_EG  = MM("<i>E</i><sub>g</sub>");
+const H_MUN = MM("<i>μ</i><sub>n</sub>");
+const H_MUP = MM("<i>μ</i><sub>p</sub>");
+const H_SIG = MM("<i>σ</i>");
+const H_KAP = MM("<i>κ</i>");
+const H_KL  = MM("<i>κ</i><sub>L</sub>");
+const H_KE  = MM("<i>κ</i><sub>e</sub>");
+const H_KB  = MM("<i>κ</i><sub>bip</sub>");
+const H_EE  = MM("<i>E</i>");
+const H_LL  = MM("<i>L</i>");
+const H_ETA = MM("<i>η</i>");
+const H_AA  = MM("<i>A</i>");
+const H_RR  = MM("<i>r</i>");
+const H_LZ  = MM("<i>L</i><sub>0</sub>");
+const H_PF  = MM("S<sup>2</sup><i>σ</i>");
+const H_ZT  = MM("<i>ZT</i>");
+const H_QQ  = MM("<i>q</i>");
+const H_EVU = MM("eV");
+const H_UM  = MM("μm");
+const H_MM  = MM("mm");
+const H_KK  = MM("K");
+const H_CM3 = MM("cm<sup>−3</sup>");
+const H_SCM = MM("S/cm");
+const H_CMS = MM("cm/s");
+const H_CM2 = MM("cm<sup>2</sup>");
+const H_VCM = MM("V/cm");
+const H_WMK = MM("W/(m·K)");
+const H_UVK = MM("μV/K");
+
+function drawReadout() {
+  const M = mat(), st = state(), C = curves();
+  const dv = deltaV(), E = fieldVcm(), ni = niT(tAvg());
+  let h = "", hm = "";
+
+  /* ---- 核心区：S 的符号、大小与热电性能 ---- */
+  h += kvRow(H_SE + " = " + MM("Δ<i>V</i><span class='op'>/</span>Δ<i>T</i>") + "（积分平均）", "<b>" + fmt(sEff() * 1e6, 2) + " " + H_UVK + "</b>" +
+             (Math.abs(st.S - sEff()) * 1e6 > 1 ? "　与中点值差 " +
+               fmt(Math.abs(st.S - sEff()) * 1e6, 2) + "（" + H_S + " 非线性）" : "　（与中点值一致）"));
+  h += kvRow("温差电动势 " + H_DV, "<b>" + fmt(dv * 1e3, 4) + " mV</b>　= ∫" + H_S + "(<span class='m'><i>T</i></span>)d<span class='m'><i>T</i></span>" +
+             "（<span class='m'><i>T</i><sub>L</sub></span> → <span class='m'><i>T</i><sub>H</sub></span>，即 <span class='m'><i>V</i><sub>冷</sub></span> − <span class='m'><i>V</i><sub>热</sub></span>）" +
+             "　冷端电势更<b>" + (dv < 0 ? "低" : "高") + "</b>");
+  h += kvRow("内建电场 " + H_EE, "<b>" + fmt(Math.abs(E), 4) + " " + H_VCM + "</b>　方向 " + (E >= 0 ? "热 → 冷" : "冷 → 热"));
+  h += kvRow("冷端积累", OPT.type === 0 ? "<b>电子</b>（带负电，故 " + H_S + " < 0）"
+                                        : "<b>空穴</b>（带正电，故 " + H_S + " > 0）");
+  h += kvRow("简约费米能级 " + H_ETA, "<b>" + fmt(st.etaM, 3) + "</b>　（" + H_ETA + " < 0 非简并；> 0 已简并）");
+  h += kvRow("电导率 " + H_SIG, "<b>" + fmt(st.sig / 100, 3) + " " + H_SCM + "</b>　= " +
+             fmt(st.sig, 2) + " S/m　电阻率 " + fmt(1 / Math.max(st.sig / 100, 1e-30), 4) + " Ω·cm");
+  h += kvRow("热电优值 " + H_ZT, "<b>" + fmt(st.ZT, st.ZT < 0.01 ? 6 : 4) + "</b>　峰值 " +
+             fmt(C.ztmax, 4) + "（在 n = " + sciV(C.nopt, 2) + " " + H_CM3 +
+             (OPT.n < C.nopt / 2 ? "，当前偏轻" : OPT.n > C.nopt * 2 ? "，当前偏重" : "，就在峰附近") +
+             "）　当前 / 峰值 = <b>" + fmt(st.ZT / Math.max(C.ztmax, 1e-30), 3) + "</b>");
+  $("readout").innerHTML = h;
+
+  /* ---- 折叠区：材料、公式分解、载流子与热导 ---- */
+  hm += kvRow("── 材料与状态 ──", "");
+  hm += kvRow("材料", "<b>" + M.n + "</b>　" + H_EG + " = " + fmt(M.eg, 3) + " " + H_EVU +
+              "　" + H_NC + " = " + sciV(ncT(tAvg()), 2) +
+              "　" + H_NV + " = " + sciV(nvT(tAvg()), 2) + " " + H_CM3);
+  hm += kvRow("导电类型", OPT.type === 0 ? "<b>n 型</b>（多数＝电子，圆形）"
+                                         : "<b>p 型</b>（多数＝空穴，方形）");
+  hm += kvRow("散射机制", SCA_NAME[OPT.scat] + "　" + H_RR + " = " + fmt(scatR(), 2) +
+              "　" + H_AA + " = " + H_RR + " + 5/2 = <b>" + fmt(Acf(), 2) + "</b>");
+  hm += kvRow("温度", H_TH + " = " + fmt(OPT.TH, 0) + " " + H_KK + "　" + H_TL + " = " +
+              fmt(OPT.TL, 0) + " " + H_KK + "　" + H_DT + " = <b>" + fmt(dT(), 0) + " " + H_KK +
+              "</b>　" + H_TA + " = " + fmt(tAvg(), 1) + " " + H_KK);
+  /* A 在页首（非简并极限）与这里（含费米积分比值的 A(η)）原本是同一个字母的两个定义，
+     这里显式写成 A(η) 并把数值摆出来；|S|/(k/q) = A(η) − η 只对多数载流子项严格成立。 */
+  hm += kvRow(H_S + "（" + H_TA + " 处）", "<b>" + fmt(st.S * 1e6, 2) + " " + H_UVK + "</b>" +
+              "　= ∓(<span class='m'><i>k</i><sub>B</sub></span>/" + H_QQ + ")[<span class='m'><i>A</i></span>(<span class='m'><i>η</i></span>) − <span class='m'><i>η</i></span>]，" +
+              "<span class='m'><i>A</i></span>(<span class='m'><i>η</i></span>) = <b>" + fmt(AtOf(st.etaM), 3) + "</b>（非简并值 " + fmt(Acf(), 2) +
+              "）、<span class='m'><i>η</i></span> = " + fmt(st.etaM, 3));
+  hm += kvRow("掺杂 / 多数浓度", sciV(OPT.n, 2) + " → <b>" + sciV(st.maj, 3) + " " + H_CM3 + "</b>" +
+              (CK.bip && st.maj > OPT.n * 1.02 ? "　（本征激发多出 " +
+                fmt(100 * (st.maj / OPT.n - 1), 1) + "%）" : ""));
+  hm += kvRow("少数浓度", sciV(st.min, 3) + " " + H_CM3 +
+              "　" + H_NI + "(" + H_TA + ") = " + sciV(ni, 3) + " " + H_CM3 +
+              (CK.bip && ni > OPT.n * 0.1 ? "　<b>本征区，双极效应显著</b>" : ""));
+  hm += kvRow(OPT.type === 0 ? H_EC + " − " + H_EF : H_EF + " − " + H_EV,
+              "<b>" + fmt(-st.etaM * KBQ * tAvg(), 4) + " " + H_EVU + "</b>　= −" + H_ETA + "·<span class='m'><i>k</i><sub>B</sub></span>" + H_TA);
+  hm += kvRow("迁移率", H_MUN + " = " + fmt(muOf(0), 0) + "　" + H_MUP + " = " + fmt(muOf(1), 0) +
+              " " + H_CM2 + "/V·s　（已含重掺杂退化；低掺杂极限 " +
+              fmt(M.mun, 0) + " / " + fmt(M.mup, 0) + "）");
+  hm += kvRow("── 输运与热导 ──", "");
+  hm += kvRow("洛伦兹数 " + H_LZ, sciV(st.Lz, 3) + " W·Ω/K²　（非简并极限 <span class='m'><i>A</i></span>·(<span class='m'><i>k</i><sub>B</sub></span>/" +
+              H_QQ + ")² = " + sciV(Acf() * KBQ * KBQ, 3) + "；简并极限 π²/3·(<span class='m'><i>k</i><sub>B</sub></span>/" +
+              H_QQ + ")² = " + sciV(Math.PI * Math.PI / 3 * KBQ * KBQ, 3) + "）");
+  hm += kvRow("热导率 " + H_KAP, "<b>" + fmt(st.kap, 3) + " " + H_WMK + "</b>　= " + H_KL + " " +
+              fmt(st.kl, 3) + " + " + H_KE + " " + fmt(st.ke, 3) + " + " + H_KB + " " + fmt(st.kb, 3) +
+              "　电子热导占比 " + fmt(100 * (st.ke + st.kb) / Math.max(st.kap, 1e-30), 1) + "%" +
+              (st.kb > st.ke ? "　（双极热导已超过普通电子热导！）" : ""));
+  hm += kvRow("功率因子 " + H_PF, "<b>" + fmt(st.PF * 1e3, 3) + " mW/(m·K²)</b>　峰值 " +
+              fmt(C.pfm * 1e3, 3) + "（在 n = " + sciV(C.nopt, 2) + " 附近）");
+  $("readoutMore").innerHTML = hm;
+
+  /* 模块一图例里那句「积累层相对浓度」必须现算：实测 ε|ΔV|/(qnL²) 跨 10⁻¹⁵…10⁻¹²，
+     写死「10⁻¹³ 量级」在多数档位都差一到两个数量级。 */
+  const an = $("accNote");
+  if (an) an.innerHTML = "积累层相对浓度只有 <b>" + sciV(accRatio(), 1) + "</b>（现算），为可见已大幅放大";
+}
+
+
+/* ================= 图例 ================= */
+function drawLegends() {
+  $("legBar").innerHTML =
+    '<span class="lg"><i style="background:#d94a3d"></i>热端</span>' +
+    '<span class="lg"><i style="background:#1976d2"></i>冷端</span>' +
+    '<span class="lg"><i style="background:' + (OPT.type === 0 ? "#1976d2" : "#d94a3d") + '"></i>' +
+    (OPT.type === 0 ? "电子（圆形）" : "空穴（方形）") + '</span>' +
+    '<span class="lg"><i style="background:' + (OPT.type === 0 ? "#d94a3d" : "#1976d2") + '"></i>少数载流子（空心）</span>' +
+    '<span class="lg"><i style="background:#ef8c1a"></i>热扩散流</span>' +
+    '<span class="lg"><i style="background:#1976d2"></i>漂移流</span>' +
+    '<span class="lg"><i style="background:#2e9e5b"></i>内建电场 <span class="m"><i>E</i></span></span>' +
+    '<span class="lg"><em id="accNote">积累层相对浓度极小（数值随参数变），为可见已大幅放大</em></span>';
+
+  $("legProf").innerHTML =
+    '<span class="lg"><i style="background:#1976d2"></i>稳态实际 <span class="m"><i>n</i>(<i>x</i>)</span>（电中性锁死）</span>' +
+    '<span class="lg"><i style="background:#ef8c1a"></i>局部平衡 <span class="m"><i>n</i><sub>eq</sub>(<i>x</i>)</span>（虚线）</span>' +
+    '<span class="lg"><i style="background:#7b3fa0"></i>电势 <span class="m"><i>V</i>(<i>x</i>)<span class="op">−</span><i>V</i></span>（热端）</span>' +
+    '<span class="lg"><em>两条浓度曲线的落差就是「想扩散的冲动」</em></span>';
+
+  $("legTerms").innerHTML =
+    '<span class="lg"><i style="background:#1976d2"></i>① 能级项 <span class="m">(<i>E</i><sub>C</sub><span class="op">−</span><i>E</i><sub>F</sub>)<span class="op">/</span><i>k</i><sub>B</sub><i>T</i><span class="op">=</span><span class="op">−</span><i>η</i></span></span>' +
+    '<span class="lg"><i style="background:#ef8c1a"></i>② 输运项 <span class="m"><i>A</i>(<i>η</i>)</span>（非简并 → <span class="m"><i>r</i><span class="op">+</span>5/2</span>）</span>' +
+    '<span class="lg"><i style="background:#546e7a"></i>合计 ①+②</span>' +
+    '<span class="lg"><em>零线两侧相消；合计 × <span class="m"><i>k</i><sub>B</sub><span class="op">/</span><i>q</i><span class="op">=</span></span> 多数载流子的 <span class="m">|<i>S</i>|</span></em></span>';
+
+  $("legS").innerHTML =
+    '<span class="lg"><i style="background:#d94a3d"></i>p 型（<span class="m"><i>S</i></span> &gt; 0）</span>' +
+    '<span class="lg"><i style="background:#1976d2"></i>n 型（S &lt; 0）</span>' +
+    '<span class="lg"><i style="background:#c9483c"></i>当前工作点</span>' +
+    '<span class="lg"><em>当前类型实线，另一型虚线</em></span>';
+
+  $("legZt").innerHTML =
+    '<span class="lg"><i style="background:#1976d2"></i>ZT（左轴，实线）</span>' +
+    '<span class="lg"><i style="background:#ef8c1a"></i>功率因子 <span class="m"><i>S</i><sup>2</sup><i>σ</i></span>（归一化，虚线）</span>' +
+    '<span class="lg"><i style="background:#2e9e5b"></i>热导率 <span class="m"><i>κ</i></span>（归一化，点线）</span>' +
+    '<span class="lg"><i style="background:#c9483c"></i>当前工作点</span>' +
+    '<span class="lg"><em>后两条只画形状，峰值数值标在图下方</em></span>';
+}
+
+/* ================= 预设 ================= */
+const PRES = [
+  { n: "平衡态", s: "ΔT = 0：两端同温，没有热扩散，什么都建不起来。",
+    mat: 0, type: 0, scat: 0, lg: 1700, TH: 300, TL: 300, kl: 0 },
+  { n: "小温差 10 K", s: "ΔT = 10 K：电动势只有几毫伏，形状已经完全成型。",
+    mat: 0, type: 0, scat: 0, lg: 1700, TH: 305, TL: 295, kl: 0 },
+  { n: "大温差 200 K", s: "<span class='m'>Δ<i>T</i></span> = 200 K：|<span class='m'><i>S</i></span>| 沿程变化明显，积分平均与中点值开始不同。",
+    mat: 0, type: 0, scat: 0, lg: 1700, TH: 450, TL: 250, kl: 0 },
+  { n: "n 型 Si", s: "<span class='m'><i>n</i></span> = 10¹⁷ cm⁻³，<span class='m'>Δ<i>T</i></span> = 50 K：标准教学工况，<span class='m'><i>S</i></span> ≈ −660 μV/K。",
+    mat: 0, type: 0, scat: 0, lg: 1700, TH: 350, TL: 300, kl: 0 },
+  { n: "p 型 Si", s: "换成 p 型：载流子扩散方向不变，但积累的是正电荷，<span class='m'><i>S</i></span> 反号。",
+    mat: 0, type: 1, scat: 0, lg: 1700, TH: 350, TL: 300, kl: 0 },
+  { n: "Bi₂Te₃ 热电材料", s: "低热导 + 高迁移率：ZT 接近 1。注意本征激发已经在拖后腿。",
+    mat: 2, type: 0, scat: 0, lg: 1900, TH: 350, TL: 300, kl: 0 },
+  { n: "重掺杂", s: "n = 10²⁰ cm⁻³：<span class='m'><i>σ</i></span> 上去了，|S| 塌到 100 μV/K 以下，ZT 反而掉。",
+    mat: 2, type: 0, scat: 0, lg: 2000, TH: 350, TL: 300, kl: 0 },
+  { n: "轻掺杂", s: "n = 10¹⁵ cm⁻³：|S| 很大，但 <span class='m'><i>σ</i></span> 太小，功率因子照样上不去。",
+    mat: 2, type: 0, scat: 0, lg: 1500, TH: 350, TL: 300, kl: 0 },
+  { n: "低热导极限", s: "把 <span class='m'><i>κ</i><sub>L</sub></span> 压到 0.2 倍：ZT 立刻翻几番 —— 这就是纳米结构的思路。",
+    mat: 2, type: 0, scat: 0, lg: 1900, TH: 350, TL: 300, kl: -70 }
+];
+function applyPreset(p) {
+  OPT.mat = p.mat; OPT.type = p.type; OPT.scat = p.scat;
+  OPT.n = Math.pow(10, p.lg / 100);
+  OPT.TH = p.TH; OPT.TL = p.TL;
+  OPT.kl = Math.pow(10, p.kl / 100);
+  CK.bip = true;
+}
+
+/* ================= 挑战卡 ================= */
+const CHAL = [
+  { q: "把温差从 0 调到 200 K，观察半导体棒里发生了什么。热端的载流子往哪边跑？冷端积累的是什么电荷？内建电场指向哪边？稳态时扩散流和漂移流是什么关系？",
+    a: "载流子从<b>热端跑向冷端</b>（热扩散）。n 型跑的是电子，冷端积累<b>负</b>电荷；p 型跑的是空穴，冷端积累<b>正</b>电荷。" +
+       "内建电场的任务永远是<b>把载流子拉回热端</b>：n 型电场由热指向冷（电子受力向热），p 型电场由冷指向热（空穴受力向热）。" +
+       "稳态时两股流<b>等大反向</b>，净电流为零，但各自都不为零 —— 天平符号就是在说这件事。" +
+       "顺带一提：真正驱动扩散的不是浓度差（体内浓度被电中性锁死，见模块二的实线），而是<b>热端载流子更热</b>。" },
+  { q: "在 n 型和 p 型之间来回切换。两种情况下扩散流的方向变了吗？积累的电荷极性变了吗？塞贝克系数的符号呢？为什么？",
+    a: "<b>扩散方向不变</b> —— 无论什么载流子，都是从热端往冷端跑，因为驱动力是温度梯度。" +
+       "变的是<b>搬的是什么电荷</b>：n 型搬负电荷，p 型搬正电荷，所以冷端的极性相反、电势差的符号相反，" +
+       "塞贝克系数也就一负一正。这就是 <span class='m'><i>S</i></span> 能当「载流子类型探针」的原因：" +
+       "<b>测出 ΔV 的正负，就知道材料是 n 型还是 p 型</b>。" },
+  { q: "把载流子浓度从 10¹⁵ 拖到 10²¹ cm⁻³，同时盯住模块四的 S 曲线和读数里的 <span class='m'><i>σ</i></span>。|S| 怎么变？<span class='m'><i>σ</i></span> 怎么变？为什么重掺杂「提高 <span class='m'><i>σ</i></span> 却降低 S」？",
+    a: "<span class='m'>|<i>S</i>|</span> 近似<b>线性地随 lg n 下降</b>：<b>非简并区</b>每高一个数量级掉约 86·ln10 ≈ 200 μV/K" +
+       "（<b>简并端会明显变平</b>：10²⁰ cm⁻³ 附近只剩 −95、10²¹ 只有 −23 μV/K；本征端则被双极项拉向零 —— 模块四图注给出当前工作点的实测斜率）。" +
+       "原因是 <span class='m'><i>E</i><sub>C</sub><span class='op'>−</span><i>E</i><sub>F</sub><span class='op'>=</span><i>k</i><sub>B</sub><i>T</i>ln(<i>N</i><sub>C</sub><span class='op'>/</span><i>n</i>)</span>：" +
+       "掺杂越重，费米能级越靠近（甚至进入）能带，每个载流子平均携带的熵就越小。" +
+       "而 <span class='m'><i>σ</i><span class='op'>=</span><i>nqμ</i></span> 随 n 上升（虽然重掺杂会让 <span class='m'><i>μ</i></span> 退化，但乘积仍上升）。" +
+       "两者对 n 的依赖<b>方向相反</b>，这就是热电材料最根本的权衡。" },
+  { q: "盯住模块三的两根条。拖动载流子浓度，第一项怎么变？切换散射机制，第二项怎么变？在典型掺杂下哪一项说了算？",
+    a: "<b>第一项（能级项）</b>随掺杂升高而<b>减小</b>，轻掺杂时可以到 5 以上，重掺杂时压到 1 甚至变负（简并）。" +
+       "<b>第二项（输运项）</b>在<b>非简并</b>时只由散射机制定，与浓度<b>无关</b>：声学声子散射 A = 2，常数 <span class='m'><i>τ</i></span> 时 A = 5/2，电离杂质散射 A = 4；" +
+       "但<b>简并之后 A(<span class='m'><i>η</i></span>) 会跟着 <span class='m'><i>η</i></span> 一起长</b>，不再是常数（10²⁰ cm⁻³ 附近已到 5 以上）。" +
+       "典型掺杂（10¹⁷ ~ 10¹⁹）下第一项通常 2 ~ 5，与 A 同量级，<b>两项都重要</b>；" +
+       "到重掺杂简并区，① 变负、② 同步变长，两根条<b>几乎抵消</b>，剩下的差值才是 |S| —— 这就是重掺杂 |S| 塌下去的机制。" +
+       "（切换散射机构改的是 A 的那个系数，<span class='m'><i>σ</i></span> 不受影响 —— 两条路径是分开的。）" },
+  { q: "看模块五的 ZT 曲线。ZT 在什么浓度达到峰值？为什么存在一个最优浓度？如果只追求高 S（轻掺杂）或只追求高 <span class='m'><i>σ</i></span>（重掺杂），ZT 会怎样？",
+    a: "峰值通常在 <b>10¹⁹ cm⁻³</b> 附近（本工具中 Bi₂Te₃ 约在此处）。" +
+       "左侧是<b><span class='m'><i>σ</i></span> 不够</b>：S 虽大，但 S²<span class='m'><i>σ</i></span> 里的 <span class='m'><i>σ</i></span> 太小；右侧是<b>|S| 不够</b>：<span class='m'><i>σ</i></span> 虽大，但 S² 掉得更快，" +
+       "而且电子热导 <span class='m'><i>κ</i></span><sub>e</sub> 按维德曼–弗兰兹律随 <span class='m'><i>σ</i></span> 一起涨，把增益又吃掉一部分。" +
+       "两头都不划算，中间必然有个最优。想突破这个天花板只有一条路 —— <b>降低晶格热导 <span class='m'><i>κ</i></span><sub>L</sub></b>，" +
+       "因为它跟 S、<span class='m'><i>σ</i></span> 都<b>不</b>绑定。切到「预设 → 低热导极限」（<span class='m'><i>κ</i></span><sub>L</sub> 压到 0.2 倍）看看。" }
+];
+const ansOf = c => (typeof c.a === "function" ? c.a() : c.a);
+let ANS_EL = [];
+function refreshAnswers() { ANS_EL.forEach((el, i) => { el.innerHTML = ansOf(CHAL[i]); }); }
+function buildChal() {
+  const grid = $("chalGrid");
+  grid.innerHTML = ""; ANS_EL = [];
+  CHAL.forEach((c, i) => {
+    const d = document.createElement("div");
+    d.className = "chal";
+    d.innerHTML = '<div class="chal-head"><b>' + (i + 1) + ". " + c.q + '</b><span class="chev">▶</span></div>' +
+      '<div class="chal-body"><div class="ans"></div><div class="btn-row"><button>看看答案</button></div></div>';
+    grid.appendChild(d);
+    d.querySelector(".chal-head").onclick = () => d.classList.toggle("open");
+    const ans = d.querySelector(".ans");
+    ANS_EL.push(ans);
+    d.querySelector(".btn-row button").onclick = e => { e.stopPropagation(); ans.classList.toggle("show"); };
+  });
+  refreshAnswers();
+}
+
+/* ================= 提示文案 ================= */
+function hintBar() {
+  const h = $("hintBar"); if (!h) return;
+  const st = state();
+  h.innerHTML = "棒内颜色是<b>温度</b>，不是浓度。载流子的抖动幅度按 " +
+    "<span class='m'>√<i>T</i></span> 定 —— 热端抖得厉害，这就是「更热」的字面意思。" +
+    "冷端那几个符号是积累的<b>" + (OPT.type === 0 ? "电子" : "空穴") + "</b>，它们造出内建电场，" +
+    "把载流子往回拉，直到扩散与漂移<b>精确抵消</b>。" +
+    "底部四格显示建立过程：真实材料的介电弛豫只有 10<sup>−12</sup> s，这里放慢到 <b>" + fmt(TAU_D, 1) + "</b> s。" +
+    "当前 <span class='m'><i>S</i> = " + fmt(st.S * 1e6, 1) + " " + H_UVK + "</span>，" +
+    "<span class='m'>Δ<i>V</i> = " + fmt(deltaV() * 1e3, 3) + " mV</span>。";
+}
+function hintProf() {
+  const h = $("hintProf"); if (!h) return;
+  h.innerHTML = "上半部分是这张图最该看的地方：<b>蓝色实线是真实的稳态浓度</b> —— 它<b>是平的</b>。" +
+    "体内载流子浓度被电中性死死锁在掺杂值上，温度梯度并没有真的改变它。" +
+    "<b>橙色虚线</b>是一个反事实：假设电荷<b>不重新分布</b>去建立电场（化学势停在中点值），" +
+    "各处只按当地温度 <span class='m'><i>N</i><sub>C</sub>(<i>T</i>)·<i>F</i><sub>1/2</sub></span> 算出的平衡浓度，" +
+    "它从热端到冷端差着好几倍。两条线的落差，就是系统<b>想扩散的冲动</b>；" +
+    "而实线之所以是平的，正因为电荷重新分布建立起的电场把化学势沿程推着走，" +
+    "把这个冲动<b>立刻抵消了</b>（这条虚线是反事实，所以<b>不含</b>内建电势 <span class='m'>−<i>qV</i>(<i>x</i>)</span> 的能带弯曲 —— " +
+    "把它加进去反而会落回蓝色实线，那时就没有对照了）。" +
+    "下半部分是电势：<span class='m'>Δ<i>V</i></span> 由 <span class='m'><i>S</i>(<i>T</i>)</span> 沿程积分得到，" +
+    "所以温差大时它不是严格线性。";
+}
+function hintTerms() {
+  const h = $("hintTerms"); if (!h) return;
+  const st = state();
+  h.innerHTML = "塞贝克系数由<b>两项相加</b>再乘 " +
+    "<span class='m'><i>k</i><sub>B</sub><span class='op'>/</span><i>q</i></span> = 86.17 μV/K。" +
+    "<b>蓝条</b>是能级项 <span class='m'><span class='op'>−</span><i>η</i></span>（费米能级离带边多远）；" +
+    "<b>橙条</b>是输运项 <span class='m'><i>A</i>(<i>η</i>)<span class='op'>=</span><span class='op'>⟨</span><i>E</i><span class='op'>⟩</span><sub>σ</sub><span class='op'>/</span><i>k</i><sub>B</sub><i>T</i></span>：" +
+    "<b>非简并</b>时它退化成 <span class='m'><i>r</i><span class='op'>+</span>5<span class='op'>/</span>2</span> = " + fmt(Acf(), 2) +
+    "（只由散射机制定，与浓度无关），<b>简并</b>时它随 <span class='m'><i>η</i></span> 一起长（现在 " +
+    fmt(AtOf(st.etaM), 3) + "，<span class='m'><i>η</i> = " + fmt(st.etaM, 2) + "</span>）⇒ 两根条几乎抵消，" +
+    "这就是重掺杂 <span class='m'>|<i>S</i>|</span> 塌下去的原因。" +
+    "教材里常见的「<b>3/2</b>」是<b>另一种加权</b>：按<b>态密度</b>（权重 <span class='m'><i>E</i><sup>1/2</sup></span>）算平均能量得 " +
+    "<span class='m'>3<i>k</i><sub>B</sub><i>T</i><span class='op'>/</span>2</span>，没有计入 " +
+    "<span class='m'><i>v</i><sup>2</sup><span class='op'>∝</span><i>E</i></span> 与 <span class='m'><i>τ</i><span class='op'>∝</span><i>E</i><sup><i>r</i></sup></span> 这两个额外权重；" +
+    "本工具按<b>电导</b>加权（权重 <span class='m'><i>E</i><sup><i>r</i>+3/2</sup></span>），故为 " +
+    "<span class='m'>(<i>r</i><span class='op'>+</span>5<span class='op'>/</span>2)<i>k</i><sub>B</sub><i>T</i></span> —— 两者正好差 <span class='m'>(<i>r</i><span class='op'>+</span>1)<i>k</i><sub>B</sub><i>T</i></span>。";
+}
+function hintS() {
+  const h = $("hintS"); if (!h) return;
+  const C = curves();
+  h.innerHTML = "两条曲线一正一负，形状几乎<b>镜像</b>：p 型在上（<span class='m'><i>S</i><span class='op'>&gt;</span>0</span>），" +
+    "n 型在下（<span class='m'><i>S</i><span class='op'>&lt;</span>0</span>）。" +
+    "横轴是对数刻度，所以两条<b>近似直线</b> —— 这正对应" +
+    "<span class='m'>|<i>S</i>|<span class='op'>=</span>(<i>k</i><sub>B</sub><span class='op'>/</span><i>q</i>)[ln(<i>N</i><sub>C</sub><span class='op'>/</span><i>n</i>)<span class='op'>+</span><i>A</i>]</span> 的对数依赖。" +
+    "高温时曲线的<b>右端会翘起来</b>（本征激发，双极效应把 S 拉向零）—— 把温度拉到 600 K 看 Bi₂Te₃。" +
+    "峰值 |S| 出现在最轻掺杂处：<b>" + fmt(Math.abs(C.sn[0]) * 1e6, 0) + " μV/K</b>。";
+}
+function hintZt() {
+  const h = $("hintZt"); if (!h) return;
+  const C = curves(), st = state();
+  h.innerHTML = "<b>蓝实线是 ZT</b>（左轴有数值），橙虚线与绿点线只画形状（各自归一化，峰值标在图下方）。" +
+    "功率因子先升后降 —— 左端 <span class='m'><i>σ</i></span> 不够、右端 |S| 不够；热导率单调上升 —— 电子热导跟着 <span class='m'><i>σ</i></span> 一起涨。" +
+    "两条曲线一交叉就在中间造出一个<b>最优掺杂</b>，这里是 <b>" + sciV(C.nopt, 2) + " cm<sup>−3</sup></b>，" +
+    "<span class='m'><i>ZT</i> = " + fmt(C.ztmax, 4) + "</span>。当前工作点的 ZT 是 <b>" +
+    fmt(st.ZT, st.ZT < 0.01 ? 6 : 4) + "</b>。" +
+    "想再往上走，唯一的自由是<b>晶格热导</b>：切到「预设 → 低热导极限」把 <span class='m'><i>κ</i></span><sub>L</sub> 压到 0.2 倍，ZT 会立刻改观。";
+}
+function hintAll() { hintBar(); hintProf(); hintTerms(); hintS(); hintZt(); }
+
+/* ================= 交互 ================= */
+const HOV = { id: "", x: 0, y: 0, on: false };
+function bindHover(ids) {
+  ids.forEach(id => {
+    const el = $(id);
+    if (!el) return;
+    el.addEventListener("pointermove", e => {
+      const r = el.getBoundingClientRect();
+      HOV.id = id; HOV.x = e.clientX - r.left; HOV.y = e.clientY - r.top; HOV.on = true;
+      /* 只有模块二画悬停读数：原来每次 pointermove 都整套 render()（9.2 ms），
+         逐帧悬停根本不需要重画另外 4 张画布与两段 innerHTML。 */
+      if (id === "prof") drawProf();
+    });
+    el.addEventListener("pointerleave", () => {
+      HOV.on = false;
+      if (id === "prof") drawProf();
+    });
+  });
+}
+function syncInputs() {
+  $("nSlider").value = Math.round(Math.log10(OPT.n) * 100);
+  $("thSlider").value = Math.round(OPT.TH);
+  $("tlSlider").value = Math.round(OPT.TL);
+  syncTexts();
+  buildBtns();
+}
+function syncTexts() {
+  const M = mat(), st = state(), C = curves();
+  $("nVal").innerHTML = sciV(OPT.n, 1) + " " + H_CM3;
+  $("thVal").innerHTML = fmt(OPT.TH, 0) + " " + H_KK;
+  $("tlVal").innerHTML = fmt(OPT.TL, 0) + " " + H_KK;
+  /* 两个被固定的参量集中披露：L 是纯几何常量；κ_L 缩放仍由「低热导极限」预设切换。
+     数字两侧用 <b> 断开文本节点 —— key 禁含运行时数字。 */
+  $("fixVal").innerHTML = H_LL + " = " + fmt(OPT.L, 1) + " " + H_MM + SEP2 +
+    H_KL + " 缩放 <b>×" + fmt(OPT.kl, 2) + "</b>　（当前 " + H_KL + " = " +
+    fmt(st.kl, 3) + " " + H_WMK + "）";
+
+  $("matVal").innerHTML = M.n;
+  $("matSub").innerHTML = H_EG + " = " + fmt(M.eg, 3) + " " + H_EVU + "　" +
+    H_NC + " = " + sciV(M.nc, 2) + "　" + H_NV + " = " + sciV(M.nv, 2) + " " + H_CM3 +
+    "　" + H_KL + " = " + fmt(M.kl, 2) + " " + H_WMK +
+    "　" + H_MUN + "/" + H_MUP + " = " + fmt(M.mun, 0) + "/" + fmt(M.mup, 0) + " " + H_CM2 + "/V·s。";
+  $("typVal").innerHTML = OPT.type === 0 ? "n 型" : "p 型";
+  $("typSub").innerHTML = OPT.type === 0
+    ? "多数载流子是<b>电子</b>（圆形），冷端积累负电荷，<span class='m'><i>S</i> &lt; 0</span>。"
+    : "多数载流子是<b>空穴</b>（方形），冷端积累正电荷，<span class='m'><i>S</i> &gt; 0</span>。";
+  $("scaVal").innerHTML = SCA_NAME[OPT.scat];
+  $("scaSub").innerHTML = SCA_SUB[OPT.scat] + "。当前输运项 " + H_AA + " = <b>" +
+    fmt(Acf(), 2) + "</b>，它<b>不随浓度变化</b>。";
+
+  $("nSub").innerHTML = "决定能级项 <span class='m'>ln(<i>N</i><sub>C</sub><span class='op'>/</span><i>n</i>)</span>。" +
+    "当前 <span class='m'><i>η</i> = " + fmt(st.etaM, 2) + "</span>" +
+    (st.etaM > 0 ? "（<b>已简并</b>，费米能级进了能带）" : "（非简并）") +
+    "，<span class='m'><i>μ</i> = " + fmt(st.muM, 0) + " " + H_CM2 + "/V·s</span>（低掺杂极限 " +
+    fmt(OPT.type === 0 ? M.mun : M.mup, 0) + "）。";
+  $("thSub").innerHTML = "热端温度。温差 <span class='m'>Δ<i>T</i> = " + fmt(dT(), 0) + " " + H_KK +
+    "</span>，电动势 <span class='m'>Δ<i>V</i> = " + fmt(deltaV() * 1e3, 3) + " mV</span>。";
+  $("tlSub").innerHTML = "冷端温度。会自动被压到不超过 " + H_TH + " − 1 " + H_KK + "。" +
+    "当前平均温度 <span class='m'>" + fmt(tAvg(), 1) + " " + H_KK + "</span>，" +
+    "<span class='m'><i>n</i><sub>i</sub> = " + sciV(niT(tAvg()), 2) + " " + H_CM3 + "</span>。";
+  /* 原 lSub / klSub 的数值都有落点：E 在「更多读数 → 输运」与画布标注，ZT 在模块五曲线与读数。
+     这里只留两条「为什么固定 / 谁还能动它」的说明。 */
+  $("fixSub").innerHTML = "这两项<b>没有滑块</b>：" + H_LL + " 是纯几何量，只影响电场 " +
+    "<span class='m'><i>E</i> = |Δ<i>V</i>|/<i>L</i></span>，<b>不影响</b> <span class='m'><i>S</i></span> 与 " + H_DV + " 本身" +
+    "（当前 <span class='m'><i>E</i> = " + fmt(Math.abs(fieldVcm()), 4) + " " + H_VCM + "</span>）。" +
+    H_KL + " 缩放<b>不与 <span class='m'><i>S</i></span>、<span class='m'><i>σ</i></span> 绑定</b>，" +
+    "是改善 <span class='m'><i>ZT</i></span> 唯一能独立下手的参数 —— 由「预设 → 低热导极限」压到 0.2 倍" +
+    "（当前 <span class='m'><i>ZT</i> = " + fmt(st.ZT, st.ZT < 0.01 ? 6 : 4) + "</span>）。";
+
+  $("preVal").innerHTML = OPT.preset >= 0 ? PRES[OPT.preset].n : "自定义";
+  $("preSub").innerHTML = OPT.preset >= 0 ? PRES[OPT.preset].s : "已手动改动参数。";
+}
+function buildBtns() {
+  const pb = $("preBtns"); pb.innerHTML = "";
+  PRES.forEach((p, i) => {
+    const b = document.createElement("button");
+    b.innerHTML = p.n;
+    if (OPT.preset === i) b.className = "sel";
+    b.onclick = () => { OPT.preset = i; applyPreset(p); syncInputs(); hintAll(); render(); };
+    pb.appendChild(b);
+  });
+  const wire = (id, key, set) => {
+    const bs = $(id).querySelectorAll("button");
+    bs.forEach(b => {
+      b.classList.toggle("active", +b.dataset.m === OPT[key]);
+      b.onclick = () => { set(+b.dataset.m); };
+    });
+  };
+  const refresh = () => { OPT.preset = -1; syncInputs(); hintAll(); render(); };
+  wire("matBtns", "mat", v => { OPT.mat = v; refresh(); });
+  wire("typBtns", "type", v => { OPT.type = v; refresh(); });
+  wire("scaBtns", "scat", v => { OPT.scat = v; refresh(); });
+
+  const cr = $("ckRow"); cr.innerHTML = "";
+  [["tmp", "温度曲线"], ["car", "载流子"], ["dif", "扩散流"], ["drf", "漂移流"],
+   ["acc", "积累电荷"], ["fld", "内建电场"], ["eq", "n_eq 虚线"], ["bip", "本征激发"]].forEach(a => {
+    const b = document.createElement("button");
+    b.innerHTML = a[1];
+    if (CK[a[0]]) b.className = "sel";
+    b.onclick = () => { CK[a[0]] = !CK[a[0]]; OPT.preset = -1; buildBtns(); render(); };
+    cr.appendChild(b);
+  });
+  drawLegends();
+}
+
+function fitAll() { ["bar", "prof", "terms", "scurve", "zt"].forEach(fitCanvas); }
+function render() {
+  drawBar(); drawProf(); drawTerms(); drawS(); drawZT();
+  drawReadout();
+}
+/* 滑块 / 悬停是高频事件，一整套 render() 实测 9.2 ms（5 张画布 ≈ 7 ms）。
+   合并到「每帧最多一次」，拖动时的掉帧立刻消失。 */
+let RAFQ = 0;
+function renderSoon() {
+  if (RAFQ) return;
+  RAFQ = requestAnimationFrame(() => { RAFQ = 0; render(); });
+}
+
+/* ================= 初始化 ================= */
+function init() {
+  applyPreset(PRES[OPT.preset]);
+  fitAll();
+  buildBtns();
+  buildChal();
+
+  const bind = (sid, fn) => {
+    $(sid).addEventListener("input", e => {
+      fn(+e.target.value); OPT.preset = -1;
+      syncTexts(); hintAll(); renderSoon();
+    });
+  };
+  bind("nSlider", v => { OPT.n = Math.pow(10, v / 100); });
+  bind("thSlider", v => { OPT.TH = v; if (OPT.TL > v - 1) OPT.TL = v - 1; syncInputs(); });
+  bind("tlSlider", v => { OPT.TL = v; if (OPT.TH < v + 1) OPT.TH = v + 1; syncInputs(); });
+
+  bindHover(["bar", "prof", "terms", "scurve", "zt"]);
+
+  $("scurve").addEventListener("click", () => {
+    if (!HOV.on) return;
+    const x0 = SCV.x0, x1 = CV.scurve.W - 20;
+    const u = clamp((HOV.x - x0) / (x1 - x0), 0, 1);
+    OPT.n = Math.pow(10, NL + (NH - NL) * u);
+    OPT.preset = -1;
+    syncInputs(); hintAll(); render();
+  });
+  $("zt").addEventListener("click", () => {
+    if (!HOV.on) return;
+    const x0 = ZTV.x0, x1 = CV.zt.W - 20;
+    const u = clamp((HOV.x - x0) / (x1 - x0), 0, 1);
+    OPT.n = Math.pow(10, NL + (NH - NL) * u);
+    OPT.preset = -1;
+    syncInputs(); hintAll(); render();
+  });
+
+  $("btnPlay").onclick = () => {
+    OPT.play = !OPT.play;
+    $("btnPlay").innerHTML = OPT.play ? "⏸ 暂停" : "▶ 播放";
+  };
+  $("btnReset").onclick = () => {
+    ANIM = 0;
+    syncTexts(); hintAll(); render();
+  };
+
+  /* 折叠区（.fold）：事件委托，新增折叠块不用再逐个绑定。
+     与挑战区的 .chal 完全独立，两者互不影响。 */
+  document.addEventListener("click", e => {
+    const h = e.target.closest ? e.target.closest(".fold-head") : null;
+    if (!h) return;
+    const f = h.parentNode;
+    if (f && f.classList && f.classList.contains("fold")) f.classList.toggle("open");
+  });
+  window.addEventListener("resize", () => { fitAll(); render(); });
+
+  syncInputs();
+  hintAll();
+  drawLegends();
+
+  let last = performance.now();
+  (function loop(now) {
+    const dt = Math.min((now - last) / 1000, 0.05);
+    last = now;
+    if (OPT.play) {
+      ANIM += dt;
+      if (ANIM < 10) drawBar();      /* τ_D = 1.7 s ⇒ 10 s 时进度 99.8%，之后画面静止 */
+    }
+    requestAnimationFrame(loop);
+  })(performance.now());
+
+  render();
+}
+if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
+else init();
+
+/* i18n 启动必须在 init() 之后：setLang() 会重跑 syncInputs()/render()，
+   放到 init() 之前会在 fitAll() 之前触发绘制，一旦抛异常整个 init() 就跑不到（挑战与画布会空）。 */
+(function () {
+  try {
+    i18nWatch();
+    ORIG_TITLE = ORIG_TITLE || document.title;
+    var btn = document.getElementById("langBtn");
+    if (btn) btn.onclick = function () { setLang(LANG === "en" ? "zh" : "en"); };
+    if (LANG === "en") setLang("en"); else { document.title = ORIG_TITLE; i18nWalk(document.body); }
+  } catch (e) { }
+})();
+</script>
+</body>
+</html>

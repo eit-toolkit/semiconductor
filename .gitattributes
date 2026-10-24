@@ -1,0 +1,3 @@
+# Keep LF everywhere in this repo: all 32 single-file tools require pure LF
+# (CRLF breaks the regression assertions).
+* text=auto eol=lf

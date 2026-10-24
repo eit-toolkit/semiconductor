@@ -1,0 +1,2043 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<!-- SPDX-License-Identifier: MIT -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>半导体表面边界条件交互教学工具</title>
+<style>
+
+  :root {
+    --bg: #f7f9fb;
+    --panel: #ffffff;
+    --border: #dde4ec;
+    --text: #2c3e50;
+    --text-sub: #6b7a8c;
+    --blue: #1976d2;
+    --blue-light: #e3f0fb;
+    --orange: #ef8c1a;
+    --red: #d94a3d;
+    --teal: #0f9b8e;
+    --green: #2e9e5b;
+    --purple: #7b3fa0;
+    --gray-ref: #9aa5b1;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Microsoft YaHei", "PingFang SC", "Segoe UI", sans-serif;
+    background: var(--bg); color: var(--text); padding: 14px;
+  }
+  header { position: relative; display: flex; align-items: baseline; justify-content: center; gap: 14px; flex-wrap: wrap; text-align: center; margin-bottom: 2px; }
+  .lang-btn { position: absolute; right: 0; top: 0; border: 1px solid var(--border); background: #fff;
+    color: var(--text-sub); padding: 3px 10px; border-radius: 7px; cursor: pointer; font-size: 12px; font-weight: 600; }
+  .lang-btn:hover { border-color: var(--blue); color: var(--blue); }
+  header h1 { font-size: 20px; }
+  header .formula { font-size: 14.5px; color: var(--text-sub); }
+  .sub-note { text-align: center; font-size: 12.5px; color: var(--text-sub); margin-bottom: 12px; line-height: 1.75; }
+  .sub-note b { color: var(--blue); }
+
+  .layout { display: flex; gap: 14px; align-items: flex-start; max-width: 1500px; margin: 0 auto; }
+  .viz { flex: 0 0 64%; min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+  .side { flex: 1; min-width: 310px; display: flex; flex-direction: column; gap: 12px; }
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; }
+  .sec-title { font-size: 13.5px; font-weight: 700; margin: 2px 0 6px; }
+  /* 模块编号徽标：只有教学内容模块才带编号；控制面板等辅助面板不是模块，不加 */
+  .sec-title .mtag {
+    display: inline-block; background: var(--blue); color: #fff;
+    font-size: 11px; font-weight: 700; padding: 1.5px 7px;
+    border-radius: 5px; margin-right: 6px; vertical-align: 1.5px; letter-spacing: .3px;
+  }
+  canvas { display: block; width: 100%; border-radius: 6px; touch-action: none; }
+  canvas:focus { outline: 2px solid rgba(25,118,210,.45); outline-offset: 1px; }
+  .chart-wrap { position: relative; }
+  .hint { font-size: 12px; color: var(--text-sub); margin-top: 6px; line-height: 1.6; }
+  .ctrl { margin-bottom: 10px; }
+  .ctrl:last-child { margin-bottom: 0; }
+  .ctrl-head { display: flex; justify-content: space-between; align-items: baseline; font-size: 13px; font-weight: 600; margin-bottom: 2px; gap: 8px; }
+  .ctrl-head .val { color: var(--blue); font-variant-numeric: tabular-nums; font-weight: 700; white-space: nowrap; }
+  .ctrl input[type=range] { width: 100%; accent-color: var(--blue); }
+  .ctrl .sub { font-size: 11.5px; color: var(--text-sub); margin-top: 1px; line-height: 1.5; }
+  .btn-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+  .btn-row button {
+    border: 1px solid var(--border); background: #fff; color: var(--text);
+    padding: 5px 11px; border-radius: 7px; cursor: pointer; font-size: 12.5px;
+  }
+  .btn-row button:hover { border-color: var(--blue); color: var(--blue); }
+  .btn-row.tight button { padding: 4px 9px; font-size: 12px; }
+  .btn-row button.sel { background: var(--blue); border-color: var(--blue); color: #fff; font-weight: 600; }
+  .btn-row button.primary { background: var(--blue-light); border-color: var(--blue); color: var(--blue); font-weight: 600; }
+  .mode-switch { display: flex; gap: 6px; }
+  .mode-switch button {
+    flex: 1; border: 1px solid var(--border); background: #fff; color: var(--text-sub);
+    padding: 6px 10px; border-radius: 8px; cursor: pointer; font-size: 12.5px; font-weight: 600;
+  }
+  .mode-switch button.active { background: var(--blue); border-color: var(--blue); color: #fff; }
+  .chk-row { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12.5px; color: var(--text-sub); margin-top: 4px; }
+  .chk-row label { display: inline-flex; align-items: center; gap: 5px; cursor: pointer; }
+  .chk-row input[type=checkbox] { accent-color: var(--blue); }
+  .legend { display: flex; gap: 6px 14px; flex-wrap: wrap; align-items: center; font-size: 12px; color: var(--text-sub); margin-top: 6px; }
+  .swatch { display: inline-block; vertical-align: middle; width: 20px; height: 0; border-top: 3px solid currentColor; border-radius: 2px; margin-right: 6px; }
+  .swatch.dash { border-top-style: dashed; }
+  .swatch.dot { width: 11px; height: 11px; border: none; border-radius: 50%; }
+  .swatch.sq { width: 11px; height: 11px; border: none; border-radius: 3px; }
+  /* ---- LaTeX 风格数学排版（纯 CSS，无外部库） ---- */
+  .m { font-family: "Cambria Math", "STIX Two Math", "Latin Modern Math", "Times New Roman", Times, serif;
+       font-size: 1.05em; font-style: normal; white-space: nowrap; letter-spacing: .01em; }
+  .m i, .m var { font-style: italic; }
+  .m .rm { font-style: normal; }
+  .m sub, .m sup { font-size: .70em; font-style: normal; line-height: 1; }
+  .m sub { vertical-align: -.28em; }
+  .m sup { vertical-align: .50em; }
+.m .m { font-size: 1em; }   /* 嵌套容器（TEXH 下标转换叠加）不再放大字号 */
+  .m sub i, .m sup i { font-style: italic; }
+  .m .op { font-style: normal; padding: 0 .24em; }
+  .m .sl { font-style: normal; padding: 0 .05em; }
+  .m .un { font-style: normal; padding-left: .16em; }
+  .frac { display: inline-block; vertical-align: -0.52em; text-align: center; margin: 0 .16em; font-size: .86em; line-height: 1.18; }
+  .frac > .num { display: block; padding: 0 .34em; border-bottom: 1px solid currentColor; }
+  .frac > .den { display: block; padding: 0 .34em; }
+  /* ---- 读数区 ---- */
+  .kv { display: grid; grid-template-columns: 1fr; gap: 2px 22px; font-size: 12.5px; }
+  .kv .row { display: flex; justify-content: space-between; gap: 8px; border-bottom: 1px dotted #eef2f7; padding: 2px 0; }
+  .kv .k { color: var(--text-sub); white-space: nowrap; }
+  .kv .v { font-variant-numeric: tabular-nums; text-align: right; }
+  .kv .v b { color: var(--blue); }
+  .kv .hd { grid-column: 1 / -1; font-weight: 700; color: var(--text); font-size: 12px; margin: 6px 0 2px; }
+  .kv .hd:first-child { margin-top: 0; }
+  .kv .nt { grid-column: 1 / -1; font-size: 11px; color: var(--text-sub); line-height: 1.65; padding: 3px 0 2px; }
+  .unit-note { font-size: 11.5px; color: var(--text-sub); line-height: 1.55; margin-top: 6px; }
+  /* ---- 引导探究 ---- */
+  .chal-wrap { max-width: 1500px; margin: 14px auto 0; }
+  .chal-bar { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+  .chal-bar b { font-size: 14.5px; }
+  .chal-bar span { font-size: 12px; color: var(--text-sub); }
+  .chal-grid { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+  .chal { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 8px 12px; }
+  .chal-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; cursor: pointer; }
+  .chal-head b { font-size: 13.5px; }
+  .chal-head .chev { color: var(--text-sub); font-size: 12px; transition: transform .15s; display: inline-block; }
+  .chal.open .chal-head .chev { transform: rotate(90deg); }
+  .chal.open { border-color: var(--blue); }
+  .chal-body { display: none; margin-top: 6px; font-size: 12.5px; color: var(--text-sub); line-height: 1.75; }
+  .chal.open .chal-body { display: block; }
+  .chal-body .ans { display: none; margin-top: 6px; padding: 7px 10px; background: var(--blue-light); border-radius: 6px; color: var(--text); }
+  .chal-body .ans.show { display: block; }
+  .chal-body .ans b { color: var(--blue); }
+  .chal-body .btn-row { margin-top: 8px; }
+  @media (max-width: 1100px) {
+    .layout { flex-direction: column; }
+    .viz { flex: 1 1 auto; width: 100%; }
+  }
+  /* ---- 课程页脚 ---- */
+  .site-foot { max-width: 1500px; margin: 18px auto 0; padding: 12px 16px 24px;
+    border-top: 1px solid var(--border); color: var(--text-sub);
+    font-size: 12.5px; line-height: 1.8; text-align: center; }
+  .site-foot a { color: var(--blue, #1976d2); text-decoration: none; }
+  .site-foot a:hover { text-decoration: underline; }
+
+  .grp { border-top: 1px dotted #e6ecf3; padding-top: 8px; margin-top: 8px; }
+  .grp:first-child { border-top: 0; padding-top: 0; margin-top: 0; }
+  .bar { height: 8px; background: #eef2f7; border-radius: 4px; overflow: hidden; margin-top: 2px; }
+  .bar > i { display: block; height: 100%; border-radius: 4px; }
+  .barlab { display: flex; justify-content: space-between; font-size: 11.5px; color: var(--text-sub); margin-top: 6px; gap: 8px; }
+  .barlab b { color: var(--blue); }
+  .sqrt > .rdc, .sqrt .rdc { display: inline-block; position: static; font-size: 1em;
+             border-top: .055em solid currentColor; padding: .06em .12em 0 .10em; margin: 0; line-height: 1; }
+
+  /* 公式排版：分式 / 根式 —— 全站统一为「回旋共振 v06」写法（置于末尾，覆盖本文件早期变体） */
+  .frac { display: inline-block; vertical-align: -0.52em; text-align: center; font-size: .78em; margin: 0 .12em; }
+  .frac > .num, .frac .num { display: block; padding: 0 .22em; border-bottom: .055em solid currentColor; line-height: inherit; }
+  .frac > .den, .frac .den { display: block; padding: 0 .22em; line-height: inherit; }
+  .sqrt { display: inline-block; white-space: nowrap; vertical-align: baseline; margin: 0; font-size: 1em; }
+  .sqrt > .rd, .sqrt .rd { display: inline-block; position: static; font-size: 1em; line-height: inherit; padding: 0 .02em 0 0; margin: 0; }
+  .sqrt > .rdc, .sqrt .rdc { display: inline-block; position: static; font-size: 1em;
+             border-top: .055em solid currentColor; padding: .06em .12em 0 .10em; margin: 0; line-height: 1; }
+  .sqrt .rdc:has(sup) { padding-top: .18em; }
+</style>
+</head>
+<body>
+
+<header>
+  <button id="langBtn" class="lang-btn" data-noi18n title="中文 / English">EN</button>
+  <h1>半导体表面边界条件交互教学工具</h1>
+  <div class="formula"><span class="m"><span class="op">−</span>(<i>ℏ</i><sup>2</sup><span class="sl">/</span>2<i>m</i><sup>*</sup>)<i>ψ</i>″<span class="op">+</span><i>V</i>(<i>x</i>)<i>ψ</i><span class="op">=</span><i>Eψ</i></span>　·　<span class="m"><i>V</i>(<i>x</i><span class="op">+</span><i>d</i>)<span class="op">=</span><i>V</i>(<i>x</i>)　（体内：周期势）</span>　·　<span class="m"><i>ψ</i><span class="op">∝</span><span class="rm">e</span><sup><span class="op">−</span><i>x</i><span class="sl">/</span><i>ξ</i></sup>　（表面态：局域）</span>　·　<span class="m"><i>N</i><sub>s</sub><span class="op">=</span>2<span class="sl">/</span><i>a</i><sup>2</sup><span class="op">=</span>6.8<span class="op">×</span>10<sup>14</sup> cm<sup><span class="op">−</span>2</sup></span></div>
+</header>
+<div class="sub-note">
+  晶体在这里<b>到头了</b>。表面原子外侧少了邻居，剩下一根<b>没有对手的悬挂键</b>，键上那个未配对电子在体内的能带里找不到位置，只能待在<b>禁带</b>中 —— 这就是<b>表面态</b>。本工具用<b>两幅图讲同一件事</b>：模块一是<b>原子图像</b>（谁少了近邻），模块二是<b>一维势能函数</b>（周期量子阱在表面被切断），后者的能级与波函数由<b>一维薛定谔方程的数值解</b>给出，不是示意画法。两图各自独立回答的是同一个问题：<b>表面态为什么会存在</b>；它们的<b>方位也一致</b> —— 真空都在左、晶体都朝右，读图时不用换算方向。至于表面态存了电荷之后如何把能带掰弯（<span class="m"><i>Q</i><sub>ss</sub><span class="op">+</span><i>Q</i><sub>sc</sub><span class="op">=</span>0</span> 的自洽解），请看同系列的《MIS 结构偏压与表面势》工具。
+</div>
+
+<div class="layout">
+  <div class="viz">
+    <div class="card">
+      <div class="sec-title"><span class="mtag">模块一</span>原子图像：谁少了近邻（鼠标悬停查看每个原子）</div>
+      <div class="chart-wrap"><canvas id="lat" data-h="300" tabindex="0"></canvas></div>
+      <div class="legend" id="legLat"></div>
+      <div class="hint">这里<b>最左一列是表面</b>：表面原子外侧（左侧）没有邻居，只剩 3 个近邻，剩下那根没有对手的键就是<b>悬挂键</b>，朝左伸进真空，上面挂着一个<b>未配对电子</b>（橙点）。往<b>右</b>是<b>晶体内部</b>：每个原子有 4 个近邻、4 根完整的键，电子两两成对，禁带里干干净净。<b>悬挂键面密度 <span class="m"><i>N</i><sub>db</sub></span></b>滑块决定多少个表面原子还留着悬挂键 —— 其余的被氢原子钝化（小白球 H），那个电子被配对成 Si–H 键，表面态也就跟着消失了。这就是<b>表面钝化</b>的全部内容。把鼠标放到任意原子上，会显示它的近邻数与悬挂键数。</div>
+    </div>
+
+    <div class="card">
+      <div class="sec-title"><span class="mtag">模块二</span>势能图像：一维晶体的势能函数 —— 周期量子阱在表面被切断</div>
+      <div class="chart-wrap"><canvas id="pot" data-h="320" tabindex="0"></canvas></div>
+      <div class="legend" id="legPot"></div>
+      <div class="hint">把晶体想成一排<b>周期排列的量子阱</b>（势阱宽 0.40 nm、势垒宽 0.25 nm、垒高 2.0 eV，<span class="m"><i>m</i><sup>*</sup><span class="op">=</span><i>m</i><sub>0</sub></span>，示意值）。体内每个势阱都完整，相邻势阱的波函数互相渗透 ⇒ 6 个势阱给出 6 个只差一丁点的能级，挤成一条<b>能带</b>（灰色横线），它们的波函数<b>贯穿整块晶体</b>（灰色曲线）。到了表面，周期<b>被切断</b>：最外面那个势阱只剩半截， confinement 变强 ⇒ 它的能级被抬高，<b>从能带里分裂出来落进禁带</b>，波函数<b>只贴在表面</b>、往体内指数衰减 —— 这就是<b>塔姆表面态</b>（青色）。图上的能级与波函数都是<b>真解方程解出来的</b>：有限差分三对角矩阵 + Sturm 序列计数二分求能级，带位移反迭代（Thomas 追赶）求波函数。</div>
+    </div>
+  </div>
+
+  <div class="side">
+    <div class="card">
+      <div class="sec-title">控制面板</div>
+
+      <div class="ctrl grp">
+        <div class="ctrl-head"><span>悬挂键面密度 <span class="m"><i>N</i><sub>db</sub></span>（作用于模块一）</span><span class="val" id="ditVal">6.8×10<sup>14</sup> cm<sup>−2</sup></span></div>
+        <input type="range" id="ditSlider" min="0" max="500" step="1" value="500">
+        <div class="sub" id="ditSub"></div>
+        <div class="ctrl-head" style="margin-top:6px;"><span>表面切割量 <span class="m"><i>Δ</i></span>（作用于模块二）</span><span class="val" id="cutVal">0.15 nm</span></div>
+        <input type="range" id="cutSlider" min="0" max="300" step="5" value="150">
+        <div class="sub" id="cutSub"></div>
+      </div>
+
+      <div class="ctrl grp">
+        <div class="ctrl-head"><span>显示项目</span></div>
+        <div class="chk-row">
+          <label><input type="checkbox" id="ckDbond" checked> 悬挂键电子（模块一）</label>
+          <label><input type="checkbox" id="ckPsi" checked> 波函数曲线（模块二）</label>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="sec-title">读数面板</div>
+      <div class="kv" id="readout"></div>
+      <div class="barlab" id="barLab"></div>
+      <div class="bar"><i id="barLoc"></i></div>
+      <div class="bar"><i id="barGap"></i></div>
+      <div class="unit-note"><b>模块一怎么数</b>：材料固定为 <b>Si</b>，晶格常数 a = 5.431 Å，(100) 面每个原胞 2 个原子 ⇒ 表面原子密度 <span class="m"><i>N</i><sub>s</sub><span class="op">=</span>2<span class="sl">/</span><i>a</i><sup>2</sup><span class="op">=</span>6.8<span class="op">×</span>10<sup>14</sup> cm<sup><span class="op">−</span>2</sup></span>，这就是「每个表面原子一个悬挂键」的上限。<b>模块二怎么算</b>：把连续坐标离散成 <span class="m">Δ<i>x</i><span class="op">≈</span>0.006</span> nm 的网格，薛定谔方程化成<b>对称三对角矩阵</b>本征值问题；用 <b>Sturm 序列</b>数出小于试探能量的本征值个数，二分到 <span class="m">10<sup><span class="op">−</span>4</sup></span> eV 以下得到能级；再用<b>带位移的反迭代</b>（Thomas 追赶）解出对应波函数并归一化。参数是<b>示意值</b>（为了让「6 个势阱 ⇒ 6 个能级 ⇒ 1 个分裂出来」这件事在图上肉眼可辨），不代表真实 Si 的数值。</div>
+    </div>
+  </div>
+</div>
+
+<div class="chal-wrap">
+  <div class="card">
+    <div class="chal-bar">
+      <b>引导探究（点击展开，先自己试一试再看答案）</b>
+      <span>挑战任务</span>
+    </div>
+    <div class="chal-grid" id="chalGrid"></div>
+  </div>
+</div>
+
+<div class="site-foot">本工具是 EIT-SP（半导体物理交互式教学工具箱）的一部分（武汉大学物理学院《半导体物理》智慧课程），以 MIT 协议开源，可自由使用与二次开发；转载请保留出处。反馈意见 <a href="mailto:doctorwanghao@qq.com">doctorwanghao@qq.com</a></div>
+
+<script>
+/* ==================================================================
+   i18n（C1 单文件双语：物理代码仍然只有一份）
+   LANG 取值优先级：URL ?lang=en / ?lang=zh  >  localStorage('opl_lang')  >  默认中文。
+   不做 location 跳转——保住「单文件拷走也能用」。
+   三个注入点，**业务字符串一个都不改**：
+     ① partsOf()   画布 token：带 i/sub/sup/un 标记的是物理量、下标与单位，跳过
+     ② fillText/measureText 原型挂钩：兜住直接写进画布的中文串
+     ③ DOM 文本节点：静态 HTML 与 JS 写进来的 innerHTML，用 MutationObserver 兜住新增节点
+   T() 先查整句词典，未命中再按「最长优先」做短语替换，因此拼接串也能翻。
+   漏翻会被记进 window.__MISS，可导出核对。 */
+var LANG = (function () {
+  var m = /[?&]lang=([a-zA-Z]+)/.exec(location.search);
+  var q = m ? m[1].toLowerCase() : "";
+  if (q === "en" || q === "zh") return q;
+  var s = "";
+  try { s = localStorage.getItem("opl_lang") || ""; } catch (e) { }
+  return (s === "en" || s === "zh") ? s : "zh";
+})();
+var ORIG_TITLE = document.title;
+var __MISS = [];
+try { window.__MISS = __MISS; } catch (e) { }
+function noteMiss(s) { if (__MISS.indexOf(s) < 0) __MISS.push(s); }
+function TSoft(s) {
+  if (!T._K) T._K = Object.keys(I18N).sort(function (a, b) { return b.length - a.length; });
+  var out = s, i, k, orig = s;
+  /* 两遍：第一遍只吃长度 ≥ 2 的短语，第二遍才让单字 key 上场。
+     否则「下」会先被翻掉，把「留不下净电荷」「1 T 下输出」这类整句切碎。
+     ⚠️ 第二遍仍有硬门槛：单字 key 只在「传进来的整串恰好等于这一个字」时才生效
+     （弱门槛 `pass === 0` 会被基座里的 "个"→bound states、"上"→upper、"高"→high
+       这类污染词条钻空子，把「耗尽区几乎全在…」切得七零八落。2026-10-21 踩过。） */
+  for (var pass = 0; pass < 2; pass++) {
+    for (i = 0; i < T._K.length; i++) {
+      k = T._K[i];
+      if (k.length < 2 && (pass === 0 || orig !== k)) continue;
+      if (out.indexOf(k) < 0) continue;
+      /* 中文片段之间没有空格：前一片段已翻成英文时，本片段英文直连进去会粘连
+         （「更深」「或」「更浅」逐段替换成 deeper、or、shallower 会拼出 deeperor），
+         所以替换时看上下文：key 以中文开头、前一字符已是英文 ⇒ 前面补一个空格。 */
+      out = out.replace(new RegExp(k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "g"), function (m, off, str) {
+        var v = I18N[k];
+        var pre = off > 0 ? str.charAt(off - 1) : "";
+        if (/[A-Za-z0-9]/.test(pre) && /^[A-Za-z0-9(]/.test(v) && /[\u3400-\u9FFF]/.test(k.charAt(0))) v = " " + v;
+        return v;
+      });
+    }
+  }
+  return out;
+}
+/* 同一句被 DOM 切成好几个文本节点时，首尾空格会随机落在 data 里；
+   所以除了「整句命中」，再试一次「去空格后命中」并原样补回首尾空白。 */
+function trimMap() {
+  if (T._TM) return T._TM;
+  var m = {};
+  for (var k in I18N) if (Object.prototype.hasOwnProperty.call(I18N, k)) {
+    var t = k.replace(/^\s+|\s+$/g, "");
+    if (t && m[t] === undefined) m[t] = I18N[k];
+  }
+  T._TM = m;
+  return m;
+}
+/* eslint-disable no-use-before-define */
+function T(s) {
+  if (LANG !== "en" || typeof s !== "string" || !s) return s;
+  if (!/[一-鿿]/.test(s)) return s;
+  if (Object.prototype.hasOwnProperty.call(I18N, s)) return I18N[s];
+  var tm = trimMap(), core = s.replace(/^\s+|\s+$/g, "");
+  if (core && tm[core] !== undefined) {
+    var lead = s.slice(0, s.length - s.replace(/^\s+/, "").length);
+    var tail = s.slice(s.replace(/\s+$/, "").length);
+    return lead + tm[core] + tail;
+  }
+  var v = TSoft(s);
+  if (v === s) noteMiss(s);
+  return v;
+}
+var I18N = {
+  /* ---- 词典：中文原文 → 英文。key 禁含运行时数字（换个参数就漏），数字前后要拆开 ---- */
+  "格": "cells",
+  "模块一": "Module 1",
+  "控制面板": "Control Panel",
+  "挑战任务": "Challenges",
+  "？": "?",
+  "，": ", ",
+  "、": ", ",
+  "：": ": ",
+  "；": "; ",
+  "（": " (",
+  "）": ")",
+  "本工具是 EIT-SP（半导体物理交互式教学工具箱）的一部分（武汉大学物理学院《半导体物理》智慧课程），以 MIT 协议开源，可自由使用与二次开发；转载请保留出处。": "This tool is part of EIT-SP, the Educational Interactive Toolkit for Semiconductor Physics (School of Physics and Technology, Wuhan University). Released under the MIT licence: free to use, modify and redistribute, including commercially. Please keep this attribution.",
+  "反馈意见": " Feedback",
+  "材料": "Material",
+  "读数面板": "Readout Panel",
+  "空": "empty",
+  "能量": "energy",
+  "看答案": "Show answer",
+  "从 ": " from ",
+  "），": "), and ",
+  "）；": "); ",
+  "）：": "): ",
+  "。把": ". Turning on the ",
+  " ⇒ ": " ⇒ ",
+  "几乎": "almost ",
+  " / ": " / ",
+  " 的": " ",
+  " 与": " and ",
+  "宽度": "width",
+  "本工具是 EIT-SP（半导体物理交互式教学工具箱）的一部分（武汉大学物理学院《半导体物理》智慧课程），以 MIT 协议开源，可自由使用与二次开发；转载请保留出处。反馈意见": "This tool is part of EIT-SP, the Educational Interactive Toolkit for Semiconductor Physics (School of Physics and Technology, Wuhan University). Released under the MIT licence: free to use, modify and redistribute, including commercially. Please keep this attribution. Feedback",
+  "本工具是": "This tool is part of",
+  "（半导体物理交互式教学工具箱）的一部分（武汉大学物理学院《半导体物理》智慧课程），以": ", the Educational Interactive Toolkit for Semiconductor Physics (School of Physics and Technology, Wuhan University). Released under the",
+  "协议开源，可自由使用与二次开发；转载请保留出处。反馈意见": "licence: free to use, modify and redistribute, including commercially. Please keep this attribution. Feedback",
+  "协议开源，可自由使用与二次开发；转载请保留出处。": "licence: free to use, modify and redistribute, including commercially. Please keep this attribution.",
+  "。当前": ". Current",
+  "，所以": ", so",
+  "固定": "fixed",
+  "方向": "direction",
+  "注意": "note",
+  "参数": "parameters",
+  "×": " × ",
+  "到": "to",
+  "还是": "or",
+  " eV）": " eV in all)",
+  "，这就是": ", and this is the ",
+  " 就是": " means ",
+  "全部": "all",
+  "一列": "a row of",
+  "开": "on",
+  "中心": "centre",
+  "关": "Off",
+  "只有": "only",
+  "费米能": "Fermi energy",
+  "一侧": "one side",
+  "是": "is",
+  "比": "than",
+  "随": "varies with",
+  "同时": "at the same time",
+  "为什么": "why",
+  "时": "when",
+  "费米能级": "Fermi level",
+  "本征": "Intrinsic",
+  "）的": ") has the largest",
+  "挑战": "Challenge",
+  "和": " and ",
+  " eV（": " eV (",
+  "，把": " and push the ",
+  "，不是": ", not the measured value for",
+  "电荷": "charge",
+  "大": "larger",
+  "差": "differ by",
+  "能": "Energy",
+  "量": " ",
+  "原": "origin",
+  "点": "",
+  "导": "conduction",
+  "子": "quantum",
+  "几": "almost",
+  "乎": " ",
+  "全": "",
+  "没": "no ",
+  "的": "",
+  "占": "Occupation",
+  "率": "probability",
+  "）。": "at room temperature).",
+  "侧）": " side)",
+  "下": "lower",
+  "能带": "Band diagram",
+  " 结": " junction",
+  "正": "positive",
+  "常数": "constant",
+  "模块二": "Module 2",
+  "取": "Take ",
+  "显示": "Display",
+  "参考": "reference",
+  "降到": "falls to",
+  "相反": "opposite to the field",
+  "带底": "band bottom",
+  "带顶": "band top",
+  "带底 ": "band bottom ",
+  "带顶 ": "band top ",
+  "上限": "upper limit",
+  "价": "valence",
+  "顶": "top",
+  "底": "bottom",
+  "，宽 ": ", width ",
+  "抬高": "up",
+  "势垒 ": "Barrier ",
+  "）—— ": "). ",
+  "，越过": ", which crosses the ",
+  "到 ": "to ",
+  "态密度 ": "Density of states ",
+  "晶格常数 ": "Lattice constant ",
+  "%）": "%)",
+  "个电子": " electrons",
+  " 个 ": " ",
+  " 指数衰减（": " outside the well (",
+  "阱宽 ": "Well width ",
+  "势能 ": "Potential energy ",
+  "势能": "potential energy",
+  "个": "bound states",
+  " 个原子": " atoms inside the circle",
+  "原子": "atom",
+  "示意": "schematic",
+  "原子 ": "atom ",
+  "有 ": " ",
+  "禁带": "Forbidden gap",
+  "反号": "flips sign",
+  "消失": "disappears",
+  "。注意": ". Note that the ",
+  "拉到": "to",
+  "只是": "are just",
+  "每个原子有": "Each atom has",
+  "晶格常数": "Lattice constant",
+  "个原子": " atoms",
+  "曲线": "curve",
+  "＋": " + ",
+  "（当前 ": " (currently ",
+  "悬挂键": "dangling bonds",
+  " 悬挂键": " dangling bonds",
+  "少了": "missing",
+  "少一个": "one fewer",
+  "小于": "less than",
+  "相邻": "adjacent",
+  "反键态": "antibonding",
+  "成键态": "bonding",
+  " 个能级": " levels",
+  " 个势阱": " wells",
+  "（当前": " (currently",
+  "能量分布": "energy distribution",
+  "周期势": "periodic potential",
+  " 个态，": " states, ",
+  "周期": "period",
+  "结构": "structure",
+  "幅度": "Amplitude",
+  "决定": "set by",
+  "往上": "upwards",
+  "态密度": "Density of states",
+  "本身": "itself",
+  "，但": ", but",
+  "有电场": "Field",
+  "）就": ") ",
+  "，两者": ", and the two ",
+  "就是": "is exactly",
+  "，电子": ", electron",
+  "上升": "rises",
+  "允许": "allowed",
+  "当前：": "Current: ",
+  "禁": "forbidden",
+  "允": " allowed",
+  "许": "",
+  "概": "",
+  "距": "distance to the ",
+  " 个态": " states",
+  "电子（": "Electrons (",
+  "从": "from",
+  "一": "one",
+  "不": "not",
+  "方程解": "solution of the equation",
+  "无（": "Off (",
+  "数值解": "Numerical solution",
+  "个）": ")",
+  " 无": " off",
+  "上": "upper",
+  "高": "high",
+  "表面": "Surface",
+  "真实 ": "Actual ",
+  "内部": "interior",
+  "边界": "boundaries",
+  "分布": "The distribution",
+  "超出": "outside",
+  "真 空": "Vacuum",
+  "体内：4 个近邻，键全部饱和 ⋯": "Bulk: 4 neighbours, all bonds saturated ⋯",
+  "表面：只剩 3 个近邻": "Surface: only 3 neighbours left",
+  "（表面原子密度  = 6.78×10": "(Surface atom density  = 6.78×10",
+  "（表面原子密度": "(Surface atom density",
+  "体内继续延伸 →": "continues into the bulk →",
+  "塔姆表面态  = 1.737 eV": "Tamm surface state  = 1.737 eV",
+  "塔姆表面态": "Tamm surface state",
+  "衰减长度 ξ = 0.72 nm": "Decay length ξ = 0.72 nm",
+  "第一能带（5 个态）": "First band (5 states)",
+  "第二能带": "Second band",
+  "禁 带": "Band gap",
+  "体内：波函数贯穿整块晶体": "Bulk: the wave function runs through the whole crystal",
+  "半导体表面边界条件交互教学工具": "Semiconductor Surface Boundary Conditions — Interactive Toolkit",
+  ")　（体内：周期势）": ")　(bulk: periodic potential)",
+  "　（表面态：局域）": "　(surface state: localised)",
+  "\n  晶体在这里": "\n  the crystal is here",
+  "到头了": "ends here",
+  "。表面原子外侧少了邻居，剩下一根": ". A surface atom is short of a neighbour on the outside, leaving one",
+  "没有对手的悬挂键": "dangling bond with no partner",
+  "，键上那个未配对电子在体内的能带里找不到位置，只能待在": ", and the unpaired electron on that bond finds no room in the bulk bands, so it can only sit in",
+  "中 —— 这就是": " — this is the",
+  "表面态": "surface state",
+  "。本工具用": ". This tool uses",
+  "两幅图讲同一件事": "two figures to make the same point",
+  "原子图像": "the atomic picture",
+  "（谁少了近邻），模块二是": " (who is short of a neighbour); module 2 is the",
+  "一维势能函数": "one-dimensional potential-energy profile",
+  "（周期量子阱在表面被切断），后者的能级与波函数由": " (a periodic array of quantum wells cut off at the surface); the levels and wave functions of the latter come from",
+  "一维薛定谔方程的数值解": "a numerical solution of the one-dimensional Schrödinger equation",
+  "给出，不是示意画法。两图各自独立回答的是同一个问题：": ", not from a hand-drawn sketch. The two figures independently answer the same question:",
+  "表面态为什么会存在": "why surface states exist",
+  "；它们的": "; their",
+  "方位也一致": "orientation agrees as well",
+  " —— 真空都在左、晶体都朝右，读图时不用换算方向。至于表面态存了电荷之后如何把能带掰弯（": " — vacuum is on the left and the crystal runs right in both, so you never have to translate directions. As for how charge stored on surface states bends the bands (",
+  " 的自洽解），请看同系列的《MIS 结构偏压与表面势》工具。\n": " self-consistent solution), see the companion tool on MIS bias and surface potential.\n",
+  "原子图像：谁少了近邻（鼠标悬停查看每个原子）": "Atomic picture: who is short of a neighbour (hover over any atom)",
+  "体内原子（4 近邻，键饱和）": "Bulk atom (4 neighbours, bonds saturated)",
+  "表面原子（3 近邻，有悬挂键）": "Surface atom (3 neighbours, with a dangling bond)",
+  "已钝化的表面原子（Si–H）": "Passivated surface atom (Si–H)",
+  "悬挂键上的未配对电子": "Unpaired electron on a dangling bond",
+  "H（氢钝化）": "H (hydrogen passivation)",
+  "这里": "here",
+  "最左一列是表面": "The leftmost column is the surface",
+  "：表面原子外侧（左侧）没有邻居，只剩 3 个近邻，剩下那根没有对手的键就是": ": a surface atom has no neighbour on its outer (left) side, only 3 neighbours are left, and the leftover bond with no partner is the",
+  "，朝左伸进真空，上面挂着一个": ", reaching left into the vacuum and carrying one",
+  "未配对电子": "unpaired electron",
+  "（橙点）。往": " (orange dot). Towards the",
+  "右": "right",
+  "晶体内部": "crystal interior",
+  "：每个原子有 4 个近邻、4 根完整的键，电子两两成对，禁带里干干净净。": ": every atom has 4 neighbours and 4 complete bonds, the electrons pair up two by two, and the band gap stays perfectly clean.",
+  "悬挂键面密度 ": "Dangling-bond areal density ",
+  "滑块决定多少个表面原子还留着悬挂键 —— 其余的被氢原子钝化（小白球 H），那个电子被配对成 Si–H 键，表面态也就跟着消失了。这就是": "The slider decides how many surface atoms still keep a dangling bond — the rest are passivated by hydrogen (small white H), that electron is paired into a Si–H bond, and the surface state disappears along with it. This is the whole story of",
+  "表面钝化": "surface passivation",
+  "的全部内容。把鼠标放到任意原子上，会显示它的近邻数与悬挂键数。": ". Hover over any atom to see its number of neighbours and of dangling bonds.",
+  "势能图像：一维晶体的势能函数 —— 周期量子阱在表面被切断": "Potential picture: the potential-energy profile of a one-dimensional crystal — a periodic quantum-well array cut off at the surface",
+  "势能 V(x)（周期量子阱）": "Potential V(x) (periodic quantum wells)",
+  "真空（E": "Vacuum (E",
+  " = 12 eV，超出图幅）": " = 12 eV, outside the frame)",
+  "体能带中的态 ＋ 波函数（贯穿晶体）": "Bulk-band state + wave function (spans the crystal)",
+  "塔姆表面态 ＋ 波函数（只在表面）": "Tamm surface state + wave function (at the surface only)",
+  "表面（周期势在此被切断）": "Surface (the periodic potential is cut off here)",
+  "把晶体想成一排": "Think of the crystal as a row of",
+  "周期排列的量子阱": "periodically arranged quantum wells",
+  "（势阱宽 0.40 nm、势垒宽 0.25 nm、垒高 2.0 eV，": " (well width 0.40 nm, barrier width 0.25 nm, barrier height 2.0 eV,",
+  "，示意值）。体内每个势阱都完整，相邻势阱的波函数互相渗透 ⇒ 6 个势阱给出 6 个只差一丁点的能级，挤成一条": ", illustrative values). In the bulk every well is complete, the wave functions of neighbouring wells leak into each other ⇒ 6 wells give 6 levels differing only slightly, packed into one",
+  "（灰色横线），它们的波函数": " (grey horizontal line), and their wave functions",
+  "贯穿整块晶体": "run through the whole crystal",
+  "（灰色曲线）。到了表面，周期": " (grey curve). At the surface the periodicity",
+  "被切断": "is cut off",
+  "：最外面那个势阱只剩半截， confinement 变强 ⇒ 它的能级被抬高，": ": the outermost well is left with only half of itself, confinement gets stronger ⇒ its level is pushed up and",
+  "从能带里分裂出来落进禁带": "splits out of the band and falls into the gap",
+  "，波函数": ", while its wave function",
+  "只贴在表面": "clings to the surface only",
+  "、往体内指数衰减 —— 这就是": " and decays exponentially into the bulk — this is the",
+  "（青色）。图上的能级与波函数都是": " (cyan). The levels and wave functions on the plot are all",
+  "真解方程解出来的": "obtained by actually solving the equation",
+  "：有限差分三对角矩阵 + Sturm 序列计数二分求能级，带位移反迭代（Thomas 追赶）求波函数。": ": a finite-difference tridiagonal matrix plus Sturm-sequence counting with bisection gives the levels, and shifted inverse iteration (Thomas chasing) gives the wave functions.",
+  "（作用于模块一）": " (acts on module 1)",
+  "；滑块": "; the slider",
+  " ＝ 每个表面原子一根悬挂键（物理上限，再往上就超过「一个原子一根键」了）。往小拉就是": " = one dangling bond per surface atom (the physical upper limit; beyond that you exceed one bond per atom). Pulling it down is",
+  "氢钝化": "hydrogen passivation",
+  "：H 与未配对电子配对成 Si–H，表面态随之消失。": ": H pairs with the unpaired electron into Si–H, and the surface state disappears with it.",
+  "单位：": "Units:",
+  "个数密度": "number density",
+  "，不是按能量分布的 ": ", not the energy-distributed ",
+  "表面切割量 ": "Surface cut ",
+  "（作用于模块二）": " (acts on module 2)",
+  "表面势阱只剩 ": "The surface well is left with only ",
+  " nm（完整 0.40 nm）。当前 ": " nm (0.40 nm when complete). Currently ",
+  "；拉到 0 它只贴着带顶，拉到约 0.23 nm 以上它就": "; at 0 it only hugs the band top, and beyond about 0.23 nm it",
+  "跳过整条禁带、并入第二能带": "skips the whole gap and merges into the second band",
+  "了。": ".",
+  "显示项目": "Display items",
+  " 波函数曲线（模块二）": " wave-function curves (module 2)",
+  "模块一 · 表面原子（Si，(100) 面）": "Module 1 · Surface atoms (Si, (100) face)",
+  "表面原子密度 ": "Surface atom density ",
+  "折合": "Equivalent to",
+  "平均 ": "on average ",
+  " 个表面原子摊到 1 个悬挂键 ⇒ 1 个表面态": " surface atoms per dangling bond ⇒ 1 surface state",
+  "单位提醒：": "Unit note:",
+  "：一根未配对的键算一个），与文献 / 工业界的界面态密度 ": ": one unpaired bond counts as one), and is not the same quantity as the interface-state density ",
+  "按能量分布": "distributed in energy",
+  "）不是同一个量 —— 两者差一次对禁带窗口的积分 ": ") used in the literature and in industry — the two differ by one integration over the gap window ",
+  "；滑块到顶的 6.78×10": "; the slider's top value 6.78×10",
+  " 就是物理上限（每个表面原子最多一根悬挂键）。": " is the physical upper limit (at most one dangling bond per surface atom).",
+  "模块二 · 一维势能模型（示意参数）": "Module 2 · One-dimensional potential model (illustrative parameters)",
+  " / 势阱数": " / number of wells",
+  " nm　6 个势阱（理论上给出 6 个能级）": " nm　6 wells (in principle giving 6 levels)",
+  "表面势阱宽度": "Surface well width",
+  "第一能带": "First band",
+  "第二能带底 / 禁带宽": "Second band bottom / gap width",
+  "表面能级 ": "Surface level ",
+  " eV（落在禁带 ": " eV (at ",
+  "表面第一周期内概率": "Probability within the first surface period",
+  "衰减长度 ": "Decay length ",
+  " nm（每往里 1 个周期，幅度剩 ": " nm (one period further in, the amplitude keeps ",
+  "表面态局域程度 = ": "Degree of surface-state localisation = ",
+  " 在禁带中的位置 = ": " position within the gap = ",
+  "模块一怎么数": "How module 1 counts",
+  "：材料固定为 ": ": the material is fixed to ",
+  "，晶格常数 a = 5.431 Å，(100) 面每个原胞 2 个原子 ⇒ 表面原子密度 ": ", lattice constant a = 5.431 Å, 2 atoms per surface unit cell on the (100) face ⇒ a surface atom density of ",
+  "，这就是「每个表面原子一个悬挂键」的上限。": ", which is the upper limit of one dangling bond per surface atom.",
+  "模块二怎么算": "How module 2 computes",
+  "：把连续坐标离散成 ": ": the continuous coordinate is discretised into a ",
+  " nm 的网格，薛定谔方程化成": " nm grid, and the Schrödinger equation becomes a",
+  "对称三对角矩阵": "symmetric tridiagonal matrix",
+  "本征值问题；用 ": " eigenvalue problem; using the ",
+  "Sturm 序列": "Sturm sequence",
+  "数出小于试探能量的本征值个数，二分到 ": " to count the eigenvalues below a trial energy, bisecting down to ",
+  " eV 以下得到能级；再用": " eV to obtain the levels; then",
+  "带位移的反迭代": "shifted inverse iteration",
+  "（Thomas 追赶）解出对应波函数并归一化。参数是": " (Thomas chasing) solves and normalises the corresponding wave function. The parameters are",
+  "示意值": "illustrative values",
+  "（为了让「6 个势阱 ⇒ 6 个能级 ⇒ 1 个分裂出来」这件事在图上肉眼可辨），不代表真实 Si 的数值。": " (chosen so that 6 wells ⇒ 6 levels ⇒ 1 splitting out is visible to the eye on the plot), and do not represent the values of real Si.",
+  "引导探究（点击展开，先自己试一试再看答案）": "Guided inquiry (click to expand; try it yourself before reading the answers)",
+  "1. 把鼠标移到模块一里": "1. Move the mouse over atoms at",
+  "不同位置": "different positions",
+  "的原子上：体内原子有几个近邻？表面原子呢？为什么表面会多出一只「没人牵的手」，手上还挂着一个电子？": " in module 1: how many nearest neighbours does a bulk atom have, and a surface atom? Why does the surface end up with an extra hand that nobody holds, with an electron still sitting on it?",
+  "体内原子有 ": "A bulk atom has ",
+  "4 个近邻、4 根饱和键": "4 nearest neighbours and 4 saturated bonds",
+  "，每根键由一对自旋相反的电子组成，电子全都成对 ⇒ 体内的成键态与反键态分别落进价带与导带，": ", each bond made of a pair of opposite-spin electrons; all electrons are paired ⇒ the bulk bonding and antibonding states fall into the valence and conduction bands respectively,",
+  "禁带里干干净净": "leaving the gap perfectly clean",
+  "。表面原子外侧没有邻居，只剩 ": ". A surface atom has no neighbour on the outside, only ",
+  "3 个近邻": "3 nearest neighbours",
+  "，剩下那根键": " remain, and the leftover bond",
+  "没有对手可以配对": "has no partner to pair with",
+  "，就成了": ", so it becomes a",
+  "，上面留着一个": ", leaving one",
+  "。这个电子在体内找不到属于它的能级 —— 周期势允许的能量都排在价带和导带里 —— 只能待在": ". This electron finds no level of its own in the bulk — the energies allowed by the periodic potential all sit in the valence and conduction bands — so it can only stay in",
+  "中，这就是表面态的起源。当前：表面原子密度 6.78×10": " — that is the origin of surface states. Currently: surface atom density 6.78×10",
+  "，悬挂键面密度 ": ", dangling-bond areal density ",
+  "，相当于平均 ": ", equivalent to an average of ",
+  " 个表面原子才摊到 1 个悬挂键。": " surface atoms per dangling bond.",
+  "看看答案": "Show the answer",
+  "2. 看模块二：体内那条": "2. In module 2, the bulk",
+  "灰色波函数": "grey wave function",
+  "和表面那条": " and the surface",
+  "青色波函数": "cyan wave function",
+  "，形状差在哪？为什么最外面那个势阱被切窄，它的能级就会掉进": " differ in shape — how? And why does narrowing the outermost well make its level fall into the",
+  "里？": "?",
+  "体内的势阱个个完整，彼此的波函数互相渗透 ⇒ 6 个势阱给出 6 个只差一丁点的能级，挤成一条宽 ": "In the bulk every well is complete and the wave functions leak into each other ⇒ 6 wells give 6 levels differing only slightly, packed into a band ",
+  "（图中灰线），它们的波函数": " wide (the grey line in the figure), and their wave functions",
+  " nm —— 限域变强，能级被一路抬到 ": " nm — confinement grows stronger, the level is pushed all the way up to ",
+  " eV，抬过了第一带顶（0.992 eV），于是从能带里": " eV, past the first band top (0.992 eV), and so it",
+  "分裂出来": "splits out of the band",
+  "，落在它与第二带底（2.257 eV）之间的": ", landing in the",
+  "里。代价是它被": " between it and the second band bottom (2.257 eV). The price is that it is",
+  "关在了表面": "confined to the surface",
+  " 的概率落在表面第一个周期内，往体内以 ": " of its probability lies within the first surface period, decaying into the bulk over ",
+  " nm 指数衰减（每往里走一个周期 0.65 nm，幅度只剩 40%）。这就是": " nm (one period of 0.65 nm further in, the amplitude keeps only 40%). This is what",
+  "：能量在禁带里、空间上只在表面。": " means: an energy inside the gap, localised in space at the surface.",
+  "3. 慢慢拖动": "3. Drag the",
+  "表面切割量": "surface cut",
+  "滑块：把它拉到 0（周期": " slider slowly: pull it to 0 (periodicity",
+  "没有": "not",
+  "被切断）时，禁带里还有表面态吗？一路拉到底又会怎样？这条能级的位置和局域程度是怎么跟着变的？": " cut off) — is there still a surface state in the gap? What happens if you pull it all the way down? How do the position and the degree of localisation of this level follow?",
+  "把它拉到 ": "Pull it to ",
+  "，周期势并没有被切断，但表面两侧毕竟不对称 —— 外侧是 ": ", the periodic potential is not cut off, but the two sides of the surface are still asymmetric — outside lies ",
+  " 的真空、内侧只有 2.0 eV 的势垒 —— 所以仍然跑出一个": " vacuum, inside only a 2.0 eV barrier — so a",
+  "局域在表面的态": "state localised at the surface",
+  "，只是它紧贴着第一带顶、几乎没挣脱出来。这说明": " still comes out, only hugging the first band top and barely breaking free. This shows that",
+  "「晶体到头了」本身就足以产生局域态": "the mere fact that the crystal ends is enough to produce a localised state",
+  " = 1.115 eV，位于禁带 11% 处，表面一个周期内占 68%": " = 1.115 eV, 11% into the gap, 68% within the first surface period",
+  " = 1.311 eV，位于禁带 26% 处，表面一个周期内占 84%": " = 1.311 eV, 26% into the gap, 84% within the first surface period",
+  " = 1.737 eV，位于禁带 59% 处，表面一个周期内占 84%": " = 1.737 eV, 59% into the gap, 84% within the first surface period",
+  " = 2.074 eV，位于禁带 83% 处，表面一个周期内占 61%": " = 2.074 eV, 83% into the gap, 61% within the first surface period",
+  " = 无（已并入能带）": " = none (merged into the band)",
+  "可以看到能级": "The level can be seen to",
+  "单调上升": "rise monotonically",
+  "（限域越强 ⇒ 零点能越高），越过带顶才谈得上「掉进禁带」；切过了头，它又一路升到第二能带里，与那条带的体态混成一个、": " (stronger confinement ⇒ higher zero-point energy); only after passing the band top can one speak of falling into the gap. Cut too far and it rises all the way into the second band, mixing with the bulk states of that band into one and",
+  "不再独立存在": "no longer existing independently",
+  "。结论是：": ". The conclusion:",
+  "表面态不是外加的，它是「周期在这里中止」的必然产物；至于它落在禁带里的哪个位置，取决于表面的势环境与体内差多少。": "surface states are not added from outside; they are the inevitable product of the periodicity stopping here. Where exactly the level lands in the gap depends on how much the potential environment at the surface differs from the bulk.",
+  " 从顶（每个表面原子一根键）一路拉到 10": " from the top (one bond per surface atom) all the way down to 10",
+  "，图上会看到什么？为什么少一根悬挂键就等于少一个表面态？这和芯片里说的": ", what do you see on the plot? Why does one dangling bond fewer mean one surface state fewer? And how does this relate to the",
+  "钝化": "passivation",
+  "是什么关系？": " spoken of in chip manufacturing?",
+  "会看到表面那一列": "You will see the",
+  "小白球 H": "small white H",
+  " 越来越多、橙色的未配对电子越来越少。剩下的每个悬挂键仍然是": " on the surface column grow more and more numerous and the orange unpaired electrons fewer and fewer. Every remaining dangling bond is still",
+  "一个完整的表面态": "one complete surface state",
+  "，数量只是按 ": ", the number simply scales with ",
+  " 成比例缩放：": " proportionally:",
+  "一根悬挂键 ⇒ 一个禁带里的态": "one dangling bond ⇒ one state in the gap",
+  "（严格说是上限 —— 真实表面上重构与吸附会让一部分键两两配成成键态与反键态，反而退出禁带）。当前 ": " (strictly an upper limit — reconstruction and adsorption on a real surface let some bonds pair up into bonding and antibonding states, which then leave the gap). Currently ",
+  "，占表面原子密度的 ": ", i.e. ",
+  "，也就是平均 ": ", that is an average of ",
+  " 个表面原子摊到 1 个悬挂键；把它降到 10": " surface atoms per dangling bond; lower it to 10",
+  " 上下，则是每 ": " or so and there is only one per ",
+  " 个表面原子才有 1 个 —— 这就是": " surface atoms — this is",
+  "：氢与悬挂键上的未配对电子配对成 Si–H 键，那个电子有了对手，": ": hydrogen pairs with the unpaired electron on the dangling bond into a Si–H bond, that electron finally has a partner, and",
+  "不再在禁带里撑出能级": "no longer props up a level in the gap",
+  "。注意这一节只讲「": ". Note that this section is only about",
+  "有多少个": "how many there are",
+  "」。这些态同时还是": ". These states are at the same time",
+  "复合中心": "recombination centres",
+  "（电子先落进表面态，再与空穴复合，两步走完一条 SRH 通道），所以从 PERC 电池的 Al": " (an electron first falls into the surface state and then recombines with a hole — two steps completing one SRH channel). So from the Al",
+  " 钝化，到 Si/SiO": " passivation of PERC cells to the Si/SiO",
+  " 界面追求 ": " interface striving for ",
+  "，本质上都在做同一件事：": ", essentially all of it is the same thing:",
+  "把悬挂键配对掉": "pairing off the dangling bonds",
+  "两个量别混：": "Do not confuse the two quantities:",
+  "本工具数的是": "what this tool counts is",
+  "，一根键算一个），工业界与文献里的 ": ", one bond counts as one), whereas the ",
+  "的密度（cm": " density in the literature and in industry (cm",
+  "）；两者差一次对禁带窗口的积分：": "); the two differ by one integration over the gap window:",
+  " ≈ 1 eV（Si 禁带量级）就能对上号：": " ≈ 1 eV (the scale of the Si gap) is enough to match them up:",
+  " ⇒ 约 ": " ⇒ about ",
+  " 未配对的键，相当于每 ": " unpaired bonds, i.e. one per ",
+  " 个表面原子才摊到 1 根 —— 也就是「七万个表面原子里大约只剩一个还没被钝化」。": " surface atoms — in other words, roughly one in seventy thousand surface atoms is still unpassivated.",
+  "5. 最后一问：为什么": "5. One last question: why can a state",
+  "局域": "localised",
+  "在表面的态能存电荷，": " at the surface store charge, while a bulk state that",
+  "贯穿": "spans",
+  "整块晶体的体态却不能？存了电荷之后会发生什么？（本工具讲到哪里为止？）": " the whole crystal cannot? And what happens once charge is stored? (Where does this tool stop?)",
+  "因为": "Because an",
+  "扩展态": "extended state",
+  "属于整块晶体：往里面多放一个电子，它立刻弥散到 10": " belongs to the whole crystal: put one more electron into it and it immediately spreads over 10",
+  " 个原子上，哪里也攒不出净电荷。而": " atoms, so no net charge builds up anywhere. A",
+  "局域态": "localised state",
+  "被按在表面一两个原子层里（当前这条 ": ", by contrast, is pinned within one or two atomic layers at the surface (for the present one, ",
+  " 的概率挤在表面第一个周期内，": " of its probability is packed into the first surface period,",
+  "出不来": "cannot get out",
+  " ⇒ 表面能积累起一层电荷 ": " ⇒ a layer of charge can accumulate at the surface, ",
+  "。有了电荷就要有电场，晶体另一侧必须有等量反号的电荷来中和 ⇒ 一维泊松方程给出空间电荷 ": " . Once there is charge there must be a field, so an equal amount of opposite charge must appear elsewhere in the crystal to neutralise it ⇒ the one-dimensional Poisson equation gives the space charge ",
+  "，两者由电中性条件 ": ", the two being fixed self-consistently by the charge-neutrality condition ",
+  " 自洽决定 ⇒ ": ", ⇒ ",
+  "能带在表面附近弯曲": "the bands bend near the surface",
+  "，弯曲量的上限正好是「把表面费米能级拉到表面态能级上」所需的那段距离。本工具": ", and the upper limit of the bending is exactly the distance needed to pull the surface Fermi level onto the surface-state level. This tool",
+  "到此为止": "stops here",
+  "：它只回答「表面态为什么存在、有多少个」。至于存了电荷之后怎么把能带掰弯（泊松方程的精确解），请看同系列的《MIS 结构偏压与表面势》工具。": ": it only answers why surface states exist and how many there are. As for how the stored charge bends the bands (the exact solution of the Poisson equation), see the companion tool on MIS bias and surface potential.",
+  "到顶": "at the top",
+  "。取 Δ": ". Take Δ",
+  "：模块一是": ": module 1 is the",
+  "（占表面原子 ": "(share of surface atoms: ",
+  "占表面原子 ": "share of surface atoms: ",
+  "占表面原子": "share of surface atoms",
+  "把模块一的": "In module 1, drag the",
+  " nm（完整势阱 ": " nm (",
+  " nm，被切掉 ": " nm, ",
+  " nm）": " nm cut away)",
+  " 个态，宽 ": " states, width ",
+  " 处，高出第一带顶 ": " into the gap, above the first band top by ",
+  "（灰色曲线）。表面那个势阱被切掉 ": " (grey curve). The surface well has ",
+  " nm、只剩 ": " nm cut away, leaving only ",
+  "，把它切窄只是让这件事变得明显。一路把它拉大（当前 Δ = ": ", and cutting it narrower merely makes this obvious. Pull it all the way up (currently Δ = ",
+  " nm）：": " nm):",
+  " nm），电子进去就": " nm), so an electron that gets in",
+  " nm 指数衰减（每往里走一个周期 ": " nm (one period of ",
+  " nm，幅度只剩 ": " nm further in, the amplitude keeps only ",
+  "%）。这就是": "%). This is what",
+  "体内原子：4 个近邻，4 根饱和键，": "Bulk atom: 4 neighbours, 4 saturated bonds, ",
+  " 个悬挂键": " dangling bonds",
+  "当前切割量下": "For the current cut",
+  "禁带里没有表面态": "no surface state in the gap",
+  "：表面能级被抬得太高，已经并入第二能带。把「表面切割量」调小一点，先让它落进禁带，再来比较这两条波函数。": ": the surface level has been pushed too high and has already merged into the second band. Reduce the surface cut a little so that it falls back into the gap, and then compare the two wave functions.",
+  "禁带里没有表面态了：表面能级被抬得过高，已并入第二能带": "No surface state in the gap any more: the surface level has been pushed too high and has merged into the second band",
+  "禁带中无表面态（已并入第二能带）": "No surface state in the gap (merged into the second band)",
+  "无（已并入第二能带）": "None (merged into the second band)",
+  "体能带中的态": "Bulk-band state",
+  " eV，抬过了第一带顶（": " eV, past the first band top (",
+  " eV），于是从能带里": " eV), and so it",
+  "，落在它与第二带底（": ", landing in the gap between it and the second band bottom (",
+  " eV）之间的": " eV) and the",
+  "被按在表面一两个原子层里（当前这条已经并入能带，请先把切割量调小），电子进去就": "is pinned within one or two atomic layers at the surface (the present one has already merged into the band — please reduce the cut first), so an electron that gets in",
+  "表面原子：3 个近邻 + 1 个悬挂键（1 个未配对电子）": "Surface atom: 3 nearest neighbours + 1 dangling bond (1 unpaired electron)",
+  "表面原子（已钝化）：3 个近邻 + 1 根 Si–H 键，0 个悬挂键": "Surface atom (passivated): 3 nearest neighbours + 1 Si–H bond, 0 dangling bonds",
+};
+
+/* 注入点②：画布直写字符串。老工具直接调 g.fillText()（描边文字走 g.strokeText()），这里在原型上兜住。
+   measureText 必须一起挂钩，否则「量的宽度」和「量的文字」用的不是同一个串。 */
+(function () {
+  if (typeof CanvasRenderingContext2D === "undefined") return;
+  var ft = CanvasRenderingContext2D.prototype.fillText;
+  CanvasRenderingContext2D.prototype.fillText = function (s, x, y) {
+    if (typeof s === "string") arguments[0] = T(s);
+    return ft.apply(this, arguments);
+  };
+  /* 描边文字（白边包字）走 strokeText，同样要过 T()，否则画布标签漏翻 */
+  var stx = CanvasRenderingContext2D.prototype.strokeText;
+  CanvasRenderingContext2D.prototype.strokeText = function (s, x, y) {
+    if (typeof s === "string") arguments[0] = T(s);
+    return stx.apply(this, arguments);
+  };
+  var mt = CanvasRenderingContext2D.prototype.measureText;
+  CanvasRenderingContext2D.prototype.measureText = function (s) {
+    return mt.call(this, typeof s === "string" ? T(s) : s);
+  };
+})();
+
+/* ---- DOM 文本节点 ---- */
+function i18nNode(n) {
+  var el = n.parentElement;
+  if (!el) return;
+  var tag = el.tagName;
+  if (tag === "SCRIPT" || tag === "STYLE") return;
+  if (el.closest && el.closest("[data-noi18n]")) return;
+  var cur = n.nodeValue;
+  if (n.__orig === undefined || (cur !== n.__last && cur !== n.__orig)) n.__orig = cur;
+  var want = LANG === "en" ? T(n.__orig) : n.__orig;
+  if (want !== cur) n.nodeValue = want;
+  n.__last = want;
+}
+/* 属性（title / placeholder / optgroup label …）不是文本节点，MutationObserver 覆盖不到，
+   必须单独过一遍：否则悬停提示、下拉分组名会残留中文。原文缓存在元素 expando 上，
+   切回中文时原样写回。改属性不会触发 childList/characterData 观察器，不会递归。 */
+var I18N_ATTRS = ["title", "placeholder", "aria-label", "alt", "label"];
+function i18nAttrs(root) {
+  var els = [root], i, j;
+  if (root.querySelectorAll) els = els.concat(Array.prototype.slice.call(root.querySelectorAll("*")));
+  for (i = 0; i < els.length; i++) {
+    var el = els[i];
+    if (!el.getAttribute) continue;
+    if (el.closest && el.closest("[data-noi18n]")) continue;
+    for (j = 0; j < I18N_ATTRS.length; j++) {
+      var a = I18N_ATTRS[j];
+      if (!el.hasAttribute(a)) continue;
+      var key = "__a_" + a;
+      if (el[key] === undefined) el[key] = el.getAttribute(a);
+      var want = LANG === "en" ? T(el[key]) : el[key];
+      if (want !== el.getAttribute(a)) el.setAttribute(a, want);
+    }
+  }
+}
+/* 英文补空格（跨节点）：中文片段被行内标签切开时，各自翻成英文后直连会粘连。
+   判定用 DOM 结构而不是渲染矩形——折叠区（挑战答案）矩形为零，矩形法会漏。
+   两文本节点在文档序里紧邻（中间没有任何文本节点，包括空格节点）、
+   前段末尾与后段开头都是字母、双方词条都没自带空格、且不在上下标里 ⇒ 插一个空格。
+   空格节点记录在案，切回中文时移除。只动 i18n 注入层，不改业务文本。 */
+function fixGlue(root) {
+  var all = [];
+  var w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null, false), n;
+  while ((n = w.nextNode())) all.push(n);
+  function subbed(el) {
+    while (el) { var t = el.tagName; if (t === "SUB" || t === "SUP") return true; el = el.parentElement; }
+    return false;
+  }
+  for (var i = 0; i + 1 < all.length; i++) {
+    var a = all[i], b = all[i + 1];
+    if (!a.nodeValue || !b.nodeValue) continue;
+    if (/\s$/.test(a.nodeValue) || /^\s/.test(b.nodeValue)) continue;
+    if (!/[A-Za-z0-9]$/.test(a.nodeValue) || !/^[A-Za-z]/.test(b.nodeValue)) continue;
+    var pa = a.parentElement, pb = b.parentElement;
+    if (!pa || !pb || subbed(pa) || subbed(pb)) continue;
+    var sp = document.createTextNode(" ");
+    sp.__glue = 1;
+    (fixGlue._n = fixGlue._n || []).push(sp);
+    b.parentNode.insertBefore(sp, b);
+  }
+}
+function removeGlue() {
+  if (!fixGlue._n) return;
+  for (var i = 0; i < fixGlue._n.length; i++) { var g = fixGlue._n[i]; if (g.parentNode) g.parentNode.removeChild(g); }
+  fixGlue._n = [];
+}
+/* 全局防抖补空格：挑战答案这类「点击时才重建」的区域，observer 回调里对子树跑
+   fixGlue 的时机不全（答案重写、延迟渲染都会错过）。任何 DOM 变更后 60ms
+   对整页补一次；空格本身不触发新插入，收敛。 */
+var _glueTimer = null;
+function _glueKick() {
+  if (LANG !== "en") return;
+  if (_glueTimer) clearTimeout(_glueTimer);
+  _glueTimer = setTimeout(function () {
+    _glueTimer = null;
+    if (LANG === "en") fixGlue(document.body);
+  }, 60);
+}
+function i18nWalk(root) {
+  var w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null, false), n, c = 0;
+  while ((n = w.nextNode())) { i18nNode(n); c++; }
+  i18nAttrs(root);
+  if (LANG === "en") fixGlue(root === document ? document.body : root);
+  return c;
+}
+var _i18nBusy = false;
+function i18nWatch() {
+  if (typeof MutationObserver === "undefined") return;
+  var mo = new MutationObserver(function (ms) {
+    if (_i18nBusy) return;
+    _i18nBusy = true;
+    try {
+      for (var i = 0; i < ms.length; i++) {
+        var m = ms[i];
+        if (m.type === "childList") {
+          for (var j = 0; j < m.addedNodes.length; j++) {
+            var nd = m.addedNodes[j];
+            if (nd.nodeType === 3) i18nNode(nd);
+            else if (nd.nodeType === 1) i18nWalk(nd);
+          }
+        } else if (m.type === "characterData") i18nNode(m.target);
+      }
+    } finally { _i18nBusy = false; }
+    _glueKick();
+  });
+  mo.observe(document.body, { childList: true, subtree: true, characterData: true });
+}
+function setLang(l) {
+  LANG = l;
+  try { localStorage.setItem("opl_lang", l); } catch (e) { }
+  document.documentElement.lang = l === "en" ? "en" : "zh-CN";
+  var btn = document.getElementById("langBtn");
+  if (btn) btn.textContent = l === "en" ? "中文" : "EN";
+  document.title = l === "en" ? T(ORIG_TITLE) : ORIG_TITLE;
+  if (l !== "en") removeGlue();
+  i18nWalk(document.body);
+  _glueKick();
+  if (typeof syncInputs === "function") syncInputs();
+  if (typeof render === "function") render();
+}
+
+
+
+
+
+/* ---------------- 直接 fillText / strokeText 的自动排版钩子 ----------------
+   有些标注不走 txt() 而是直接 g.fillText()（状态徽标、能带边等），
+   这里在原型层统一处理：含数学记法的字符串先按 LaTeX 规则拆段再绘制，
+   measureText 同步返回拆段总宽，白底框长度自动跟着变。 */
+const NEED_MATH_HM = /[\u2070-\u209C\u00B2\u00B3\u00B9]|_\{?[A-Za-z0-9\u0370-\u03ff]|\^\{?[\d(\-]|\d(\.\d+)?[eE][+\-]\d|\u221A/;
+/* 原生 measureText：mathSegsHM 内部量宽必须走这一条，
+   否则 measureText 被钩子接管后会 self-recursion（RangeError）。 */
+var _mRawHM = null;
+function measureRawHM(g, s) { return (_mRawHM ? _mRawHM : g.measureText).call(g, s).width; }
+function mathSegsHM(g, s) {
+  const f = String(g.font || "");
+  const mm = /(\d+(?:\.\d+)?)px/.exec(f);
+  const size = mm ? parseFloat(mm[1]) : 12;
+  const family = f.replace(/^(?:\s*(?:italic|oblique|bold|[1-9]00)\s*)*\d+(?:\.\d+)?px\s*/, "");
+  const style = /italic|oblique/.test(f) ? "italic " : (/bold|[6-9]00/.test(f) ? "bold " : "");
+  const parts = AUTO(s), laid = [];
+  let w = 0;
+  for (const p of parts) {
+    const small = !!(p.sup || p.sub);
+    const fs = style + (small ? (size * 0.74).toFixed(2) : size.toFixed(2)) + "px " + family;
+    g.font = fs;
+    const tw = measureRawHM(g, p.s);
+    laid.push({ s: p.s, w: tw, fs: fs, dy: small ? (p.sup ? -size * 0.40 : size * 0.22) : 0 });
+    w += tw;
+  }
+  return { laid: laid, w: w, family: family, style: style, size: size };
+}
+(function hookMathHM() {
+  if (window.__MATH_HOOK) return; window.__MATH_HOOK = 1;
+  const P = CanvasRenderingContext2D.prototype;
+  const _fill = P.fillText, _stroke = P.strokeText, _measure = P.measureText;
+  function draw(drawRaw, g, s, x, y, rest) {
+    const info = mathSegsHM(g, s);
+    const al = g.textAlign, bl = g.textBaseline;
+    const cx = al === "right" ? x - info.w : (al === "center" ? x - info.w / 2 : x);
+    g.textAlign = "left";
+    let px = cx;
+    for (const L of info.laid) {
+      g.font = L.fs;
+      drawRaw.call(g, L.s, px, y + L.dy, ...rest);
+      px += L.w;
+    }
+    g.textAlign = al; g.textBaseline = bl;
+    g.font = info.style + info.size.toFixed(2) + "px " + info.family;
+    return info;
+  }
+  P.fillText = function (s, x, y) {
+    if (typeof s !== "string" || !NEED_MATH_HM.test(s)) return _fill.apply(this, arguments);
+    draw(_fill, this, s, x, y, Array.prototype.slice.call(arguments, 3));
+  };
+  P.strokeText = function (s, x, y) {
+    if (typeof s !== "string" || !NEED_MATH_HM.test(s)) return _stroke.apply(this, arguments);
+    draw(_stroke, this, s, x, y, Array.prototype.slice.call(arguments, 3));
+  };
+  if (!_mRawHM) _mRawHM = _measure;
+  P.measureText = function (s) {
+    if (window.__HM_IN || typeof s !== "string" || !NEED_MATH_HM.test(s)) return _measure.call(this, s);
+    window.__HM_IN = 1;
+    const save = this.font;
+    let info;
+    try { info = mathSegsHM(this, s); } finally { window.__HM_IN = 0; }
+    this.font = save;
+    return { width: info.w, get actualBoundingBoxLeft() { return 0; }, get actualBoundingBoxRight() { return info.w; } };
+  };
+})();
+
+/* ---------------- HTML 侧自动 LaTeX 排版 ----------------
+   读数 / 说明 / 按钮名里由 JS 拼出来的 cm⁻³、E_c、2.5e+8，
+   在写进 innerHTML 之前转成真 <sup>/<sub>；标签与属性原样放过（title 不会被塞进尖括号）。
+   与画布侧 AUTO() 对偶，保证网页和画布按同一套规则排版。 */
+const AUTOH_SUP = { "⁰": "0", "¹": "1", "²": "2", "³": "3", "⁴": "4", "⁵": "5", "⁶": "6",
+  "⁷": "7", "⁸": "8", "⁹": "9", "⁺": "+", "⁻": "−", "⁼": "=", "⁽": "(", "⁾": ")", "ⁿ": "n", "ⁱ": "i" };
+const AUTOH_SUB = { "₀": "0", "₁": "1", "₂": "2", "₃": "3", "₄": "4", "₅": "5", "₆": "6",
+  "₇": "7", "₈": "8", "₉": "9", "₊": "+", "₋": "−", "₌": "=", "₍": "(", "₎": ")",
+  "ₐ": "a", "ₑ": "e", "ₒ": "o", "ₓ": "x", "ₔ": "ə", "ₕ": "h", "ₖ": "k", "ₗ": "l",
+  "ₘ": "m", "ₙ": "n", "ₚ": "p", "ₛ": "s", "ₜ": "t", "ᵣ": "r", "ᵤ": "u", "ᵥ": "v" };
+const TEXH_NEED = /[\u2070-\u209C\u00B2\u00B3\u00B9]|_\{?[A-Za-z0-9\u0370-\u03ff]|\^\{?[\d(\-]|\d(\.\d+)?[eE][+\-]\d|\u221A/;
+/* 从 i 处（必须是 '<'）扫出一个"完整元素"的结束下标（含嵌套），失败返回 -1 */
+function TEXH_elemEnd(h, i) {
+  if (h.charAt(i) !== "<") return -1;
+  let depth = 0, j = i, guard = 0;
+  while (j < h.length && guard++ < 4000) {
+    if (h.charAt(j) !== "<") { j++; continue; }
+    const e = TEXH_tagEnd(h, j);
+    if (e < 0) return -1;
+    const isClose = h.charAt(j + 1) === "/";
+    const selfClose = h.charAt(e - 2) === "/";
+    if (isClose) { depth--; j = e; if (depth <= 0) return j; }
+    else if (selfClose) { j = e; if (depth === 0) return j; }
+    else { depth++; j = e; }
+  }
+  return -1;
+}
+/* √ 后面直接跟一个元素：√<i>E</i> → √‾E（前两条规则只吃 √(A) 与 √字母串） */
+function TEXHsqrtElem(s) {
+  let out = "", i = 0, guard = 0;
+  while (guard++ < 400) {
+    const k = s.indexOf("\u221A", i);
+    if (k < 0) break;
+    out += s.slice(i, k);
+    /* 守卫：√ 后面已是闭标签 ⇒ 该 √ 已排版过（对整段 HTML 重复跑 TEXH 会把 </span> 当成被开方式，
+       层层包出空壳根号，视觉上变成 √−3 / √−E），原样输出不再包裹 */
+    if (s.charAt(k + 1) === "<" && s.charAt(k + 2) === "/") { out += "\u221A"; i = k + 1; continue; }
+    let rad = null, end = k + 1;
+    if (s.charAt(k + 1) === "(") {
+      /* √(…) ：被开方式里常有标签，括号本身不在同一个文本片段里，必须整串扫 */
+      let depth = 0, p = k + 1;
+      while (p < s.length) {
+        const c = s.charAt(p);
+        if (c === "(") depth++;
+        else if (c === ")") { depth--; if (depth === 0) { rad = s.slice(k + 2, p); end = p + 1; break; } }
+        p++;
+      }
+    } else {
+      const e = TEXH_elemEnd(s, k + 1);
+      if (e > 0 && e - k < 500) { rad = s.slice(k + 1, e); end = e; }
+    }
+    if (rad !== null && rad.length) {
+      out += "<span class=\"sqrt\"><span class=\"rd\">\u221A</span><span class=\"rdc\">" + rad + "</span></span>";
+      i = end;
+    } else { out += "\u221A"; i = k + 1; }
+  }
+  return out + s.slice(i);
+}
+function TEXHpart(t) {
+  let s = t;
+  /* 根号：√ 或 √(A) → <span class="sqrt">√<span class="rd"><span class="rdc">A</span></span></span>（A 内不含嵌套括号） */
+  s = s.replace(/<span class="(?:op|rm|fn|v|u)">\u221A<\/span>/g, "\u221A");
+  s = s.replace(/\u221A<span class="(?:op|rm)">\(<\/span>([^()]{1,120}?)<span class="(?:op|rm)">\)<\/span>/g, function (m, a) {
+    return "<span class=\"sqrt\"><span class=\"rd\">\u221A</span><span class=\"rdc\">" + a + "</span></span>";
+  });
+  s = s.replace(/\u221A\(([^()]{1,120})\)/g, function (m, a) {
+    return "<span class=\"sqrt\"><span class=\"rd\">\u221A</span><span class=\"rdc\">" + a + "</span></span>";
+  });
+  s = s.replace(/\u221A([A-Za-z0-9\u0370-\u03ff]{1,6})/g, function (m, a) {
+    return "<span class=\"sqrt\"><span class=\"rd\">\u221A</span><span class=\"rdc\">" + a + "</span></span>";
+  });
+  s = s.replace(/(\d(?:\.\d+)?)e([+-])(\d+)/g, function (m, a, sg, e) {
+    return a + "\u00d710<sup>" + (sg === "-" ? "\u2212" : "") + e + "</sup>";
+  });
+  s = s.replace(/([A-Za-z\u0370-\u03ff)\]])\^\{([^{}]{1,12})\}/g, "$1<sup>$2</sup>");
+  s = s.replace(/([A-Za-z\u0370-\u03ff)\]])\^(\d+(?:\.\d+)?)/g, "$1<sup>$2</sup>");
+  s = s.replace(/([A-Za-z\u0370-\u03ff])_\{([A-Za-z0-9\u0370-\u03ff+\-]{1,8})\}/g, "<span class='m'><i>$1</i><sub>$2</sub></span>");
+  s = s.replace(/([A-Za-z\u0370-\u03ff])_([A-Za-z0-9\u0370-\u03ff]{1,6})(?![A-Za-z0-9])/g, "<span class='m'><i>$1</i><sub>$2</sub></span>");
+  if (/[\u2070-\u209C\u00B2\u00B3\u00B9]/.test(s)) {
+    let out = "", i = 0;
+    while (i < s.length) {
+      const ch = s[i];
+      if (AUTOH_SUP[ch] !== undefined || AUTOH_SUB[ch] !== undefined) {
+        const isSup = AUTOH_SUP[ch] !== undefined, tab = isSup ? AUTOH_SUP : AUTOH_SUB;
+        let j = i, buf = "";
+        while (j < s.length && (isSup ? AUTOH_SUP[s[j]] !== undefined : AUTOH_SUB[s[j]] !== undefined)) {
+          buf += tab[s[j]]; j++;
+        }
+        out += "<" + (isSup ? "sup" : "sub") + ">" + buf + "</" + (isSup ? "sup" : "sub") + ">";
+        i = j;
+      } else { out += ch; i++; }
+    }
+    s = out;
+  }
+  return s.indexOf("\u221A") >= 0 ? TEXHsqrtElem(s) : s;
+}
+/* 只有真正的标签才整段跳过：正文里裸写的 '<'（如 "t₂ < 0"）必须当普通字符，
+   否则 indexOf('>') 会一路吞掉后面整段，E₂⁰ 这类记法就漏排了。 */
+function TEXH_tagEnd(h, i) {
+  if (h.charAt(i) !== "<") return -1;
+  const c = h.charAt(i + 1);
+  if (c === "!" || c === "/") { const j = h.indexOf(">", i); return (j >= 0 && j - i < 300) ? j + 1 : -1; }
+  if (!/[A-Za-z]/.test(c)) return -1;
+  let j = i + 1;
+  while (j < h.length && /[A-Za-z0-9]/.test(h.charAt(j))) j++;
+  if (j === i + 1) return -1;
+  if (h.charAt(j) === ">") return j + 1;
+  if (h.charAt(j) !== " " && h.charAt(j) !== "\n" && h.charAt(j) !== "\t") return -1;
+  const g = h.indexOf(">", j), nx = h.indexOf("<", j);
+  if (g < 0 || g - i > 300) return -1;
+  if (nx >= 0 && nx < g) return -1;
+  return g + 1;
+}
+function TEXH(h) {
+  if (typeof h !== "string" || !TEXH_NEED.test(h)) return h;
+  if (h.indexOf("\u221A") >= 0) h = h.replace(/<span class="(?:op|rm|fn|v|u)">\u221A<\/span>/g, "\u221A");
+  if (h.indexOf("<") < 0) return TEXHpart(h);
+  let out = "", i = 0, n = h.length, guard = 0;
+  while (i < n && guard++ < 40000) {
+    const e = TEXH_tagEnd(h, i);
+    if (e > 0) { out += h.slice(i, e); i = e; continue; }
+    let j = i;
+    while (j < n && TEXH_tagEnd(h, j) <= 0) j++;
+    out += TEXHpart(h.slice(i, j)); i = j;
+  }
+  const r = out + h.slice(i);
+  return r.indexOf("\u221A") >= 0 ? TEXHsqrtElem(r) : r;
+}
+(function hookHTML() {
+  if (window.__TEXH_HOOK) return; window.__TEXH_HOOK = 1;
+  const d = Object.getOwnPropertyDescriptor(Element.prototype, "innerHTML");
+  if (!d || !d.set) return;
+  Object.defineProperty(Element.prototype, "innerHTML", {
+    configurable: true, get: d.get,
+    set: function (v) { d.set.call(this, typeof v === "string" ? TEXH(v) : v); }
+  });
+  /* insertAdjacentHTML 也会被用到 */
+  const ia = Element.prototype.insertAdjacentHTML;
+  Element.prototype.insertAdjacentHTML = function (pos, v) {
+    return ia.call(this, pos, typeof v === "string" ? TEXH(v) : v);
+  };
+})();
+
+/* ---------------- 画布自动 LaTeX 排版 ----------------
+   老调用点 txt(g, "cm⁻³") / txt(g, "E_c") / txt(g, "2.5e+8") 一行都不用改，
+   只要在绘制前把字符串解析成分段零件即可。规则与网页侧一致：
+   物理量斜体、描述性下标与单位正体、幂次用真上标（不用 Unicode 伪字符）。 */
+const SUPMAP = { "⁰": "0", "¹": "1", "²": "2", "³": "3", "⁴": "4", "⁵": "5", "⁶": "6",
+  "⁷": "7", "⁸": "8", "⁹": "9", "⁺": "+", "⁻": "−", "⁼": "=", "⁽": "(", "⁾": ")", "ⁿ": "n", "ⁱ": "i" };
+const SUBMAP = { "₀": "0", "₁": "1", "₂": "2", "₃": "3", "₄": "4", "₅": "5", "₆": "6",
+  "₇": "7", "₈": "8", "₉": "9", "₊": "+", "₋": "−", "₌": "=", "₍": "(", "₎": ")",
+  "ₐ": "a", "ₑ": "e", "ₒ": "o", "ₓ": "x", "ₔ": "ə", "ₕ": "h", "ₖ": "k", "ₗ": "l",
+  "ₘ": "m", "ₙ": "n", "ₚ": "p", "ₛ": "s", "ₜ": "t", "ᵣ": "r", "ᵤ": "u", "ᵥ": "v" };
+const MATH_IDCH = /[A-Za-z\u0370-\u03ff]/;
+const NEED_MATH = /[\u2070-\u209C\u00B2\u00B3\u00B9]|_\{?[A-Za-z0-9\u0370-\u03ff]|\^\{?[\d(\-]|\d(\.\d+)?[eE][+\-]\d/;
+function AUTO(s) {
+  const out = [];
+  let buf = "", mode = 0;
+  const emit = (t, kind) => {
+    if (!t) return;
+    if (kind === 1) out.push({ s: t, sup: true });
+    else if (kind === -1) out.push({ s: t, sub: true });
+    else out.push({ s: t });
+  };
+  let i = 0, italicAll = false;
+  while (i < s.length) {
+    const ch = s[i];
+    if (SUPMAP[ch] !== undefined) { if (mode !== 1) { emit(buf, mode); buf = ""; mode = 1; } buf += SUPMAP[ch]; i++; continue; }
+    if (SUBMAP[ch] !== undefined) { if (mode !== -1) { emit(buf, mode); buf = ""; mode = -1; } buf += SUBMAP[ch]; i++; continue; }
+    if (mode) { emit(buf, mode); buf = ""; mode = 0; }
+    const rest = s.slice(i);
+    const sc = /^\d(\.\d+)?[eE][+\-]\d{1,3}/.exec(rest);       /* ASCII 伪科学计数 2.5e+8 */
+    if (sc) {
+      const parts = sc[0].split(/[eE]/);
+      emit(parts[0] + "\u00d710", 0); emit(String(+parts[1]).replace("-", "\u2212"), 1);
+      i += sc[0].length; continue;
+    }
+    if (MATH_IDCH.test(ch) && i + 1 < s.length && (s[i + 1] === "_" || s[i + 1] === "^")) {
+      const sup = s[i + 1] === "^";
+      let j = i + 2, grp = "";
+      if (s[j] === "{") { const e = s.indexOf("}", j); if (e > 0) { grp = s.slice(j + 1, e); j = e + 1; } }
+      else {
+        const RCJK = /[\u2E80-\u9FFF]/, RASC = /[A-Za-z0-9\u0370-\u03ff+\-]/;
+        if (RCJK.test(s[j])) { while (j < s.length && RCJK.test(s[j]) && j - i < 8) j++; }   /* 中文描述性下标：τ_直接、E_声子 */
+        else { while (j < s.length && RASC.test(s[j])) j++; }
+        grp = s.slice(i + 2, j);
+      }
+      if (grp) {
+        emit(ch, 0);
+        if (italicAll || /^[A-Za-z\u0370-\u03ff]$/.test(ch)) out[out.length - 1].i = true;
+        emit(sup ? grp.replace(/-/g, "\u2212") : grp, sup ? 1 : -1);
+        i = j; continue;
+      }
+    }
+    buf += ch; i++;
+  }
+  emit(buf, mode);
+  return out;
+}
+function fontInfo(font, dflt) {
+  const f = String(font || "");
+  const m = /(\d+(?:\.\d+)?)px/.exec(f);
+  return { fp: m ? parseFloat(m[1]) : (dflt || 12), bd: /bold|70\d|600/.test(f), it: /italic|oblique/.test(f) };
+}
+
+/* ---------------- HTML 字符串 → 画布零件（网页与画布共用同一份排版） ----------------
+   mtxt(g, TX(H_NA), x, y, col, fp) —— H_* 常量本来就在喂 innerHTML，
+   再喂给 TX() 就不会出现「网页斜体、画布正体」的两边不一致。
+   <i> 斜体、<sub> 下标、<sup> 上标；<span class="op|un|rm|sqrt|frac"> 只剥标签（保持正体）。 */
+const catA = (...a) => [].concat(...a);
+function TX(h) {
+  const t = String(h == null ? "" : h)
+    .replace(/<span\b[^>]*>/g, "").replace(/<\/span>/g, "")
+    .replace(/<i\b[^>]*>/g, "<i>").replace(/<b\b[^>]*>/g, "").replace(/<\/b>/g, "")
+    .replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&").replace(/&nbsp;/g, " ");
+  const out = [], re = /<i>([\s\S]*?)<\/i>|<sub>([\s\S]*?)<\/sub>|<sup>([\s\S]*?)<\/sup>|([^<]+)/g;
+  let m;
+  while ((m = re.exec(t))) {
+    const raw = s => s == null ? null : s.replace(/<[^>]*>/g, "");
+    if (m[1] != null) out.push({ s: raw(m[1]), i: true });
+    else if (m[2] != null) out.push({ s: raw(m[2]), sub: true });
+    else if (m[3] != null) out.push({ s: raw(m[3]), sup: true });
+    else if (m[4]) out.push({ s: m[4] });
+  }
+  return out;
+}
+function TXof(...a) { return catA(...a.map(TX)); }
+
+
+function PSci(v, n) {
+  if (!isFinite(v) || v === 0) return [{ s: "0" }];
+  const e = Math.floor(Math.log10(Math.abs(v)));
+  const m = (v / Math.pow(10, e)).toFixed(n === undefined ? 1 : n);
+  /* 1 ≦ |v| < 10 时直接写尾数，不再拖一个 ×10⁰（与 sciH 一致） */
+  if (e === 0) return [{ s: m }];
+  /* 指数负号用 U+2212 */
+  return [{ s: m + "×10" },
+          { s: String(e).replace("-", "−"), sup: true }];
+}
+
+/* ---------------- 0. 小工具 ---------------- */
+const $ = id => document.getElementById(id);
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const fmt = (v, n) => (isFinite(v) ? v.toFixed(n === undefined ? 2 : n) : "—");
+const MM = h => '<span class="m">' + h + "</span>";
+
+/* ---------------- 3. 画布与画布内排版 ---------------- */
+const CV = {};
+function fitCanvas(id) {
+  const el = $(id);
+  if (!el || !el.clientWidth) return null;
+  const w = el.clientWidth, h = +el.dataset.h;
+  const dpr = window.devicePixelRatio || 1;
+  el.width = Math.round(w * dpr); el.height = Math.round(h * dpr);
+  el.style.height = h + "px";
+  const g = el.getContext("2d");
+  g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  CV[id] = { g: g, W: w, H: h, el: el };
+  return CV[id];
+}
+function fitAll() { ["chain", "disp", "zoom"].forEach(fitCanvas); }
+
+const FONT = "\"Microsoft YaHei\",\"PingFang SC\",sans-serif";
+const FONTM = "\"Cambria Math\",\"Times New Roman\",Times,serif";
+const SUBR = 0.74, SUBDY = 0.22, SUPDY = 0.40;
+const C_AC = "#1976d2", C_OP = "#d94a3d";
+const C_HEAVY = "#2f4a6b", C_LIGHT = "#7fb2e3";
+const C_ARROW = "#ef8c1a", C_SUB = "#6b7a8c", C_GRID = "#e7edf4", C_REF = "#9aa5b1";
+
+function txt(g, s, x, y, col, font, align, base) {
+  g.fillStyle = col; g.font = font || "12px " + FONT;
+  g.textAlign = align || "left"; g.textBaseline = base || "middle";
+  if (typeof s === "string" && NEED_MATH.test(s)) {
+    const fi = fontInfo(font, 12);
+    mRun(g, AUTO(s), x, y, fi.fp, fi.bd, align || "left", false);
+    return;
+  }
+  g.fillText(s, x, y);
+}
+function txtHalo(g, s, x, y, col, font, align, base) {
+  g.font = font || "12px " + FONT;  g.textAlign = align || "left"; g.textBaseline = base || "middle";
+  g.lineJoin = "round"; g.strokeStyle = "rgba(255,255,255,0.94)"; g.lineWidth = 3.2;
+  if (typeof s === "string" && NEED_MATH.test(s)) {
+    const fi = fontInfo(font, 12), parts = AUTO(s);
+    g.lineJoin = "round";
+    mRun(g, parts, x, y, fi.fp, fi.bd, align || "left", true);
+    g.fillStyle = col;
+    mRun(g, parts, x, y, fi.fp, fi.bd, align || "left", false);
+    return;
+  }
+  g.strokeText(s, x, y); g.fillStyle = col; g.fillText(s, x, y);
+}
+function isCJKch(ch) {
+  const c = ch.codePointAt(0);
+  return (c >= 0x2E80 && c <= 0x9FFF) || (c >= 0xF900 && c <= 0xFAFF) ||
+    (c >= 0xFF00 && c <= 0xFF60) || c === 0x2014 || c === 0x2015 || c === 0x2026;
+}
+function segRuns(s) {
+  const out = []; let cur = "", curC = null;
+  for (const ch of s) {
+    const c = isCJKch(ch);
+    if (curC === null) { cur = ch; curC = c; }
+    else if (c === curC) cur += ch;
+    else { out.push({ s: cur, cjk: curC }); cur = ch; curC = c; }
+  }
+  if (cur) out.push({ s: cur, cjk: curC });
+  return out;
+}
+function pFont(q, fp, bd, cjk) {
+  const sz = fp * ((q.sub || q.sup) ? SUBR : 1);
+  return (bd ? "bold " : "") + (!cjk && q.i ? "italic " : "") + sz.toFixed(2) + "px " + (cjk ? FONT : FONTM);
+}
+/* i18n 注入点①：画布 token。带 i / sub / sup / un 标记的是物理量、下标与单位，一律不动；
+   没有这些标记的 token 才是自然语言，交给 T() —— 所以这里的判断只看标记，不看内容。 */
+const partsOf = p => p.map(q => {
+  const o = (typeof q === "string" ? { s: q } : q);
+  const natural = !(o.i || o.sub || o.sup || o.un);
+  if (LANG === "en" && natural && typeof o.s === "string" && /[\u4E00-\u9FFF]/.test(o.s)) {
+    const t = T(o.s);
+    return t === o.s ? o : Object.assign({}, o, { s: t });
+  }
+  return o;
+});
+function mMeasure(g, parts, fp, bd) {
+  let w = 0;
+  for (const q of partsOf(parts))
+    for (const sg of segRuns(q.s)) { g.font = pFont(q, fp, bd, sg.cjk); w += g.measureText(sg.s).width; }
+  return w;
+}
+function mRun(g, parts, x, y, fp, bd, align, stroke) {
+  const ps = partsOf(parts), w = mMeasure(g, ps, fp, bd);
+  let cx = align === "right" ? x - w : (align === "center" ? x - w / 2 : x);
+  g.textAlign = "left"; g.textBaseline = "middle"; g.lineJoin = "round";
+  for (const q of ps) {
+    const dy = q.sub ? fp * SUBDY : (q.sup ? -fp * SUPDY : 0);
+    for (const sg of segRuns(q.s)) {
+      g.font = pFont(q, fp, bd, sg.cjk);
+      if (stroke) { g.lineWidth = (q.sub || q.sup) ? 2.4 : 3.2; g.strokeText(sg.s, cx, y + dy); }
+      else g.fillText(sg.s, cx, y + dy);
+      cx += g.measureText(sg.s).width;
+    }
+  }
+}
+function mtxt(g, parts, x, y, col, fp, align, bd) {
+  g.fillStyle = col; mRun(g, parts, x, y, fp, bd || false, align, false);
+}
+function mtxtHalo(g, parts, x, y, col, fp, align, bd) {
+  g.strokeStyle = "rgba(255,255,255,0.94)";
+  mRun(g, parts, x, y, fp, bd || false, align, true);
+  mtxt(g, parts, x, y, col, fp, align, bd);
+}
+function line(g, x1, y1, x2, y2, col, lw, dash) {
+  g.save();
+  g.strokeStyle = col; g.lineWidth = lw || 1;
+  if (dash) g.setLineDash(dash);
+  g.beginPath(); g.moveTo(x1, y1); g.lineTo(x2, y2); g.stroke();
+  g.restore();
+}
+function arrowHead(g, x, y, ang, sz, col) {
+  g.save(); g.translate(x, y); g.rotate(ang);
+  g.beginPath(); g.moveTo(0, 0); g.lineTo(-sz, sz * 0.42); g.lineTo(-sz, -sz * 0.42);
+  g.closePath(); g.fillStyle = col; g.fill(); g.restore();
+}
+function arrow(g, x1, y1, x2, y2, col, lw, sz) {
+  const dx = x2 - x1, dy = y2 - y1, L = Math.hypot(dx, dy);
+  if (L < 0.5) return;
+  line(g, x1, y1, x2, y2, col, lw || 1.4);
+  arrowHead(g, x2, y2, Math.atan2(dy, dx), sz || 6, col);
+}
+function chip(g, s, x, y, col, font, align) {
+  g.font = font || "11px " + FONT;
+  const w = g.measureText(s).width, al = align || "left";
+  const bx = al === "right" ? x - w : (al === "center" ? x - w / 2 : x);
+  g.fillStyle = "rgba(255,255,255,0.92)";
+  g.fillRect(bx - 4, y - 8, w + 8, 16);
+  txt(g, s, bx, y, col, font, "left", "middle");
+}
+
+
+/* ---------------- 1. 常数与状态 ---------------- */
+/* 材料固定为 Si：晶格常数 a = 5.431 Å，(100) 面每个原胞 2 个原子
+   ⇒ 表面原子密度 Ns = 2/a² = 6.8×10¹⁴ cm⁻²，这就是「每个表面原子一个悬挂键」的上限 */
+const NS_SI = 2 / Math.pow(5.431e-8, 2);     // cm⁻²
+const C_BULK = "#aab6c3", C_SURF = C_AC;
+
+const OPT = {
+  ditS: 500,     // 0..500 → N_db 在 10¹⁰ ~ N_s 之间按 log 插值（cm⁻²）   作用于模块一
+  cutS: 150,     // 0..300 → 表面切割量 Δ = v/1000    (nm)                作用于模块二
+  ckDbond: true, // 模块一：画悬挂键上的未配对电子
+  ckPsi: true    // 模块二：画波函数曲线
+};
+/* 悬挂键面密度滑块：log 刻度，底端 10¹⁰ cm⁻²（重钝化），顶端 **正好等于** N_s
+   （每个表面原子一根悬挂键）。不要再让顶端越过 N_s —— 那样读数会出现
+   「1×10¹⁵ cm⁻²（占表面原子 100%）」这种自相矛盾的显示（旧版 v=500 → 10¹⁵ 就是这么来的）。 */
+const ND_LO = 10, ND_HI = Math.log10(NS_SI);          // 10¹⁰ → 6.78×10¹⁴
+const NDof = v => Math.pow(10, ND_LO + (ND_HI - ND_LO) * v / 500);
+const CUof = v => v / 1000;
+
+/* ---------------- 2. 数值小工具 ---------------- */
+function sci(v, nd) {
+  if (!isFinite(v) || v <= 0) return "—";
+  const e = Math.floor(Math.log10(v)), m = v / Math.pow(10, e);
+  const sup = String(e).split("").map(c => "⁰¹²³⁴⁵⁶⁷⁸⁹"[+c] || (c === "-" ? "⁻" : c)).join("");
+  return m.toFixed(nd === undefined ? 2 : nd) + "×10" + sup;
+}
+/* 网页版：幂次用真 <sup>（画布版 sci() 返回的是给人看的 Unicode 串，别混用） */
+function sciH(v, nd) {
+  if (!isFinite(v) || v <= 0) return "—";
+  const e = Math.floor(Math.log10(v)), m = v / Math.pow(10, e);
+  return m.toFixed(nd === undefined ? 2 : nd) + "×10<sup>" + String(e).replace("-", "\u2212") + "</sup>";
+}
+/* 模块一的几何量：表面原子密度、悬挂键面密度、悬挂键占比。
+   N_db 是「个数」密度（cm⁻²），不是文献里按能量分布的 D_it(E)（cm⁻²·eV⁻¹）—— 见读数区的单位提醒。 */
+function dbGeom() {
+  const Ndb = NDof(OPT.ditS);
+  return { Ndb: Ndb, Ns: NS_SI, frac: clamp(Ndb / NS_SI, 0, 1) };   // 顶端 == N_s ⇒ frac 到顶恰好 1，钳位只是兜底
+}
+
+function fitAll() { ["lat", "pot"].forEach(fitCanvas); }
+
+/* ---------------- 3. 模块一：表面原子与悬挂键 ---------------- */
+const HOV = { lat: null, pot: null };
+let ATOMS = [];
+
+/* 带边界钳制的文字底片（避免文字飞出画布） */
+function chipC(g, s, x, y, col, font, align, W, H) {
+  g.font = font || "11px " + FONT;
+  const w = g.measureText(s).width, al = align || "left";
+  let bx = al === "right" ? x - w : (al === "center" ? x - w / 2 : x);
+  bx = clamp(bx, 2, Math.max(2, W - w - 2));
+  const by = clamp(y, 10, Math.max(10, H - 8));
+  g.fillStyle = "rgba(255,255,255,0.93)";
+  g.fillRect(bx - 4, by - 8, w + 8, 16);
+  txt(g, s, bx, by, col, font, "left", "middle");
+}
+
+function drawLat() {
+  const c = CV.lat || fitCanvas("lat"); if (!c) return;
+  const g = c.g, W = c.W, H = c.H;
+  g.clearRect(0, 0, W, H); g.fillStyle = "#fbfdff"; g.fillRect(0, 0, W, H);
+  const gm = dbGeom();
+
+  const cols = 9, rows = 6;
+  /* 方位约定：**真空在左、晶体向右延伸**，与模块二的势能图（刘恩科图 8-1 的画法）同向 ——
+     两幅图的「表面」都在左端、「体内」都朝右，避免读者把方向读反。
+     左侧留白要够放真空标注 + 伸向真空的悬挂键（含钝化的 H 原子）。 */
+  const mL = 78, mR = 34, mT = 26, mB = 58;
+  const avail = W - mL - mR, availH = H - mT - mB;
+  const cell = Math.max(16, Math.min(avail / (cols - 1), availH / (rows - 1), 46));
+  const lw = (cols - 1) * cell, lh = (rows - 1) * cell;
+  const x0 = mL + Math.max(0, (avail - lw) / 2);
+  const y0 = mT + Math.max(0, (availH - lh) / 2);
+  const xs = x0;                            // 表面所在列（最左一列）
+  const r = Math.max(5, cell * 0.17);
+  const AX = i => x0 + i * cell, AY = j => y0 + j * cell;
+
+  /* 真空区：在表面的左侧 */
+  const vx = xs - 0.42 * cell;
+  g.fillStyle = "#f2f5f9";
+  g.fillRect(0, 0, vx, H);
+  line(g, vx, mT - 12, vx, y0 + lh + 14, "#8a94a3", 1.4, [5, 4]);
+  txt(g, "真 空", vx / 2, mT - 6, C_SUB, "11px " + FONT, "center");
+
+  /* 截断处的延伸示意（右端、上、下都不是真正的表面） */
+  g.save();
+  g.strokeStyle = "#cfd8e3"; g.lineWidth = 2; g.setLineDash([3, 3]);
+  for (let j = 0; j < rows; j++) {
+    g.beginPath(); g.moveTo(AX(cols - 1), AY(j)); g.lineTo(AX(cols - 1) + cell * 0.42, AY(j)); g.stroke();
+  }
+  for (let i = 0; i < cols - 1; i++) {
+    g.beginPath(); g.moveTo(AX(i), AY(0)); g.lineTo(AX(i), AY(0) - cell * 0.42); g.stroke();
+    g.beginPath(); g.moveTo(AX(i), AY(rows - 1)); g.lineTo(AX(i), AY(rows - 1) + cell * 0.42); g.stroke();
+  }
+  g.restore();
+
+  /* 完整化学键 */
+  for (let i = 0; i < cols - 1; i++)
+    for (let j = 0; j < rows; j++) line(g, AX(i), AY(j), AX(i + 1), AY(j), "#8a94a3", 2.2);
+  for (let i = 0; i < cols; i++)
+    for (let j = 0; j < rows - 1; j++) line(g, AX(i), AY(j), AX(i), AY(j + 1), "#8a94a3", 2.2);
+
+  /* 悬挂键分配：N_db/N_s 决定有多少表面原子还留着悬挂键（顶端 = 1 ⇒ 每个表面原子一根） */
+  const frac = gm.frac;
+  const cnt = frac * rows;
+  ATOMS = [];
+  const dang = [];
+  for (let j = 0; j < rows; j++) {
+    const v = cnt - (j + 0.5);
+    dang.push(v > 0 ? { on: true, a: clamp(v / 0.5, 0.28, 1) } : { on: false, a: 1 });
+  }
+
+  /* 表面原子 + 悬挂键 / 钝化：悬挂键朝左伸进真空（与模块二「真空在左」同向） */
+  for (let j = 0; j < rows; j++) {
+    const x = AX(0), y = AY(j), dj = dang[j];
+    const ex = x - cell * 0.55, ey = y;
+    if (dj.on) {
+      line(g, x - r * 0.7, y, ex, ey, C_SURF, 2.2);
+      if (OPT.ckDbond) {
+        g.globalAlpha = dj.a;
+        g.beginPath(); g.arc(ex - 4.6, ey, 3.6, 0, 6.2832);
+        g.fillStyle = C_ARROW; g.fill();
+        g.strokeStyle = "#fff"; g.lineWidth = 1.2; g.stroke();
+        g.globalAlpha = 1;
+      }
+    } else {
+      line(g, x - r * 0.7, y, ex, ey, "#9aa5b1", 1.6);
+      g.beginPath(); g.arc(ex - 5.4, ey, 5.4, 0, 6.2832);
+      g.fillStyle = "#fff"; g.fill(); g.strokeStyle = "#8a94a3"; g.lineWidth = 1.2; g.stroke();
+      txt(g, "H", ex - 5.4, ey + 0.5, "#5a6572", "bold 8.5px " + FONT, "center");
+    }
+    ATOMS.push({ x: x, y: y, surf: true, nb: 3, db: dj.on ? 1 : 0 });
+  }
+  /* 体内原子 */
+  for (let i = 1; i < cols; i++)
+    for (let j = 0; j < rows; j++)
+      ATOMS.push({ x: AX(i), y: AY(j), surf: false, nb: 4, db: 0 });
+
+  for (const a of ATOMS) {
+    g.beginPath(); g.arc(a.x, a.y, r, 0, 6.2832);
+    if (a.surf) { g.fillStyle = a.db ? C_SURF : "#a8c4e0"; g.strokeStyle = a.db ? "#0d47a1" : "#7b8794"; }
+    else { g.fillStyle = C_BULK; g.strokeStyle = "#7b8794"; }
+    g.fill(); g.lineWidth = 1.3; g.stroke();
+  }
+
+  /* 标注：左＝表面（真空在其外侧），右＝体内（继续延伸） */
+  txt(g, "体内：4 个近邻，键全部饱和 ⋯", W - 6, y0 + lh + 16, C_SUB, "11px " + FONT, "right");
+  txt(g, "表面：只剩 3 个近邻", xs, y0 + lh + 16, C_AC, "bold 11px " + FONT, "center");
+  const pct = frac >= 0.999 ? "100" : (frac >= 0.01 ? fmt(frac * 100, 1) : fmt(frac * 100, 3));
+  txt(g, "悬挂键／表面原子 = " + pct + "%", W - 6, H - 26, C_SUB, "11px " + FONT, "right");
+  txt(g, "N_db = " + sci(gm.Ndb, 1) + " cm⁻²（表面原子密度 N_s = " + sci(gm.Ns, 2) + "）", W - 6, H - 7, C_SUB, "11px " + FONT, "right");
+
+  /* 悬停提示 */
+  if (HOV.lat) {
+    let best = null, bd = 1e9;
+    for (const a of ATOMS) {
+      const dd = Math.hypot(a.x - HOV.lat.x, a.y - HOV.lat.y);
+      if (dd < bd) { bd = dd; best = a; }
+    }
+    if (best && bd < cell * 0.75) {
+      const s = best.surf
+        ? (best.db ? "表面原子：3 个近邻 + 1 个悬挂键（1 个未配对电子）"
+                   : "表面原子（已钝化）：3 个近邻 + 1 根 Si–H 键，0 个悬挂键")
+        : "体内原子：4 个近邻，4 根饱和键，0 个悬挂键";
+      chipC(g, s, best.x, best.y - r - 12, "#2c3e50", "11px " + FONT, "center", W, H);
+      g.beginPath(); g.arc(best.x, best.y, r + 3, 0, 6.2832);
+      g.strokeStyle = C_ARROW; g.lineWidth = 2; g.stroke();
+    }
+  }
+}
+
+/* ---------------- 4. 模块二：一维晶体的势能函数与塔姆表面态 ---------------- */
+/* 刘恩科《半导体物理学》图 8-1「一维晶体的势能函数」的可计算版本：
+   体内是周期排列的量子阱（阱宽 a、垒宽 b、垒高 V₀，m* = m₀）；到表面处周期被切断 —— 最外面那个
+   势阱被切掉 cut（＝右侧「表面切割量」滑块），它的能级被抬高：抬过第一条能带的带顶就落进禁带，
+   成为局域在表面、往体内以 ξ 指数衰减的**塔姆表面态**；切得过头，它反而并入第二条能带，禁带里
+   就一个表面态也没有了。能级用「有限差分三对角 + Sturm 序列计数 + 二分」逐个求出，波函数用带
+   位移的反迭代（Thomas 追赶）求；结果是精确数值解，不是示意画法。其余几何参数（a / b / V₀ / E₀
+   / M）取示意值且固定，只为让「6 个势阱 ⇒ 6 个能级 ⇒ 其中 1 个分裂出来」在图上肉眼可辨。 */
+const HB2M0 = 0.0380998;             // ℏ²/2m₀，eV·nm²
+const KP = { a: 0.40, b: 0.25, V0: 2.0, E0: 12.0, M: 6, Lv: 0.90, Lr: 0.60, dx: 0.006, EM: 2.90 };
+const KPC = {};                      // 按「表面切割量」缓存数值解（拖滑块时不重复求解）
+
+/* 势能分段：[x0, x1, V]（表面处的第一个势阱被切掉 cut，右侧以完整势垒收尾） */
+function kpSegs(cut) {
+  const p = KP, d = p.a + p.b, Lc = p.M * d - cut;
+  const segs = [[0, p.Lv, p.E0]];
+  let x = p.Lv;
+  segs.push([x, x + (p.a - cut), 0]); x += p.a - cut;      // 表面：被切窄的势阱
+  for (let i = 0; i < p.M; i++) {
+    segs.push([x, x + p.b, p.V0]); x += p.b;                    // 势垒
+    if (i < p.M - 1) { segs.push([x, x + p.a, 0]); x += p.a; }  // 完整势阱
+  }
+  segs.push([x, x + p.Lr, p.E0]);
+  return { segs: segs, Lc: Lc, L: p.Lv + Lc + p.Lr, d: d, cr0: p.Lv, cr1: x, cut: cut };
+}
+/* 反迭代求特征向量：解 (H − (E+δ)) v' = v 若干次 */
+function kpVec(N, dm, off, E) {
+  const s = E + 1e-7;
+  const A = new Float64Array(N), B = new Float64Array(N), C = new Float64Array(N);
+  for (let i = 0; i < N; i++) { A[i] = dm[i] - s; B[i] = i < N - 1 ? off[i] : 0; C[i] = i > 0 ? off[i - 1] : 0; }
+  let v = new Float64Array(N);
+  for (let i = 0; i < N; i++) v[i] = Math.sin((i + 1) * 1.7) + 0.3 * Math.cos((i + 1) * 0.6);
+  for (let k = 0; k < 8; k++) {
+    const cp = new Float64Array(N), dp = new Float64Array(N);
+    cp[0] = C[0] / A[0]; dp[0] = v[0] / A[0];
+    for (let i = 1; i < N; i++) {
+      const den = A[i] - B[i - 1] * cp[i - 1];
+      cp[i] = C[i] / den; dp[i] = (v[i] - B[i - 1] * dp[i - 1]) / den;
+    }
+    const xn = new Float64Array(N); xn[N - 1] = dp[N - 1];
+    for (let i = N - 2; i >= 0; i--) xn[i] = dp[i] - cp[i] * xn[i + 1];
+    let nr = 0; for (let i = 0; i < N; i++) nr += xn[i] * xn[i];
+    nr = Math.sqrt(nr) || 1;
+    for (let i = 0; i < N; i++) v[i] = xn[i] / nr;
+  }
+  return v;
+}
+/* 求解某一切割量下的全部解；结果按 cut 缓存（拖滑块只算一次） */
+function kpSolveAt(cut) {
+  cut = Math.round(cut * 1e6) / 1e6;
+  if (KPC[cut]) return KPC[cut];
+  const p = KP, geo = kpSegs(cut), L = geo.L;
+  const N = Math.round(L / p.dx), dx = L / (N + 1);
+  const V = new Float64Array(N), xs = new Float64Array(N);
+  for (let i = 0; i < N; i++) {
+    const x = (i + 1) * dx; xs[i] = x;
+    let v = p.E0;
+    for (const s of geo.segs) if (x >= s[0] && x < s[1]) { v = s[2]; break; }
+    V[i] = v;
+  }
+  const t = HB2M0 / (dx * dx);
+  const dm = new Float64Array(N), off = new Float64Array(N - 1);
+  for (let i = 0; i < N; i++) dm[i] = 2 * t + V[i];
+  for (let i = 0; i < N - 1; i++) off[i] = -t;
+  /* Sturm 序列：小于 σ 的特征值个数 */
+  const cnt = s => {
+    let n = 0, pr = 0;
+    for (let i = 0; i < N; i++) {
+      let di = dm[i] - s;
+      if (i) di -= off[i - 1] * off[i - 1] / pr;
+      if (di < 0) n++;
+      if (Math.abs(di) < 1e-300) di = 1e-300;
+      pr = di;
+    }
+    return n;
+  };
+  const lv = []; let lo = -1;
+  for (let k = 0; k < 24; k++) {
+    if (cnt(p.EM) <= k) break;
+    let a1 = lo, b1 = p.EM;
+    for (let it = 0; it < 80; it++) { const m2 = (a1 + b1) / 2; if (cnt(m2) > k) b1 = m2; else a1 = m2; }
+    const E = (a1 + b1) / 2, psi = kpVec(N, dm, off, E);
+    /* 表面权重：表面第一个周期内的概率 */
+    let ws = 0, tot = 0;
+    for (let i = 0; i < N; i++) { const q = psi[i] * psi[i]; tot += q; if (xs[i] < geo.cr0 + geo.d) ws += q; }
+    lv.push({ E: E, psi: psi, w: tot > 0 ? ws / tot : 0 });
+    lo = E + 1e-9;
+  }
+  /* 分类：w 大的为表面态，其余按 E 聚类分成第 1 / 第 2 … 能带 */
+  const bulk = lv.filter(r => r.w < 0.5), surf = lv.filter(r => r.w >= 0.5);
+  const bands = [];
+  bulk.forEach(r => {
+    const last = bands[bands.length - 1];
+    if (last && r.E - last.hi < 0.5) { last.hi = r.E; last.n++; }
+    else bands.push({ lo: r.E, hi: r.E, n: 1 });
+  });
+  /* 衰减长度：相邻周期峰值之比 */
+  let xi = NaN;
+  if (surf.length) {
+    const s0 = surf[0];
+    const at = x0 => { const i = Math.round(x0 / dx) - 1; return (i >= 0 && i < N) ? Math.abs(s0.psi[i]) : 0; };
+    let pk0 = 0, xk0 = 0, pk1 = 0;
+    for (let x0 = geo.cr0; x0 < geo.cr0 + geo.d; x0 += dx) { const v = at(x0); if (v > pk0) { pk0 = v; xk0 = x0; } }
+    for (let x0 = xk0 + geo.d - dx; x0 < xk0 + 2 * geo.d; x0 += dx) { const v = at(x0); if (v > pk1) pk1 = v; }
+    if (pk0 > 0 && pk1 > 0 && pk1 < pk0) xi = geo.d / Math.log(pk0 / pk1);
+  }
+  /* 表面态是否真的落在禁带里（严格夹在第一带顶与第二带底之间），以及在禁带中的位置 */
+  const b1 = bands[0], b2 = bands[1];
+  const inGap = !!surf[0] && !!b1 && !!b2 && surf[0].E > b1.hi && surf[0].E < b2.lo;
+  const depth = (surf[0] && b1 && b2) ? (surf[0].E - b1.hi) / (b2.lo - b1.hi) : NaN;
+  KPC[cut] = { cut: cut, geo: geo, N: N, dx: dx, xs: xs, V: V, lv: lv, surf: surf, bands: bands,
+    xi: xi, inGap: inGap, depth: depth };
+  return KPC[cut];
+}
+/* 当前滑块对应的解 */
+function kpSolve() { return kpSolveAt(CUof(OPT.cutS)); }
+
+const C_TAMM = "#0f9b8e";            // 与模块二的表面态同色
+const C_PSI = "#8a94a3";
+
+function drawPot() {
+  const c = CV.pot || fitCanvas("pot"); if (!c) return;
+  const g = c.g, W = c.W, H = c.H;
+  g.clearRect(0, 0, W, H); g.fillStyle = "#fbfdff"; g.fillRect(0, 0, W, H);
+  const K = kpSolve(), geo = K.geo, p = KP;
+  const EM = p.EM;
+  const L = 44, R = W - 14, T = 16, B = H - 30;
+  /* 图幅只画到晶体右端 cr1（真空尾巴只是数值边界，画出来会被误读成「右边还有一个表面」）。
+     方位与模块一一致：**真空在左、体内朝右**。 */
+  const X = x => L + clamp(x / geo.cr1, 0, 1) * (R - L);
+  const Y = E => B - clamp(E / EM, 0, 1) * (B - T);
+
+  /* 真空区底色：只有表面外侧（左侧）那一块 */
+  g.fillStyle = "#f2f5f9";
+  g.fillRect(L, T, X(geo.cr0) - L, B - T);
+
+  /* 势阱区（势能为 0）留白，势垒区浅色 */
+  for (const s of geo.segs) {
+    if (s[2] <= 0 || s[2] > EM) continue;
+    g.fillStyle = "rgba(69,90,100,0.10)";
+    g.fillRect(X(s[0]), Y(s[2]), X(s[1]) - X(s[0]), B - Y(s[2]));
+  }
+
+  /* 纵轴 */
+  for (let e = 0; e <= EM + 1e-9; e += 0.5) {
+    const y = Y(e);
+    line(g, L, y, R, y, C_GRID, 1);
+    txt(g, fmt(e, 1), L - 6, y, C_SUB, "10.5px " + FONT, "right");
+  }
+  /* 横轴 */
+  for (let x = 0; x <= geo.cr1 + 1e-9; x += 0.5) {
+    const xx = X(x);
+    line(g, xx, T, xx, B, "#eef2f7", 1);
+    txt(g, fmt(x, 1), xx, B + 13, C_SUB, "10.5px " + FONT,
+      x <= 0.01 ? "left" : (x >= geo.cr1 - 0.01 ? "right" : "center"));
+  }
+  txt(g, "x（nm）", (L + R) / 2, H - 6, C_SUB, "11.5px " + FONT, "center");
+  mtxt(g, [{ s: "V", i: true }, { s: "（eV）" }], 6, T + 6, C_SUB, 11.5, "left");
+
+  /* V(x) 阶梯：真空能级在图幅之外，画成截断并标出 */
+  g.lineWidth = 2; g.lineJoin = "round"; g.strokeStyle = "#455a64";
+  g.beginPath();
+  let first = true;
+  for (const s of geo.segs) {
+    if (s[0] >= geo.cr1 - 1e-9) continue;      // 图幅之外（数值边界的真空尾巴）不画
+    const y = Y(Math.min(s[2], EM));
+    if (first) { g.moveTo(X(s[0]), y); first = false; } else g.lineTo(X(s[0]), y);
+    g.lineTo(X(s[1]), y);
+  }
+  g.stroke();
+  /* 真空能级：超出图幅，用上箭头标注（只在表面外侧那一侧） */
+  for (const xb of [geo.cr0 * 0.45]) {
+    line(g, X(xb), Y(EM) - 2, X(xb), T + 4, "#455a64", 1.6, [3, 3]);
+    txt(g, "↑ E₀ = " + fmt(p.E0, 0) + " eV", X(xb), T + 12, "#455a64", "10.5px " + FONT, "center");
+  }
+  txt(g, "真 空", (L + X(geo.cr0)) / 2, (T + B) / 2, C_SUB, "bold 11px " + FONT, "center");
+
+  /* 表面线 */
+  line(g, X(geo.cr0), T, X(geo.cr0), B, C_AC, 1.6, [5, 4]);
+  txt(g, "表面", X(geo.cr0) - 4, T + 26, C_AC, "bold 11px " + FONT, "right");
+  txt(g, "体内继续延伸 →", R - 2, T + 26, C_SUB, "11px " + FONT, "right");
+
+  /* 能带分组括号：画在表面线左侧的真空列里（那里是空的，不会压住曲线） */
+  const bracket = (e0, e1, col, lab) => {
+    const y0 = Y(e1), y1 = Y(e0), bx = X(geo.cr0) - 8;
+    line(g, bx, y0, bx, y1, col, 1.6);
+    line(g, bx, y0, bx - 5, y0, col, 1.6);
+    line(g, bx, y1, bx - 5, y1, col, 1.6);
+    txt(g, lab, bx - 9, (y0 + y1) / 2, col, "10.5px " + FONT, "right");
+  };
+
+  /* 能级线 + 波函数 */
+  const amp = 13;                                    // 波函数振幅（px）
+  const drawPsi = (lv, col, lw) => {
+    if (!OPT.ckPsi) return;
+    let mx = 0;
+    for (let i = 0; i < K.N; i++) mx = Math.max(mx, Math.abs(lv.psi[i]));
+    if (mx <= 0) return;
+    const y0 = Y(lv.E);
+    g.beginPath();
+    for (let i = 0; i < K.N; i++) {
+      const xx = X(K.xs[i]), yy = y0 - lv.psi[i] / mx * amp;
+      i ? g.lineTo(xx, yy) : g.moveTo(xx, yy);
+    }
+    g.strokeStyle = col; g.lineWidth = lw; g.stroke();
+  };
+  /* 体能级：先画波函数（灰，展示「贯穿整块晶体」），再画线 */
+  const bulkLv = K.lv.filter(r => r.w < 0.5);
+  const lowest = bulkLv[0];
+  if (lowest) { drawPsi(lowest, C_PSI, 1.6); }
+  for (const r of bulkLv) line(g, X(geo.cr0), Y(r.E), X(geo.cr1), Y(r.E), C_PSI, 1.2);
+
+  /* 表面态（塔姆态）：有能量落在禁带里的局域态就画它，否则说明它已并入能带 */
+  const sv = K.surf[0];
+  if (sv) {
+    line(g, X(geo.cr0) - 6, Y(sv.E), X(geo.cr1), Y(sv.E), C_TAMM, 2.4);
+    drawPsi(sv, C_TAMM, 2);
+    const lbl = "塔姆表面态 E_s = " + fmt(sv.E, 3) + " eV";
+    chipC(g, lbl, X(geo.cr0) + 6, Y(sv.E) - amp - 12, C_TAMM, "bold 11px " + FONT, "left", W, H);
+    /* 衰减长度 */
+    if (isFinite(K.xi)) {
+      const yA = Y(sv.E) + amp + 10;
+      arrow(g, X(geo.cr0), yA, X(geo.cr0 + K.xi), yA, C_TAMM, 1.2, 5);
+      txt(g, "衰减长度 ξ = " + fmt(K.xi, 2) + " nm", X(geo.cr0 + K.xi) + 6, yA, C_TAMM, "10.5px " + FONT, "left");
+    }
+  } else {
+    chipC(g, "禁带里没有表面态了：表面能级被抬得过高，已并入第二能带",
+      (X(geo.cr0) + X(geo.cr1)) / 2, T + 14, "#b8860b", "bold 11px " + FONT, "center", W, H);
+  }
+  /* 体能带 / 禁带标注 */
+  if (K.bands.length) {
+    bracket(K.bands[0].lo, K.bands[0].hi, C_PSI, "第一能带（" + K.bands[0].n + " 个态）");
+    if (K.bands.length > 1) bracket(K.bands[1].lo, Math.min(K.bands[1].hi, EM), C_PSI, "第二能带");
+  }
+  if (K.bands.length && K.bands[0].hi < (K.bands[1] ? K.bands[1].lo : EM)) {
+    const gTop = K.bands[1] ? K.bands[1].lo : EM, gBot = K.bands[0].hi;
+    txt(g, "禁 带", (X(geo.cr0) + X(geo.cr1)) / 2, (Y(gTop) + Y(gBot)) / 2, "#b8860b", "bold 11px " + FONT, "center");
+  }
+  txt(g, "体内：波函数贯穿整块晶体", X(geo.cr1) - 6, Y(lowest ? lowest.E : 0) + amp + 12,
+    C_PSI, "10.5px " + FONT, "right");
+
+  /* 悬停探针 */
+  if (HOV.pot && HOV.pot.x > L && HOV.pot.x < R) {
+    let best = null, bd = 1e9;
+    for (const r of K.lv) {
+      const dd = Math.abs(Y(r.E) - HOV.pot.y);
+      if (dd < bd) { bd = dd; best = r; }
+    }
+    if (best && bd < 12) {
+      const s = (best.w >= 0.5 ? "塔姆表面态" : "体能带中的态") + "　E = " + fmt(best.E, 3) +
+        " eV　表面第一周期内概率 = " + fmt(best.w * 100, 1) + "%";
+      line(g, X(geo.cr0), Y(best.E), X(geo.cr1), Y(best.E), "#2c3e50", 1, [3, 3]);
+      chipC(g, s, X(geo.cr0) + 6, Y(best.E) + (best.w >= 0.5 ? -amp - 12 : amp + 10),
+        "#2c3e50", "10.5px " + FONT, "left", W, H);
+    }
+  }
+}
+
+/* ---------------- 9. 图例 ---------------- */
+function buildLegends() {
+  $("legLat").innerHTML = [
+    '<span><span class="swatch dot" style="background:#aab6c3"></span>体内原子（4 近邻，键饱和）</span>',
+    '<span><span class="swatch dot" style="background:#1976d2"></span>表面原子（3 近邻，有悬挂键）</span>',
+    '<span><span class="swatch dot" style="background:#a8c4e0"></span>已钝化的表面原子（Si–H）</span>',
+    '<span><span class="swatch dot" style="background:#ef8c1a"></span>悬挂键上的未配对电子</span>',
+    '<span><span class="swatch sq" style="background:#fff;border:1px solid #8a94a3"></span>H（氢钝化）</span>'
+  ].join("");
+  /* 表面态词条随「表面切割量」实时变化：状态不同，该画的东西也不同 */
+  const K = kpSolve(), sv = K.surf[0];
+  const tammEntry = sv
+    ? '<span><span class="swatch" style="border-color:#0f9b8e;border-width:2.5px"></span>塔姆表面态 ＋ 波函数（只在表面）</span>'
+    : '<span><span class="swatch sq" style="background:#eef2f7;border:1px dashed #b8860b"></span>禁带中无表面态（已并入第二能带）</span>';
+  $("legPot").innerHTML = [
+    '<span><span class="swatch" style="border-color:#455a64"></span>势能 V(x)（周期量子阱）</span>',
+    '<span><span class="swatch sq" style="background:#f2f5f9;border:1px solid #8a94a3"></span>真空（E₀ = 12 eV，超出图幅）</span>',
+    '<span><span class="swatch" style="border-color:#8a94a3"></span>体能带中的态 ＋ 波函数（贯穿晶体）</span>',
+    tammEntry,
+    '<span><span class="swatch dash" style="border-color:#1976d2"></span>表面（周期势在此被切断）</span>'
+  ].join("");
+}
+
+/* ---------------- 10. 引导探究 ---------------- */
+const CHAL = [
+  {
+    q: "把鼠标移到模块一里<b>不同位置</b>的原子上：体内原子有几个近邻？表面原子呢？为什么表面会多出一只「没人牵的手」，手上还挂着一个电子？",
+    a: () => {
+      const gm = dbGeom();
+      return "体内原子有 <b>4 个近邻、4 根饱和键</b>，每根键由一对自旋相反的电子组成，电子全都成对 ⇒ 体内的成键态与反键态分别落进价带与导带，<b>禁带里干干净净</b>。表面原子外侧没有邻居，只剩 <b>3 个近邻</b>，剩下那根键<b>没有对手可以配对</b>，就成了<b>悬挂键</b>，上面留着一个<b>未配对电子</b>。这个电子在体内找不到属于它的能级 —— 周期势允许的能量都排在价带和导带里 —— 只能待在<b>禁带</b>中，这就是表面态的起源。当前：表面原子密度 " +
+        sci(gm.Ns, 2) + " cm⁻²，悬挂键面密度 <span class=\"m\"><i>N</i><sub>db</sub></span> = " + sci(gm.Ndb, 1) + " cm⁻²，相当于平均 <b>" +
+        (gm.frac > 1e-6 ? sci(1 / gm.frac, 1) : "—") + "</b> 个表面原子才摊到 1 个悬挂键。";
+    }
+  },
+  {
+    q: "看模块二：体内那条<b>灰色波函数</b>和表面那条<b>青色波函数</b>，形状差在哪？为什么最外面那个势阱被切窄，它的能级就会掉进<b>禁带</b>里？",
+    a: () => {
+      const K = kpSolve();
+      const b1 = K.bands[0], b2 = K.bands[1], sv = K.surf[0];
+      if (!sv) return "当前切割量下<b>禁带里没有表面态</b>：表面能级被抬得太高，已经并入第二能带。把「表面切割量」调小一点，先让它落进禁带，再来比较这两条波函数。";
+      const dPer = isFinite(K.xi) ? Math.exp(-K.geo.d / K.xi) * 100 : NaN;
+      return "体内的势阱个个完整，彼此的波函数互相渗透 ⇒ " + (b1.n + 1) + " 个势阱给出 " + (b1.n + 1) +
+        " 个只差一丁点的能级，挤成一条宽 <b>" + fmt(b1.hi - b1.lo, 3) +
+        "</b> eV 的<b>能带</b>（图中灰线），它们的波函数<b>贯穿整块晶体</b>（灰色曲线）。表面那个势阱被切掉 " +
+        fmt(K.cut, 2) + " nm、只剩 <b>" + fmt(KP.a - K.cut, 2) +
+        "</b> nm —— 限域变强，能级被一路抬到 <b>" + fmt(sv.E, 3) + "</b> eV，抬过了第一带顶（" +
+        fmt(b1.hi, 3) + " eV），于是从能带里<b>分裂出来</b>，落在它与第二带底（" + (b2 ? fmt(b2.lo, 3) : "—") +
+        " eV）之间的<b>禁带</b>里。代价是它被<b>关在了表面</b>：<b>" + fmt(sv.w * 100, 1) +
+        "%</b> 的概率落在表面第一个周期内，往体内以 <b><span class='m'><i>ξ</i></span> = " + fmt(K.xi, 2) +
+        "</b> nm 指数衰减（每往里走一个周期 " + fmt(K.geo.d, 2) + " nm，幅度只剩 " + fmt(dPer, 0) +
+        "%）。这就是<b>塔姆表面态</b>：能量在禁带里、空间上只在表面。";
+    }
+  },
+  {
+    q: "慢慢拖动<b>表面切割量</b>滑块：把它拉到 0（周期<b>没有</b>被切断）时，禁带里还有表面态吗？一路拉到底又会怎样？这条能级的位置和局域程度是怎么跟着变的？",
+    a: () => {
+      const cur = CUof(OPT.cutS);
+      const probe = [];
+      for (const c of [0, 0.06, 0.15, 0.22, 0.30]) {
+        const K = kpSolveAt(c), b1 = K.bands[0], b2 = K.bands[1], sv = K.surf[0];
+        probe.push({ c: c, E: sv ? +sv.E.toFixed(3) : null, w: sv ? +(sv.w * 100).toFixed(1) : null,
+          top: b1 ? +b1.hi.toFixed(3) : null,
+          dep: (sv && b1 && b2) ? +((sv.E - b1.hi) / (b2.lo - b1.hi) * 100).toFixed(1) : null });
+      }
+      const row = p => "　·　Δ = " + fmt(p.c, 2) + " nm ⇒ E_s = " +
+        (p.E === null ? "无（已并入能带）" : fmt(p.E, 3) + " eV") +
+        (p.dep === null ? "" : "，位于禁带 " + fmt(p.dep, 0) + "% 处") +
+        (p.w === null ? "" : "，表面一个周期内占 " + fmt(p.w, 0) + "%");
+      return "把它拉到 <b>0</b>，周期势并没有被切断，但表面两侧毕竟不对称 —— 外侧是 <b><span class='m'><i>E</i><sub>0</sub></span> = " + fmt(KP.E0, 0) +
+        " eV</b> 的真空、内侧只有 " + fmt(KP.V0, 1) +
+        " eV 的势垒 —— 所以仍然跑出一个<b>局域在表面的态</b>，只是它紧贴着第一带顶、几乎没挣脱出来。这说明<b>「晶体到头了」本身就足以产生局域态</b>，把它切窄只是让这件事变得明显。一路把它拉大（当前 Δ = " +
+        fmt(cur, 2) + " nm）：<br>" + probe.map(row).join("<br>") +
+        "<br>可以看到能级<b>单调上升</b>（限域越强 ⇒ 零点能越高），越过带顶才谈得上「掉进禁带」；切过了头，它又一路升到第二能带里，与那条带的体态混成一个、<b>不再独立存在</b>。结论是：<b>表面态不是外加的，它是「周期在这里中止」的必然产物；至于它落在禁带里的哪个位置，取决于表面的势环境与体内差多少。</b>";
+    }
+  },
+  {
+    q: "把模块一的<b>悬挂键面密度 <span class=\"m\"><i>N</i><sub>db</sub></span></b> 从顶（每个表面原子一根键）一路拉到 10¹⁰ cm⁻²，图上会看到什么？为什么少一根悬挂键就等于少一个表面态？这和芯片里说的<b>钝化</b>是什么关系？",
+    a: () => {
+      const gm = dbGeom();
+      return "会看到表面那一列<b>小白球 H</b> 越来越多、橙色的未配对电子越来越少。剩下的每个悬挂键仍然是<b>一个完整的表面态</b>，数量只是按 <span class=\"m\"><i>N</i><sub>db</sub></span> 成比例缩放：<b>一根悬挂键 ⇒ 一个禁带里的态</b>（严格说是上限 —— 真实表面上重构与吸附会让一部分键两两配成成键态与反键态，反而退出禁带）。当前 <span class=\"m\"><i>N</i><sub>db</sub></span> = " +
+        sci(gm.Ndb, 1) + " cm⁻²，占表面原子密度的 <b>" + fmt(gm.frac * 100, 2) + "%</b>，也就是平均 <b>" +
+        (gm.frac > 1e-6 ? sci(1 / gm.frac, 1) : "—") + "</b> 个表面原子摊到 1 个悬挂键；把它降到 10¹¹ cm⁻² 上下，则是每 <b>" +
+        sci(gm.Ns / 1e11, 1) + "</b> 个表面原子才有 1 个 —— 这就是<b>氢钝化</b>：氢与悬挂键上的未配对电子配对成 Si–H 键，那个电子有了对手，<b>不再在禁带里撑出能级</b>。注意这一节只讲「<b>有多少个</b>」。这些态同时还是<b>复合中心</b>（电子先落进表面态，再与空穴复合，两步走完一条 SRH 通道），所以从 PERC 电池的 Al₂O₃ 钝化，到 Si/SiO₂ 界面追求 <span class=\"m\"><i>D</i><sub>it</sub><span class=\"op\">~</span>10<sup>10</sup></span> cm⁻²·eV⁻¹，本质上都在做同一件事：<b>把悬挂键配对掉</b>。" +
+        "<br><b>两个量别混：</b>本工具数的是<b>个数密度</b> <span class=\"m\"><i>N</i><sub>db</sub></span>（cm⁻²，一根键算一个），工业界与文献里的 <span class=\"m\"><i>D</i><sub>it</sub>(<i>E</i>)</span> 是<b>按能量分布</b>的密度（cm⁻²·eV⁻¹）；两者差一次对禁带窗口的积分：" +
+        "<span class=\"m\"><i>N</i><sub>db</sub><span class=\"op\">≈</span>∫<i>D</i><sub>it</sub>d<i>E</i><span class=\"op\">≈</span><i>D</i><sub>it</sub><span class=\"op\">×</span>Δ<i>E</i></span>。取 Δ<span class='m'><i>E</i></span> ≈ 1 eV（Si 禁带量级）就能对上号：" +
+        "<span class=\"m\"><i>D</i><sub>it</sub><span class=\"op\">~</span>10<sup>10</sup></span> cm⁻²·eV⁻¹ ⇒ 约 <b>10¹⁰ cm⁻²</b> 未配对的键，相当于每 <b>" +
+        sci(gm.Ns / 1e10, 1) + "</b> 个表面原子才摊到 1 根 —— 也就是「七万个表面原子里大约只剩一个还没被钝化」。";
+    }
+  },
+  {
+    q: "最后一问：为什么<b>局域</b>在表面的态能存电荷，<b>贯穿</b>整块晶体的体态却不能？存了电荷之后会发生什么？（本工具讲到哪里为止？）",
+    a: () => {
+      const K = kpSolve(), sv = K.surf[0];
+      return "因为<b>扩展态</b>属于整块晶体：往里面多放一个电子，它立刻弥散到 10²² 个原子上，哪里也攒不出净电荷。而<b>局域态</b>被按在表面一两个原子层里（当前这条" +
+        (sv ? " <b>" + fmt(sv.w * 100, 1) + "%</b> 的概率挤在表面第一个周期内，<span class='m'><i>ξ</i></span> = " + fmt(K.xi, 2) + " nm" :
+              "已经并入能带，请先把切割量调小") +
+        "），电子进去就<b>出不来</b> ⇒ 表面能积累起一层电荷 <span class=\"m\"><i>Q</i><sub>ss</sub></span>。有了电荷就要有电场，晶体另一侧必须有等量反号的电荷来中和 ⇒ 一维泊松方程给出空间电荷 <span class=\"m\"><i>Q</i><sub>sc</sub></span>，两者由电中性条件 <span class=\"m\"><i>Q</i><sub>ss</sub><span class=\"op\">+</span><i>Q</i><sub>sc</sub><span class=\"op\">=</span>0</span> 自洽决定 ⇒ <b>能带在表面附近弯曲</b>，弯曲量的上限正好是「把表面费米能级拉到表面态能级上」所需的那段距离。本工具<b>到此为止</b>：它只回答「表面态为什么存在、有多少个」。至于存了电荷之后怎么把能带掰弯（泊松方程的精确解），请看同系列的《MIS 结构偏压与表面势》工具。";
+    }
+  }
+];
+
+let ANS_EL = [];
+function buildChal() {
+  const grid = $("chalGrid");
+  grid.innerHTML = ""; ANS_EL = [];
+  CHAL.forEach((c, i) => {
+    const el = document.createElement("div");
+    el.className = "chal";
+    el.innerHTML = '<div class="chal-head"><b>' + (i + 1) + ". " + c.q + '</b><span class="chev">▶</span></div>' +
+      '<div class="chal-body"><div class="ans"></div><div class="btn-row"><button>看看答案</button></div></div>';
+    grid.appendChild(el);
+    el.querySelector(".chal-head").onclick = () => el.classList.toggle("open");
+    const ans = el.querySelector(".ans");
+    ANS_EL.push(ans);
+    el.querySelector(".btn-row button").onclick = e => { e.stopPropagation(); ans.classList.toggle("show"); };
+  });
+}
+function refreshAnswers() { ANS_EL.forEach((el, i) => { el.innerHTML = CHAL[i].a(); }); }
+
+/* ---------------- 11. 读数 ---------------- */
+function kvRow(k, v) { return '<div class="row"><span class="k">' + k + '</span><span class="v">' + v + "</span></div>"; }
+function hd(s) { return '<div class="hd">' + s + "</div>"; }
+
+function updateReadout() {
+  const gm = dbGeom(), K = kpSolve();
+  const h = [];
+  h.push(hd("模块一 · 表面原子（Si，(100) 面）"));
+  h.push(kvRow("表面原子密度 N_s", "<b>" + sci(gm.Ns, 2) + "</b> cm⁻²（2/a²，a = 5.431 Å）"));
+  h.push(kvRow("悬挂键面密度 " + MM("<i>N</i><sub>db</sub>"), "<b>" + sci(gm.Ndb, 1) + "</b> cm⁻²　（占表面原子 <b>" +
+    fmt(gm.frac * 100, 2) + "%</b>）"));
+  h.push(kvRow("折合", gm.frac > 1e-6 ? "平均 <b>" + sci(1 / gm.frac, 1) + "</b> 个表面原子摊到 1 个悬挂键 ⇒ 1 个表面态"
+    : "悬挂键几乎清零 ⇒ 表面态几乎清零"));
+  h.push('<div class="nt"><b>单位提醒：</b>' + MM("<i>N</i><sub>db</sub>") + " 是<b>个数密度</b>（cm⁻²：一根未配对的键算一个），" +
+    "与文献 / 工业界的界面态密度 " + MM("<i>D</i><sub>it</sub>(<i>E</i>)") + "（cm⁻²·eV⁻¹，<b>按能量分布</b>）不是同一个量 —— " +
+    "两者差一次对禁带窗口的积分 " + MM("<i>N</i><sub>db</sub><span class=\"op\">≈</span><i>D</i><sub>it</sub><span class=\"op\">×</span>Δ<i>E</i>") +
+    "；滑块到顶的 " + sci(gm.Ns, 2) + " cm⁻² 就是物理上限（每个表面原子最多一根悬挂键）。</div>");
+
+  h.push(hd("模块二 · 一维势能模型（示意参数）"));
+  h.push(kvRow("周期 " + MM("<i>d</i>") + " / 势阱数", "<b>" + fmt(K.geo.d, 2) + "</b> nm　" + KP.M + " 个势阱（理论上给出 " +
+    KP.M + " 个能级）"));
+  h.push(kvRow("表面势阱宽度", "<b>" + fmt(KP.a - K.cut, 2) + "</b> nm（完整势阱 " + fmt(KP.a, 2) +
+    " nm，被切掉 " + fmt(K.cut, 2) + " nm）"));
+  const b1 = K.bands[0], b2 = K.bands[1], sv = K.surf[0];
+  h.push(kvRow("第一能带", b1 ? fmt(b1.lo, 3) + " → <b>" + fmt(b1.hi, 3) + "</b> eV（<b>" + b1.n +
+    "</b> 个态，宽 " + fmt(b1.hi - b1.lo, 3) + " eV）" : "—"));
+  h.push(kvRow("第二能带底 / 禁带宽", b2 ? fmt(b2.lo, 3) + " eV　禁带 <b>" + fmt(b2.lo - b1.hi, 3) + "</b> eV" : "—"));
+  h.push(kvRow("表面能级 E_s", sv ? "<b>" + fmt(sv.E, 3) + "</b> eV（落在禁带 <b>" +
+    fmt(K.depth * 100, 1) + "%</b> 处，高出第一带顶 " + fmt(sv.E - b1.hi, 3) + " eV）"
+    : "无（已并入第二能带）"));
+  h.push(kvRow("表面第一周期内概率", sv ? "<b>" + fmt(sv.w * 100, 1) + "%</b>" : "—"));
+  h.push(kvRow("衰减长度 " + MM("<i>ξ</i>"), isFinite(K.xi) ? "<b>" + fmt(K.xi, 2) + "</b> nm（每往里 1 个周期，幅度剩 <b>" +
+    fmt(Math.exp(-K.geo.d / K.xi) * 100, 0) + "%</b>）" : "—"));
+  $("readout").innerHTML = h.join("");
+
+  const locF = sv ? clamp(sv.w, 0, 1) : 0;
+  const gapF = sv ? clamp(K.depth, 0, 1) : 0;
+  $("barLab").innerHTML =
+    "<span>表面态局域程度 = <b>" + fmt(locF, 2) + "</b></span>" +
+    "<span>E_s 在禁带中的位置 = <b>" + fmt(gapF, 2) + "</b></span>";
+  $("barLoc").style.width = (locF * 100).toFixed(1) + "%";
+  $("barLoc").style.background = C_TAMM;
+  $("barGap").style.width = (gapF * 100).toFixed(1) + "%";
+  $("barGap").style.background = sv ? C_OP : C_REF;
+}
+
+/* ---------------- 12. 同步与渲染 ---------------- */
+function render() { drawLat(); drawPot(); buildLegends(); updateReadout(); refreshAnswers(); }
+
+function syncInputs() {
+  const gm = dbGeom(), K = kpSolve();
+  $("ditSlider").value = OPT.ditS;
+  $("cutSlider").value = OPT.cutS;
+  $("ckDbond").checked = OPT.ckDbond;
+  $("ckPsi").checked = OPT.ckPsi;
+
+  $("ditVal").innerHTML = sciH(gm.Ndb, 1) + " <span class='un'>cm<sup>−2</sup></span>";
+  $("ditSub").innerHTML = "占表面原子 <b>" + fmt(gm.frac * 100, 2) + "%</b>；滑块<b>到顶</b>就是 " + sci(gm.Ns, 2) +
+    " cm⁻² ＝ 每个表面原子一根悬挂键（物理上限，再往上就超过「一个原子一根键」了）。" +
+    "往小拉就是<b>氢钝化</b>：H 与未配对电子配对成 Si–H，表面态随之消失。" +
+    "<br><span style='color:#8a94a3'>单位：" + MM("<i>N</i><sub>db</sub>") + " 是<b>个数密度</b> cm⁻²，不是按能量分布的 " +
+    MM("<i>D</i><sub>it</sub>(<i>E</i>)") + "（cm⁻²·eV⁻¹）。</span>";
+  $("cutVal").textContent = fmt(CUof(OPT.cutS), 2) + " nm";
+  const svv = K.surf[0];
+  $("cutSub").innerHTML = "表面势阱只剩 <b>" + fmt(KP.a - K.cut, 2) + "</b> nm（完整 " + fmt(KP.a, 2) +
+    " nm）。当前 E_s = <b>" + (svv ? fmt(svv.E, 3) + " eV" : "无（已并入第二能带）") +
+    "</b>；拉到 0 它只贴着带顶，拉到约 0.23 nm 以上它就<b>跳过整条禁带、并入第二能带</b>了。";
+}
+
+/* ---------------- 13. 绑定 ---------------- */
+function init() {
+  buildLegends(); buildChal();
+
+  const sl = (id, fn) => $(id).addEventListener("input", e => fn(+e.target.value));
+  sl("ditSlider", v => { OPT.ditS = v; syncInputs(); render(); });
+  sl("cutSlider", v => { OPT.cutS = v; syncInputs(); render(); });
+
+  ["ckDbond", "ckPsi"].forEach(k =>
+    $(k).addEventListener("change", e => { OPT[k] = e.target.checked; render(); }));
+
+  const hov = (id, key) => {
+    const el = $(id);
+    el.addEventListener("mousemove", e => {
+      const r = el.getBoundingClientRect();
+      HOV[key] = { x: e.clientX - r.left, y: e.clientY - r.top };
+      if (key === "lat") drawLat(); else drawPot();
+    });
+    el.addEventListener("mouseleave", () => {
+      HOV[key] = null;
+      if (key === "lat") drawLat(); else drawPot();
+    });
+  };
+  hov("lat", "lat"); hov("pot", "pot");
+
+  window.addEventListener("resize", () => { fitAll(); render(); });
+  /* 必须 syncInputs()：否则刷新后两个滑块的子提示（ditSub / cutSub）是空的，
+     要等学生拖一下滑块才出现（读数面板不受影响，但控件区会「缺一块」）。 */
+  fitAll(); syncInputs(); render();
+}
+
+init();
+
+/* i18n 启动必须在 init() 之后：setLang() 会重跑 syncInputs()/render()，
+   放到 init() 之前会在 fitAll() 之前触发绘制，一旦抛异常整个 init() 就跑不到（挑战与画布会空）。 */
+(function () {
+  try {
+    i18nWatch();
+    ORIG_TITLE = ORIG_TITLE || document.title;
+    var btn = document.getElementById("langBtn");
+    if (btn) btn.onclick = function () { setLang(LANG === "en" ? "zh" : "en"); };
+    if (LANG === "en") setLang("en"); else { document.title = ORIG_TITLE; i18nWalk(document.body); }
+  } catch (e) { }
+})();
+</script>
+</body>
+</html>

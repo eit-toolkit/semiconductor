@@ -1,0 +1,2064 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<!-- SPDX-License-Identifier: MIT -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>k 空间等能面与态密度交互教学工具</title>
+<style>
+  :root {
+    --bg: #f7f9fb;
+    --panel: #ffffff;
+    --border: #dde4ec;
+    --text: #2c3e50;
+    --text-sub: #6b7a8c;
+    --blue: #1976d2;
+    --blue-light: #e3f0fb;
+    --orange: #ef8c1a;
+    --red: #d94a3d;
+    --teal: #0f9b8e;
+    --green: #2e9e5b;
+    --purple: #8e5bd0;
+    --gray-ref: #9aa5b1;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Microsoft YaHei", "PingFang SC", "Segoe UI", sans-serif;
+    background: var(--bg); color: var(--text); padding: 14px;
+  }
+  header { position: relative; display: flex; align-items: baseline; justify-content: center; gap: 14px; flex-wrap: wrap; text-align: center; margin-bottom: 2px; }
+  .lang-btn { position: absolute; right: 0; top: 0; border: 1px solid var(--border); background: #fff;
+    color: var(--text-sub); padding: 3px 10px; border-radius: 7px; cursor: pointer; font-size: 12px; font-weight: 600; }
+  .lang-btn:hover { border-color: var(--blue); color: var(--blue); }
+  header h1 { font-size: 20px; }
+  header .formula { font-size: 14.5px; color: var(--text-sub); }
+  .sub-note { text-align: center; font-size: 12.5px; color: var(--text-sub); margin-bottom: 12px; line-height: 1.75; }
+  .sub-note b { color: var(--blue); }
+
+  .layout { display: flex; gap: 14px; align-items: flex-start; max-width: 1500px; margin: 0 auto; }
+  .viz { flex: 0 0 60%; min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+  .side { flex: 1; min-width: 310px; display: flex; flex-direction: column; gap: 12px; }
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; }
+  .sec-title { font-size: 13.5px; font-weight: 700; margin: 2px 0 6px; }
+  /* 模块编号徽标：只有教学内容模块才带编号；控制面板等辅助面板不是模块，不加 */
+  .sec-title .mtag {
+    display: inline-block; background: var(--blue); color: #fff;
+    font-size: 11px; font-weight: 700; padding: 1.5px 7px;
+    border-radius: 5px; margin-right: 6px; vertical-align: 1.5px; letter-spacing: .3px;
+  }
+  canvas { display: block; width: 100%; border-radius: 6px; touch-action: none; }
+  .hint { font-size: 12px; color: var(--text-sub); margin-top: 6px; line-height: 1.6; }
+  .ctrl { margin-bottom: 10px; }
+  .ctrl:last-child { margin-bottom: 0; }
+  .ctrl-head { display: flex; justify-content: space-between; align-items: baseline; font-size: 13px; font-weight: 600; margin-bottom: 2px; gap: 8px; }
+  .ctrl-head .val { color: var(--blue); font-variant-numeric: tabular-nums; font-weight: 700; white-space: nowrap; }
+  .ctrl input[type=range] { width: 100%; accent-color: var(--blue); }
+  .ctrl input[type=range]:disabled { opacity: .45; }
+  .ctrl .sub { font-size: 11.5px; color: var(--text-sub); margin-top: 1px; line-height: 1.5; }
+  .btn-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+  .btn-row button {
+    border: 1px solid var(--border); background: #fff; color: var(--text);
+    padding: 5px 11px; border-radius: 7px; cursor: pointer; font-size: 12.5px;
+  }
+  .btn-row button:hover { border-color: var(--blue); color: var(--blue); }
+  .btn-row button.sel { background: var(--blue); border-color: var(--blue); color: #fff; font-weight: 600; }
+  .btn-row.tight button { padding: 4px 9px; font-size: 12px; }
+  .mode-switch { display: flex; gap: 6px; }
+  .mode-switch button {
+    flex: 1; border: 1px solid var(--border); background: #fff; color: var(--text-sub);
+    padding: 6px 8px; border-radius: 8px; cursor: pointer; font-size: 12.5px; font-weight: 600;
+  }
+  .mode-switch button:hover { border-color: var(--blue); color: var(--blue); }
+  .mode-switch button.active { background: var(--blue); border-color: var(--blue); color: #fff; }
+  .chk-row { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12.5px; color: var(--text-sub); margin-top: 6px; }
+  .chk-row label { display: inline-flex; align-items: center; gap: 5px; cursor: pointer; }
+  .chk-row input[type=checkbox] { accent-color: var(--blue); }
+  .legend { display: flex; gap: 6px 14px; flex-wrap: wrap; align-items: center; font-size: 12px; color: var(--text-sub); margin-top: 6px; }
+  .swatch { display: inline-block; vertical-align: middle; width: 20px; height: 0; border-top: 3px solid currentColor; border-radius: 2px; margin-right: 6px; }
+  .swatch.dash { border-top-style: dashed; }
+  .swatch.dot { width: 11px; height: 11px; border: none; border-radius: 50%; background: currentColor; }
+  .swatch.sq { width: 11px; height: 11px; border: none; border-radius: 3px; background: currentColor; }
+  .swatch.ring { width: 11px; height: 11px; border: 2px solid currentColor; border-radius: 50%; }
+  .warn { font-size: 11.5px; color: #b4531a; background: #fdf1e3; border-radius: 6px; padding: 5px 8px; margin-top: 6px; line-height: 1.55; display: none; }
+  .warn.show { display: block; }
+  .chal .q { color: var(--text); }
+  .chal .a { margin-top: 7px; padding: 7px 10px; background: var(--blue-light);
+             border-radius: 6px; color: var(--text); }
+  .chal .a b { color: var(--blue); }
+  .chal .act { margin-top: 8px; }
+  .chal .act button { border: 1px solid var(--border); background: #fff; color: var(--text);
+    padding: 4px 10px; border-radius: 7px; cursor: pointer; font-size: 12px; }
+  .chal .act button:hover { border-color: var(--blue); color: var(--blue); }
+  /* ---- LaTeX 风格数学排版（纯 CSS，无外部库） ---- */
+  .m { font-family: "Cambria Math", "STIX Two Math", "Latin Modern Math", "Times New Roman", Times, serif;
+       font-size: 1.05em; font-style: normal; white-space: nowrap; letter-spacing: .01em; }
+  .m i, .m var { font-style: italic; }
+  .m .rm { font-style: normal; }
+  .m sub, .m sup { font-size: .70em; font-style: normal; line-height: 1; }
+  .m sub { vertical-align: -.28em; }
+  .m sup { vertical-align: .50em; }
+.m .m { font-size: 1em; }   /* 嵌套容器（TEXH 下标转换叠加）不再放大字号 */
+  .m sub i, .m sup i { font-style: italic; }
+  .m .op { font-style: normal; padding: 0 .24em; }
+  .m .sl { font-style: normal; padding: 0 .05em; }
+  .m .un { font-style: normal; padding-left: .16em; }
+  .frac { display: inline-block; vertical-align: -0.52em; text-align: center; margin: 0 .16em; font-size: .86em; line-height: 1.18; }
+  .frac > .num { display: block; padding: 0 .34em; border-bottom: 1px solid currentColor; }
+  .frac > .den { display: block; padding: 0 .34em; }
+  /* ---- 挑战卡 ---- */
+  .chal-wrap { max-width: 1500px; margin: 14px auto 0; }
+  .chal-bar { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+  .chal-bar b { font-size: 14.5px; }
+  .chal-bar span { font-size: 12px; color: var(--text-sub); }
+  .chal-grid { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+  .chal { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 8px 12px; }
+  .chal-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; cursor: pointer; }
+  .chal-head b { font-size: 13.5px; }
+  .chal-head .chev { color: var(--text-sub); font-size: 12px; transition: transform .15s; display: inline-block; }
+  .chal.open .chal-head .chev { transform: rotate(90deg); }
+  .chal.open { border-color: var(--blue); }
+  .chal-body { display: none; margin-top: 6px; font-size: 12.5px; color: var(--text-sub); line-height: 1.75; }
+  .chal.open .chal-body { display: block; }
+  .chal-body .ans { display: none; margin-top: 6px; padding: 7px 10px; background: var(--blue-light); border-radius: 6px; color: var(--text); }
+  .chal-body .ans.show { display: block; }
+  .chal-body .ans b { color: var(--blue); }
+  .chal-body .btn-row { margin-top: 8px; }
+  @media (max-width: 1100px) {
+    .layout { flex-direction: column; }
+    .viz { flex: 1 1 auto; width: 100%; }
+  }
+  /* ---- 课程页脚 ---- */
+  .site-foot { max-width: 1500px; margin: 18px auto 0; padding: 12px 16px 24px;
+    border-top: 1px solid var(--border); color: var(--text-sub);
+    font-size: 12.5px; line-height: 1.8; text-align: center; }
+  .site-foot a { color: var(--blue, #1976d2); text-decoration: none; }
+  .site-foot a:hover { text-decoration: underline; }
+  .sqrt > .rdc, .sqrt .rdc { display: inline-block; position: static; font-size: 1em;
+             border-top: .055em solid currentColor; padding: .06em .12em 0 .10em; margin: 0; line-height: 1; }
+
+  /* 公式排版：分式 / 根式 —— 全站统一为「回旋共振 v06」写法（置于末尾，覆盖本文件早期变体） */
+  .frac { display: inline-block; vertical-align: -0.52em; text-align: center; font-size: .78em; margin: 0 .12em; }
+  .frac > .num, .frac .num { display: block; padding: 0 .22em; border-bottom: .055em solid currentColor; line-height: inherit; }
+  .frac > .den, .frac .den { display: block; padding: 0 .22em; line-height: inherit; }
+  .sqrt { display: inline-block; white-space: nowrap; vertical-align: baseline; margin: 0; font-size: 1em; }
+  .sqrt > .rd, .sqrt .rd { display: inline-block; position: static; font-size: 1em; line-height: inherit; padding: 0 .02em 0 0; margin: 0; }
+  .sqrt > .rdc, .sqrt .rdc { display: inline-block; position: static; font-size: 1em;
+             border-top: .055em solid currentColor; padding: .06em .12em 0 .10em; margin: 0; line-height: 1; }
+  .sqrt .rdc:has(sup) { padding-top: .18em; }
+</style>
+</head>
+<body>
+
+<header>
+  <button id="langBtn" class="lang-btn" data-noi18n title="中文 / English">EN</button>
+  <h1><span class="m"><i>k</i></span> 空间等能面与态密度交互教学工具</h1>
+  <div class="formula"><span class="m"><i>k</i><span class="op">=</span><span class="frac"><span class="num">2<i>π</i></span><span class="den"><i>L</i></span></span>(<i>n<sub>x</sub></i>, <i>n<sub>y</sub></i>, <i>n<sub>z</sub></i>)　·　<i>E</i>(<i>k</i>)　·　<i>g</i>(<i>E</i>)<span class="op">=</span><span class="frac"><span class="num">d<i>N</i></span><span class="den">d<i>E</i></span></span>　·　<i>E</i><span class="op">&lt;</span><i>E<sub>F</sub></i></span> 全占据</div>
+</header>
+<div class="sub-note">
+  有限晶体 → <span class="m"><i>k</i></span> 点离散化（间距 <span class="m">2<i>π</i><span class="sl">/</span><i>L</i></span>）→ 费米面（= 能量为 <span class="m"><i>E</i><sub>F</sub></span> 的等能面，面内全占据）→ 态密度 <span class="m"><i>g</i>(<i>E</i>)</span> → 维度效应（3D / 2D / 1D）　<b>全图为示意图：长度单位 <span class="m"><i>Δk</i></span>，能量单位 <span class="m"><i>E</i><sub>1</sub></span></b>
+</div>
+
+<div class="layout">
+  <!-- ============ 左侧：k 空间 ============ -->
+  <div class="viz">
+    <div class="card">
+      <div class="sec-title"><span class="mtag">模块一</span><span class="m"><i>k</i></span> 空间与费米面（示意图）</div>
+      <div class="chart-wrap"><canvas id="k3d" data-h="430" tabindex="0"></canvas></div>
+      <div class="legend" id="legend3d"></div>
+      <div class="hint">两图视角联动：拖动任意一幅，两幅一起旋转 · 滚轮缩放 · 右键拖动平移 · 方向键旋转 · 悬停 <span class="m"><i>k</i></span> 点查看格点坐标与占据状态</div>
+    </div>
+
+    <div class="card">
+      <div class="sec-title"><span class="mtag">模块二</span><span class="m"><i>k</i></span> 空间二维截面（<span class="m"><i>k<sub>z</sub></i><span class="op">=</span>0</span> 平面，示意）</div>
+      <div class="chart-wrap"><canvas id="ksec" data-h="320" tabindex="0"></canvas></div>
+      <div class="hint" id="secHint"></div>
+    </div>
+  </div>
+
+  <!-- ============ 右侧：控制 / 态密度 ============ -->
+  <div class="side">
+    <div class="card">
+      <div class="sec-title">控制面板</div>
+
+      <div class="ctrl">
+        <div class="ctrl-head"><span>维度</span><span class="val" id="dimVal">3D</span></div>
+        <div class="mode-switch" id="dimBtns"></div>
+        <div class="sub" id="dimSub"></div>
+      </div>
+
+      <div class="ctrl">
+        <div class="ctrl-head"><span>填充水平（费米半径 <span class="m"><i>k</i><sub>F</sub></span>）</span><span class="val" id="fillVal">—</span></div>
+        <input type="range" id="fillSlider" min="0" max="1000" step="1" value="500">
+        <div class="sub" id="fillSub"></div>
+      </div>
+
+      <div class="ctrl">
+        <div class="ctrl-head"><span>显示项目</span></div>
+        <div class="chk-row">
+          <label><input type="checkbox" id="ckPts" checked> <span class="m"><i>k</i></span> 点</label>
+          <label><input type="checkbox" id="ckFermi" checked> 费米面</label>
+          <label><input type="checkbox" id="ckCells" checked> <span class="m"><i>Δk</i></span> 晶胞</label>
+        </div>
+      </div>
+
+      <div class="ctrl">
+        <div class="ctrl-head"><span>视角</span></div>
+        <div class="btn-row tight">
+          <button id="resetView">重置视角</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="sec-title"><span class="mtag">模块三</span>态密度 <span class="m"><i>g</i>(<i>E</i>)</span>（示意）</div>
+      <div class="chart-wrap"><canvas id="dos" data-h="300" tabindex="0"></canvas></div>
+      <div class="hint" id="dosHint"></div>
+      <div class="legend" id="legendDos"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ============ 底部：引导探究 ============ -->
+<div class="chal-wrap">
+  <div class="card">
+    <div class="chal-bar">
+      <b>引导探究（点击展开，先自己试一试再看答案）</b>
+      <span>挑战任务</span>
+    </div>
+    <div class="chal-grid" id="chalGrid"></div>
+  </div>
+</div>
+
+<script>
+/* ==================================================================
+   i18n（C1 单文件双语：物理代码仍然只有一份）
+   LANG 取值优先级：URL ?lang=en / ?lang=zh  >  localStorage('opl_lang')  >  默认中文。
+   不做 location 跳转——保住「单文件拷走也能用」。
+   三个注入点，**业务字符串一个都不改**：
+     ① partsOf()   画布 token：带 i/sub/sup/un 标记的是物理量、下标与单位，跳过
+     ② fillText/measureText 原型挂钩：兜住直接写进画布的中文串
+     ③ DOM 文本节点：静态 HTML 与 JS 写进来的 innerHTML，用 MutationObserver 兜住新增节点
+   T() 先查整句词典，未命中再按「最长优先」做短语替换，因此拼接串也能翻。
+   漏翻会被记进 window.__MISS，可导出核对。 */
+var LANG = (function () {
+  var m = /[?&]lang=([a-zA-Z]+)/.exec(location.search);
+  var q = m ? m[1].toLowerCase() : "";
+  if (q === "en" || q === "zh") return q;
+  var s = "";
+  try { s = localStorage.getItem("opl_lang") || ""; } catch (e) { }
+  return (s === "en" || s === "zh") ? s : "zh";
+})();
+var ORIG_TITLE = document.title;
+var __MISS = [];
+try { window.__MISS = __MISS; } catch (e) { }
+function noteMiss(s) { if (__MISS.indexOf(s) < 0) __MISS.push(s); }
+function TSoft(s) {
+  if (!T._K) T._K = Object.keys(I18N).sort(function (a, b) { return b.length - a.length; });
+  var out = s, i, k, orig = s;
+  /* 两遍：第一遍只吃长度 ≥ 2 的短语；第二遍的单字 key 只在「传进来的串
+     恰好就是这一个字」时才上场——画布逐字排版会拿单字去 measureText，那一
+     路必须翻。反过来，绝不让单字 key 去切更长的句子：否则「导」「子」「原」
+     会把「半导体」「电子数」「泡利原理」切成半 conduction 体、电 quantum 数、
+     泡利 origin 理这类中英混排。同一条理由也适用于「下」：整句不该被切碎。 */
+  for (var pass = 0; pass < 2; pass++) {
+    for (i = 0; i < T._K.length; i++) {
+      k = T._K[i];
+      if (k.length < 2 && (pass === 0 || orig !== k)) continue;
+      if (out.indexOf(k) < 0) continue;
+      /* 中文片段之间没有空格：前一片段已翻成英文时，本片段英文直连进去会粘连
+         （「更深」「或」「更浅」逐段替换成 deeper、or、shallower 会拼出 deeperor），
+         所以替换时看上下文：key 以中文开头、前一字符已是英文 ⇒ 前面补一个空格。 */
+      out = out.replace(new RegExp(k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "g"), function (m, off, str) {
+        var v = I18N[k];
+        var pre = off > 0 ? str.charAt(off - 1) : "";
+        if (/[A-Za-z0-9]/.test(pre) && /^[A-Za-z0-9(]/.test(v) && /[\u3400-\u9FFF]/.test(k.charAt(0))) v = " " + v;
+        return v;
+      });
+    }
+  }
+  return out;
+}
+/* 同一句被 DOM 切成好几个文本节点时，首尾空格会随机落在 data 里；
+   所以除了「整句命中」，再试一次「去空格后命中」并原样补回首尾空白。 */
+function trimMap() {
+  if (T._TM) return T._TM;
+  var m = {};
+  for (var k in I18N) if (Object.prototype.hasOwnProperty.call(I18N, k)) {
+    var t = k.replace(/^\s+|\s+$/g, "");
+    if (t && m[t] === undefined) m[t] = I18N[k];
+  }
+  T._TM = m;
+  return m;
+}
+/* eslint-disable no-use-before-define */
+function T(s) {
+  if (LANG !== "en" || typeof s !== "string" || !s) return s;
+  if (!/[一-鿿]/.test(s)) return s;
+  if (Object.prototype.hasOwnProperty.call(I18N, s)) return I18N[s];
+  var tm = trimMap(), core = s.replace(/^\s+|\s+$/g, "");
+  if (core && tm[core] !== undefined) {
+    var lead = s.slice(0, s.length - s.replace(/^\s+/, "").length);
+    var tail = s.slice(s.replace(/\s+$/, "").length);
+    return lead + tm[core] + tail;
+  }
+  var v = TSoft(s);
+  /* 译完还剩汉字也算漏翻：只翻掉一半的「半吊子译文」曾经让 __MISS 恒为 0。 */
+  if (v === s || /[\u3400-\u9FFF]/.test(v)) noteMiss(s);
+  return v;
+}
+var I18N = {
+  /* ---- 词典：中文原文 → 英文。key 禁含运行时数字（换个参数就漏），数字前后要拆开 ---- */
+  "k 空间等能面与态密度交互教学工具": "Constant-Energy Surfaces and Density of States in k-Space — Interactive Toolkit",
+  " 空间等能面与态密度交互教学工具": " -space: Constant-Energy Surfaces and Density of States — Interactive Toolkit",
+  "（示意间距）": " (spacing schematic)",
+  "① 完整费米球": "① The complete Fermi sphere",
+  "完整费米球": "Complete Fermi sphere",
+  " 空间示意 · 每格 = 1 个允许的 ": " space, schematic · 1 cell = 1 ",
+  " 态": " state",
+  "空间示意": "space, schematic",
+  "每格": "Each cell",
+  "个允许的": " allowed",
+  "态": "states",
+  "② 1/8 球壳（+": "② One eighth of the shell (+",
+  "球壳（": "Shell (",
+  "那一卦）": " octant)",
+  " = 0 截面　·　1 格 = ": " = 0 section　·　1 cell = ",
+  "截面　": "section　",
+  "格": "cells",
+  "（单位 ": " (in units of ",
+  "（单位": " (units",
+  ")　相对单位（曲线下面积 = 态的份额）": ")　in relative units (the area under the curve = the share of states)",
+  "　相对单位（曲线下面积": "　relative units (area under the curve",
+  "态的份额）": " = share of states)",
+  " 全占据": " fully occupied",
+  "\n  有限晶体 → ": "\n  A finite crystal → ",
+  " 点离散化（间距 ": " points become discrete (spacing ",
+  "）→ 费米面（= 能量为 ": ") → the Fermi surface (the constant-energy surface at ",
+  " 的等能面，面内全占据）→ 态密度 ": ", fully occupied inside) → the density of states ",
+  " → 维度效应（3D / 2D / 1D）　": " → dimensional effects (3D / 2D / 1D)　",
+  "全图为示意图：长度单位 ": "The whole figure is schematic: the unit of length is ",
+  "，能量单位 ": " and the unit of energy ",
+  "模块一": "Module 1",
+  " 空间与费米面（示意图）": " space and the Fermi surface (schematic)",
+  "已占据 ": "Occupied ",
+  " 点（": " points (",
+  "空 ": "Empty ",
+  "费米面（": "Fermi surface (",
+  " 的等能面，面内全占据）": " — the constant-energy surface, fully occupied inside)",
+  " 晶胞（": " cells (",
+  " 第一层 · 整格不越出费米球）": " first layer · whole cells inside the Fermi sphere)",
+  "1/8 球壳（右图：": "1/8 of the shell (right: ",
+  " 轴": " axis",
+  "Γ 点（": "The Γ point (",
+  "两图视角联动：拖动任意一幅，两幅一起旋转 · 滚轮缩放 · 右键拖动平移 · 方向键旋转 · 悬停 ": "The two views are linked: drag either one and both rotate together · wheel to zoom · right-drag to pan · arrow keys to rotate · hover a ",
+  " 点查看格点坐标与占据状态": " point to read its coordinates and whether it is occupied",
+  "模块二": "Module 2",
+  " 空间二维截面（": " space, a two-dimensional section (the ",
+  " 平面，示意）": " plane, schematic)",
+  "蓝点为已占据态（": "Blue dots are occupied states (",
+  "），空心点为未占据；1 格 = ": "), open circles are empty ones; one cell = ",
+  "，费米圆内部全满、外部全空。": ", and the Fermi circle is full inside and empty outside.",
+  "控制面板": "Control Panel",
+  "维度": "Dimensionality",
+  "三维体材料：": "Three-dimensional bulk: ",
+  " 空间三维，每个 ": " space is three-dimensional, every ",
+  " 态占体积 ": " state occupies a volume ",
+  "，等能面为球面。": ", and the constant-energy surfaces are spheres.",
+  "填充水平（费米半径 ": "Filling level (Fermi radius ",
+  "决定费米半径 ": " sets the Fermi radius ",
+  " 与费米能 ": " and the Fermi energy ",
+  "；费米面以内（": "; inside the Fermi surface (",
+  "）的 ": ") every ",
+  " 态全部占据、以外全空。": " state is occupied, outside it all are empty.",
+  "显示项目": "Display",
+  " 点": " points",
+  " 费米面": " Fermi surface",
+  " 晶胞": " cells",
+  "视角": "View",
+  "重置视角": "Reset view",
+  "模块三": "Module 3",
+  "态密度 ": "Density of states ",
+  "（示意）": " (schematic)",
+  "点击图上任意位置即把费米能取到该处，": "Click anywhere on the plot to set the Fermi energy there; the ",
+  " 空间中的费米面随即胀缩；曲线形状只由维度决定 —— 三者统一写成 ": " Fermi surface grows or shrinks at once; the shape of the curve depends only on dimensionality — all three are written as ",
+  "，即 3D ": ", namely in 3D ",
+  "、2D 常数、1D ": ", a constant in 2D and ",
+  "，不随填充水平改变（3D ": ", and none of them changes with the filling level (in 3D ",
+  "（形状只由维度决定，不随填充改变）": " (the shape depends only on dimensionality, not on filling)",
+  "费米能级 ": "Fermi level ",
+  "已占据的态（": "Occupied states (",
+  "，面积 = 占据份额）": "; the area is the occupied fraction)",
+  "引导探究（点击展开，先自己试一试再看答案）": "Guided inquiry (click to expand — try it yourself before opening the answers)",
+  "挑战任务": "Challenges",
+  "查看答案": "Show answer",
+  "收起答案": "Hide answer",
+  "挑战一 · ": "Challenge 1 · ",
+  " 点为什么是离散的": " points: why are they discrete?",
+  "为什么 ": "Why is ",
+  " 空间不是连续的？图中的一格代表什么？若晶体尺寸 ": " space not continuous? What does one cell of the figure stand for? If the crystal size ",
+  " 加倍，同样大小的费米球里能装下多少倍的 ": " is doubled, how many times more ",
+  " 态？": " states fit into a Fermi sphere of the same size?",
+  "周期边界条件要求 ": "Periodic boundary conditions require ",
+  "，于是 ": ", so ",
+  " 空间被切成间距 ": " space is cut into cells of spacing ",
+  " 的格子，": ", and ",
+  "每一格就是一个允许的 ": "each cell is one allowed ",
+  " 态（容纳 2 个电子，自旋 ↑↓）。本图把这一格画成 1 个单位长度。": " state (holding 2 electrons, spin ↑↓). In this figure that cell is drawn as one unit of length.",
+  " 加倍 → ": " doubled → ",
+  " 减半 → 同样半径的球内格点数变为 ": " halved → the number of cells inside a sphere of the same radius becomes ",
+  " 倍；": " times; ",
+  " 时 ": " , ",
+  " 趋于连续，求和 ": " tends to a continuum and the sum ",
+  " 也就过渡为积分 ": " turns into the integral ",
+  " —— 这正是固体物理里那个替换项的来历。": " — which is where that replacement rule of solid-state physics comes from.",
+  "挑战二 · 费米面与填充": "Challenge 2 · The Fermi surface and filling",
+  "拖动「填充水平」滑块，看 ": "Drag the “filling level” slider and watch how ",
+  "、已占据格点数、": ", the number of occupied cells and ",
+  " 曲线下的阴影面积三者如何一起变化。": " the shaded area under the curve all change together.",
+  "填充水平是唯一的自由度，它给出费米半径 ": "The filling level is the only degree of freedom; it gives the Fermi radius ",
+  "（图中以 ": " (measured in the figure in units of ",
+  " 计）。": ").",
+  " 增大 → 费米面胀大 → ": " grows → the Fermi surface swells → ",
+  "球内格点数 ": " the number of cells inside the sphere goes as ",
+  "（3D 立方增长、2D 平方增长、1D 线性增长）；同时 ": " (cubic growth in 3D, quadratic in 2D, linear in 1D); at the same time ",
+  " 增大，": " grows and ",
+  " 图左侧被填充的阴影同步变宽。": " the filled shading on the left of the plot widens in step.",
+  "面内（": "Inside the surface (",
+  "）全占据、面外全空——这就是 ": ") everything is occupied, outside it everything is empty — that is the ",
+  " 的费米海。": " Fermi sea.",
+  "挑战三 · 费米面与态密度": "Challenge 3 · Fermi surface and density of states",
+  " 曲线下面的面积代表什么？为什么拖动填充水平时，曲线本身一动不动？": " What does the area under the curve stand for? Why does the curve itself not move at all when you drag the filling level?",
+  "曲线下的面积就是已占据态的份额（本图把 ": "The area under the curve is the share of occupied states (this figure normalises ",
+  " 归一到 ": " to ",
+  "，它与模块一里实心的 ": ", which cross-checks against the fraction of filled ",
+  " 点所占的比例互相印证": " points in module 1",
+  "；1D 的 ": "; in 1D the ",
+  " 在 ": " diverges at ",
+  " 处发散，紧贴纵轴的那一小段必然被图幅截断，图上读到的面积会比理论值小几个百分点）。": " , so the short stretch next to the vertical axis is necessarily cut off by the frame, and the area read off the figure is a few percent below the theoretical value).",
+  " 只由维度决定：它是 ": " depends only on dimensionality: it is the volume of the constant-energy shell in ",
+  " 空间等能壳层的体积除以 ": " space divided by ",
+  "，与电子填到哪里无关；": ", and has nothing to do with how far the electrons fill it; ",
+  "填充只移动 ": "filling only moves the ",
+  " 那条竖线和它左侧的阴影，曲线本身当然不动。": " vertical line and the shading to its left — the curve itself of course stays put.",
+  "挑战四 · 维度对态密度的影响": "Challenge 4 · How dimensionality shapes the density of states",
+  "切换 3D、2D、1D，对比 ": "Switch between 3D, 2D and 1D and compare the shape of ",
+  " 的形状。为什么 3D 是 ": ". Why is 3D ",
+  "、2D 是常数、1D 是 ": ", 2D a constant and 1D ",
+  "？": "?",
+  "关键是等能「壳层」的度量随 ": "The key is how the measure of the constant-energy “shell” grows with ",
+  " 怎么长：": " : ",
+  " = 壳层度量 ": " = shell measure ",
+  "，而 ": ", while ",
+  " 总是给出 ": " always gives ",
+  "：3D 壳层面积 ": ": in 3D the shell area goes as ",
+  "，相除后剩一个 ": " and after division one ",
+  "，得 ": " remains, giving ",
+  "（从带边平滑上升）；2D 的壳层是周长 ": " (rising smoothly from the band edge); in 2D the shell is the perimeter ",
+  "，恰好被 ": " , which is exactly cancelled by ",
+  " 完全抵消，于是 ": ", so that ",
+  " 是与能量无关的常数（阶梯）；1D 只剩 ": " is a constant independent of energy (a staircase); in 1D only ",
+  " 两个点，": " two points remain, so ",
+  "，越靠近带边涨得越快——这是维度降低最直观的后果。": " — the closer to the band edge, the faster it rises: the most visible consequence of lowering the dimensionality.",
+  "挑战五 · 费米能随填充的标度": "Challenge 5 · Scaling of the Fermi energy with filling",
+  "占据的 ": "When the number of occupied ",
+  " 态数变成 8 倍时，": " states is multiplied by 8, by what factor does ",
+  " 变成几倍？分别在 3D、2D、1D 里数一数，找出 ": " change? Count it out in 3D, 2D and 1D and find the ",
+  " 中的 ": " in ",
+  "。": ".",
+  "格点计数给出 ": "Counting cells gives ",
+  "；又 ": ", and since ",
+  "，故 ": ", so ",
+  "：3D 是 ": ": in 3D it is ",
+  "（8 倍态 → 4 倍 ": " (8 times the states → 4 times ",
+  "）、2D 是 ": "), in 2D ",
+  "（8 倍）、1D 是 ": " (8 times) and in 1D ",
+  "（64 倍）。数一数模块一里实心的 ": " (64 times). Counting the filled ",
+  " 点即可验证。这就是低维体系对掺杂极度敏感的原因：同样多的注入电子，在量子线里引起的费米能移动要比体材料大一个数量级。": " points in module 1 verifies this. That is why low-dimensional systems are so sensitive to doping: the same number of injected electrons shifts the Fermi energy by an order of magnitude more in a quantum wire than in a bulk material.",
+  "，": ", ",
+  "、": ", ",
+  "：": ": ",
+  "；": "; ",
+  "（": " (",
+  "）": ")",
+  "本工具是 EIT-SP（半导体物理交互式教学工具箱）的一部分（武汉大学物理学院《半导体物理》智慧课程），以 MIT 协议开源，可自由使用与二次开发；转载请保留出处。": "This tool is part of EIT-SP, the Educational Interactive Toolkit for Semiconductor Physics (School of Physics and Technology, Wuhan University). Released under the MIT licence: free to use, modify and redistribute, including commercially. Please keep this attribution.",
+  "反馈意见": " Feedback",
+  "第一象限 ": "first quadrant ",
+  "个完整格（整格不越出费米圆）": " complete cells (no cell crosses the Fermi circle)",
+  "第一象限": "first quadrant",
+  "格（连续近似，略多一圈边界）": " cells (continuum approximation, roughly one extra boundary ring)",
+  " = 常数（与 ": " = constant (independent of ",
+  " 无关）　〔": ")　[",
+  "常数（与": "constant (independent of ",
+  "无关）　〔": ")　[",
+  "二维电子气：": "2D electron gas: ",
+  " 冻结，": " frozen, ",
+  " 空间退化为 ": " space collapses onto a ",
+  " 平面，等能面退化为圆。": " plane, and the constant-energy surface becomes a circle.",
+  " 晶胞（第一象限 · 整格不越出费米圆，随 ": " cells (first quadrant · whole cells only, following ",
+  " 胀缩）": " as it grows or shrinks)",
+  "每级台阶 = 一个允许的 ": "Each step = one allowed ",
+  " 态（容纳 ": " state (holding ",
+  "个电子），台阶间距 = ": " electrons), step spacing = ",
+  "每级台阶": "Each step",
+  "（容纳": " (holding ",
+  "个电子），台阶间距": " electrons), step spacing",
+  "一维量子线：只有 ": "1D quantum wire: only ",
+  " 方向自由，": " is free, ",
+  " 空间退化为一条直线，等能「面」只剩 ": " space collapses to a straight line, and the constant-energy \"surface\" is only ",
+  " 两个点。": " two points.",
+  "一维能带 ": "1D band ",
+  "：每根竖线是一个允许的 ": ": each vertical line is one allowed ",
+  " 态（顶端小圆点，实心为已占据，每态容纳 ": " state (the dot on top is solid when occupied; each state holds ",
+  "个电子，自旋 ↑↓），台阶间距 ": " electrons, spin ↑↓), step spacing ",
+  "，电子填到 ": ", electrons fill up to ",
+  " 为止。": ".",
+  " 晶胞（正 ": " cells (the two neighbouring cells on the positive ",
+  " 轴上的相邻两格）": " axis)",
+};
+
+/* 注入点②：画布直写字符串。老工具直接调 g.fillText()，这里在原型上兜住。
+   measureText 必须一起挂钩，否则「量的宽度」和「量的文字」用的不是同一个串。 */
+(function () {
+  if (typeof CanvasRenderingContext2D === "undefined") return;
+  var ft = CanvasRenderingContext2D.prototype.fillText;
+  CanvasRenderingContext2D.prototype.fillText = function (s, x, y) {
+    if (typeof s === "string") arguments[0] = T(s);
+    return ft.apply(this, arguments);
+  };
+  var mt = CanvasRenderingContext2D.prototype.measureText;
+  CanvasRenderingContext2D.prototype.measureText = function (s) {
+    return mt.call(this, typeof s === "string" ? T(s) : s);
+  };
+})();
+
+/* 注入点④：逐字绘制的画布串。drawMath 一类把中文按单字拆成 token 再逐个 fillText，
+   T() 每次只见到一个汉字 ⇒ 整句词条永远命中不了。这里在整串进入分词之前先整体翻译，
+   于是画布标注也走「整句优先」，与 DOM 同一个口径。没有这些函数的工具自动跳过。
+   ⚠️ 签名坑：drawMath / measureMath 的第一个参数是 canvas context（对象），文本在第
+   二位；早期版本照着 arguments[0] 翻，等于把 context 送去 T()，补丁全程空转。
+   这里改为「找到第一个含中文的字符串参数」再翻，既躲开 context，也不会误伤
+   align / weight 之类以英文字符串传的选项。 */
+(function () {
+  ["drawMath", "drawMathHalo", "measureMath"].forEach(function (n) {
+    var f = window[n];
+    if (typeof f !== "function") return;
+    window[n] = function () {
+      for (var i = 0; i < arguments.length; i++) {
+        if (typeof arguments[i] === "string" && /[\u3400-\u9FFF]/.test(arguments[i])) {
+          arguments[i] = T(arguments[i]);
+          break;
+        }
+      }
+      return f.apply(this, arguments);
+    };
+  });
+})();
+
+
+/* ---- DOM 文本节点 ---- */
+function i18nNode(n) {
+  var el = n.parentElement;
+  if (!el) return;
+  var tag = el.tagName;
+  if (tag === "SCRIPT" || tag === "STYLE") return;
+  if (el.closest && el.closest("[data-noi18n]")) return;
+  var cur = n.nodeValue;
+  if (n.__orig === undefined || (cur !== n.__last && cur !== n.__orig)) n.__orig = cur;
+  var want = LANG === "en" ? T(n.__orig) : n.__orig;
+  if (want !== cur) n.nodeValue = want;
+  n.__last = want;
+}
+/* 属性（title / placeholder / optgroup label …）不是文本节点，MutationObserver 覆盖不到，
+   必须单独过一遍：否则悬停提示、下拉分组名会残留中文。原文缓存在元素 expando 上，
+   切回中文时原样写回。改属性不会触发 childList/characterData 观察器，不会递归。 */
+var I18N_ATTRS = ["title", "placeholder", "aria-label", "alt", "label"];
+function i18nAttrs(root) {
+  var els = [root], i, j;
+  if (root.querySelectorAll) els = els.concat(Array.prototype.slice.call(root.querySelectorAll("*")));
+  for (i = 0; i < els.length; i++) {
+    var el = els[i];
+    if (!el.getAttribute) continue;
+    if (el.closest && el.closest("[data-noi18n]")) continue;
+    for (j = 0; j < I18N_ATTRS.length; j++) {
+      var a = I18N_ATTRS[j];
+      if (!el.hasAttribute(a)) continue;
+      var key = "__a_" + a;
+      if (el[key] === undefined) el[key] = el.getAttribute(a);
+      var want = LANG === "en" ? T(el[key]) : el[key];
+      if (want !== el.getAttribute(a)) el.setAttribute(a, want);
+    }
+  }
+}
+/* 英文补空格（跨节点）：中文片段被行内标签切开时，各自翻成英文后直连会粘连。
+   判定用 DOM 结构而不是渲染矩形——折叠区（挑战答案）矩形为零，矩形法会漏。
+   两文本节点在文档序里紧邻（中间没有任何文本节点，包括空格节点）、
+   前段末尾与后段开头都是字母、双方词条都没自带空格、且不在上下标里 ⇒ 插一个空格。
+   空格节点记录在案，切回中文时移除。只动 i18n 注入层，不改业务文本。 */
+function fixGlue(root) {
+  var all = [];
+  var w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null, false), n;
+  while ((n = w.nextNode())) all.push(n);
+  function subbed(el) {
+    while (el) { var t = el.tagName; if (t === "SUB" || t === "SUP") return true; el = el.parentElement; }
+    return false;
+  }
+  for (var i = 0; i + 1 < all.length; i++) {
+    var a = all[i], b = all[i + 1];
+    if (!a.nodeValue || !b.nodeValue) continue;
+    if (/\s$/.test(a.nodeValue) || /^\s/.test(b.nodeValue)) continue;
+    if (!/[A-Za-z0-9]$/.test(a.nodeValue) || !/^[A-Za-z]/.test(b.nodeValue)) continue;
+    var pa = a.parentElement, pb = b.parentElement;
+    if (!pa || !pb || subbed(pa) || subbed(pb)) continue;
+    var sp = document.createTextNode(" ");
+    sp.__glue = 1;
+    (fixGlue._n = fixGlue._n || []).push(sp);
+    b.parentNode.insertBefore(sp, b);
+  }
+}
+function removeGlue() {
+  if (!fixGlue._n) return;
+  for (var i = 0; i < fixGlue._n.length; i++) { var g = fixGlue._n[i]; if (g.parentNode) g.parentNode.removeChild(g); }
+  fixGlue._n = [];
+}
+/* 全局防抖补空格：挑战答案这类「点击时才重建」的区域，observer 回调里对子树跑
+   fixGlue 的时机不全（答案重写、延迟渲染都会错过）。任何 DOM 变更后 60ms
+   对整页补一次；空格本身不触发新插入，收敛。 */
+var _glueTimer = null;
+function _glueKick() {
+  if (LANG !== "en") return;
+  if (_glueTimer) clearTimeout(_glueTimer);
+  _glueTimer = setTimeout(function () {
+    _glueTimer = null;
+    if (LANG === "en") fixGlue(document.body);
+  }, 60);
+}
+function i18nWalk(root) {
+  var w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null, false), n, c = 0;
+  while ((n = w.nextNode())) { i18nNode(n); c++; }
+  i18nAttrs(root);
+  if (LANG === "en") fixGlue(root === document ? document.body : root);
+  return c;
+}
+var _i18nBusy = false;
+function i18nWatch() {
+  if (typeof MutationObserver === "undefined") return;
+  var mo = new MutationObserver(function (ms) {
+    if (_i18nBusy) return;
+    _i18nBusy = true;
+    try {
+      for (var i = 0; i < ms.length; i++) {
+        var m = ms[i];
+        if (m.type === "childList") {
+          for (var j = 0; j < m.addedNodes.length; j++) {
+            var nd = m.addedNodes[j];
+            if (nd.nodeType === 3) i18nNode(nd);
+            else if (nd.nodeType === 1) i18nWalk(nd);
+          }
+        } else if (m.type === "characterData") i18nNode(m.target);
+      }
+    } finally { _i18nBusy = false; }
+    _glueKick();
+  });
+  mo.observe(document.body, { childList: true, subtree: true, characterData: true });
+}
+function setLang(l) {
+  LANG = l;
+  try { localStorage.setItem("opl_lang", l); } catch (e) { }
+  document.documentElement.lang = l === "en" ? "en" : "zh-CN";
+  var btn = document.getElementById("langBtn");
+  if (btn) btn.textContent = l === "en" ? "中文" : "EN";
+  document.title = l === "en" ? T(ORIG_TITLE) : ORIG_TITLE;
+  if (l !== "en") removeGlue();
+  i18nWalk(document.body);
+  _glueKick();
+  if (typeof syncInputs === "function") syncInputs();
+  if (typeof render === "function") render();
+}
+"use strict";
+
+
+
+
+/* ---------------- 直接 fillText / strokeText 的自动排版钩子 ----------------
+   有些标注不走 txt() 而是直接 g.fillText()（状态徽标、能带边等），
+   这里在原型层统一处理：含数学记法的字符串先按 LaTeX 规则拆段再绘制，
+   measureText 同步返回拆段总宽，白底框长度自动跟着变。 */
+const NEED_MATH_HM = /[\u2070-\u209C\u00B2\u00B3\u00B9]|_\{?[A-Za-z0-9\u0370-\u03ff]|\^\{?[\d(\-]|\d(\.\d+)?[eE][+\-]\d|\u221A/;
+/* 原生 measureText：mathSegsHM 内部量宽必须走这一条，
+   否则 measureText 被钩子接管后会 self-recursion（RangeError）。 */
+var _mRawHM = null;
+function measureRawHM(g, s) { return (_mRawHM ? _mRawHM : g.measureText).call(g, s).width; }
+function mathSegsHM(g, s) {
+  const f = String(g.font || "");
+  const mm = /(\d+(?:\.\d+)?)px/.exec(f);
+  const size = mm ? parseFloat(mm[1]) : 12;
+  const family = f.replace(/^(?:\s*(?:italic|oblique|bold|[1-9]00)\s*)*\d+(?:\.\d+)?px\s*/, "");
+  const style = /italic|oblique/.test(f) ? "italic " : (/bold|[6-9]00/.test(f) ? "bold " : "");
+  const parts = AUTO(s), laid = [];
+  let w = 0;
+  for (const p of parts) {
+    const small = !!(p.sup || p.sub);
+    const fs = style + (small ? (size * 0.74).toFixed(2) : size.toFixed(2)) + "px " + family;
+    g.font = fs;
+    const tw = measureRawHM(g, p.s);
+    laid.push({ s: p.s, w: tw, fs: fs, dy: small ? (p.sup ? -size * 0.40 : size * 0.22) : 0 });
+    w += tw;
+  }
+  return { laid: laid, w: w, family: family, style: style, size: size };
+}
+(function hookMathHM() {
+  if (window.__MATH_HOOK) return; window.__MATH_HOOK = 1;
+  const P = CanvasRenderingContext2D.prototype;
+  const _fill = P.fillText, _stroke = P.strokeText, _measure = P.measureText;
+  function draw(drawRaw, g, s, x, y, rest) {
+    const info = mathSegsHM(g, s);
+    const al = g.textAlign, bl = g.textBaseline;
+    const cx = al === "right" ? x - info.w : (al === "center" ? x - info.w / 2 : x);
+    g.textAlign = "left";
+    let px = cx;
+    for (const L of info.laid) {
+      g.font = L.fs;
+      drawRaw.call(g, L.s, px, y + L.dy, ...rest);
+      px += L.w;
+    }
+    g.textAlign = al; g.textBaseline = bl;
+    g.font = info.style + info.size.toFixed(2) + "px " + info.family;
+    return info;
+  }
+  P.fillText = function (s, x, y) {
+    if (typeof s !== "string" || !NEED_MATH_HM.test(s)) return _fill.apply(this, arguments);
+    draw(_fill, this, s, x, y, Array.prototype.slice.call(arguments, 3));
+  };
+  P.strokeText = function (s, x, y) {
+    if (typeof s !== "string" || !NEED_MATH_HM.test(s)) return _stroke.apply(this, arguments);
+    draw(_stroke, this, s, x, y, Array.prototype.slice.call(arguments, 3));
+  };
+  if (!_mRawHM) _mRawHM = _measure;
+  P.measureText = function (s) {
+    if (window.__HM_IN || typeof s !== "string" || !NEED_MATH_HM.test(s)) return _measure.call(this, s);
+    window.__HM_IN = 1;
+    const save = this.font;
+    let info;
+    try { info = mathSegsHM(this, s); } finally { window.__HM_IN = 0; }
+    this.font = save;
+    return { width: info.w, get actualBoundingBoxLeft() { return 0; }, get actualBoundingBoxRight() { return info.w; } };
+  };
+})();
+
+/* ---------------- HTML 侧自动 LaTeX 排版 ----------------
+   读数 / 说明 / 按钮名里由 JS 拼出来的 cm⁻³、E_c、2.5e+8，
+   在写进 innerHTML 之前转成真 <sup>/<sub>；标签与属性原样放过（title 不会被塞进尖括号）。
+   与画布侧 AUTO() 对偶，保证网页和画布按同一套规则排版。 */
+const AUTOH_SUP = { "⁰": "0", "¹": "1", "²": "2", "³": "3", "⁴": "4", "⁵": "5", "⁶": "6",
+  "⁷": "7", "⁸": "8", "⁹": "9", "⁺": "+", "⁻": "−", "⁼": "=", "⁽": "(", "⁾": ")", "ⁿ": "n", "ⁱ": "i" };
+const AUTOH_SUB = { "₀": "0", "₁": "1", "₂": "2", "₃": "3", "₄": "4", "₅": "5", "₆": "6",
+  "₇": "7", "₈": "8", "₉": "9", "₊": "+", "₋": "−", "₌": "=", "₍": "(", "₎": ")",
+  "ₐ": "a", "ₑ": "e", "ₒ": "o", "ₓ": "x", "ₔ": "ə", "ₕ": "h", "ₖ": "k", "ₗ": "l",
+  "ₘ": "m", "ₙ": "n", "ₚ": "p", "ₛ": "s", "ₜ": "t", "ᵣ": "r", "ᵤ": "u", "ᵥ": "v" };
+const TEXH_NEED = /[\u2070-\u209C\u00B2\u00B3\u00B9]|_\{?[A-Za-z0-9\u0370-\u03ff]|\^\{?[\d(\-]|\d(\.\d+)?[eE][+\-]\d|\u221A/;
+/* 从 i 处（必须是 '<'）扫出一个"完整元素"的结束下标（含嵌套），失败返回 -1 */
+function TEXH_elemEnd(h, i) {
+  if (h.charAt(i) !== "<") return -1;
+  let depth = 0, j = i, guard = 0;
+  while (j < h.length && guard++ < 4000) {
+    if (h.charAt(j) !== "<") { j++; continue; }
+    const e = TEXH_tagEnd(h, j);
+    if (e < 0) return -1;
+    const isClose = h.charAt(j + 1) === "/";
+    const selfClose = h.charAt(e - 2) === "/";
+    if (isClose) { depth--; j = e; if (depth <= 0) return j; }
+    else if (selfClose) { j = e; if (depth === 0) return j; }
+    else { depth++; j = e; }
+  }
+  return -1;
+}
+/* √ 后面直接跟一个元素：√<i>E</i> → √‾E（前两条规则只吃 √(A) 与 √字母串） */
+function TEXHsqrtElem(s) {
+  let out = "", i = 0, guard = 0;
+  while (guard++ < 400) {
+    const k = s.indexOf("\u221A", i);
+    if (k < 0) break;
+    out += s.slice(i, k);
+    /* 守卫：√ 后面已是闭标签 ⇒ 该 √ 已排版过（对整段 HTML 重复跑 TEXH 会把 </span> 当成被开方式，
+       层层包出空壳根号，视觉上变成 √−3 / √−E），原样输出不再包裹 */
+    if (s.charAt(k + 1) === "<" && s.charAt(k + 2) === "/") { out += "\u221A"; i = k + 1; continue; }
+    let rad = null, end = k + 1;
+    if (s.charAt(k + 1) === "(") {
+      /* √(…) ：被开方式里常有标签，括号本身不在同一个文本片段里，必须整串扫 */
+      let depth = 0, p = k + 1;
+      while (p < s.length) {
+        const c = s.charAt(p);
+        if (c === "(") depth++;
+        else if (c === ")") { depth--; if (depth === 0) { rad = s.slice(k + 2, p); end = p + 1; break; } }
+        p++;
+      }
+    } else {
+      const e = TEXH_elemEnd(s, k + 1);
+      if (e > 0 && e - k < 500) { rad = s.slice(k + 1, e); end = e; }
+    }
+    if (rad !== null && rad.length) {
+      out += "<span class=\"sqrt\"><span class=\"rd\">\u221A</span><span class=\"rdc\">" + rad + "</span></span>";
+      i = end;
+    } else { out += "\u221A"; i = k + 1; }
+  }
+  return out + s.slice(i);
+}
+function TEXHpart(t) {
+  let s = t;
+  /* 根号：√ 或 √(A) → <span class="sqrt">√<span class="rd"><span class="rdc">A</span></span></span>（A 内不含嵌套括号） */
+  s = s.replace(/<span class="(?:op|rm|fn|v|u)">\u221A<\/span>/g, "\u221A");
+  s = s.replace(/\u221A<span class="(?:op|rm)">\(<\/span>([^()]{1,120}?)<span class="(?:op|rm)">\)<\/span>/g, function (m, a) {
+    return "<span class=\"sqrt\"><span class=\"rd\">\u221A</span><span class=\"rdc\">" + a + "</span></span>";
+  });
+  s = s.replace(/\u221A\(([^()]{1,120})\)/g, function (m, a) {
+    return "<span class=\"sqrt\"><span class=\"rd\">\u221A</span><span class=\"rdc\">" + a + "</span></span>";
+  });
+  s = s.replace(/\u221A([A-Za-z0-9\u0370-\u03ff]{1,6})/g, function (m, a) {
+    return "<span class=\"sqrt\"><span class=\"rd\">\u221A</span><span class=\"rdc\">" + a + "</span></span>";
+  });
+  s = s.replace(/(\d(?:\.\d+)?)e([+-])(\d+)/g, function (m, a, sg, e) {
+    return a + "\u00d710<sup>" + (sg === "-" ? "\u2212" : "") + e + "</sup>";
+  });
+  s = s.replace(/([A-Za-z\u0370-\u03ff)\]])\^\{([^{}]{1,12})\}/g, "$1<sup>$2</sup>");
+  s = s.replace(/([A-Za-z\u0370-\u03ff)\]])\^(\d+(?:\.\d+)?)/g, "$1<sup>$2</sup>");
+  s = s.replace(/([A-Za-z\u0370-\u03ff])_\{([A-Za-z0-9\u0370-\u03ff+\-]{1,8})\}/g, "<span class='m'><i>$1</i><sub>$2</sub></span>");
+  s = s.replace(/([A-Za-z\u0370-\u03ff])_([A-Za-z0-9\u0370-\u03ff]{1,6})(?![A-Za-z0-9])/g, "<span class='m'><i>$1</i><sub>$2</sub></span>");
+  if (/[\u2070-\u209C\u00B2\u00B3\u00B9]/.test(s)) {
+    let out = "", i = 0;
+    while (i < s.length) {
+      const ch = s[i];
+      if (AUTOH_SUP[ch] !== undefined || AUTOH_SUB[ch] !== undefined) {
+        const isSup = AUTOH_SUP[ch] !== undefined, tab = isSup ? AUTOH_SUP : AUTOH_SUB;
+        let j = i, buf = "";
+        while (j < s.length && (isSup ? AUTOH_SUP[s[j]] !== undefined : AUTOH_SUB[s[j]] !== undefined)) {
+          buf += tab[s[j]]; j++;
+        }
+        out += "<" + (isSup ? "sup" : "sub") + ">" + buf + "</" + (isSup ? "sup" : "sub") + ">";
+        i = j;
+      } else { out += ch; i++; }
+    }
+    s = out;
+  }
+  return s.indexOf("\u221A") >= 0 ? TEXHsqrtElem(s) : s;
+}
+/* 只有真正的标签才整段跳过：正文里裸写的 '<'（如 "t₂ < 0"）必须当普通字符，
+   否则 indexOf('>') 会一路吞掉后面整段，E₂⁰ 这类记法就漏排了。 */
+function TEXH_tagEnd(h, i) {
+  if (h.charAt(i) !== "<") return -1;
+  const c = h.charAt(i + 1);
+  if (c === "!" || c === "/") { const j = h.indexOf(">", i); return (j >= 0 && j - i < 300) ? j + 1 : -1; }
+  if (!/[A-Za-z]/.test(c)) return -1;
+  let j = i + 1;
+  while (j < h.length && /[A-Za-z0-9]/.test(h.charAt(j))) j++;
+  if (j === i + 1) return -1;
+  if (h.charAt(j) === ">") return j + 1;
+  if (h.charAt(j) !== " " && h.charAt(j) !== "\n" && h.charAt(j) !== "\t") return -1;
+  const g = h.indexOf(">", j), nx = h.indexOf("<", j);
+  if (g < 0 || g - i > 300) return -1;
+  if (nx >= 0 && nx < g) return -1;
+  return g + 1;
+}
+function TEXH(h) {
+  if (typeof h !== "string" || !TEXH_NEED.test(h)) return h;
+  if (h.indexOf("\u221A") >= 0) h = h.replace(/<span class="(?:op|rm|fn|v|u)">\u221A<\/span>/g, "\u221A");
+  if (h.indexOf("<") < 0) return TEXHpart(h);
+  let out = "", i = 0, n = h.length, guard = 0;
+  while (i < n && guard++ < 40000) {
+    const e = TEXH_tagEnd(h, i);
+    if (e > 0) { out += h.slice(i, e); i = e; continue; }
+    let j = i;
+    while (j < n && TEXH_tagEnd(h, j) <= 0) j++;
+    out += TEXHpart(h.slice(i, j)); i = j;
+  }
+  const r = out + h.slice(i);
+  return r.indexOf("\u221A") >= 0 ? TEXHsqrtElem(r) : r;
+}
+(function hookHTML() {
+  if (window.__TEXH_HOOK) return; window.__TEXH_HOOK = 1;
+  const d = Object.getOwnPropertyDescriptor(Element.prototype, "innerHTML");
+  if (!d || !d.set) return;
+  Object.defineProperty(Element.prototype, "innerHTML", {
+    configurable: true, get: d.get,
+    set: function (v) { d.set.call(this, typeof v === "string" ? TEXH(v) : v); }
+  });
+  /* insertAdjacentHTML 也会被用到 */
+  const ia = Element.prototype.insertAdjacentHTML;
+  Element.prototype.insertAdjacentHTML = function (pos, v) {
+    return ia.call(this, pos, typeof v === "string" ? TEXH(v) : v);
+  };
+})();
+
+/* ---------------- 画布自动 LaTeX 排版 ----------------
+   老调用点 txt(g, "cm⁻³") / txt(g, "E_c") / txt(g, "2.5e+8") 一行都不用改，
+   只要在绘制前把字符串解析成分段零件即可。规则与网页侧一致：
+   物理量斜体、描述性下标与单位正体、幂次用真上标（不用 Unicode 伪字符）。 */
+const SUPMAP = { "⁰": "0", "¹": "1", "²": "2", "³": "3", "⁴": "4", "⁵": "5", "⁶": "6",
+  "⁷": "7", "⁸": "8", "⁹": "9", "⁺": "+", "⁻": "−", "⁼": "=", "⁽": "(", "⁾": ")", "ⁿ": "n", "ⁱ": "i" };
+const SUBMAP = { "₀": "0", "₁": "1", "₂": "2", "₃": "3", "₄": "4", "₅": "5", "₆": "6",
+  "₇": "7", "₈": "8", "₉": "9", "₊": "+", "₋": "−", "₌": "=", "₍": "(", "₎": ")",
+  "ₐ": "a", "ₑ": "e", "ₒ": "o", "ₓ": "x", "ₔ": "ə", "ₕ": "h", "ₖ": "k", "ₗ": "l",
+  "ₘ": "m", "ₙ": "n", "ₚ": "p", "ₛ": "s", "ₜ": "t", "ᵣ": "r", "ᵤ": "u", "ᵥ": "v" };
+const MATH_IDCH = /[A-Za-z\u0370-\u03ff]/;
+const NEED_MATH = /[\u2070-\u209C\u00B2\u00B3\u00B9]|_\{?[A-Za-z0-9\u0370-\u03ff]|\^\{?[\d(\-]|\d(\.\d+)?[eE][+\-]\d/;
+function AUTO(s) {
+  const out = [];
+  let buf = "", mode = 0;
+  const emit = (t, kind) => {
+    if (!t) return;
+    if (kind === 1) out.push({ s: t, sup: true });
+    else if (kind === -1) out.push({ s: t, sub: true });
+    else out.push({ s: t });
+  };
+  let i = 0, italicAll = false;
+  while (i < s.length) {
+    const ch = s[i];
+    if (SUPMAP[ch] !== undefined) { if (mode !== 1) { emit(buf, mode); buf = ""; mode = 1; } buf += SUPMAP[ch]; i++; continue; }
+    if (SUBMAP[ch] !== undefined) { if (mode !== -1) { emit(buf, mode); buf = ""; mode = -1; } buf += SUBMAP[ch]; i++; continue; }
+    if (mode) { emit(buf, mode); buf = ""; mode = 0; }
+    const rest = s.slice(i);
+    const sc = /^\d(\.\d+)?[eE][+\-]\d{1,3}/.exec(rest);       /* ASCII 伪科学计数 2.5e+8 */
+    if (sc) {
+      const parts = sc[0].split(/[eE]/);
+      emit(parts[0] + "\u00d710", 0); emit(String(+parts[1]).replace("-", "\u2212"), 1);
+      i += sc[0].length; continue;
+    }
+    if (MATH_IDCH.test(ch) && i + 1 < s.length && (s[i + 1] === "_" || s[i + 1] === "^")) {
+      const sup = s[i + 1] === "^";
+      let j = i + 2, grp = "";
+      if (s[j] === "{") { const e = s.indexOf("}", j); if (e > 0) { grp = s.slice(j + 1, e); j = e + 1; } }
+      else {
+        const RCJK = /[\u2E80-\u9FFF]/, RASC = /[A-Za-z0-9\u0370-\u03ff+\-]/;
+        if (RCJK.test(s[j])) { while (j < s.length && RCJK.test(s[j]) && j - i < 8) j++; }   /* 中文描述性下标：τ_直接、E_声子 */
+        else { while (j < s.length && RASC.test(s[j])) j++; }
+        grp = s.slice(i + 2, j);
+      }
+      if (grp) {
+        emit(ch, 0);
+        if (italicAll || /^[A-Za-z\u0370-\u03ff]$/.test(ch)) out[out.length - 1].i = true;
+        emit(sup ? grp.replace(/-/g, "\u2212") : grp, sup ? 1 : -1);
+        i = j; continue;
+      }
+    }
+    buf += ch; i++;
+  }
+  emit(buf, mode);
+  return out;
+}
+function fontInfo(font, dflt) {
+  const f = String(font || "");
+  const m = /(\d+(?:\.\d+)?)px/.exec(f);
+  return { fp: m ? parseFloat(m[1]) : (dflt || 12), bd: /bold|70\d|600/.test(f), it: /italic|oblique/.test(f) };
+}
+
+/* ---------------- HTML 字符串 → 画布零件（网页与画布共用同一份排版） ----------------
+   mtxt(g, TX(H_NA), x, y, col, fp) —— H_* 常量本来就在喂 innerHTML，
+   再喂给 TX() 就不会出现「网页斜体、画布正体」的两边不一致。
+   <i> 斜体、<sub> 下标、<sup> 上标；<span class="op|un|rm|sqrt|frac"> 只剥标签（保持正体）。 */
+const catA = (...a) => [].concat(...a);
+function TX(h) {
+  const t = String(h == null ? "" : h)
+    .replace(/<span\b[^>]*>/g, "").replace(/<\/span>/g, "")
+    .replace(/<i\b[^>]*>/g, "<i>").replace(/<b\b[^>]*>/g, "").replace(/<\/b>/g, "")
+    .replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&").replace(/&nbsp;/g, " ");
+  const out = [], re = /<i>([\s\S]*?)<\/i>|<sub>([\s\S]*?)<\/sub>|<sup>([\s\S]*?)<\/sup>|([^<]+)/g;
+  let m;
+  while ((m = re.exec(t))) {
+    const raw = s => s == null ? null : s.replace(/<[^>]*>/g, "");
+    if (m[1] != null) out.push({ s: raw(m[1]), i: true });
+    else if (m[2] != null) out.push({ s: raw(m[2]), sub: true });
+    else if (m[3] != null) out.push({ s: raw(m[3]), sup: true });
+    else if (m[4]) out.push({ s: m[4] });
+  }
+  return out;
+}
+function TXof(...a) { return catA(...a.map(TX)); }
+
+
+function PSci(v, n) {
+  if (!isFinite(v) || v === 0) return [{ s: "0" }];
+  const e = Math.floor(Math.log10(Math.abs(v)));
+  const m = (v / Math.pow(10, e)).toFixed(n === undefined ? 1 : n);
+  /* 1 ≦ |v| < 10 时直接写尾数，不再拖一个 ×10⁰（与 sciH 一致） */
+  if (e === 0) return [{ s: m }];
+  /* 指数负号用 U+2212 */
+  return [{ s: m + "×10" },
+          { s: String(e).replace("-", "−"), sup: true }];
+}
+
+/* ==================================================================
+   k 空间等能面与态密度交互教学工具
+   —— 零依赖单文件：三维渲染为自研 Canvas 2D 透视投影 + 画家算法
+   —— 全工具为示意图：长度单位 = 1 个 Δk（= 2π/L），能量单位 = E₁ = ℏ²(Δk)²/2m₀，
+      故 E = (k/Δk)² E₁；不出现任何 nm⁻¹ / eV / cm⁻³ 之类的真实数值
+   —— 费米面 = 能量为 E_F 的等能面，面（E < E_F）内的 k 态全部被占据
+   —— g(E) 取解析形式 ∝ E^{d/2−1}（3D √E、2D 常数、1D 1/√E），积分归一到 1
+   ================================================================== */
+
+/* ---------------- 小工具 ---------------- */
+const $ = (id) => document.getElementById(id);
+const clamp = (v, a, b) => v < a ? a : (v > b ? b : v);
+const RAD = Math.PI / 180;
+const PI = Math.PI;
+const fmt = (v, n) => (isFinite(v) ? (Math.abs(v) < 5e-4 ? 0 : v).toFixed(n === undefined ? 2 : n) : "—");
+function sup(s) { return String(s).replace(/-/g, "−").replace(/([0-9])/g, (d) => "⁰¹²³⁴⁵⁶⁷⁸⁹"[+d]); }
+
+/* ==================================================================
+   1. 示意单位与全局状态（全工具不出现真实物理数值）
+   ------------------------------------------------------------------
+   长度单位：1 格 = Δk = 2π/L（有限晶体周期边界给出的 k 点间距）
+   能量单位：E₁ = ℏ²(Δk)²/2m，即 k = 1·Δk 处自由电子的能量
+   于是 E = (k/Δk)² E₁，费米半径 k_F 与费米能 E_F = (k_F/Δk)² E₁ 一一对应
+   ================================================================== */
+const OPT = {
+  dim: 3,
+  t: 0.5,                /* 0~1「填充水平」：唯一的可调参数，同时决定 k_F 与 E_F */
+  pts: true, fermi: true,
+  cells: true
+};
+/* 示意尺度：格点取 ±N，示意视野半径 RV，费米半径范围 [kFLo, kFHi]（单位 Δk） */
+const SC = { N: 5, RV: 6.3, kFLo: 1.6, kFHi: 5.6, KMAX: 6, EMAX: 36 };
+function kFschem() { return SC.kFLo + (SC.kFHi - SC.kFLo) * clamp(OPT.t, 0, 1); }
+function eFschem() { const k = kFschem(); return k * k; }        /* 单位 E₁ */
+function tOfE(E) {                                               /* 由示意能量反解填充水平 */
+  const k = Math.sqrt(clamp(E, 0, SC.EMAX));
+  return clamp((k - SC.kFLo) / (SC.kFHi - SC.kFLo), 0, 1);
+}
+
+/* ==================================================================
+   3. 画布：尺寸适配与数学排版（与系列工具完全一致）
+   ================================================================== */
+const CV = {};
+function fitCanvas(id, h) {
+  const el = $(id);
+  if (!el) return null;
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  const w = el.clientWidth || 600;
+  el.style.height = h + "px";
+  el.width = Math.round(w * dpr); el.height = Math.round(h * dpr);
+  const g = el.getContext("2d");
+  g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  CV[id] = { el: el, g: g, W: w, H: h, dpr: dpr };
+  return CV[id];
+}
+const FONT = "\"Microsoft YaHei\",\"PingFang SC\",sans-serif";
+const FONTM = "\"Cambria Math\",\"Times New Roman\",Times,serif";
+const SUBR = 0.74, SUBDY = 0.22, SUPDY = 0.40;
+/* 画布字体规格（与氢原子 / 势阱工具对齐）：
+   面板小标题 12/bold · 强调标注 11–11.5/bold/halo · 一般标注 11
+   轴标签与单位 10.5 灰 · 刻度数字 10.5 灰 · 悬停读数 11 */
+function isCJKch(ch) {
+  const c = ch.codePointAt(0);
+  return (c >= 0x2E80 && c <= 0x9FFF) || (c >= 0xF900 && c <= 0xFAFF) ||
+    (c >= 0xFF00 && c <= 0xFF60) || c === 0x2014 || c === 0x2015 || c === 0x2026;
+}
+function segRuns(s) {
+  const out = []; let cur = "", curC = null;
+  for (const ch of s) {
+    const c = isCJKch(ch);
+    if (curC === null) { cur = ch; curC = c; }
+    else if (c === curC) cur += ch;
+    else { out.push({ s: cur, cjk: curC }); cur = ch; curC = c; }
+  }
+  if (cur) out.push({ s: cur, cjk: curC });
+  return out;
+}
+function pFont(q, fp, bd, cjk) {
+  const sz = fp * ((q.sub || q.sup) ? SUBR : 1);
+  return (bd ? "bold " : "") + (!cjk && q.i ? "italic " : "") + sz.toFixed(2) + "px " + (cjk ? FONT : FONTM);
+}
+/* i18n 注入点①：画布 token。带 i / sub / sup / un 标记的是物理量、下标与单位，一律不动；
+   没有这些标记的 token 才是自然语言，交给 T() —— 所以这里的判断只看标记，不看内容。 */
+const partsOf = p => p.map(q => {
+  const o = (typeof q === "string" ? { s: q } : q);
+  const natural = !(o.i || o.sub || o.sup || o.un);
+  if (LANG === "en" && natural && typeof o.s === "string" && /[\u4E00-\u9FFF]/.test(o.s)) {
+    const t = T(o.s);
+    return t === o.s ? o : Object.assign({}, o, { s: t });
+  }
+  return o;
+});
+/* —— 画布分式 token：{ n: [...分子], d: [...分母] } —— 分子分母用略小字号居中排，中间一道分数线 */
+const FR_SHR = 0.84, FR_DY = 0.44;
+const isFrac = q => !!(q && q.n && q.d);
+function frWidth(g, fr, fp, bd) { return Math.max(mMeasure(g, fr.n, fp, bd), mMeasure(g, fr.d, fp, bd)) + 4; }
+function frDraw(g, fr, x, y, fp, bd, stroke) {
+  const fn = fp * FR_SHR, wN = mMeasure(g, fr.n, fn, bd), wD = mMeasure(g, fr.d, fn, bd);
+  const w = Math.max(wN, wD) + 4;
+  mRun(g, fr.n, x + (w - wN) / 2, y - fp * FR_DY, fn, bd, "left", stroke);
+  mRun(g, fr.d, x + (w - wD) / 2, y + fp * FR_DY, fn, bd, "left", stroke);
+  const s0 = g.strokeStyle;
+  g.strokeStyle = stroke ? "rgba(255,255,255,0.94)" : g.fillStyle;
+  g.lineWidth = stroke ? 3.2 : 1.1;
+  g.beginPath(); g.moveTo(x, y); g.lineTo(x + w, y); g.stroke();
+  g.strokeStyle = s0;
+}
+function mMeasure(g, parts, fp, bd) {
+  let w = 0;
+  for (const q of partsOf(parts)) {
+    if (isFrac(q)) { w += frWidth(g, q, fp * FR_SHR, bd) + 2; continue; }
+    for (const sg of segRuns(q.s)) { g.font = pFont(q, fp, bd, sg.cjk); w += g.measureText(sg.s).width; }
+  }
+  return w;
+}
+function mRun(g, parts, x, y, fp, bd, align, stroke) {
+  const ps = partsOf(parts), w = mMeasure(g, ps, fp, bd);
+  let cx = align === "right" ? x - w : (align === "center" ? x - w / 2 : x);
+  g.textAlign = "left"; g.textBaseline = "middle"; g.lineJoin = "round";
+  for (const q of ps) {
+    if (isFrac(q)) { frDraw(g, q, cx + 1, y, fp, bd, stroke); cx += frWidth(g, q, fp * FR_SHR, bd) + 2; continue; }
+    const dy = q.sub ? fp * SUBDY : (q.sup ? -fp * SUPDY : 0);
+    for (const sg of segRuns(q.s)) {
+      g.font = pFont(q, fp, bd, sg.cjk);
+      if (stroke) { g.lineWidth = (q.sub || q.sup) ? 2.4 : 3.2; g.strokeText(sg.s, cx, y + dy); }
+      else g.fillText(sg.s, cx, y + dy);
+      cx += g.measureText(sg.s).width;
+    }
+  }
+}
+function mtxt(g, parts, x, y, col, fp, align, bd) { g.fillStyle = col; mRun(g, parts, x, y, fp, bd, align, false); }
+function mtxtHalo(g, parts, x, y, col, fp, align, bd) {
+  g.strokeStyle = "rgba(255,255,255,0.94)";
+  mRun(g, parts, x, y, fp, bd, align, true);
+  mtxt(g, parts, x, y, col, fp, align, bd);
+}
+function txt(g, s, x, y, col, font, align, base) {
+  g.fillStyle = col; g.font = font || "12px " + FONT;
+  g.textAlign = align || "left"; g.textBaseline = base || "middle";
+  if (typeof s === "string" && NEED_MATH.test(s)) {
+    const fi = fontInfo(font, 12);
+    mRun(g, AUTO(s), x, y, fi.fp, fi.bd, align || "left", false);
+    return;
+  }
+  g.fillText(s, x, y);
+}
+function rrect(g, x, y, w, h, r) {
+  g.beginPath();
+  g.moveTo(x + r, y); g.lineTo(x + w - r, y); g.quadraticCurveTo(x + w, y, x + w, y + r);
+  g.lineTo(x + w, y + h - r); g.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  g.lineTo(x + r, y + h); g.quadraticCurveTo(x, y + h, x, y + h - r);
+  g.lineTo(x, y + r); g.quadraticCurveTo(x, y, x + r, y);
+  g.closePath();
+}
+/* 配色：紫/绿/蓝=三根晶轴
+   · 青=费米面（即能量为 E_F 的等能面，面内是被占据的费米海）· 蓝=占据态 / g(E) 曲线 */
+const C_PURPLE = "#8e5bd0", C_GREEN = "#2e9e5b", C_BLUE = "#1976d2";
+const C_OCC = "#1565c0", C_UNOCC = "#c9d1da";
+const C_FERMI = "#0f9b8e";
+const C_CELL = "#9db6d6";
+const C_BZ = "#9aa5b1", C_REF = "#6b7a8c";
+
+/* ==================================================================
+   4. 态密度（示意）：g(E) ∝ E^{d/2−1}，在 [0, EMAX] 上积分归一到 1
+      —— 3D ∝ √E（从带边平滑上升）· 2D = 常数（阶梯）· 1D ∝ 1/√E（带边发散）
+      —— 曲线下面积 = 已占据态的份额（与格点计数 (k_F/KMAX)^d 一致）
+   ================================================================== */
+/* 采样点数。除主网格外，最左的半格 [0, E₀] 再细分 DOSHEAD 层：1D 的 g ∝ 1/√E 在带边发散，
+   若只靠主网格第一个中点，那半格的多边形是用一条斜线顶替 ∫₀^{E₀} g dE = √E₀/6 ≈ 0.046
+   （占总份额 4.6%），1D 的阴影面积会系统性偏小两成；细分后再让超出的点被纵轴自然截断，
+   曲线左端也就真的像「发散」那样贴着天花板冲上来，而不是一条 45° 的斜线。 */
+const DOSN = 240, DOSHEAD = 16;
+let DOS = null, DOS_CACHE = {};
+function buildDOS() {
+  if (!DOS_CACHE[OPT.dim]) DOS_CACHE[OPT.dim] = dosCurve(OPT.dim);
+  DOS = DOS_CACHE[OPT.dim];
+  return DOS;
+}
+function gSchem(E, dim) {                       /* 相对单位（∫₀^{EMAX} g dE = 1） */
+  const e = Math.max(E, 1e-6);
+  if (dim === 3) return Math.sqrt(e) / ((2 / 3) * Math.pow(SC.EMAX, 1.5));
+  if (dim === 2) return 1 / SC.EMAX;
+  return (1 / Math.sqrt(e)) / (2 * Math.sqrt(SC.EMAX));
+}
+function dosCurve(dim) {
+  const E = [], g = [], dE = SC.EMAX / DOSN, e0 = 0.5 * dE, h = e0 / DOSHEAD;
+  for (let m = 0; m < DOSHEAD; m++) { const e = (m + 0.5) * h; E.push(e); g.push(gSchem(e, dim)); }
+  for (let i = 0; i < DOSN; i++) { const e = (i + 0.5) * dE; E.push(e); g.push(gSchem(e, dim)); }
+  /* 纵轴量程取「主网格上的最大值 × 1.12」——三个维度共用同一条规则（峰值一律占 89% 图高）。
+     【改动】旧版取 0.985 分位数 ×1.18，对 3D / 2D 无害（峰值 85%），却正好把 1D 的带边峰
+     砍掉一半以上：分位值落在 g(0.525) 上，量程只有真实峰值的 45%，于是 1D 的前两个采样点
+     一起被钳在同一条顶线上，g ∝ 1/√E 的「发散」被画成一小段平顶。
+     注意最大值只统计主网格：头部细分的点本来就该被纵轴截断，拿它们定量程会把 1D 压成一条直线。 */
+  let gm = 0;
+  for (let i = DOSHEAD; i < g.length; i++) gm = Math.max(gm, g[i]);
+  return { E: E, g: g, dE: dE, eHi: SC.EMAX, gmax: Math.max(gm * 1.12, 1e-12) };
+}
+function gAt(E) { return gSchem(Math.max(E, 0), OPT.dim); }
+/* 已占据态的份额：由 g(E) 积分给出（= (k_F/KMAX)^d） */
+function occShare() { return Math.pow(kFschem() / SC.KMAX, OPT.dim); }
+
+/* ==================================================================
+   7. 三维视图
+   ================================================================== */
+/* 默认视角：观察者位于 (+k_x,+k_y,−k_z) 卦、沿体对角线 (1,1,−1)/√3 方向看进球壳——
+   +k_x / +k_y 一侧呈现外凸面、+k_z 一侧呈现内凹面，同时能看见 k_x=0 坐标面上的 Δk 晶胞薄片。
+   推导：rot 后 r = (x1, y·cp − z1·sp, y·sp + z1·cp)，深度 z' 越大越远，故观察者方向
+   d = (cp·sin yaw, −sin pitch, −cp·cos yaw)；令 d ∝ (+1,+1,−1)/√3 解得
+   yaw = 45°、pitch = −arcsin(1/√3) ≈ −35.264°（负 pitch 表示相机位于 +y 一侧俯视）。 */
+const DEF_YAW = 45, DEF_PITCH = -Math.asin(1 / Math.sqrt(3)) * 180 / Math.PI;   /* ≈ −35.264° */
+/* 2D / 1D：从 (0,0,−k_z) 方向正视 k_x–k_y 平面（d ∝ (0,0,−1) ⇒ yaw = 0、pitch = 0），
+   于是 k_x 水平向右、k_y 竖直向上，圆 / 线段不再被透视压扁 */
+const DEF_YAW_2D = 0, DEF_PITCH_2D = 0;
+const V3 = { yaw: DEF_YAW * RAD, pitch: DEF_PITCH * RAD, zoom: 1, panX: 0, panY: 0, W: 600, H: 430, base: 100, hover: null, drag: null, ptsProj: [] };
+/* 当前维度对应的默认视角：3D 用体对角线方向，2D / 1D 用正视 −k_z 方向 */
+function resetCamera() {
+  const yaw = OPT.dim === 3 ? DEF_YAW : DEF_YAW_2D;
+  const pitch = OPT.dim === 3 ? DEF_PITCH : DEF_PITCH_2D;
+  V3.yaw = yaw * RAD; V3.pitch = pitch * RAD; V3.zoom = 1; V3.panX = 0; V3.panY = 0;
+}
+function rot(v, p) {
+  const cy = Math.cos(v.yaw), sy = Math.sin(v.yaw);
+  const x1 = p[0] * cy + p[2] * sy, z1 = -p[0] * sy + p[2] * cy;
+  const cp = Math.cos(v.pitch), sp = Math.sin(v.pitch);
+  return [x1, p[1] * cp - z1 * sp, p[1] * sp + z1 * cp];
+}
+const FOCAL = 16;   /* 示意坐标跨度大（±6.3），焦距取大些以削弱透视畸变 */
+function proj(v, p) {
+  const r = rot(v, p), focal = FOCAL;
+  const s = focal / (focal + r[2]) * v.zoom * v.base;
+  return { x: (v.ox || 0) + v.W / 2 + v.panX + r[0] * s, y: (v.oy || 0) + v.H / 2 + v.panY - r[1] * s, z: r[2], s: s };
+}
+function hex2rgb(h) { return [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)]; }
+function mixHex(a, b, t) {
+  const A = hex2rgb(a), B = hex2rgb(b);
+  return "rgb(" + Math.round(A[0] + (B[0] - A[0]) * t) + "," + Math.round(A[1] + (B[1] - A[1]) * t) + "," + Math.round(A[2] + (B[2] - A[2]) * t) + ")";
+}
+const LIGHT = [0.42, 0.60, -0.68];
+function shadeTri(v, tri, col) {
+  const r0 = rot(v, tri[0]), r1 = rot(v, tri[1]), r2 = rot(v, tri[2]);
+  const ux = r1[0] - r0[0], uy = r1[1] - r0[1], uz = r1[2] - r0[2];
+  const wx = r2[0] - r0[0], wy = r2[1] - r0[1], wz = r2[2] - r0[2];
+  let nxv = uy * wz - uz * wy, nyv = uz * wx - ux * wz, nzv = ux * wy - uy * wx;
+  const nl = Math.sqrt(nxv * nxv + nyv * nyv + nzv * nzv) || 1;
+  nxv /= nl; nyv /= nl; nzv /= nl;
+  if (nzv > 0) { nxv = -nxv; nyv = -nyv; nzv = -nzv; }
+  const df = Math.max(0, nxv * LIGHT[0] + nyv * LIGHT[1] + nzv * LIGHT[2]);
+  return mixHex(col, "#ffffff", 0.10 + 0.50 * df);
+}
+function axisArrow(v, g, from, to, col, lab) {
+  const A = proj(v, from), B = proj(v, to);
+  g.strokeStyle = col; g.lineWidth = 2.2; g.globalAlpha = 0.9; g.lineCap = "round";
+  g.beginPath(); g.moveTo(A.x, A.y); g.lineTo(B.x, B.y); g.stroke();
+  const dx = B.x - A.x, dy = B.y - A.y, L = Math.hypot(dx, dy) || 1;
+  const ux = dx / L, uy = dy / L;
+  g.beginPath();
+  g.moveTo(B.x, B.y);
+  g.lineTo(B.x - 9 * ux + 4 * uy, B.y - 9 * uy - 4 * ux);
+  g.lineTo(B.x - 9 * ux - 4 * uy, B.y - 9 * uy + 4 * ux);
+  g.closePath(); g.fillStyle = col; g.fill();
+  const parts = [{ s: lab[0], i: 1 }, { s: lab.slice(1), sub: 1 }];
+  mtxtHalo(g, parts, B.x + 10 * ux, B.y + 10 * uy, col, 11, "left", true);
+  g.globalAlpha = 1;
+}
+
+/* 保留哪一个八分区的球壳：(+k_x, +k_y, +k_z) 那一卦。
+   默认视角（yaw = 45°, pitch = −35.264°）下观察者位于 (+1,+1,−1) 体对角线方向，从斜下方看进球壳：
+   三个角点分别落在 +k_x、+k_y、+k_z 轴上，+k_z 一侧还能看到壳的内凹面 */
+const CUT_S = [1, 1, 1];
+/* 右图只显示这一卦内的 k 态：格点三个分量与 CUT_S 同号（坐标面上的点也算在这一卦内） */
+function octPoints() {
+  const all = schemPoints();
+  if (OPT.dim !== 3) return all;
+  return all.filter(o => o.n[0] * CUT_S[0] >= 0 && o.n[1] * CUT_S[1] >= 0 && o.n[2] * CUT_S[2] >= 0);
+}
+/* 1/8 球壳的参数化：u、w ∈ [0, π/2] 给出卦限内的球面三角片 */
+function octSurf(kf, u, w) {
+  const sw = Math.sin(w), cw = Math.cos(w);
+  return [CUT_S[0] * kf * sw * Math.cos(u), CUT_S[1] * kf * cw, CUT_S[2] * kf * sw * Math.sin(u)];
+}
+/* 1/8 球壳的三条边界（1/4 大圆弧）：z = 0 边、x = 0 边、y = 0（赤道）边 */
+const SC_ARCS = [
+  (kf, t) => [CUT_S[0] * kf * Math.sin(t * PI / 2), CUT_S[1] * kf * Math.cos(t * PI / 2), 0],
+  (kf, t) => [0, CUT_S[1] * kf * Math.cos(t * PI / 2), CUT_S[2] * kf * Math.sin(t * PI / 2)],
+  (kf, t) => [CUT_S[0] * kf * Math.cos(t * PI / 2), 0, CUT_S[2] * kf * Math.sin(t * PI / 2)]
+];
+let SPTS_KEY = "", SPTS = [];
+function schemPoints() {
+  const key = OPT.dim + "|" + clamp(OPT.t, 0, 1).toFixed(4);
+  if (key === SPTS_KEY) return SPTS;
+  const kf = kFschem(), kf2 = kf * kf, out = [];
+  const jhi = OPT.dim >= 2 ? SC.N : 0, khi = OPT.dim === 3 ? SC.N : 0;
+  for (let i = -SC.N; i <= SC.N; i++)
+    for (let j = -jhi; j <= jhi; j++)
+      for (let k = -khi; k <= khi; k++) {
+        const r2 = i * i + j * j + k * k;
+        if (r2 > SC.KMAX * SC.KMAX) continue;
+        out.push({ p: [i, j, k], n: [i, j, k], occ: r2 <= kf2 ? 1 : 0 });
+      }
+  SPTS_KEY = key; SPTS = out;
+  return out;
+}
+
+/* 二维情形下要画的 Δk 晶胞：严格限制在第一象限（+k_x、+k_y），且每格都是完整方格、不越出费米圆。
+   约定：每个允许的 k 态占据一个边长 1·Δk 的方格 [i, i+1] × [j, j+1]（i, j ≥ 0）；
+   判据取「离原点最远的那个角」(i+1, j+1) 仍落在费米圆以内 ⇒ 整个方格都在圆内，
+   绝不会像"中心判据"那样让格子戳出费米面 —— 与三维薄片同一套逻辑（只画费米面以内的完整晶胞）。
+   代价：紧贴费米圆的那一圈月牙留白不画 ⇒ 格数是「内接下界」，比 1/4 圆面积 πk_F²/4
+   略少一圈边界项；这个差额正好演示「离散求和 vs 连续积分」，是模块三态密度的核心。 */
+function cells2D(kf) {
+  const kf2 = kf * kf, out = [];
+  for (let i = 0; i < SC.N; i++) for (let j = 0; j < SC.N; j++) {
+    const ax = i + 1, ay = j + 1;                 /* 离原点最远的角 —— 它在圆内则整格都在圆内 */
+    if (ax * ax + ay * ay <= kf2) out.push(i + "," + j);
+  }
+  return out;
+}
+/* 第一象限内费米圆的连续面积（以 (Δk)² 为单位）：πk_F²/4 —— 与上面内接格数对照 */
+function cellAreaEst(kf) { return Math.PI * kf * kf / 4; }
+
+/* 【已取消】曾试图再画一类"外角相切"格：外角半径与 k_F 相差不到 0.12 Δk 的格子。
+   实际效果不好 —— 它毕竟略微越出费米圆，且只有一个角搭在圆上，看上去像
+   "画了边却没填满"，容易让人误以为那一格只算半个态 ⇒ 只保留整格内接的画法。 */
+
+/* 模块一（3D）：并排两图 —— 左「完整费米球」/ 右「只保留 1/8 球壳」，两图共用同一视角 V3 → 联动旋转 */
+function k3dPanels(W, H) {
+  if (OPT.dim === 3) {
+    const gap = 14, w = (W - gap) / 2;
+    /* 图注用 token 数组，保证 k_x / k_y / k_z 的下标是真正的数学排版 */
+    return [
+      { x: 0, y: 0, w: w, h: H, cut: false, title: ["① 完整费米球"] },
+      { x: w + gap, y: 0, w: w, h: H, cut: true,
+        title: ["② 1/8 球壳（+", { s: "k", i: 1 }, { s: "x", sub: 1 }, "、+",
+          { s: "k", i: 1 }, { s: "y", sub: 1 }, "、+", { s: "k", i: 1 }, { s: "z", sub: 1 }, " 那一卦）"] }
+    ];
+  }
+  return [{ x: 0, y: 0, w: W, h: H, cut: false, title: null }];
+}
+
+function drawK3D() {
+  const c = CV["k3d"]; if (!c) return;
+  const g = c.g, W = c.W, H = c.H, v = V3;
+  g.clearRect(0, 0, W, H);
+  g.fillStyle = "#eef3f8"; g.fillRect(0, 0, W, H);
+  const panels = k3dPanels(W, H), split = panels.length > 1;
+  V3.ptsProj = [];
+  for (const PN of panels) drawK3DPanel(v, g, PN, split);
+  v.W = W; v.H = H; v.ox = 0; v.oy = 0;
+  if (v.hover) drawHoverK3D(g, W, H, v.hover);
+}
+
+function drawK3DPanel(v, g, PN, split) {
+  const kf = kFschem();
+  /* 右图（1/8 球壳）只显示该卦内的 k 态；左图与 2D/1D 显示全部 */
+  const pts = OPT.pts ? (PN.cut ? octPoints() : schemPoints()) : [];
+  const all = PN.cut ? octPoints() : schemPoints();
+  v.W = PN.w; v.H = PN.h; v.ox = PN.x; v.oy = PN.y + (split ? 14 : 0);   /* oy 下移：给顶部图注留空间 */
+  v.base = 0.46 * Math.min(PN.w, PN.h) / SC.RV * (split ? 0.95 : 1);
+  const xr = PN.x + PN.w;                       /* 面板右边界（标签钳制用） */
+  /* 右图：把 1/8 球壳的重心平移到面板中部。
+     球面八分片的重心 = (k_F/2)(1,1,1)（类比半球面重心距球心 R/2），随 k_F 变化 */
+  if (PN.cut && OPT.dim === 3) {
+    const rc = rot(v, [kf / 2, kf / 2, kf / 2]);
+    const sc = FOCAL / (FOCAL + rc[2]) * v.zoom * v.base;
+    v.ox -= rc[0] * sc; v.oy += rc[1] * sc;     /* 屏幕 y 轴向下，故 oy 取 + */
+  }
+
+  /* 面板底 */
+  g.save();
+  rrect(g, PN.x + 1, PN.y + 1, PN.w - 2, PN.h - 2, 7);
+  g.fillStyle = "#fbfcfe"; g.fill();
+  g.clip();
+
+  /* --- 费米面（示意）：左图画完整球面；右图只保留面向观察者的 1/8 球壳 --- */
+  let tris = [];
+  if (OPT.fermi && OPT.dim === 3) {
+    if (PN.cut) {
+      /* 只保留 1/8 球壳：u、w ∈ [0, π/2] 的卦限球面三角片（不画三个坐标面，保持「壳」的观感） */
+      const NU = 16, NV = 16;
+      for (let i = 0; i < NU; i++) for (let j = 0; j < NV; j++) {
+        const u0 = i / NU * PI / 2, u1 = (i + 1) / NU * PI / 2, w0 = j / NV * PI / 2, w1 = (j + 1) / NV * PI / 2;
+        const q = [octSurf(kf, u0, w0), octSurf(kf, u1, w0), octSurf(kf, u1, w1), octSurf(kf, u0, w1)];
+        tris.push({ P: [q[0], q[1], q[2]], col: C_FERMI, al: 0.30, flat: false });
+        tris.push({ P: [q[0], q[2], q[3]], col: C_FERMI, al: 0.30, flat: false });
+      }
+    } else {
+      const NU = 30, NV = 18;
+      const SP = (u, w) => [kf * Math.sin(w) * Math.cos(u), kf * Math.cos(w), kf * Math.sin(w) * Math.sin(u)];
+      for (let i = 0; i < NU; i++) for (let j = 0; j < NV; j++) {
+        const q = [SP(i / NU * 2 * PI, j / NV * PI), SP((i + 1) / NU * 2 * PI, j / NV * PI),
+                   SP((i + 1) / NU * 2 * PI, (j + 1) / NV * PI), SP(i / NU * 2 * PI, (j + 1) / NV * PI)];
+        for (const tr of [[q[0], q[1], q[2]], [q[0], q[2], q[3]]]) tris.push({ P: tr, col: C_FERMI, al: 0.15, flat: false });
+      }
+    }
+  }
+  if (tris.length) {
+    const arr = tris.map(t => {
+      const a = proj(v, t.P[0]), b = proj(v, t.P[1]), d = proj(v, t.P[2]);
+      return { t: t, a: a, b: b, d: d, z: (a.z + b.z + d.z) / 3 };
+    }).sort((x, y) => y.z - x.z);
+    for (const o of arr) {
+      g.beginPath();
+      g.moveTo(o.a.x, o.a.y); g.lineTo(o.b.x, o.b.y); g.lineTo(o.d.x, o.d.y); g.closePath();
+      g.fillStyle = o.t.flat ? o.t.col : shadeTri(v, o.t.P, o.t.col);
+      g.globalAlpha = o.t.al; g.fill();
+    }
+    g.globalAlpha = 1;
+    /* 1/8 球壳的三条边界弧：勾出这一瓣的轮廓，并沿 −k_x / −k_y / −k_z 标出它的三个角点 */
+    if (PN.cut) {
+      g.strokeStyle = C_FERMI; g.lineWidth = 2.2; g.globalAlpha = 0.95; g.lineCap = "round";
+      for (const arc of SC_ARCS) {
+        g.beginPath();
+        for (let i = 0; i <= 28; i++) { const Q = proj(v, arc(kf, i / 28)); i ? g.lineTo(Q.x, Q.y) : g.moveTo(Q.x, Q.y); }
+        g.stroke();
+      }
+      g.globalAlpha = 1;
+      for (const ax of [[CUT_S[0] * kf, 0, 0], [0, CUT_S[1] * kf, 0], [0, 0, CUT_S[2] * kf]]) {
+        const Q = proj(v, ax);
+        g.fillStyle = C_FERMI; g.beginPath(); g.arc(Q.x, Q.y, 4.2, 0, 6.2832); g.fill();
+        g.strokeStyle = "#fff"; g.lineWidth = 1.6; g.stroke();
+      }
+    }
+  }
+  /* 2D：费米圆 + 费米海圆盘（示意） */
+  if (OPT.fermi && OPT.dim === 2) {
+    g.beginPath();
+    for (let i = 0; i <= 72; i++) { const a = i / 72 * 2 * PI, Q = proj(v, [kf * Math.cos(a), kf * Math.sin(a), 0]); i ? g.lineTo(Q.x, Q.y) : g.moveTo(Q.x, Q.y); }
+    g.closePath(); g.fillStyle = C_FERMI; g.globalAlpha = 0.13; g.fill(); g.globalAlpha = 1;
+    g.strokeStyle = C_FERMI; g.lineWidth = 3.0; g.lineCap = "round"; g.stroke();
+  }
+  /* 1D：占据段 −k_F ~ +k_F（示意） */
+  if (OPT.fermi && OPT.dim === 1) {
+    const A = proj(v, [-kf, 0, 0]), B = proj(v, [kf, 0, 0]);
+    g.save(); g.strokeStyle = C_FERMI; g.lineWidth = 5; g.globalAlpha = 0.4; g.lineCap = "round";
+    g.beginPath(); g.moveTo(A.x, A.y); g.lineTo(B.x, B.y); g.stroke(); g.restore();
+    for (const p of [[kf, 0, 0], [-kf, 0, 0]]) { const Q = proj(v, p); g.fillStyle = C_FERMI; g.beginPath(); g.arc(Q.x, Q.y, 5.5, 0, 6.2832); g.fill(); g.strokeStyle = "#fff"; g.lineWidth = 1.6; g.stroke(); }
+  }
+
+  /* --- k 点：实心 = 已占据（E < E_F），空心 = 空 --- */
+  const PP = [];
+  for (const o of pts) { const Q = proj(v, o.p); PP.push({ o: o, x: Q.x, y: Q.y, z: Q.z, s: Q.s }); }
+  PP.sort((a, b) => b.z - a.z);
+  V3.ptsProj = V3.ptsProj.concat(PP);
+  const pr = clamp(v.zoom, 0.75, 1.5), rb = OPT.dim === 1 ? 3.2 : 2.3;
+  for (const o of PP) {
+    if (o.o.occ) { g.fillStyle = C_OCC; g.beginPath(); g.arc(o.x, o.y, rb * pr, 0, 6.2832); g.fill(); }
+    else { g.strokeStyle = C_UNOCC; g.lineWidth = 1.0; g.beginPath(); g.arc(o.x, o.y, rb * 0.92 * pr, 0, 6.2832); g.stroke(); }
+  }
+
+  /* --- Δk 晶胞辅助线（3D）：画成 k_x ∈ [0, 2π/L] 的一格厚薄片，沿 +k_y、+k_z 展开，
+         只画费米面以下（晶胞中心落在费米球内）的晶胞（示意：边长 = 1 个 Δk） --- */
+  if (OPT.cells) {
+    const nc = 2;
+    g.strokeStyle = C_CELL; g.lineWidth = 1.4; g.globalAlpha = 1;
+    const seg = (a, b) => { const A = proj(v, a), B = proj(v, b); g.beginPath(); g.moveTo(A.x, A.y); g.lineTo(B.x, B.y); g.stroke(); };
+    const quad = P => {                       /* 填一个方格（用于二维的极淡铺砌底色） */
+      g.beginPath();
+      for (let m = 0; m < P.length; m++) { const Q = proj(v, P[m]); m ? g.lineTo(Q.x, Q.y) : g.moveTo(Q.x, Q.y); }
+      g.closePath(); g.fill();
+    };
+    let lp, nCell = -1, nArea = -1;
+    if (OPT.dim === 3) {
+      const kf3 = kFschem() * kFschem();
+      /* 判据与二维「同一套逻辑」：离原点最远的那个角 (1, j+1, k+1) 仍在费米球内 ⇒ 整个晶胞都在球内。
+         【改动】旧版写成 0.75 + j(j+1) + k(k+1) ≤ k_F²，等价于取晶胞中心 (0.5, j+0.5, k+0.5) 作判据，
+         于是格子会戳出费米面（k_F=3.6 时 11 格里有 5 格越界，最多伸出 21%）—— 恰好是二维注释里点名
+         否定的那种做法，两处口径互相打架。统一成「最远角」后，三维也变成内接下界，
+         与二维一样演示「离散求和比连续体积少一圈边界项」。 */
+      const inside = (j, k) => 1 + (j + 1) * (j + 1) + (k + 1) * (k + 1) <= kf3;
+      let J = 0, K = 0;
+      for (let j = 0; j < SC.N; j++) for (let k = 0; k < SC.N; k++) {
+        if (!inside(j, k)) continue;
+        J = Math.max(J, j); K = Math.max(K, k);
+        for (const c of [0, 1]) {          /* k_x = 0 与 k_x = 2π/L 两片端面上的网格 */
+          if (j < SC.N - 1) seg([c, j, k], [c, j + 1, k]);
+          if (k < SC.N - 1) seg([c, j, k], [c, j, k + 1]);
+        }
+        seg([0, j, k], [1, j, k]);         /* 沿 k_x 方向连接两片端面 */
+        if (j < SC.N - 1) seg([0, j + 1, k], [1, j + 1, k]);
+        if (k < SC.N - 1) seg([0, j, k + 1], [1, j, k + 1]);
+      }
+      lp = proj(v, [1, J + 1, K + 1]);
+    } else if (OPT.dim === 2) {
+      /* 二维：第一象限内的完整方格铺砌 —— 只画整格完全落在费米圆以内的方格（判据见 cells2D），
+         填充与四条边一起画全，随填充水平（k_F）实时胀缩，内接台阶从里面逼近 1/4 费米圆。
+         （曾经额外画过"外角相切"的格子，但它毕竟略微越出圆、且只有边没有完整的内部结构，
+           视觉上像"画了边却没填满"，容易误读 ⇒ 已取消，只保留整格内接。） */
+      const S = cells2D(kf), U = new Set(S), has = (i, j) => U.has(i + "," + j);
+      let im = 0, jm = 0;
+      const cellOf = key => key.split(",").map(Number);
+      const quadOf = (i, j) => quad([[i, j, 0], [i + 1, j, 0], [i + 1, j + 1, 0], [i, j + 1, 0]]);
+      /* (1) 极淡铺砌底色：内接格与相切格同一支颜色 */
+      g.fillStyle = C_CELL; g.globalAlpha = 0.10;
+      for (const key of U) {
+        const c = cellOf(key); if (c[0] > im) im = c[0]; if (c[1] > jm) jm = c[1];
+        quadOf(c[0], c[1]);
+      }
+      g.globalAlpha = 1;
+      /* (2) 每个 Δk 正方形的四条边全部描出，且每条边只画一次：
+            每格固定负责自己的 −x 边与 −y 边（必定画 ⇒ 内部网格一条不漏），
+            再补上无邻格的 +x 边与 +y 边（外轮廓）。
+            【踩过的坑】早先写成「四条边都在邻格不存在时才画」，结果相邻两格互相认为
+            对方存在 ⇒ 公共边谁都不画，只留下外轮廓，内部网格整片消失。 */
+      g.strokeStyle = C_CELL; g.lineWidth = 1.4;
+      for (const key of U) {
+        const c = cellOf(key), i = c[0], j = c[1];
+        seg([i, j, 0], [i, j + 1, 0]);                                  /* −x 边（总是画） */
+        seg([i, j, 0], [i + 1, j, 0]);                                  /* −y 边（总是画） */
+        if (!has(i + 1, j)) seg([i + 1, j, 0], [i + 1, j + 1, 0]);      /* +x 边（外轮廓） */
+        if (!has(i, j + 1)) seg([i, j + 1, 0], [i + 1, j + 1, 0]);      /* +y 边（外轮廓） */
+      }
+      lp = proj(v, [im + 1, jm + 1, 0]);
+      nCell = U.size; nArea = cellAreaEst(kf);
+    } else {
+      for (let i = 0; i < nc; i++) seg([i, 0, 0], [i + 1, 0, 0]);
+      lp = proj(v, [nc, 0, 0]);
+    }
+    /* 标签锚点：3D/1D 锚在拼块外角；2D 固定锚在面板右上角（右对齐）——
+       低填充时拼块外角在费米圆内部，会与 k_F 刻度标注相撞，固定角落最稳 */
+    const lx = OPT.dim === 2 ? xr - 12 : clamp(lp.x + 8, PN.x + 10, Math.max(PN.x + 10, xr - 160));
+    const ly = OPT.dim === 2 ? PN.y + 26 : clamp(lp.y - 8, PN.y + 28, PN.y + PN.h - (nCell >= 0 ? 48 : 34));
+    const lal = OPT.dim === 2 ? "right" : "left";
+    mtxtHalo(g, [{ s: "Δk", i: 1 }, " = ", { n: ["2", { s: "π", i: 1 }], d: [{ s: "L", i: 1 }] }, "（示意间距）"], lx, ly, "#5b7aa6", 10.5, lal, true);
+    if (nCell >= 0) {
+      mtxtHalo(g, ["第一象限 " + nCell + " 个完整格（整格不越出费米圆）"], lx, ly + 14, "#5b7aa6", 10.5, lal, true);
+      mtxtHalo(g, [{ n: [{ s: "π", i: 1 }, { s: "k", i: 1 }, { s: "F", sub: 1 }, { s: "2", sup: 1 }], d: ["4"] },
+        " ≈ " + nArea.toFixed(1) + " 格（连续近似，略多一圈边界）"], lx, ly + 28, "#8794a8", 10, lal, true);
+    }
+  }
+
+  /* --- k_F 刻度：+x 轴上的费米半径（示意值，随填充滑块变化） --- */
+  if (OPT.fermi && OPT.dim >= 1) {
+    const T1 = proj(v, [kf, -0.16, 0]), T2 = proj(v, [kf, 0.16, 0]), LP = proj(v, [kf, 0.16, 0]);
+    g.strokeStyle = C_FERMI; g.lineWidth = 2.4; g.lineCap = "round";
+    g.beginPath(); g.moveTo(T1.x, T1.y); g.lineTo(T2.x, T2.y); g.stroke();
+    const lx = OPT.dim === 1 ? Math.max(LP.x - 86, PN.x + 8) : Math.min(LP.x + 7, xr - 96), ly = OPT.dim === 1 ? LP.y + 22 : LP.y - 10;
+    mtxtHalo(g, [{ s: "k", i: 1 }, { s: "F", sub: 1 }, " = " + kf.toFixed(1) + " ", { s: "Δk", i: 1 }], lx, ly, C_FERMI, 11, "left", true);
+  }
+
+  /* --- 晶轴 --- */
+  const AL = SC.RV * 1.04;
+  axisArrow(v, g, [0, 0, 0], [AL, 0, 0], C_PURPLE, "kx");
+  if (OPT.dim >= 2) axisArrow(v, g, [0, 0, 0], [0, AL, 0], C_GREEN, "ky");
+  if (OPT.dim >= 3) axisArrow(v, g, [0, 0, 0], [0, 0, AL], C_BLUE, "kz");
+
+  /* 原点 Γ */
+  const OG = proj(v, [0, 0, 0]);
+  g.fillStyle = C_REF; g.beginPath(); g.arc(OG.x, OG.y, 3, 0, 6.2832); g.fill();
+  mtxtHalo(g, [{ s: "Γ", rm: 1 }], OG.x - 8, OG.y - 8, C_REF, 11, "right", true);
+
+  g.restore();
+
+  /* 面板细边框 */
+  g.save();
+  rrect(g, PN.x + 0.5, PN.y + 0.5, PN.w - 1, PN.h - 1, 7);
+  g.strokeStyle = "#e2e9f1"; g.lineWidth = 1; g.stroke();
+  g.restore();
+
+  /* --- 图注（示意口径，不出现真实 nm⁻¹ / eV 数值） --- */
+  const y0 = split ? 38 : 16, XL = PN.x + 12;
+  if (split) {
+    mtxt(g, PN.title, XL, PN.y + 17, C_BLUE, 12.5, "left", true);
+    mtxtHalo(g, [{ s: "k", i: 1 }, " 空间示意 · 每格 = 1 个允许的 ", { s: "k", i: 1 }, " 态"], XL, PN.y + y0, "#2c3e50", 11, "left", true);
+  } else {
+    mtxtHalo(g, [{ s: "k", i: 1 }, " 空间示意 · 每格 = 1 个允许的 ", { s: "k", i: 1 }, " 态"], XL, PN.y + 16, "#2c3e50", 11, "left", true);
+  }
+}
+
+/* 悬停气泡（画在最上层，不受面板裁剪限制） */
+function drawHoverK3D(g, W, H, h) {
+  const lines = [
+    [{ s: "k", i: 1 }, " = (" + h.n[0] + ", " + h.n[1] + ", " + h.n[2] + ") · ", { s: "Δk", i: 1 }],
+    ["|", { s: "k", i: 1 }, "| = " + Math.hypot(h.n[0], h.n[1], h.n[2]).toFixed(2) + " ", { s: "Δk", i: 1 }],
+    h.occ
+      ? ["已占据（", { s: "E", i: 1 }, " < ", { s: "E", i: 1 }, { s: "F", sub: 1 }, "）"]
+      : ["空态（", { s: "E", i: 1 }, " > ", { s: "E", i: 1 }, { s: "F", sub: 1 }, "）"]
+  ];
+  let w = 0;
+  for (const l of lines) w = Math.max(w, mMeasure(g, l, 11, false));
+  const bw = w + 20, bh = 8 + lines.length * 15;
+  const bx = clamp(h.x + 12, 4, W - bw - 4), by = clamp(h.y - bh - 8, 4, H - bh - 4);
+  g.save();
+  g.fillStyle = "rgba(255,255,255,0.96)"; g.strokeStyle = "#dde4ec"; g.lineWidth = 1;
+  rrect(g, bx, by, bw, bh, 6); g.fill(); g.stroke();
+  g.restore();
+  lines.forEach((l, i) => mtxt(g, l, bx + 10, by + 13 + i * 15, i === 2 ? (h.occ ? C_OCC : C_REF) : "#2c3e50", 11, "left", i === 2));
+}
+
+/* ==================================================================
+   8. 二维截面（含一维能带图）
+   ================================================================== */
+function drawSection() {
+  const c = CV["ksec"]; if (!c) return;
+  const g = c.g, W = c.W, H = c.H;
+  g.clearRect(0, 0, W, H);
+  g.fillStyle = "#fbfcfe"; g.fillRect(0, 0, W, H);
+
+  /* 1D：k 空间退化为一条直线，截面改画「一维能带 E(k) + 被量子化的允许 k 态」 */
+  if (OPT.dim === 1) { drawBand1D(g, W, H); return; }
+
+  const kf = kFschem(), RV = SC.RV;
+  const L = 52, Rt = 16, T = 22, Bt = 34;
+  const cx = (L + W - Rt) / 2, cy = (T + H - Bt) / 2;
+  const sc = Math.min((W - Rt - L) / 2, (H - Bt - T) / 2) / RV;
+  const X = x => cx + x * sc, Y = y => cy - y * sc;
+
+  /* Δk 网格：每格一个允许的 k 态 */
+  g.strokeStyle = "#eef2f7"; g.lineWidth = 1;
+  for (let i = -SC.N - 1; i <= SC.N + 1; i++) {
+    g.beginPath(); g.moveTo(X(i), Y(-RV)); g.lineTo(X(i), Y(RV)); g.stroke();
+    g.beginPath(); g.moveTo(X(-RV), Y(i)); g.lineTo(X(RV), Y(i)); g.stroke();
+  }
+
+  /* k 点（只取 k_z = 0 平面） */
+  if (OPT.pts) for (const o of schemPoints()) {
+    if (o.p[2] !== 0) continue;
+    const x = X(o.p[0]), y = Y(o.p[1]);
+    if (o.occ) { g.fillStyle = C_OCC; g.beginPath(); g.arc(x, y, 2.6, 0, 6.2832); g.fill(); }
+    else { g.strokeStyle = C_UNOCC; g.lineWidth = 1.0; g.beginPath(); g.arc(x, y, 2.4, 0, 6.2832); g.stroke(); }
+  }
+
+  /* 费米海 + 费米线（示意：半径 k_F 的圆，圆内全占据） */
+  if (OPT.fermi) {
+    const rf = kf * sc;
+    if (rf > 0.5) { g.fillStyle = C_FERMI; g.globalAlpha = 0.13; g.beginPath(); g.arc(cx, cy, rf, 0, 6.2832); g.fill(); g.globalAlpha = 1; }
+    g.strokeStyle = C_FERMI; g.lineWidth = 2.6; g.lineCap = "round"; g.beginPath(); g.arc(cx, cy, rf, 0, 6.2832); g.stroke();
+  }
+
+  /* 坐标轴 */
+  g.strokeStyle = "#c9d1da"; g.lineWidth = 1.2;
+  g.beginPath(); g.moveTo(X(-RV), cy); g.lineTo(X(RV), cy); g.stroke();
+  g.beginPath(); g.moveTo(cx, Y(-RV)); g.lineTo(cx, Y(RV)); g.stroke();
+  axisFlat(g, cx, cy, X(RV) - 6, cy, C_PURPLE, "kx", X, Y);
+  axisFlat(g, cx, cy, cx, Y(RV) - 6, C_GREEN, "ky", X, Y);
+
+  /* Δk 单位格：一个 k 态在 k 空间占据的面积 */
+  if (OPT.cells) {
+    g.strokeStyle = C_CELL; g.lineWidth = 1.4;
+    g.strokeRect(X(0), Y(1), sc, sc);
+    mtxtHalo(g, [{ s: "Δk", i: 1 }], X(1) + 5, Y(1) - 6, "#5b7aa6", 10.5, "left", true);
+  }
+
+  /* k_F 标注 */
+  const yk = cy + sc * RV * 0.62, xa = X(0), xb = X(kf);
+  g.strokeStyle = C_FERMI; g.lineWidth = 1.4;
+  g.beginPath(); g.moveTo(xa, yk); g.lineTo(xb, yk); g.stroke();
+  arrowHead(g, xb, yk, 1, 0, C_FERMI); arrowHead(g, xa, yk, -1, 0, C_FERMI);
+  mtxtHalo(g, [{ s: "k", i: 1 }, { s: "F", sub: 1 }, " = " + kf.toFixed(1) + " ", { s: "Δk", i: 1 }], (xa + xb) / 2, yk - 9, C_FERMI, 11, "center", true);
+
+  /* 角标 */
+  mtxt(g, [{ s: "k", i: 1 }, { s: "z", sub: 1 }, " = 0 截面　·　1 格 = ", { s: "Δk", i: 1 }], 12, 16, C_REF, 11, "left", true);
+}
+function axisFlat(g, x0, y0, x1, y1, col, lab, X, Y) {
+  g.strokeStyle = col; g.lineWidth = 1.8; g.lineCap = "round";
+  g.beginPath(); g.moveTo(x0, y0); g.lineTo(x1, y1); g.stroke();
+  const dx = x1 - x0, dy = y1 - y0, Ln = Math.hypot(dx, dy) || 1;
+  arrowHead(g, x1, y1, dx / Ln, dy / Ln, col);
+  mtxtHalo(g, [{ s: lab[0], i: 1 }, { s: lab.slice(1), sub: 1 }], x1 + (lab === "kx" ? 6 : 12), y1 + (lab === "kx" ? -10 : 8), col, 11, "left", true);
+}
+function arrowHead(g, x, y, ux, uy, col) {
+  g.fillStyle = col;
+  g.beginPath();
+  g.moveTo(x, y);
+  g.lineTo(x - 8 * ux + 4 * uy, y - 8 * uy - 4 * ux);
+  g.lineTo(x - 8 * ux - 4 * uy, y - 8 * uy + 4 * ux);
+  g.closePath(); g.fill();
+}
+/* 1D：一维能带 E = (k_x/Δk)² E₁ 与被量子化的允许 k 态（示意） */
+function drawBand1D(g, W, H) {
+  const kf = kFschem(), eF = eFschem(), K = SC.KMAX, EMAX = SC.EMAX;
+  const L = 58, R = 18, T = 22, Bt = 38;
+  const X = k => L + (k + K) / (2 * K) * (W - R - L);
+  const Y = e => T + (1 - e / EMAX) * (H - Bt - T);
+
+  /* 网格与刻度 */
+  g.strokeStyle = "#eef2f7"; g.lineWidth = 1;
+  for (let i = 0; i <= 4; i++) {
+    const y = Y(EMAX * i / 4);
+    g.beginPath(); g.moveTo(L, y); g.lineTo(W - R, y); g.stroke();
+    mtxt(g, [(EMAX * i / 4).toFixed(0)], L - 6, y, C_REF, 10.5, "right");
+  }
+  /* 坐标轴 */
+  g.strokeStyle = "#c9d1da"; g.lineWidth = 1.2;
+  g.beginPath(); g.moveTo(L, H - Bt); g.lineTo(W - R, H - Bt); g.stroke();
+  g.beginPath(); g.moveTo(L, T); g.lineTo(L, H - Bt); g.stroke();
+  for (let i = 0; i <= 4; i++) {
+    const x = L + (W - R - L) * i / 4, k = -K + 2 * K * i / 4;
+    mtxt(g, [k.toFixed(0)], x, H - Bt + 12, C_REF, 10.5, "center");
+  }
+  mtxt(g, [{ s: "k", i: 1 }, { s: "x", sub: 1 }, "（单位 ", { s: "Δk", i: 1 }, "）"], (L + W - R) / 2, H - 12, C_REF, 10.5, "center");
+  mtxt(g, [{ s: "E", i: 1 }, " / ", { s: "E", i: 1 }, { s: "1", sub: 1 }], L - 6, 8, C_REF, 10.5, "right");
+
+  /* 允许态 ladder（每格一个 k 态，容纳 2 个电子） */
+  for (let n = -SC.N; n <= SC.N; n++) {
+    const x = X(n), e = clamp(n * n, 0, EMAX), y0 = Y(e), occ = Math.abs(n) <= kf;
+    g.strokeStyle = occ ? C_OCC : "#d3d9e0"; g.lineWidth = occ ? 2.0 : 1.2;
+    g.beginPath(); g.moveTo(x, H - Bt); g.lineTo(x, y0); g.stroke();
+    g.fillStyle = occ ? C_OCC : "#fff"; g.strokeStyle = occ ? C_OCC : C_UNOCC; g.lineWidth = 1.4;
+    g.beginPath(); g.arc(x, y0, occ ? 3.4 : 2.8, 0, 6.2832); g.fill(); g.stroke();
+  }
+  /* 能带曲线 */
+  g.strokeStyle = C_BLUE; g.lineWidth = 2.4; g.beginPath();
+  for (let i = 0; i <= 240; i++) {
+    const k = -K + 2 * K * i / 240, x = X(k), y = Y(clamp(k * k, 0, EMAX));
+    i ? g.lineTo(x, y) : g.moveTo(x, y);
+  }
+  g.stroke();
+
+  /* 费米能级 */
+  g.save(); g.strokeStyle = C_FERMI; g.lineWidth = 1.6; g.setLineDash([6, 4]);
+  g.beginPath(); g.moveTo(L, Y(eF)); g.lineTo(W - R, Y(eF)); g.stroke(); g.restore();
+  mtxtHalo(g, [{ s: "E", i: 1 }, { s: "F", sub: 1 }, " = " + eF.toFixed(1) + " ", { s: "E", i: 1 }, { s: "1", sub: 1 }], W - R - 4, Y(eF) - 10, C_FERMI, 11, "right", true);
+  mtxtHalo(g, [{ s: "k", i: 1 }, { s: "F", sub: 1 }, " = " + kf.toFixed(1) + " ", { s: "Δk", i: 1 }], X(kf), H - Bt - 10, C_FERMI, 11, "center", true);
+  mtxt(g, ["每级台阶 = 一个允许的 ", { s: "k", i: 1 }, " 态（容纳 2 个电子），台阶间距 = ", { s: "Δk", i: 1 }], L + 4, T + 2, C_REF, 10.5, "left");
+}
+
+/* ==================================================================
+   9. 态密度图
+   ================================================================== */
+const MM = h => '<span class="m">' + h + '</span>';
+const FR = (num, den) => '<span class="frac"><span class="num">' + num + '</span><span class="den">' + den + '</span></span>';
+/* 常用符号的快捷写法 */
+const K_X = '<span class="m"><i>k</i><sub><i>x</i></sub></span>', K_Y = '<span class="m"><i>k</i><sub><i>y</i></sub></span>', K_Z = '<span class="m"><i>k</i><sub><i>z</i></sub></span>', K_F = '<span class="m"><i>k</i><sub>F</sub></span>';
+const E_F = '<span class="m"><i>E</i><sub>F</sub></span>', E_1 = '<span class="m"><i>E</i><sub>1</sub></span>', D_K = '<span class="m"><i>Δk</i></span>';
+const FR_2PI_L = FR("2<span class='m'><i>π</i></span>", "<i>L</i>");
+const DOS_HOV = { on: false, E: 0, g: 0 };
+function drawDOS() {
+  const c = CV["dos"]; if (!c) return;
+  buildDOS();
+  const g = c.g, W = c.W, H = c.H;
+  g.clearRect(0, 0, W, H);
+  g.fillStyle = "#fbfcfe"; g.fillRect(0, 0, W, H);
+  const L = 58, R = 16, T = 20, B = 40;
+  const xa = L, xb = W - R, ya = H - B, yb = T;
+  const eHi = DOS.eHi, gmax = DOS.gmax, eF = eFschem();
+  const X = e => xa + (e / eHi) * (xb - xa);
+  const Y = v => ya - clamp(v / gmax, 0, 1.02) * (ya - yb);
+
+  /* 网格与刻度 */
+  g.strokeStyle = "#eef2f7"; g.lineWidth = 1;
+  for (let i = 0; i <= 4; i++) {
+    const e = eHi * i / 4, x = X(e);
+    g.beginPath(); g.moveTo(x, yb); g.lineTo(x, ya); g.stroke();
+    mtxt(g, [e.toFixed(0)], x, ya + 12, C_REF, 10.5, "center");
+  }
+  for (let i = 0; i <= 4; i++) {
+    const y = yb + (ya - yb) * i / 4;
+    g.beginPath(); g.moveTo(xa, y); g.lineTo(xb, y); g.stroke();
+  }
+  g.strokeStyle = "#c9d1da"; g.lineWidth = 1.2;
+  g.beginPath(); g.moveTo(xa, ya); g.lineTo(xb, ya); g.stroke();
+  g.beginPath(); g.moveTo(xa, yb); g.lineTo(xa, ya); g.stroke();
+  mtxt(g, [{ s: "E", i: 1 }, "（单位 ", { s: "E", i: 1 }, { s: "1", sub: 1 }, " = ",
+    { n: [{ s: "ℏ", i: 1 }, { s: "2", sup: 1 }, { s: "Δk", i: 1 }, { s: "2", sup: 1 }], d: ["2", { s: "m", i: 1 }, { s: "0", sub: 1 }] }, "）"],
+    (xa + xb) / 2, H - 10, C_REF, 10.5, "center");
+  mtxt(g, [{ s: "g", i: 1 }, "(", { s: "E", i: 1 }, ")　相对单位（曲线下面积 = 态的份额）"], 6, yb - 12, C_REF, 10.5, "left");
+
+  /* 占据区填充（0 ~ E_F） */
+  if (eF > 0) {
+    g.save(); g.fillStyle = "rgba(25,118,210,0.13)";
+    g.beginPath(); g.moveTo(X(0), ya);
+    for (let i = 0; i < DOS.E.length; i++) { if (DOS.E[i] > eF) break; g.lineTo(X(DOS.E[i]), Y(DOS.g[i])); }
+    g.lineTo(X(eF), ya); g.closePath(); g.fill(); g.restore();
+  }
+  /* 曲线 */
+  g.strokeStyle = C_BLUE; g.lineWidth = 2.4; g.lineJoin = "round";
+  g.beginPath();
+  for (let i = 0; i < DOS.E.length; i++) {
+    const xx = X(DOS.E[i]), yy = Y(DOS.g[i]);
+    if (!isFinite(yy)) continue;
+    i ? g.lineTo(xx, yy) : g.moveTo(xx, yy);
+  }
+  g.stroke();
+
+  /* 费米能级：竖线 + 与 g(E) 曲线的交点，左侧阴影即被占据的态 */
+  g.save(); g.strokeStyle = C_FERMI; g.lineWidth = 1.8; g.setLineDash([6, 4]);
+  g.beginPath(); g.moveTo(X(eF), yb); g.lineTo(X(eF), ya); g.stroke(); g.restore();
+  const yF = Y(gAt(eF));
+  g.fillStyle = C_FERMI; g.beginPath(); g.arc(X(eF), yF, 5.6, 0, 6.2832); g.fill();
+  g.strokeStyle = "#fff"; g.lineWidth = 1.8; g.stroke();
+  mtxtHalo(g, [{ s: "E", i: 1 }, { s: "F", sub: 1 }, " = " + eF.toFixed(1) + " ", { s: "E", i: 1 }, { s: "1", sub: 1 }],
+    clamp(X(eF) + 9, xa, xb - 4), Math.max(yF - 14, yb + 12), C_FERMI, 11, X(eF) > (xa + xb) / 2 ? "right" : "left", true);
+
+  /* 悬停 */
+  if (DOS_HOV.on) {
+    const x = X(DOS_HOV.E);
+    g.save(); g.strokeStyle = "rgba(90,105,125,0.55)"; g.lineWidth = 1.2; g.setLineDash([3, 3]);
+    g.beginPath(); g.moveTo(x, yb); g.lineTo(x, ya); g.stroke(); g.restore();
+    mtxtHalo(g, [{ s: "E", i: 1 }, " = " + DOS_HOV.E.toFixed(1) + "　", { s: "g", i: 1 }, " = " + DOS_HOV.g.toPrecision(3)],
+      clamp(x + 6, xa, xb - 4), ya - 10, C_REF, 11, x > (xa + xb) / 2 ? "right" : "left", true);
+  }
+
+  /* 角标：维度特征（统一形式为 g ∝ E^{d/2 − 1}） */
+  const shape = OPT.dim === 3
+    ? [{ s: "g", i: 1 }, " ∝ ", { s: "E", i: 1 }, { s: "1/2", sup: 1 }, "　〔", { s: "d", i: 1 }, " = 3〕"]
+    : (OPT.dim === 2
+      ? [{ s: "g", i: 1 }, " = 常数（与 ", { s: "E", i: 1 }, " 无关）　〔", { s: "d", i: 1 }, " = 2〕"]
+      : [{ s: "g", i: 1 }, " ∝ ", { s: "E", i: 1 }, { s: "−1/2", sup: 1 }, "　〔", { s: "d", i: 1 }, " = 1〕"]);
+  mtxt(g, shape, xb, yb - 12, C_REF, 11, "right");
+}
+
+/* ==================================================================
+   10. 面板：控件、读数、图例
+   ================================================================== */
+/* 2026-10-21：删除了与顶部「维度」开关等价的第二组按钮 ——
+   它们调的是同一个 setAll(dim)，不设置任何维度以外的参数，属于纯冗余入口；
+   对应的物理名在 dimSub 里已写过一遍，挑战区第 4 题指的也是维度开关。 */
+const DIMS = [["3D", 3], ["2D", 2], ["1D", 1]];
+
+function syncSliders() { $("fillSlider").value = Math.round(clamp(OPT.t, 0, 1) * 1000); }
+/* 示意口径下 k_F 就是三幅图共用的那个量：换维度时保持 k_F（因而 E_F）不变 */
+function setAll(dim) {
+  OPT.dim = dim;
+  syncSliders();
+  resetCamera();          /* 换维度即回到该维度的默认视角（2D / 1D 正视 −k_z） */
+  refreshUI();
+}
+function buildStaticUI() {
+  $("dimBtns").innerHTML = DIMS.map(d => '<button data-d="' + d[1] + '">' + d[0] + '</button>').join("");
+  $("dimBtns").querySelectorAll("button").forEach(b => b.onclick = () => {
+    const d = +b.dataset.d;
+    if (d === OPT.dim) return;
+    setAll(d);
+  });
+  const onFill = e => { OPT.t = clamp(+e.target.value / 1000, 0, 1); syncSliders(); refreshUI(); };
+  $("fillSlider").oninput = onFill;
+  [["ckPts", "pts"], ["ckFermi", "fermi"], ["ckCells", "cells"]].forEach(p => {
+    $(p[0]).onchange = e => { OPT[p[1]] = e.target.checked; requestDraw(); updateStatic(); };
+  });
+  $("resetView").onclick = () => { resetCamera(); requestDraw(); };
+
+  /* 图例 */
+  $("legend3d").innerHTML = [
+    '<span><i class="swatch dot" style="color:' + C_OCC + '"></i>已占据 ' + MM("<i>k</i>") + ' 点（' + MM("<i>E</i><span class=\"op\">&lt;</span>" + E_F) + '）</span>',
+    '<span><i class="swatch ring" style="color:' + C_UNOCC + '"></i>空 ' + MM("<i>k</i>") + ' 点（' + MM("<i>E</i><span class=\"op\">&gt;</span>" + E_F) + '）</span>',
+    '<span><i class="swatch dot" style="color:' + C_FERMI + '"></i>费米面（' + MM("<i>E</i><span class=\"op\">=</span>" + E_F) + ' 的等能面，面内全占据）</span>',
+    '<span id="lgCell"></span>',
+    /* 中文顿号留在 MM() 外面 —— 数学排版里混中文标点是 kdos_schem.js 那条「数学排版内无中文」断言的老 FAIL */
+    '<span id="lgOct"><i class="swatch" style="color:' + C_FERMI + ';opacity:.55"></i>1/8 球壳（右图：'
+      + MM("+<i>k</i><sub><i>x</i></sub>") + "、" + MM("+<i>k</i><sub><i>y</i></sub>") + "、" + MM("+<i>k</i><sub><i>z</i></sub>") + ' 那一卦）</span>',
+    '<span><i class="swatch" style="color:' + C_PURPLE + '"></i>' + MM(K_X) + ' 轴</span>',
+    '<span id="lgKy"><i class="swatch" style="color:' + C_GREEN + '"></i>' + MM(K_Y) + ' 轴</span>',
+    '<span id="lgKz"><i class="swatch" style="color:' + C_BLUE + '"></i>' + MM(K_Z) + ' 轴</span>',
+    '<span><i class="swatch dot" style="color:' + C_REF + '"></i>Γ 点（' + MM("<i>k</i>") + ' = 0）</span>'
+  ].join("");
+  $("legendDos").innerHTML = [
+    '<span><i class="swatch" style="color:' + C_BLUE + '"></i>' + MM("<i>g</i>(<i>E</i>)") + '（形状只由维度决定，不随填充改变）</span>',
+    '<span><i class="swatch dash" style="color:' + C_FERMI + '"></i>费米能级 ' + MM(E_F) + '</span>',
+    '<span><i class="swatch" style="color:' + C_BLUE + ';opacity:.35"></i>已占据的态（' + MM("0 <span class=\"op\">~</span>" + E_F) + '，面积 = 占据份额）</span>'
+  ].join("");
+}
+function updateStatic() {
+  $("dimVal").textContent = OPT.dim + "D";
+  $("fillVal").innerHTML = MM(K_F + "<span class=\"op\">=</span>" + kFschem().toFixed(1) + "<span class=\"un\"><span class='m'><i>Δk</i></span></span>");
+  $("dimBtns").querySelectorAll("button").forEach(b => b.classList.toggle("active", +b.dataset.d === OPT.dim));
+  $("dimSub").innerHTML = OPT.dim === 3
+    ? "三维体材料：" + MM("<i>k</i>") + " 空间三维，每个 " + MM("<i>k</i>") + " 态占体积 " + MM("(" + FR_2PI_L + ")<sup>3</sup>") + "，等能面为球面。"
+    : (OPT.dim === 2
+      ? "二维电子气：" + MM(K_Z) + " 冻结，" + MM("<i>k</i>") + " 空间退化为 " + MM(K_X + "<span class=\"op\">–</span>" + K_Y) + " 平面，等能面退化为圆。"
+      : "一维量子线：只有 " + MM(K_X) + " 方向自由，" + MM("<i>k</i>") + " 空间退化为一条直线，等能「面」只剩 " + MM("<span class=\"op\">±</span><i>k</i>") + " 两个点。");
+  $("fillSub").innerHTML = "决定费米半径 " + MM(K_F) + " 与费米能 "
+    + MM(E_F + "<span class=\"op\">=</span>" + FR(K_F, D_K) + "<sup>2</sup>" + E_1)
+    + "；费米面以内（" + MM("<i>E</i><span class=\"op\">&lt;</span>" + E_F) + "）的 " + MM("<i>k</i>") + " 态全部占据、以外全空。";
+  $("secHint").innerHTML = OPT.dim === 1
+    ? "一维能带 " + MM("<i>E</i><span class=\"op\">=</span>" + FR(K_X, D_K) + "<sup>2</sup>" + E_1)
+      + "：每根竖线是一个允许的 " + MM("<i>k</i>") + " 态（顶端小圆点，实心为已占据，每态容纳 2 个电子，自旋 ↑↓），台阶间距 "
+      + MM(D_K + "<span class=\"op\">=</span>" + FR_2PI_L) + "，电子填到 " + MM(E_F) + " 为止。"
+    : "蓝点为已占据态（" + MM("<i>E</i><span class=\"op\">&lt;</span>" + E_F) + "），空心点为未占据；1 格 = "
+      + MM(D_K + "<span class=\"op\">=</span>" + FR_2PI_L) + "，费米圆内部全满、外部全空。";
+  $("dosHint").innerHTML = "点击图上任意位置即把费米能取到该处，" + MM("<i>k</i>")
+    + " 空间中的费米面随即胀缩；曲线形状只由维度决定 —— 三者统一写成 "
+    + MM("<i>g</i>(<i>E</i>)<span class=\"op\">∝</span><i>E</i><sup><i>d</i><span class=\"sl\">/</span>2<span class=\"op\">−</span>1</sup>") + "，"
+    + "即 3D " + MM("<span class='sqrt'><span class='rd'>√</span><span class='rdc'><i>E</i></span></span>") + "、2D 常数、1D "
+    + MM("1<span class=\"sl\">/</span><span class='sqrt'><span class='rd'>√</span><span class='rdc'><i>E</i></span></span>")     + "，不随填充水平改变（3D " + MM("<span class=\"op\">↑</span>") + "、2D ─、1D " + MM("<span class=\"op\">↓</span>") + "）。";
+  /* 2026-10-18 简化：删掉原尾句（DOS 阴影与模块一实心 k 点比例的对照）——
+     图例「面积 = 占据份额」和挑战三答案各已说过一遍，这里不必再说第三遍。 */
+  const cl = $("lgCell");
+  if (cl) cl.innerHTML = '<i class="swatch" style="color:' + C_CELL + '"></i>'
+    + (OPT.dim === 3 ? MM("<i>Δk</i>") + " 晶胞（" + MM(K_X) + " 第一层 · 整格不越出费米球）"
+      : OPT.dim === 2 ? MM("<i>Δk</i>") + " 晶胞（第一象限 · 整格不越出费米圆，随 " + MM(K_F) + " 胀缩）"
+        : MM("<i>Δk</i>") + " 晶胞（正 " + MM(K_X) + " 轴上的相邻两格）");
+  /* 图例里凡是「只在某个维度才存在」的条目：跟着 dim 显隐，
+     否则 2D / 1D 下会留下「1/8 球壳（右图）」「k_z 轴」等指不到实物的色标。 */
+  const vis = (id, on) => { const e = $(id); if (e) e.style.display = on ? "" : "none"; };
+  vis("lgOct", OPT.dim === 3);
+  vis("lgKy", OPT.dim >= 2);
+  vis("lgKz", OPT.dim >= 3);
+}
+
+/* ==================================================================
+   11. 绘制调度与交互
+   ================================================================== */
+let NEED = false;
+function requestDraw() { if (NEED) return; NEED = true; requestAnimationFrame(() => { NEED = false; draw(); }); }
+function draw() {
+  buildDOS();
+  drawK3D();
+  drawSection();
+  drawDOS();
+}
+function fitAll() {
+  fitCanvas("k3d", 430);
+  fitCanvas("ksec", 320);
+  fitCanvas("dos", 300);
+  draw();
+}
+function refreshUI() { updateStatic(); draw(); }
+
+function attach3D() {
+  const c = CV["k3d"].el;
+  c.addEventListener("mousedown", e => { c.focus(); V3.drag = { x: e.clientX, y: e.clientY, btn: e.button }; });
+  window.addEventListener("mouseup", () => { V3.drag = null; });
+  window.addEventListener("mousemove", e => {
+    if (!V3.drag) return;
+    const dx = e.clientX - V3.drag.x, dy = e.clientY - V3.drag.y;
+    V3.drag.x = e.clientX; V3.drag.y = e.clientY;
+    if (V3.drag.btn === 2) { V3.panX += dx; V3.panY += dy; }
+    else { V3.yaw += dx * 0.006; V3.pitch = clamp(V3.pitch + dy * 0.006, -80 * RAD, 80 * RAD); }
+    requestDraw();
+  });
+  c.addEventListener("mousemove", e => {
+    if (V3.drag) return;
+    const r = c.getBoundingClientRect();
+    const mx = e.clientX - r.left, my = e.clientY - r.top;
+    let best = null, bd = 9;
+    for (const o of V3.ptsProj) {
+      const d = Math.hypot(o.x - mx, o.y - my);
+      if (d < bd) { bd = d; best = { x: o.x, y: o.y, n: o.o.n, p: o.o.p, E: o.o.E, occ: o.o.occ }; }
+    }
+    const ch = JSON.stringify(best && best.n) !== JSON.stringify(V3.hover && V3.hover.n);
+    V3.hover = best;
+    if (ch) { requestDraw(); }
+  });
+  c.addEventListener("mouseleave", () => { if (V3.hover) { V3.hover = null; requestDraw(); } });
+  c.addEventListener("wheel", e => { e.preventDefault(); V3.zoom = clamp(V3.zoom * (e.deltaY > 0 ? 0.92 : 1.087), 0.4, 3.2); requestDraw(); }, { passive: false });
+  c.addEventListener("contextmenu", e => e.preventDefault());
+  c.addEventListener("keydown", e => {
+    const s = e.shiftKey ? 3 : 1;
+    if (e.key === "ArrowLeft") V3.yaw -= 5 * RAD * s;
+    else if (e.key === "ArrowRight") V3.yaw += 5 * RAD * s;
+    else if (e.key === "ArrowUp") V3.pitch = clamp(V3.pitch + 4 * RAD * s, -80 * RAD, 80 * RAD);
+    else if (e.key === "ArrowDown") V3.pitch = clamp(V3.pitch - 4 * RAD * s, -80 * RAD, 80 * RAD);
+    else if (e.key === "+" || e.key === "=") V3.zoom = clamp(V3.zoom * 1.12, 0.4, 3.2);
+    else if (e.key === "-" || e.key === "_") V3.zoom = clamp(V3.zoom / 1.12, 0.4, 3.2);
+    else return;
+    e.preventDefault(); requestDraw();
+  });
+}
+function attachDOS() {
+  const c = CV["dos"].el;
+  const at = e => {
+    const r = c.getBoundingClientRect();
+    const L = 58, R = 16, xa = L, xb = CV["dos"].W - R;
+    const t = clamp((e.clientX - r.left - xa) / (xb - xa), 0, 1);
+    return { E: t * DOS.eHi, g: gAt(t * DOS.eHi) };
+  };
+  c.addEventListener("mousemove", e => { if (!DOS) return; const q = at(e); DOS_HOV.on = true; DOS_HOV.E = q.E; DOS_HOV.g = q.g; requestDraw(); });
+  c.addEventListener("mouseleave", () => { DOS_HOV.on = false; requestDraw(); });
+  c.addEventListener("click", e => {
+    if (!DOS) return;
+    const q = at(e);
+    OPT.t = tOfE(q.E);                     /* 点击处即新的费米能（费米面随之胀缩） */
+    syncSliders();
+    refreshUI();
+  });
+}
+function attachSection() {
+  const c = CV["ksec"].el;
+  c.addEventListener("mousemove", e => { requestDraw(); });
+}
+
+/* ==================================================================
+   12. 引导探究
+   ================================================================== */
+const CHALS = [
+  {
+    t: "挑战一 · " + MM("<i>k</i>") + " 点为什么是离散的",
+    q: "为什么 " + MM("<i>k</i>") + " 空间不是连续的？图中的一格代表什么？若晶体尺寸 " + MM("<i>L</i>") + " 加倍，同样大小的费米球里能装下多少倍的 " + MM("<i>k</i>") + " 态？",
+    a: "周期边界条件要求 " + MM("<i>k</i><span class=\"op\">=</span>" + FR_2PI_L + "(<span class='m'><i>n</i><sub><i>x</i></sub></span>, <span class='m'><i>n</i><sub><i>y</i></sub></span>, <span class='m'><i>n</i><sub><i>z</i></sub></span>)") +
+       "，于是 " + MM("<i>k</i>") + " 空间被切成间距 " + MM(D_K + "<span class=\"op\">=</span>" + FR_2PI_L) + " 的格子，" +
+       "每一格就是一个允许的 " + MM("<i>k</i>") + " 态（容纳 2 个电子，自旋 ↑↓）。本图把这一格画成 1 个单位长度。" +
+       MM("<i>L</i>") + " 加倍 → " + MM(D_K) + " 减半 → 同样半径的球内格点数变为 " + MM("2<sup>3</sup><span class=\"op\">=</span>8") + " 倍；" +
+       MM("<i>L</i><span class=\"op\">→</span><span class=\"op\">∞</span>") + " 时 " + MM(D_K + "<span class=\"op\">→</span>0") + "，" + MM("<i>k</i>") + " 趋于连续，" +
+       "求和 " + MM("<span class=\"op\">Σ</span><sub>k</sub>") + " 也就过渡为积分 " +
+       MM(FR("<i>V</i>", "(2<span class='m'><i>π</i></span>)<sup>3</sup>") + "<span class=\"op\">∫</span><span class=\"un\">d</span><sup>3</sup><i>k</i>") + " —— 这正是固体物理里那个替换项的来历。"
+  },
+  {
+    t: "挑战二 · 费米面与填充",
+    q: "拖动「填充水平」滑块，看 " + MM(K_F) + "、已占据格点数、" + MM("<i>g</i>(<i>E</i>)") + " 曲线下的阴影面积三者如何一起变化。",
+    a: "填充水平是唯一的自由度，它给出费米半径 " + MM(K_F) + "（图中以 " + MM(D_K) + " 计）。" + MM(K_F) + " 增大 → 费米面胀大 → " +
+       "球内格点数 " + MM("<span class=\"op\">∝</span>" + K_F + "<sup><span class='m'><i>d</i></span></sup>") + "（3D 立方增长、2D 平方增长、1D 线性增长）；" +
+       "同时 " + MM(E_F + "<span class=\"op\">=</span>" + FR(K_F, D_K) + "<sup>2</sup>" + E_1) + " 增大，" + MM("<i>g</i>(<i>E</i>)") + " 图左侧被填充的阴影同步变宽。" +
+       "面内（" + MM("<i>E</i><span class=\"op\">&lt;</span>" + E_F) + "）全占据、面外全空——这就是 " + MM("<i>T</i><span class=\"op\">=</span>0") + " 的费米海。"
+  },
+  {
+    t: "挑战三 · 费米面与态密度",
+    q: MM("<i>g</i>(<i>E</i>)") + " 曲线下面的面积代表什么？为什么拖动填充水平时，曲线本身一动不动？",
+    a: "曲线下的面积就是已占据态的份额（本图把 " + MM("<i>g</i>(<i>E</i>)") + " 归一到 " +
+       MM("<span class=\"op\">∫</span><sub>0</sub><sup><i>E</i><sub>max</sub></sup><i>g</i><span class=\"un\">d</span><i>E</i><span class=\"op\">=</span>1") +
+       "，它与模块一里实心的 " + MM("<i>k</i>") + " 点所占的比例互相印证" +
+       /* 纵轴是有限高度的：1D 的带边发散必须截断，图上面积因此比理论值略小（修完量程后仍差几个百分点）。
+          这一句学生从图上看不出来，但该说清楚 —— 否则「面积 = 份额」在低填充的 1D 下会被读成精确等式。 */
+       "；1D 的 " + MM("<i>g</i><span class=\"op\">∝</span>1<span class=\"sl\">/</span><span class='sqrt'><span class='rd'>√</span><span class='rdc'><i>E</i></span></span>") +
+       " 在 " + MM("<i>E</i><span class=\"op\">→</span>0") + " 处发散，紧贴纵轴的那一小段必然被图幅截断，图上读到的面积会比理论值小几个百分点）。" +
+       MM("<i>g</i>(<i>E</i>)") + " 只由维度决定：它是 " + MM("<i>k</i>") + " 空间等能壳层的体积除以 " + MM("<span class=\"op\">|</span><span class=\"op\">∇</span><sub>k</sub><i>E</i><span class=\"op\">|</span>") +
+       "，与电子填到哪里无关；" +
+       "填充只移动 " + MM(E_F) + " 那条竖线和它左侧的阴影，曲线本身当然不动。"
+  },
+  {
+    t: "挑战四 · 维度对态密度的影响",
+    q: "切换 3D、2D、1D，对比 " + MM("<i>g</i>(<i>E</i>)") + " 的形状。为什么 3D 是 " + MM("<span class='sqrt'><span class='rd'>√</span><span class='rdc'><i>E</i></span></span>") + "、2D 是常数、1D 是 " + MM("1<span class=\"sl\">/</span><span class='sqrt'><span class='rd'>√</span><span class='rdc'><i>E</i></span></span>") + "？",
+    a: "关键是等能「壳层」的度量随 " + MM("<i>k</i>") + " 怎么长：" +
+       MM("<i>g</i>(<i>E</i>)") + " = 壳层度量 " + MM("<span class=\"sl\">/</span>") + MM("<span class=\"op\">|</span><span class=\"un\">d</span><i>E</i><span class=\"sl\">/</span><span class=\"un\">d</span><i>k</i><span class=\"op\">|</span>") + "，" +
+       "而 " + MM("<i>E</i><span class=\"op\">∝</span><i>k</i><sup>2</sup>") + " 总是给出 " + MM("<span class=\"un\">d</span><i>E</i><span class=\"sl\">/</span><span class=\"un\">d</span><i>k</i><span class=\"op\">∝</span><i>k</i>") + "：" +
+       "3D 壳层面积 " + MM("<span class=\"op\">∝</span><i>k</i><sup>2</sup>") + "，相除后剩一个 " + MM("<i>k</i>") + "，得 " +
+       MM("<i>g</i><sub>3D</sub><span class=\"op\">∝</span><i>k</i><span class=\"op\">∝</span><span class='sqrt'><span class='rd'>√</span><span class='rdc'><i>E</i></span></span>") + "（从带边平滑上升）；" +
+       "2D 的壳层是周长 " + MM("<span class=\"op\">∝</span><i>k</i>") + "，恰好被 " + MM("<span class=\"un\">d</span><i>E</i><span class=\"sl\">/</span><span class=\"un\">d</span><i>k</i><span class=\"op\">∝</span><i>k</i>") +
+       " 完全抵消，于是 " + MM("<i>g</i><sub>2D</sub>") + " 是与能量无关的常数（阶梯）；" +
+       "1D 只剩 " + MM("<span class=\"op\">±</span><i>k</i>") + " 两个点，" + MM("<i>g</i><sub>1D</sub><span class=\"op\">∝</span>1<span class=\"sl\">/</span><span class='sqrt'><span class='rd'>√</span><span class='rdc'><i>E</i></span></span>") +
+       "，越靠近带边涨得越快——这是维度降低最直观的后果。"
+  },
+  {
+    t: "挑战五 · 费米能随填充的标度",
+    q: "占据的 " + MM("<i>k</i>") + " 态数变成 8 倍时，" + MM(E_F) + " 变成几倍？分别在 3D、2D、1D 里数一数，找出 " + MM(E_F + "<span class=\"op\">∝</span><i>N</i><sup><i>α</i></sup>") + " 中的 " + MM("<i>α</i>") + "。",
+    a: "格点计数给出 " + MM("<i>N</i><span class=\"op\">∝</span>" + K_F + "<sup><span class='m'><i>d</i></span></sup>") + "，于是 " +
+       MM(K_F + "<span class=\"op\">∝</span><i>N</i><sup>1<span class=\"sl\">/</span><i>d</i></sup>") + "；又 " + MM(E_F + "<span class=\"op\">∝</span>" + K_F + "<sup>2</sup>") + "，故 " +
+       MM("<i>α</i><span class=\"op\">=</span>" + FR("2", "<i>d</i>")) + "：" +
+       "3D 是 " + MM("<i>N</i><sup>2<span class=\"sl\">/</span>3</sup>") + "（8 倍态 → 4 倍 " + MM(E_F) + "）、2D 是 " + MM("<i>N</i>") + "（8 倍）、1D 是 " + MM("<i>N</i><sup>2</sup>") + "（64 倍）。" +
+       "数一数模块一里实心的 " + MM("<i>k</i>") + " 点即可验证。" +
+       "这就是低维体系对掺杂极度敏感的原因：同样多的注入电子，在量子线里引起的费米能移动要比体材料大一个数量级。"
+  }
+];
+function buildChals() {
+  const grid = $("chalGrid");
+  grid.innerHTML = CHALS.map((c, i) =>
+    '<div class="chal"><div class="chal-head"><b>' + c.t + '</b><span class="chev">▶</span></div>' +
+    '<div class="chal-body"><div class="q">' + c.q + '</div>' +
+    '<div class="ans" id="ans' + i + '">' + c.a + '</div>' +
+    '<div class="btn-row tight"><button data-a="' + i + '">查看答案</button></div></div></div>').join("");
+  grid.querySelectorAll(".chal-head").forEach(h => h.onclick = () => h.parentNode.classList.toggle("open"));
+  grid.querySelectorAll("button[data-a]").forEach(b => {
+    b.onclick = () => {
+      const el = $("ans" + b.dataset.a);
+      const on = el.classList.toggle("show");
+      b.textContent = on ? "收起答案" : "查看答案";
+    };
+  });
+}
+
+/* ==================================================================
+   13. 启动
+   ================================================================== */
+buildStaticUI();
+buildChals();
+syncSliders();
+fitAll();
+attach3D();
+attachDOS();
+attachSection();
+updateStatic();
+window.addEventListener("resize", () => { clearTimeout(window.__rz); window.__rz = setTimeout(fitAll, 120); });
+/* i18n 启动必须在 init() 之后：setLang() 会重跑 syncInputs()/render()，
+   放到 init() 之前会在 fitAll() 之前触发绘制，一旦抛异常整个 init() 就跑不到（挑战与画布会空）。 */
+(function () {
+  try {
+    i18nWatch();
+    ORIG_TITLE = ORIG_TITLE || document.title;
+    var btn = document.getElementById("langBtn");
+    if (btn) btn.onclick = function () { setLang(LANG === "en" ? "zh" : "en"); };
+    if (LANG === "en") setLang("en"); else { document.title = ORIG_TITLE; i18nWalk(document.body); }
+  } catch (e) { }
+})();
+</script>
+<div class="site-foot">本工具是 EIT-SP（半导体物理交互式教学工具箱）的一部分（武汉大学物理学院《半导体物理》智慧课程），以 MIT 协议开源，可自由使用与二次开发；转载请保留出处。反馈意见 <a href="mailto:doctorwanghao@qq.com">doctorwanghao@qq.com</a></div>
+</body>
+</html>

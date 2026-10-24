@@ -1,0 +1,2256 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<!-- SPDX-License-Identifier: MIT -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>直接带隙与间接带隙交互教学工具</title>
+<style>
+
+  :root {
+    --bg: #f7f9fb;
+    --panel: #ffffff;
+    --border: #dde4ec;
+    --text: #2c3e50;
+    --text-sub: #6b7a8c;
+    --blue: #1976d2;
+    --blue-light: #e3f0fb;
+    --orange: #ef8c1a;
+    --red: #d94a3d;
+    --teal: #0f9b8e;
+    --green: #2e9e5b;
+    --purple: #7b3fa0;
+    --gray-ref: #9aa5b1;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Microsoft YaHei", "PingFang SC", "Segoe UI", sans-serif;
+    background: var(--bg); color: var(--text); padding: 14px;
+  }
+  header { position: relative; display: flex; align-items: baseline; justify-content: center; gap: 14px; flex-wrap: wrap; text-align: center; margin-bottom: 2px; }
+  .lang-btn { position: absolute; right: 0; top: 0; border: 1px solid var(--border); background: #fff;
+    color: var(--text-sub); padding: 3px 10px; border-radius: 7px; cursor: pointer; font-size: 12px; font-weight: 600; }
+  .lang-btn:hover { border-color: var(--blue); color: var(--blue); }
+  header h1 { font-size: 20px; }
+  header .formula { font-size: 14.5px; color: var(--text-sub); }
+  .sub-note { text-align: center; font-size: 12.5px; color: var(--text-sub); margin-bottom: 12px; line-height: 1.75; }
+  .sub-note b { color: var(--blue); }
+
+  .layout { display: flex; gap: 14px; align-items: flex-start; max-width: 1500px; margin: 0 auto; }
+  .viz { flex: 0 0 64%; min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+  .side { flex: 1; min-width: 310px; display: flex; flex-direction: column; gap: 12px; }
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; }
+  .sec-title { font-size: 13.5px; font-weight: 700; margin: 2px 0 6px; }
+  /* 模块编号徽标：只有教学内容模块才带编号；控制面板等辅助面板不是模块，不加 */
+  .sec-title .mtag {
+    display: inline-block; background: var(--blue); color: #fff;
+    font-size: 11px; font-weight: 700; padding: 1.5px 7px;
+    border-radius: 5px; margin-right: 6px; vertical-align: 1.5px; letter-spacing: .3px;
+  }
+  canvas { display: block; width: 100%; border-radius: 6px; touch-action: none; }
+  canvas:focus { outline: 2px solid rgba(25,118,210,.45); outline-offset: 1px; }
+  .chart-wrap { position: relative; }
+  .hint { font-size: 12px; color: var(--text-sub); margin-top: 6px; line-height: 1.6; }
+  .ctrl { margin-bottom: 10px; }
+  .ctrl:last-child { margin-bottom: 0; }
+  .ctrl-head { display: flex; justify-content: space-between; align-items: baseline; font-size: 13px; font-weight: 600; margin-bottom: 2px; gap: 8px; }
+  .ctrl-head .val { color: var(--blue); font-variant-numeric: tabular-nums; font-weight: 700; white-space: nowrap; }
+  .ctrl input[type=range] { width: 100%; accent-color: var(--blue); }
+  .ctrl .sub { font-size: 11.5px; color: var(--text-sub); margin-top: 1px; line-height: 1.5; }
+  .btn-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+  .btn-row button {
+    border: 1px solid var(--border); background: #fff; color: var(--text);
+    padding: 5px 11px; border-radius: 7px; cursor: pointer; font-size: 12.5px;
+  }
+  .btn-row button:hover { border-color: var(--blue); color: var(--blue); }
+  .btn-row.tight button { padding: 4px 9px; font-size: 12px; }
+  .btn-row button.sel { background: var(--blue); border-color: var(--blue); color: #fff; font-weight: 600; }
+  .btn-row button.primary { background: var(--blue-light); border-color: var(--blue); color: var(--blue); font-weight: 600; }
+  .mode-switch { display: flex; gap: 6px; }
+  .mode-switch button {
+    flex: 1; border: 1px solid var(--border); background: #fff; color: var(--text-sub);
+    padding: 6px 10px; border-radius: 8px; cursor: pointer; font-size: 12.5px; font-weight: 600;
+  }
+  .mode-switch button.active { background: var(--blue); border-color: var(--blue); color: #fff; }
+  .chk-row { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12.5px; color: var(--text-sub); margin-top: 4px; }
+  .chk-row label { display: inline-flex; align-items: center; gap: 5px; cursor: pointer; }
+  .chk-row input[type=checkbox] { accent-color: var(--blue); }
+  .legend { display: flex; gap: 6px 14px; flex-wrap: wrap; align-items: center; font-size: 12px; color: var(--text-sub); margin-top: 6px; }
+  .swatch { display: inline-block; vertical-align: middle; width: 20px; height: 0; border-top: 3px solid currentColor; border-radius: 2px; margin-right: 6px; }
+  .swatch.dash { border-top-style: dashed; }
+  .swatch.dot { width: 11px; height: 11px; border: none; border-radius: 50%; }
+  .swatch.sq { width: 11px; height: 11px; border: none; border-radius: 3px; }
+  /* ---- LaTeX 风格数学排版（纯 CSS，无外部库） ---- */
+  .m { font-family: "Cambria Math", "STIX Two Math", "Latin Modern Math", "Times New Roman", Times, serif;
+       font-size: 1.05em; font-style: normal; white-space: nowrap; letter-spacing: .01em; }
+  .m i, .m var { font-style: italic; }
+  .m .rm { font-style: normal; }
+  .m sub, .m sup { font-size: .70em; font-style: normal; line-height: 1; }
+  .m sub { vertical-align: -.28em; }
+  .m sup { vertical-align: .50em; }
+.m .m { font-size: 1em; }   /* 嵌套容器（TEXH 下标转换叠加）不再放大字号 */
+  .m sub i, .m sup i { font-style: italic; }
+  .m .op { font-style: normal; padding: 0 .24em; }
+  .m .sl { font-style: normal; padding: 0 .05em; }
+  .m .un { font-style: normal; padding-left: .16em; }
+  .frac { display: inline-block; vertical-align: -0.52em; text-align: center; margin: 0 .16em; font-size: .86em; line-height: 1.18; }
+  .frac > .num { display: block; padding: 0 .34em; border-bottom: 1px solid currentColor; }
+  .frac > .den { display: block; padding: 0 .34em; }
+  /* ---- 读数区 ---- */
+  .kv { display: grid; grid-template-columns: 1fr; gap: 2px 22px; font-size: 12.5px; }
+  .kv .row { display: flex; justify-content: space-between; gap: 8px; border-bottom: 1px dotted #eef2f7; padding: 2px 0; }
+  .kv .k { color: var(--text-sub); white-space: nowrap; }
+  .kv .v { font-variant-numeric: tabular-nums; text-align: right; }
+  .kv .v b { color: var(--blue); }
+  .kv .hd { grid-column: 1 / -1; font-weight: 700; color: var(--text); font-size: 12px; margin: 6px 0 2px; }
+  .kv .hd:first-child { margin-top: 0; }
+  .unit-note { font-size: 11.5px; color: var(--text-sub); line-height: 1.55; margin-top: 6px; }
+  /* ---- 折叠区 ----
+     独立组件，类名一律 .fold：❌ 不许复用 .chal-head / .chev，
+     否则会被挑战区回归脚本按「挑战题」计数，也会污染挑战区视觉基线。 */
+  .fold { margin-top: 7px; border-top: 1px dotted var(--border); padding-top: 5px; }
+  .fold-head { display: flex; align-items: center; gap: 6px; cursor: pointer;
+    font-size: 12px; font-weight: 600; color: var(--text-sub); user-select: none; }
+  .fold-head:hover { color: var(--blue); }
+  .fold-head .chev { font-size: 11px; transition: transform .15s; display: inline-block; }
+  .fold.open .fold-head .chev { transform: rotate(90deg); }
+  .fold-body { display: none; margin-top: 4px; }
+  .fold.open .fold-body { display: block; }
+  /* ---- 引导探究 ---- */
+  .chal-wrap { max-width: 1500px; margin: 14px auto 0; }
+  .chal-bar { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+  .chal-bar b { font-size: 14.5px; }
+  .chal-bar span { font-size: 12px; color: var(--text-sub); }
+  .chal-grid { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+  .chal { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 8px 12px; }
+  .chal-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; cursor: pointer; }
+  .chal-head b { font-size: 13.5px; }
+  .chal-head .chev { color: var(--text-sub); font-size: 12px; transition: transform .15s; display: inline-block; }
+  .chal.open .chal-head .chev { transform: rotate(90deg); }
+  .chal.open { border-color: var(--blue); }
+  .chal-body { display: none; margin-top: 6px; font-size: 12.5px; color: var(--text-sub); line-height: 1.75; }
+  .chal.open .chal-body { display: block; }
+  .chal-body .ans { display: none; margin-top: 6px; padding: 7px 10px; background: var(--blue-light); border-radius: 6px; color: var(--text); }
+  .chal-body .ans.show { display: block; }
+  .chal-body .ans b { color: var(--blue); }
+  .chal-body .btn-row { margin-top: 8px; }
+  @media (max-width: 1100px) {
+    .layout { flex-direction: column; }
+    .viz { flex: 1 1 auto; width: 100%; }
+  }
+  /* ---- 课程页脚 ---- */
+  .site-foot { max-width: 1500px; margin: 18px auto 0; padding: 12px 16px 24px;
+    border-top: 1px solid var(--border); color: var(--text-sub);
+    font-size: 12.5px; line-height: 1.8; text-align: center; }
+  .site-foot a { color: var(--blue, #1976d2); text-decoration: none; }
+  .site-foot a:hover { text-decoration: underline; }
+
+  .grp { border-top: 1px dotted #e6ecf3; padding-top: 8px; margin-top: 8px; }
+  .grp:first-child { border-top: 0; padding-top: 0; margin-top: 0; }
+  /* 根号：√ 符号 + 一条压住被开方式的横线（纯 CSS 模拟 \sqrt{}，不用任何外部库） */
+  .sqrt { display: inline-flex; align-items: flex-start; vertical-align: baseline; margin: 0 .08em; }
+  .sqrt > .rd { font-size: 1.20em; line-height: 1; padding-right: .04em; }
+  .sqrt > .rdc { border-top: 1px solid currentColor; padding: .12em .12em 0 .14em; margin-top: .16em; }
+  /* 上标里的分数（如 1/2 次方）：抵消 sup 的 0.70em 缩小，别缩成看不见 */
+  .m sup .frac { font-size: 1.30em; vertical-align: -0.30em; }
+  /* ---- 图例条目：色块 + 文字 + 线型注 ---- */
+  .legend .lg { display: inline-flex; align-items: center; gap: 5px; }
+  .legend .lg > i { display: inline-block; width: 18px; height: 3px; border-radius: 2px; flex: 0 0 auto; }
+  .legend .lg > em { font-style: normal; color: #adb7c2; font-size: 11px; }
+  .legend .lg.off { opacity: .36; }
+  .legend .lg.cur { font-weight: 700; color: var(--text); }
+  .legend .lg[data-k] { cursor: pointer; }
+  .sqrt > .rdc, .sqrt .rdc { display: inline-block; position: static; font-size: 1em;
+             border-top: .055em solid currentColor; padding: .06em .12em 0 .10em; margin: 0; line-height: 1; }
+
+  /* 公式排版：分式 / 根式 —— 全站统一为「回旋共振 v06」写法（置于末尾，覆盖本文件早期变体） */
+  .frac { display: inline-block; vertical-align: -0.52em; text-align: center; font-size: .78em; margin: 0 .12em; }
+  .frac > .num, .frac .num { display: block; padding: 0 .22em; border-bottom: .055em solid currentColor; line-height: inherit; }
+  .frac > .den, .frac .den { display: block; padding: 0 .22em; line-height: inherit; }
+  .sqrt { display: inline-block; white-space: nowrap; vertical-align: baseline; margin: 0; font-size: 1em; }
+  .sqrt > .rd, .sqrt .rd { display: inline-block; position: static; font-size: 1em; line-height: inherit; padding: 0 .02em 0 0; margin: 0; }
+  .sqrt > .rdc, .sqrt .rdc { display: inline-block; position: static; font-size: 1em;
+             border-top: .055em solid currentColor; padding: .06em .12em 0 .10em; margin: 0; line-height: 1; }
+  .sqrt .rdc:has(sup) { padding-top: .18em; }
+</style>
+</head>
+<body>
+
+<header>
+  <button id="langBtn" class="lang-btn" data-noi18n title="中文 / English">EN</button>
+  <h1>直接带隙与间接带隙交互教学工具</h1>
+  <div class="formula"><span class="m"><span class="rm">ℏ</span><i>ω</i><span class="op">=</span><i>E</i><sub>g</sub></span>（直接）　·　<span class="m"><span class="rm">ℏ</span><i>ω</i><span class="op">=</span><i>E</i><sub>g</sub><span class="op">∓</span><i>E</i><sub>ph</sub></span>（间接）　·　<span class="m"><i>α</i><span class="op">∝</span><span class='sqrt'><span class='rd'>√</span><span class='rdc'><span class="rm">ℏ</span><i>ω</i><span class="op">−</span><i>E</i><sub>g</sub></span></span></span>／<span class="m">(<span class="rm">ℏ</span><i>ω</i><span class="op">−</span><i>E</i><sub>g</sub><span class="op">∓</span><i>E</i><sub>ph</sub>)<sup>2</sup></span>　·　<span class="m"><i>E</i><sub>g</sub>(<i>T</i>)<span class="op">=</span><i>E</i><sub>g</sub>(0)<span class="op">−</span><i>αT</i><sup>2</sup><span class="sl">/</span>(<i>T</i><span class="op">+</span><i>β</i>)</span></div>
+</header>
+<div class="sub-note">
+  导带底和价带顶<b>是不是在同一个 <span class="m"><i>k</i></span> 点</b>，决定了光跃迁要不要声子帮忙：光子几乎不带动量，所以光跃迁在 <span class="m"><i>E</i><span class="op">–</span><i>k</i></span> 图上是<b>一条竖线</b>。
+  直接带隙里这条竖线正好把价带顶接到导带底，<b>一级过程</b>，发光效率高；间接带隙里竖线到不了导带底，还差一段 <span class="m">Δ<i>k</i></span>，
+  只能由<b>声子</b>补上（声子动量大、能量只有几十 meV），于是变成<b>二级过程</b>，发光效率低好几个数量级。
+  拖动光子能量，<span class="m"><i>E</i><span class="op">–</span><i>k</i></span> 图上的跃迁、右侧的吸收系数与吸收长度会一起变。
+</div>
+
+<div class="layout">
+  <div class="viz">
+    <div class="card">
+      <div class="sec-title"><span class="mtag">模块一</span><span class="m"><i>E</i><span class="op">–</span><i>k</i></span> 能带与光跃迁：<b>能量守恒</b>管竖着走多远，<b>动量守恒</b>管横着走多远</div>
+      <div class="chart-wrap"><canvas id="ek" data-h="430" tabindex="0"></canvas></div>
+      <div class="legend" id="legEK"></div>
+    </div>
+
+    <div class="card">
+      <div class="sec-title"><span class="mtag">模块二</span>吸收系数 <span class="m"><i>α</i>(<span class="rm">ℏ</span><i>ω</i>)</span>：直接带隙按 <b>平方根</b> 陡升，间接带隙按 <b>平方</b> 慢爬</div>
+      <div class="chart-wrap"><canvas id="abs" data-h="300" tabindex="0"></canvas></div>
+      <div class="legend" id="legAbs"></div>
+      <div class="hint">
+        纵轴是 <span class="m"><i>α</i></span>（<span class="m"><span class="un">cm<sup>−1</sup></span></span>，对数）。<b>直接带隙</b>只有一条边：过了 <span class="m"><i>E</i><sub>g</sub></span> 就按 <span class="m"><i>α</i><span class="op">∝</span><span class='sqrt'><span class='rd'>√</span><span class='rdc'><span class="rm">ℏ</span><i>ω</i><span class="op">−</span><i>E</i><sub>g</sub></span></span></span> 一下窜上去，超出量还不到 <span class="m">0.1<span class="un">eV</span></span> 就已经涨过 <span class="m">10<sup>4</sup><span class="un">cm<sup>−1</sup></span></span>。
+        <b>间接带隙</b>先出现一条很缓的边：阈值其实被声子劈成两条（<span class="m"><i>E</i><sub>g</sub><span class="op">−</span><i>E</i><sub>ph</sub></span> 吸收声子、<span class="m"><i>E</i><sub>g</sub><span class="op">+</span><i>E</i><sub>ph</sub></span> 发射声子，图中两条绿虚线），因为每一步都要同时凑齐能量和动量，只能按 <span class="m"><i>α</i><span class="op">∝</span>(<span class="rm">ℏ</span><i>ω</i><span class="op">−</span><i>E</i><sub>g</sub><span class="op">∓</span><i>E</i><sub>ph</sub>)<sup>2</sup></span> 慢慢爬。
+      </div>
+    </div>
+  </div>
+
+  <div class="side">
+    <div class="card">
+      <div class="sec-title">控制面板</div>
+
+      <div class="ctrl">
+        <div class="ctrl-head">材料<span class="val" id="matVal"></span></div>
+        <div class="btn-row tight" id="matBtns"></div>
+        <div class="sub" id="matSub"></div>
+      </div>
+
+      <div class="ctrl">
+        <div class="ctrl-head">光子能量 <span class="m"><span class="rm">ℏ</span><i>ω</i></span><span class="val" id="hwVal"></span></div>
+        <input type="range" id="hwSlider" min="0.20" max="6.00" step="0.01" value="1.60">
+        <div class="sub" id="hwSub"></div>
+      </div>
+
+      <div class="ctrl">
+        <div class="ctrl-head">过程方向</div>
+        <div class="btn-row tight" id="dirBtns">
+          <button id="btnAbs">吸收（价带 → 导带）</button>
+          <button id="btnEmi">发射 · 复合（导带 → 价带）</button>
+        </div>
+        <div class="sub" id="dirSub"></div>
+      </div>
+
+      <div class="ctrl">
+        <div class="ctrl-head">声子过程（只影响间接带隙）</div>
+        <div class="btn-row tight" id="phBtns">
+          <button id="btnPhA">吸收声子 <span class="m"><span class="rm">ℏ</span><i>ω</i><span class="op">=</span><i>E</i><sub>g</sub><span class="op">−</span><i>E</i><sub>ph</sub></span></button>
+          <button id="btnPhE">发射声子 <span class="m"><span class="rm">ℏ</span><i>ω</i><span class="op">=</span><i>E</i><sub>g</sub><span class="op">+</span><i>E</i><sub>ph</sub></span></button>
+        </div>
+        <div class="sub" id="phSub"></div>
+      </div>
+
+      <div class="ctrl">
+        <div class="ctrl-head">一键对准</div>
+        <div class="btn-row tight" id="preBtns"></div>
+        <div class="sub">把 <span class="m"><span class="rm">ℏ</span><i>ω</i></span> 直接摆到几个关键位置上：刚好能跃迁的阈值、带上方 <span class="m">0.3<span class="un">eV</span></span>、以及 Γ 谷的直接跃迁阈值。</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="sec-title">读数面板</div>
+      <div class="kv" id="readout"></div>
+      <div class="fold">
+        <div class="fold-head"><span class="chev">▶</span><span>更多读数（背景量、中间量与固定参数）</span></div>
+        <div class="fold-body"><div class="kv" id="readoutMore"></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="chal-wrap">
+  <div class="card">
+    <div class="chal-bar">
+      <b>引导探究（点击展开，先自己试一试再看答案）</b>
+      <span>挑战任务</span>
+    </div>
+    <div class="chal-grid" id="chalGrid"></div>
+  </div>
+</div>
+
+<div class="site-foot">本工具是 EIT-SP（半导体物理交互式教学工具箱）的一部分（武汉大学物理学院《半导体物理》智慧课程），以 MIT 协议开源，可自由使用与二次开发；转载请保留出处。反馈意见 <a href="mailto:doctorwanghao@qq.com">doctorwanghao@qq.com</a></div>
+
+<script>
+/* ==================================================================
+   i18n（C1 单文件双语：物理代码仍然只有一份）
+   LANG 取值优先级：URL ?lang=en / ?lang=zh  >  localStorage('opl_lang')  >  默认中文。
+   不做 location 跳转——保住「单文件拷走也能用」。
+   三个注入点，**业务字符串一个都不改**：
+     ① partsOf()   画布 token：带 i/sub/sup/un 标记的是物理量、下标与单位，跳过
+     ② fillText/measureText 原型挂钩：兜住直接写进画布的中文串
+     ③ DOM 文本节点：静态 HTML 与 JS 写进来的 innerHTML，用 MutationObserver 兜住新增节点
+   T() 先查整句词典，未命中再按「最长优先」做短语替换，因此拼接串也能翻。
+   漏翻会被记进 window.__MISS，可导出核对。 */
+var LANG = (function () {
+  var m = /[?&]lang=([a-zA-Z]+)/.exec(location.search);
+  var q = m ? m[1].toLowerCase() : "";
+  if (q === "en" || q === "zh") return q;
+  var s = "";
+  try { s = localStorage.getItem("opl_lang") || ""; } catch (e) { }
+  return (s === "en" || s === "zh") ? s : "zh";
+})();
+var ORIG_TITLE = document.title;
+var __MISS = [];
+try { window.__MISS = __MISS; } catch (e) { }
+function noteMiss(s) { if (__MISS.indexOf(s) < 0) __MISS.push(s); }
+function TSoft(s) {
+  if (!T._K) T._K = Object.keys(I18N).sort(function (a, b) { return b.length - a.length; });
+  var out = s, i, k, orig = s;
+  /* 两遍：第一遍只吃长度 ≥ 2 的短语；第二遍的单字 key 只在「传进来的串
+     恰好就是这一个字」时才上场——画布逐字排版会拿单字去 measureText，那一
+     路必须翻。反过来，绝不让单字 key 去切更长的句子：否则「导」「子」「原」
+     会把「半导体」「电子数」「泡利原理」切成半 conduction 体、电 quantum 数、
+     泡利 origin 理这类中英混排。同一条理由也适用于「下」：整句不该被切碎。 */
+  for (var pass = 0; pass < 2; pass++) {
+    for (i = 0; i < T._K.length; i++) {
+      k = T._K[i];
+      if (k.length < 2 && (pass === 0 || orig !== k)) continue;
+      if (out.indexOf(k) < 0) continue;
+      /* 中文片段之间没有空格：前一片段已翻成英文时，本片段英文直连进去会粘连
+         （「更深」「或」「更浅」逐段替换成 deeper、or、shallower 会拼出 deeperor），
+         所以替换时看上下文：key 以中文开头、前一字符已是英文 ⇒ 前面补一个空格。 */
+      out = out.replace(new RegExp(k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "g"), function (m, off, str) {
+        var v = I18N[k];
+        var pre = off > 0 ? str.charAt(off - 1) : "";
+        if (/[A-Za-z0-9]/.test(pre) && /^[A-Za-z0-9(]/.test(v) && /[\u3400-\u9FFF]/.test(k.charAt(0))) v = " " + v;
+        return v;
+      });
+    }
+  }
+  return out;
+}
+/* 同一句被 DOM 切成好几个文本节点时，首尾空格会随机落在 data 里；
+   所以除了「整句命中」，再试一次「去空格后命中」并原样补回首尾空白。 */
+function trimMap() {
+  if (T._TM) return T._TM;
+  var m = {};
+  for (var k in I18N) if (Object.prototype.hasOwnProperty.call(I18N, k)) {
+    var t = k.replace(/^\s+|\s+$/g, "");
+    if (t && m[t] === undefined) m[t] = I18N[k];
+  }
+  T._TM = m;
+  return m;
+}
+/* eslint-disable no-use-before-define */
+function T(s) {
+  if (LANG !== "en" || typeof s !== "string" || !s) return s;
+  if (!/[一-鿿]/.test(s)) return s;
+  if (Object.prototype.hasOwnProperty.call(I18N, s)) return I18N[s];
+  var tm = trimMap(), core = s.replace(/^\s+|\s+$/g, "");
+  if (core && tm[core] !== undefined) {
+    var lead = s.slice(0, s.length - s.replace(/^\s+/, "").length);
+    var tail = s.slice(s.replace(/\s+$/, "").length);
+    return lead + tm[core] + tail;
+  }
+  var v = TSoft(s);
+  /* 译完还剩汉字也算漏翻：只翻掉一半的「半吊子译文」曾经让 __MISS 恒为 0。 */
+  if (v === s || /[\u3400-\u9FFF]/.test(v)) noteMiss(s);
+  return v;
+}
+var I18N = {
+  /* ---- 词典：中文原文 → 英文。key 禁含运行时数字（换个参数就漏），数字前后要拆开 ---- */
+  "直接带隙与间接带隙交互教学工具": "Direct and Indirect Band Gaps — Interactive Toolkit",
+  "（直接）　·　": " (direct)　·　",
+  "（间接）　·　": " (indirect)　·　",
+  "（直接）": " (direct)",
+  "（间接）": " (indirect)",
+  "\n  导带底和价带顶": "\n  Whether the conduction-band minimum and the valence-band maximum",
+  "是不是在同一个 ": " sit at the same ",
+  " 点": " point",
+  "，决定了光跃迁要不要声子帮忙：光子几乎不带动量，所以光跃迁在 ": " decides whether the optical transition needs a phonon: a photon carries almost no momentum, so on the ",
+  " 图上是": " plot the transition is",
+  "一条竖线": "a vertical line",
+  "。\n  直接带隙里这条竖线正好把价带顶接到导带底，": ".\n  In a direct gap this vertical line joins the valence-band top straight to the conduction-band bottom —",
+  "一级过程": "a first-order process",
+  "，发光效率高；间接带隙里竖线到不了导带底，还差一段 ": ", and the emission efficiency is high; in an indirect gap the vertical line cannot reach the conduction-band bottom and falls short by ",
+  "，\n  只能由": ",\n  which only a",
+  "声子": "phonon",
+  "补上（声子动量大、能量只有几十 meV），于是变成": " can make up (a phonon carries a large momentum but only a few tens of meV), so it becomes a",
+  "二级过程": "second-order process",
+  "，发光效率低好几个数量级。\n  拖动光子能量，": ", with an emission efficiency lower by several orders of magnitude.\n  Drag the photon energy and",
+  " 图上的跃迁、右侧的吸收系数与吸收长度会一起变。\n": " plot, together with the absorption coefficient and the absorption length on the right.\n",
+  "模块一": "Module 1",
+  " 能带与光跃迁：": " bands and optical transitions:",
+  "能量守恒": "energy conservation",
+  "管竖着走多远，": " fixes how far it goes vertically,",
+  "动量守恒": "momentum conservation",
+  "管横着走多远": " fixes how far it goes horizontally",
+  "价带 ": "Valence band ",
+  "（空穴，VBM 在 Γ）": " (holes; the VBM is at Γ)",
+  "导带 ": "Conduction band ",
+  "（电子）：CBM 所在的谷加粗": " (electrons): the valley that holds the CBM is drawn thick",
+  "卫星谷（虚线 X / 点线 L，非最低谷）": "Satellite valleys (dashed X / dotted L — not the lowest valley)",
+  "光子：竖直跃迁（光子动量 ≈ 0）": "Photon: a vertical transition (photon momentum ≈ 0)",
+  "声子：补上 ": "Phonon: makes up the missing ",
+  "；吸收给电子 ": "; absorption gives the electron ",
+  "、发射拿走 ": ", emission takes away ",
+  "（竖直双向箭头）与 ": " (vertical double arrow) and ",
+  "（水平双向箭头）": " (horizontal double arrow)",
+  "禁带": "Forbidden gap",
+  "模块二": "Module 2",
+  "吸收系数 ": "Absorption coefficient ",
+  "：直接带隙按 ": ": in a direct gap it rises steeply, following the ",
+  "平方根": "square root",
+  " 陡升，间接带隙按 ": ", whereas in an indirect gap it climbs slowly, following the ",
+  "平方": "square",
+  " 慢爬": "",
+  "：吸收系数": ": absorption coefficient",
+  "：最低带隙（阈值）": ": the smallest gap (threshold)",
+  "：两条声子伴线（仅间接带隙）": ": the two phonon sidebands (indirect gap only)",
+  "当前 ": "Current ",
+  " 与对应的 ": " and the corresponding ",
+  "\n        纵轴是 ": "\n        The vertical axis is ",
+  "，对数）。": " (logarithmic).",
+  "直接带隙": "a direct gap",
+  "间接带隙": "an indirect gap",
+  "只有一条边：过了 ": " has only one edge: once ",
+  " 就按 ": " is passed it follows ",
+  " 一下窜上去，超出量还不到 ": " and shoots up at once — before the excess has reached ",
+  " 就已经涨过 ": " it has already climbed past ",
+  "先出现一条很缓的边：阈值其实被声子劈成两条（": " shows a very gentle edge first: the threshold is really split in two by the phonon (",
+  " 吸收声子、": " with phonon absorption, ",
+  " 发射声子，图中两条绿虚线），因为每一步都要同时凑齐能量和动量，只能按 ": " with phonon emission — the two green dashed lines in the figure — because every step must satisfy energy and momentum at once, so it can only follow ",
+  " 慢慢爬。\n      ": " and creep upward.\n      ",
+  "控制面板": "Control Panel",
+  "材料": "Material",
+  "间接": "indirect",
+  "直接": "direct",
+  "金刚石结构，": "Diamond structure, ",
+  "　·　集成电路、太阳能电池": "　·　integrated circuits, solar cells",
+  "　·　红外探测器、高频器件": "　·　infrared detectors, high-frequency devices",
+  "　·　LED、激光器、高效太阳能电池": "　·　LEDs, lasers, high-efficiency solar cells",
+  "　·　蓝光 / 紫外 LED、功率器件": "　·　blue / UV LEDs, power devices",
+  "　·　光通信激光器、探测器": "　·　telecom lasers, detectors",
+  "　·　紫外 LED、透明导电薄膜": "　·　UV LEDs, transparent conducting films",
+  "光子能量 ": "Photon energy ",
+  "阈值 ": "threshold ",
+  "阈值": "Threshold",
+  "允许跃迁": "transition allowed",
+  "过程方向": "Process direction",
+  "吸收（价带 → 导带）": "Absorption (valence → conduction)",
+  "发射 · 复合（导带 → 价带）": "Emission · recombination (conduction → valence)",
+  "吸收：价带顶的电子吃掉一个光子往上走（竖直），间接材料再让声子补 ": "Absorption: an electron at the valence-band top swallows a photon and moves up (vertically); in an indirect material a phonon then supplies the missing ",
+  "声子过程（只影响间接带隙）": "Phonon process (indirect gap only)",
+  "吸收声子 ": "Absorb a phonon ",
+  "发射声子 ": "Emit a phonon ",
+  "：吸收一个声子 ⇒ 阈值降到 ": ": absorbing one phonon ⇒ the threshold drops to ",
+  "；更低的能量也能跃迁，但要先有这个声子，概率更小）": "; a smaller photon energy can then drive the transition, but that phonon must be present first, so the probability is lower)",
+  "不需要声子": "no phonon needed",
+  "（按钮已禁用）": " (button disabled)",
+  "一键对准": "Snap to",
+  "带上方 0.3 eV": "0.3 eV above the edge",
+  "带上方 1.0 eV": "1.0 eV above the edge",
+  "Γ 谷直接跃迁": "Γ-valley direct transition",
+  "把 ": "Put ",
+  " 直接摆到几个关键位置上：刚好能跃迁的阈值、带上方 ": " straight onto a few key positions: the threshold at which the transition just becomes allowed, ",
+  "、以及 Γ 谷的直接跃迁阈值。": ", and the direct-transition threshold of the Γ valley.",
+  "读数面板": "Readout Panel",
+  "更多读数（背景量、中间量与固定参数）": "More readouts (background quantities, intermediate values and fixed parameters)",
+  "固定参数": "Fixed parameters",
+  "材料 / 结构": "Material / structure",
+  "　金刚石": "　diamond",
+  "　闪锌矿": "　zinc blende",
+  "　纤锌矿": "　wurtzite",
+  "带隙类型": "Gap type",
+  "（CBM 在 Γ）": " (CBM at Γ)",
+  "（CBM 在 Γ–X 的 Δ 点）": " (CBM at the Δ point on Γ–X)",
+  "（CBM 在 L）": " (CBM at L)",
+  "典型应用": "Typical applications",
+  "集成电路、太阳能电池": "integrated circuits, solar cells",
+  "红外探测器、高频器件": "infrared detectors, high-frequency devices",
+  "LED、激光器、高效太阳能电池": "LEDs, lasers, high-efficiency solar cells",
+  "蓝光 / 紫外 LED、功率器件": "blue / UV LEDs, power devices",
+  "光通信激光器、探测器": "telecom lasers, detectors",
+  "紫外 LED、透明导电薄膜": "UV LEDs, transparent conducting films",
+  "带隙": "Band gap",
+  "（反推）": " (back-extrapolated)",
+  "　·　文献 ": "　·　literature ",
+  "Γ 谷（竖直跃迁阈值）": "Γ valley (vertical-transition threshold)",
+  "（发光波长）": " (emission wavelength)",
+  "动量": "Momentum",
+  "（光子波矢）": " (photon wave vector)",
+  "—（无需动量差）": "— (no momentum mismatch needed)",
+  "当前跃迁": "Current transition",
+  " / 阈值": " / threshold",
+  "跃迁": "Transition",
+  "允许": "allowed",
+  "（吸收进导带）": " (absorbed into the conduction band)",
+  "（复合回价带）": " (recombines back into the valence band)",
+  "不允许": "not allowed",
+  "，还差 ": ", still short by ",
+  "吸收 1 个声子：声子给电子 ": "Absorb 1 phonon: the phonon gives the electron ",
+  "发射 1 个声子：电子交出 ": "Emit 1 phonon: the electron gives up ",
+  "发射 1 个声子：电子把 ": "Emit 1 phonon: the electron hands ",
+  " 交给晶格": " over to the lattice",
+  " ⇒ 阈值 ": " ⇒ threshold ",
+  " ⇒ 发出的光子只有 ": " ⇒ the emitted photon can only have ",
+  "（Stokes 线，间接带隙发光的主线）": " (the Stokes line, the main line of indirect-gap emission)",
+  "吸收 1 个声子：电子又从晶格借 ": "Absorb 1 phonon: the electron borrows another ",
+  " ⇒ 发出的光子可达 ": " ⇒ the emitted photon can reach ",
+  "（反 Stokes 线，弱得多）": " (the anti-Stokes line, far weaker)",
+  "不需要（同一 ": "not needed (the same ",
+  " 点）": " point)",
+  "吸收": "Absorption",
+  "≈ 0（透明）": "≈ 0 (transparent)",
+  "（吸收长度）": " (absorption length)",
+  "—（几乎不吸收）": "— (almost no absorption)",
+  "温度 ": "Temperature ",
+  "（固定）": " (fixed)",
+  "（金刚石）": " (diamond)",
+  "（闪锌矿）": " (zinc blende)",
+  "（纤锌矿）": " (wurtzite)",
+  "间接带隙：CBM 与 VBM 差 ": "Indirect gap: CBM and VBM differ by ",
+  "直接带隙：CBM 与 VBM 同一个 ": "Direct gap: CBM and VBM at the same ",
+  "与": " and ",
+  "差": "differ by",
+  " 吸收": " absorbing",
+  "波矢 ": "Wave vector ",
+  "波矢": "wave vector",
+  "（沿 Γ → X → L，fcc 布里渊区；横轴按 ": " (along Γ → X → L, fcc Brillouin zone; the horizontal axis follows the true ",
+  " 空间真实长度比例）": " length scale)",
+  "（沿": " (along",
+  "布里渊区；横轴按": " Brillouin zone; the horizontal axis follows",
+  " 谷 ": " valley ",
+  "谷": "valley",
+  "VBM（价带顶，Γ）": "VBM (valence-band top, Γ)",
+  "（价带顶，": " (valence-band top, ",
+  "CBM（导带底，X）": "CBM (conduction-band bottom, X)",
+  "（导带底，": " (conduction-band bottom, ",
+  "（要声子来补）": " (a phonon must make it up)",
+  "声子：": "Phonon:",
+  "，吸收 ⇒ 电子 +0.05 ": ", absorption ⇒ electron +0.05 ",
+  "，吸收": ", absorption",
+  "电子": "electron",
+  "✓ 吸收：落进导带": "✓ Absorption: lands in the conduction band",
+  "✓ 复合：回到价带顶": "✓ Recombination: back to the valence-band top",
+  "吸收：落进导带": "Absorption: lands in the conduction band",
+  " 的吸收边": " absorption edge",
+  "间接带隙：先一条缓边（＋声子），到 Γ 谷再陡升": "Indirect gap: a gentle edge first (+ phonon), then a steep rise at the Γ valley",
+  "直接带隙：一条边，陡": "Direct gap: a single edge, steep",
+  "间接带隙：先一条缓边（＋声子），到": "Indirect gap: a gentle edge first (+ phonon), then a steep rise at",
+  " 谷再陡升": " valley",
+  "光子能量": "Photon energy",
+  "（吸收声子，阈值更低）": " (absorbing a phonon, lower threshold)",
+  "（发射声子）": " (emitting a phonon)",
+  " —— 平方律，爬得慢": " — a square law, climbing slowly",
+  " —— 平方根，一下就窜上去": " — a square root, shooting up at once",
+  "当前：": "Current: ",
+  "六方（纤锌矿）只画 Γ 谷：直接跃迁就发生在 Γ，卫星谷不在本路径上，故不画": "Hexagonal (wurtzite): only the Γ valley is drawn — the direct transition happens at Γ, and the satellite valleys are not on this path",
+  "引导探究（点击展开，先自己试一试再看答案）": "Guided inquiry (click to expand — try it yourself before opening the answers)",
+  "挑战任务": "Challenges",
+  "看看答案": "Show answer",
+  "1. 在 Si 和 GaAs 之间来回切换。两种材料的 CBM 分别在哪个 ": "1. Switch back and forth between Si and GaAs. At which ",
+  " 点？VBM 呢？加粗的那条导带谷是不是就是「最低的那条」？": " point does the CBM of each material lie? And the VBM? Is the thick conduction valley always the lowest one?",
+  "2. 光子动量为什么可以忽略？读一读右侧读数面板里的 ": "2. Why can the photon momentum be neglected? Read the ",
+  "。要是间接材料里没有声子参与，光跃迁会卡在哪一步？": " entry in the readout panel. Without phonons, at which step would the optical transition of an indirect material get stuck?",
+  "3. 在模块二里对比 Si 和 GaAs：过了阈值同样 ": "3. Compare Si and GaAs in module 2: at the same excess above threshold, ",
+  " 的时候，两条边的 ": ", what is ",
+  " 各是多少？实验上怎么靠吸收边判断材料是哪种带隙？": " for each of the two edges? How does one tell the gap type from the absorption edge experimentally?",
+  "4. 温度升高时 ": "4. When the temperature rises, does ",
+  " 是变大还是变小？对应的发光波长往哪个方向漂？读数面板里给出了 ": " grow or shrink? Which way does the emission wavelength drift? The readout panel gives ",
+  "，跟 300 ": "; compare it with the value at 300 ",
+  " 的值比一比。": ".",
+  "5. 为什么 GaAs 适合做 LED、Si 不适合？可 Si 又是太阳能电池的主力，这矛盾吗？": "5. Why is GaAs suitable for LEDs while Si is not? And if so, why is Si the workhorse of solar cells — is that a contradiction?",
+  "当前是 ": "It is currently ",
+  "（金刚石）：": " (diamond): ",
+  "（闪锌矿）：": " (zinc blende): ",
+  "（纤锌矿）：": " (wurtzite): ",
+  "VBM 一直在 Γ": "The VBM is always at Γ",
+  "（价带顶，橙点），而 ": " (valence-band top, the orange dot), while the ",
+  "CBM 在 Γ–X 方向（Si 实际在 Δ 点，≈0.85 X）": "CBM lies along Γ–X (Si actually sits at the Δ point, ≈0.85 X)",
+  "（蓝点，加粗的那条谷）。两者": " (blue dot, the thick valley). The two are",
+  "两者在": "The two are at",
+  "同一个 ": "the same ",
+  "不在同一个 ": "not at the same ",
+  "，所以是": ", so this is",
+  "：横向差着 ": ": they differ horizontally by ",
+  "）。导带画了 Γ、X、L 三条谷，加粗的永远是": "). The conduction band shows the Γ, X and L valleys, and the thick one is always the one with the",
+  "能量最低": "lowest energy",
+  "的那条 —— 看哪条谷的谷底最低，就知道带隙是不是直接的：": " — looking at which valley bottom lies lowest tells you whether the gap is direct: ",
+  " 的 Γ 谷在 ": "'s Γ valley lies at ",
+  " eV、": " eV, while the ",
+  " 谷才 ": " valley is only ",
+  " eV，所以 ": " eV, so the ",
+  " 的": " ",
+  " 的 Γ 谷 ": "'s Γ valley, at ",
+  " eV 本身就是最低的，所以它是": " eV, is already the lowest, so it is",
+  "最低": "lowest",
+  "带隙是 ": "gap is ",
+  " eV（间接），但要": " eV (indirect), but a",
+  "竖直": "vertical",
+  "跃迁（不动 ": " transition (without changing ",
+  "）得掏到 ": ") costs ",
+  " eV 才够得着 Γ 谷。": " eV before the Γ valley can be reached.",
+  "注意 ": "Note that ",
+  " 是": " is ",
+  "六方（纤锌矿）": "hexagonal (wurtzite)",
+  "：布里渊区是六棱柱，横轴走的是 ": ": the Brillouin zone is a hexagonal prism and the horizontal axis runs ",
+  "（": " (",
+  " = 边心、": " = edge centre, ",
+  " = 角），": " = corner), ",
+  "六方里没有 X 点": "there is no X point in the hexagonal case",
+  "；": "; ",
+  "本图只画 Γ 谷 —— 直接跃迁就发生在 Γ。": " only the Γ valley is drawn here — the direct transition happens at Γ.",
+  "导带画了 ": "The conduction band shows ",
+  "、": ", ",
+  " 三条谷，加粗的永远是": " valleys, and the thick one is always the one with the",
+  " eV 对应的波长 ": " eV, the corresponding wavelength is ",
+  "，于是 ": ", so that ",
+  "；而间接跃迁需要的动量差 ": "; the momentum mismatch an indirect transition needs is ",
+  "。比值 ": ". The ratio ",
+  " —— 光子带的动量": " — the momentum carried by the photon is",
+  "只有需要的 1/": "only 1/",
+  "（差 ": " (",
+  " 个数量级），所以在 ": " orders of magnitude short), so on the ",
+  " 个数量级）—— ": " orders of magnitude smaller) — ",
+  " 个数量级）": " orders of magnitude)",
+  " 图上光跃迁只能是一条": " plot the optical transition can only be a",
+  " ≈ 0）。当前是": " ≈ 0). The gap is currently",
+  "，紫色竖线走完 ": ", and after the purple vertical line has used up ",
+  " 之后还悬在禁带里（横坐标为 Γ），必须让": " it still hangs inside the forbidden gap (at the Γ abscissa): a",
+  "把它横着挪 ": " must shift it sideways by ",
+  " 才够得着导带底。声子正好补这个短板：布里渊区边界声子的波矢就是 ": " before it can reach the conduction-band bottom. The phonon fills exactly this gap: a phonon at the Brillouin-zone boundary has a wave vector of ",
+  " 这个量级，而能量只有 0.05 eV —— 只占当前带隙（": ", while its energy is only 0.05 eV — just ",
+  " eV）的 ": " eV out of the present gap: a mere ",
+  "（即小 ": " (i.e. ",
+  "动量大、能量小": "large momentum, small energy",
+  "，所以它在 ": ", so on the ",
+  " 图上几乎只是": " plot it practically only",
+  "横着走": "moves sideways",
+  "（间接）：比阈值高 0.2 eV 时 ": " (indirect): 0.2 eV above threshold ",
+  "，而 GaAs 在同一个超出量下已经到 ": ", whereas GaAs at the same excess has already reached ",
+  "差 ": "a factor of ",
+  " 倍": "",
+  "。根源就是": ". The root cause is the",
+  "边的幂次": "power of the edge",
+  "：直接带隙 ": ": in a direct gap ",
+  "，开根号在阈值附近涨得极快；间接带隙 ": ", and the square root climbs extremely fast near threshold; in an indirect gap ",
+  "，平方在阈值附近几乎是贴着零爬。实验上把它画成 ": ", and the square hugs zero near threshold. Experimentally one plots a ",
+  "Tauc 图": "Tauc plot",
+  "：若 ": ": if ",
+  " 对 ": " against ",
+  " 是一条直线 ⇒ 直接带隙；若 ": " is a straight line ⇒ direct gap; if ",
+  " 成直线 ⇒ 间接带隙。间接带隙还能看到": " is straight ⇒ indirect gap. An indirect gap also shows",
+  "两条边": "two edges",
+  "（相差 2": " (separated by 2",
+  "），那是吸收声子与发射声子的两条分支。": "), the two branches of phonon absorption and phonon emission.",
+  " 时 ": " at ",
+  "）。温度升上去带隙": "). As the temperature rises the gap",
+  "变窄": "narrows",
+  "，按 Varshni 关系 ": ", following the Varshni relation ",
+  "：低温段是 ": ": at low temperature it goes as ",
+  "（很平），高温段趋于线性下降。物理上是": " (very flat), at high temperature it tends to a linear drop. Physically it is",
+  "热膨胀": "thermal expansion",
+  "电子-声子相互作用": "electron–phonon interaction",
+  "把能带推近了。带隙变窄 ⇒ 发光波长 ": " that pushes the bands together. A narrower gap ⇒ the emission wavelength ",
+  " 变长：现在 ": " gets longer: right now ",
+  "往红端漂": "shifts to the red",
+  "。这正是 LED 和激光器要控温的原因：结温一升，波长就红移。": ". This is exactly why LEDs and lasers must be temperature-controlled: as the junction temperature rises, the wavelength shifts red.",
+  "做 LED 要的是": "An LED needs",
+  "辐射复合": "radiative recombination",
+  "：导带电子直接落回价带、把能量交给一个光子。直接带隙里这就是": ": a conduction electron falls straight back into the valence band and hands its energy to a photon. In a direct gap this is",
+  "（一个光子 + 一个矩阵元），概率高，": " (one photon plus one matrix element), with a high probability, so ",
+  " 在 ": " is of order ",
+  " 量级、辐射寿命 ns 级；间接带隙里必须": " and the radiative lifetime is nanoseconds; in an indirect gap one must",
+  "同时": "at the same time",
+  "捎上一个声子来补 ": " carry along a phonon to make up ",
+  "，是": ", which is",
+  "，概率再乘一个声子因子，": ", with the probability multiplied by a further phonon factor, so ",
+  " 掉到 ": " drops to ",
+  " 量级 —— 电子多半把能量交给晶格（发热）而不是发光。所以 LED / 激光器选 GaAs、GaN、InP 这些": " — the electron mostly gives its energy to the lattice (heat) rather than to light. That is why LEDs and lasers use",
+  "材料。但太阳能电池要的是": " materials. A solar cell, however, needs to",
+  "把光吸收掉": "swallow the light",
+  "，不是发光：": ", not to emit: ",
+  "发光效率低 ≠ 吸收差": "low emission efficiency ≠ poor absorption",
+  "，只说明吸收边没那么陡。当前 ": "; it only means the absorption edge is less steep. At present ",
+  " 处 ": " reads ",
+  "，吸收长度 ": ", and the absorption length is ",
+  "。Si 的 ": ". The ",
+  " 在带边附近只有 ": " of Si near the band edge is only ",
+  " ⇒ 要几十到上百微米厚才吸得干净，但 Si 便宜、晶圆大、钝化工艺成熟，这点厚度完全给得起；直接带隙材料 ": " ⇒ tens to hundreds of micrometres are needed to absorb the light completely, but Si is cheap, the wafers are large and the passivation technology is mature, so that thickness is easily affordable; in a direct-gap material ",
+  " 高达 ": " is as high as ",
+  " ⇒ 一微米就够，所以能做": " ⇒ one micrometre suffices, which is why",
+  "薄膜": "thin-film",
+  "电池。结论：带隙类型决定的是「": " cells are possible. In short: the gap type decides whether",
+  "行不行」和「": " works and how",
+  "要多厚": "thick",
+  "才吸干净」，两件事并不矛盾。": " the layer must be to absorb everything — two questions that do not contradict each other.",
+  "本工具是 EIT-SP（半导体物理交互式教学工具箱）的一部分（武汉大学物理学院《半导体物理》智慧课程），以 MIT 协议开源，可自由使用与二次开发；转载请保留出处。": "This tool is part of EIT-SP, the Educational Interactive Toolkit for Semiconductor Physics (School of Physics and Technology, Wuhan University). Released under the MIT licence: free to use, modify and redistribute, including commercially. Please keep this attribution.",
+  "反馈意见": " Feedback",
+  "竖线": "vertical line",
+  "发光": "emission",
+  "闪锌矿结构，": "zinc-blende structure, ",
+  "当前是直接带隙：CBM 与 VBM 同一个 ": "This is a direct gap: the CBM and the VBM share the same ",
+  "（沿 Γ → M → K，六方布里渊区基面；横轴按 ": " (along Γ → M → K, the basal plane of the hexagonal Brillouin zone; the horizontal axis follows ",
+  "，六方布里渊区基面；横轴按": ", the basal plane of the hexagonal Brillouin zone; the horizontal axis follows",
+  "✗ 还差 ": "✗ still short by ",
+  "，进不了导带": ", it cannot get into the conduction band",
+  "纤锌矿结构，": "wurtzite structure, ",
+  "　·　还差 ": "　·　still short by ",
+  "　·　发射（复合）": "　·　emission (recombination)",
+  "　发射（复合）": "　emission (recombination)",
+  "✗ 不匹配（差 ": "✗ no match (short by ",
+  "不匹配": "no match",
+  "，落不回价带顶）": ", it cannot fall back to the valence-band top)",
+  "✗ 不匹配 (": "✗ no match (",
+  "光子带走 ": "The photon carries away ",
+  "，动量差由声子补上": ", and the momentum difference is made up by a phonon",
+  "光子带走": "The photon carries away",
+  "差由": "the difference is made up by",
+  "补上": "made up by",
+  "复合：导带底的电子落回价带顶，发出一个光子；间接材料同样得先靠声子把动量还回去。": "Recombination: the electron at the conduction-band minimum falls back to the valence-band top and emits a photon; in an indirect material the momentum must likewise be handed back by a phonon first.",
+  "（蓝点，加粗的那条谷）。两者在": " (blue dot, the valley drawn thicker). The two lie at the same ",
+  " 图上一条竖线就能把价带顶接到导带底。注意 ZnO 是": " plot, where a single vertical line joins the valence-band top to the conduction-band minimum. Note that ZnO is ",
+  "。当前是": ". The present case is ",
+  "，CBM 与 VBM 都落在 Γ 点上，": ", with both the CBM and the VBM sitting at Γ, ",
+  " —— 本来就不存在「需要的动量差」这回事，": " — there is simply no \"momentum difference that has to be supplied\", ",
+  "光子动量够不够的问题根本不成立": "so the question whether the photon momentum is sufficient does not even arise",
+  "（读数面板里 ": " (in the readout panel the ",
+  " 那一栏也显示「—（无需动量差）」）。光跃迁在 ": " column also reads \"— (no momentum difference needed)\"). The optical transition is still a ",
+  " 图上仍是一条": " plot, still a single ",
+  "），而这条竖线": "), while this vertical line ",
+  "一步就够得着导带底": "reaches the conduction-band minimum in one step",
+  " —— 这就是它能直接跃迁的原因，也是它不需要声子的原因。": " — that is why it can make a direct transition, and why it needs no phonon.",
+  "（直接）：比阈值高 ": " (direct): above the threshold by ",
+  "eV 时 ": " eV, ",
+  "根源就是": "the root cause is ",
+  "（透明）": " (transparent)",
+  "，发射 ⇒ 电子 ": ", emission ⇒ the electron ",
+  "，发射": ", emission",
+  "：电子一路的最后一脚是": ": the last step of the electron's path is ",
+  "发射": "emission",
+  "一个声子：把 ": "A phonon: it supplies ",
+  " —— 正好比带隙低一个声子能量，就是间接带隙发光里最亮的那条 Stokes 伴线": " — exactly one phonon energy below the gap, the brightest Stokes sideband of indirect-gap emission",
+  " 图上一条竖线就能把价带顶接到导带底。导带画了 Γ、X、L 三条谷，加粗的永远是": " on the plot a vertical line connects the valence-band top straight to the conduction-band bottom. The conduction band shows Γ, X and L valleys, and the bold one is always",
+  " 图上一条竖线就能把价带顶接到导带底。注意 GaN 是": " on the plot a vertical line connects the valence-band top straight to the conduction-band bottom. Note that GaN is",
+};
+
+/* 注入点②：画布直写字符串。老工具直接调 g.fillText()，这里在原型上兜住。
+   measureText 必须一起挂钩，否则「量的宽度」和「量的文字」用的不是同一个串。 */
+(function () {
+  if (typeof CanvasRenderingContext2D === "undefined") return;
+  var ft = CanvasRenderingContext2D.prototype.fillText;
+  CanvasRenderingContext2D.prototype.fillText = function (s, x, y) {
+    if (typeof s === "string") arguments[0] = T(s);
+    return ft.apply(this, arguments);
+  };
+  var mt = CanvasRenderingContext2D.prototype.measureText;
+  CanvasRenderingContext2D.prototype.measureText = function (s) {
+    return mt.call(this, typeof s === "string" ? T(s) : s);
+  };
+})();
+
+/* 注入点④：逐字绘制的画布串。drawMath 一类把中文按单字拆成 token 再逐个 fillText，
+   T() 每次只见到一个汉字 ⇒ 整句词条永远命中不了。这里在整串进入分词之前先整体翻译，
+   于是画布标注也走「整句优先」，与 DOM 同一个口径。没有这些函数的工具自动跳过。
+   ⚠️ 签名坑：drawMath / measureMath 的第一个参数是 canvas context（对象），文本在第
+   二位；早期版本照着 arguments[0] 翻，等于把 context 送去 T()，补丁全程空转。
+   这里改为「找到第一个含中文的字符串参数」再翻，既躲开 context，也不会误伤
+   align / weight 之类以英文字符串传的选项。 */
+(function () {
+  ["drawMath", "drawMathHalo", "measureMath"].forEach(function (n) {
+    var f = window[n];
+    if (typeof f !== "function") return;
+    window[n] = function () {
+      for (var i = 0; i < arguments.length; i++) {
+        if (typeof arguments[i] === "string" && /[\u3400-\u9FFF]/.test(arguments[i])) {
+          arguments[i] = T(arguments[i]);
+          break;
+        }
+      }
+      return f.apply(this, arguments);
+    };
+  });
+})();
+
+
+/* ---- DOM 文本节点 ---- */
+function i18nNode(n) {
+  var el = n.parentElement;
+  if (!el) return;
+  var tag = el.tagName;
+  if (tag === "SCRIPT" || tag === "STYLE") return;
+  if (el.closest && el.closest("[data-noi18n]")) return;
+  var cur = n.nodeValue;
+  if (n.__orig === undefined || (cur !== n.__last && cur !== n.__orig)) n.__orig = cur;
+  var want = LANG === "en" ? T(n.__orig) : n.__orig;
+  if (want !== cur) n.nodeValue = want;
+  n.__last = want;
+}
+/* 属性（title / placeholder / optgroup label …）不是文本节点，MutationObserver 覆盖不到，
+   必须单独过一遍：否则悬停提示、下拉分组名会残留中文。原文缓存在元素 expando 上，
+   切回中文时原样写回。改属性不会触发 childList/characterData 观察器，不会递归。 */
+var I18N_ATTRS = ["title", "placeholder", "aria-label", "alt", "label"];
+function i18nAttrs(root) {
+  var els = [root], i, j;
+  if (root.querySelectorAll) els = els.concat(Array.prototype.slice.call(root.querySelectorAll("*")));
+  for (i = 0; i < els.length; i++) {
+    var el = els[i];
+    if (!el.getAttribute) continue;
+    if (el.closest && el.closest("[data-noi18n]")) continue;
+    for (j = 0; j < I18N_ATTRS.length; j++) {
+      var a = I18N_ATTRS[j];
+      if (!el.hasAttribute(a)) continue;
+      var key = "__a_" + a;
+      if (el[key] === undefined) el[key] = el.getAttribute(a);
+      var want = LANG === "en" ? T(el[key]) : el[key];
+      if (want !== el.getAttribute(a)) el.setAttribute(a, want);
+    }
+  }
+}
+/* 英文补空格（跨节点）：中文片段被行内标签切开时，各自翻成英文后直连会粘连。
+   判定用 DOM 结构而不是渲染矩形——折叠区（挑战答案）矩形为零，矩形法会漏。
+   两文本节点在文档序里紧邻（中间没有任何文本节点，包括空格节点）、
+   前段末尾与后段开头都是字母、双方词条都没自带空格、且不在上下标里 ⇒ 插一个空格。
+   空格节点记录在案，切回中文时移除。只动 i18n 注入层，不改业务文本。 */
+function fixGlue(root) {
+  var all = [];
+  var w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null, false), n;
+  while ((n = w.nextNode())) all.push(n);
+  function subbed(el) {
+    while (el) { var t = el.tagName; if (t === "SUB" || t === "SUP") return true; el = el.parentElement; }
+    return false;
+  }
+  for (var i = 0; i + 1 < all.length; i++) {
+    var a = all[i], b = all[i + 1];
+    if (!a.nodeValue || !b.nodeValue) continue;
+    if (/\s$/.test(a.nodeValue) || /^\s/.test(b.nodeValue)) continue;
+    if (!/[A-Za-z0-9]$/.test(a.nodeValue) || !/^[A-Za-z]/.test(b.nodeValue)) continue;
+    var pa = a.parentElement, pb = b.parentElement;
+    if (!pa || !pb || subbed(pa) || subbed(pb)) continue;
+    var sp = document.createTextNode(" ");
+    sp.__glue = 1;
+    (fixGlue._n = fixGlue._n || []).push(sp);
+    b.parentNode.insertBefore(sp, b);
+  }
+}
+function removeGlue() {
+  if (!fixGlue._n) return;
+  for (var i = 0; i < fixGlue._n.length; i++) { var g = fixGlue._n[i]; if (g.parentNode) g.parentNode.removeChild(g); }
+  fixGlue._n = [];
+}
+/* 全局防抖补空格：挑战答案这类「点击时才重建」的区域，observer 回调里对子树跑
+   fixGlue 的时机不全（答案重写、延迟渲染都会错过）。任何 DOM 变更后 60ms
+   对整页补一次；空格本身不触发新插入，收敛。 */
+var _glueTimer = null;
+function _glueKick() {
+  if (LANG !== "en") return;
+  if (_glueTimer) clearTimeout(_glueTimer);
+  _glueTimer = setTimeout(function () {
+    _glueTimer = null;
+    if (LANG === "en") fixGlue(document.body);
+  }, 60);
+}
+function i18nWalk(root) {
+  var w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null, false), n, c = 0;
+  while ((n = w.nextNode())) { i18nNode(n); c++; }
+  i18nAttrs(root);
+  if (LANG === "en") fixGlue(root === document ? document.body : root);
+  return c;
+}
+var _i18nBusy = false;
+function i18nWatch() {
+  if (typeof MutationObserver === "undefined") return;
+  var mo = new MutationObserver(function (ms) {
+    if (_i18nBusy) return;
+    _i18nBusy = true;
+    try {
+      for (var i = 0; i < ms.length; i++) {
+        var m = ms[i];
+        if (m.type === "childList") {
+          for (var j = 0; j < m.addedNodes.length; j++) {
+            var nd = m.addedNodes[j];
+            if (nd.nodeType === 3) i18nNode(nd);
+            else if (nd.nodeType === 1) i18nWalk(nd);
+          }
+        } else if (m.type === "characterData") i18nNode(m.target);
+      }
+    } finally { _i18nBusy = false; }
+    _glueKick();
+  });
+  mo.observe(document.body, { childList: true, subtree: true, characterData: true });
+}
+function setLang(l) {
+  LANG = l;
+  try { localStorage.setItem("opl_lang", l); } catch (e) { }
+  document.documentElement.lang = l === "en" ? "en" : "zh-CN";
+  var btn = document.getElementById("langBtn");
+  if (btn) btn.textContent = l === "en" ? "中文" : "EN";
+  document.title = l === "en" ? T(ORIG_TITLE) : ORIG_TITLE;
+  if (l !== "en") removeGlue();
+  i18nWalk(document.body);
+  _glueKick();
+  if (typeof syncInputs === "function") syncInputs();
+  if (typeof render === "function") render();
+}
+
+
+
+
+
+/* ---------------- 直接 fillText / strokeText 的自动排版钩子 ----------------
+   有些标注不走 txt() 而是直接 g.fillText()（状态徽标、能带边等），
+   这里在原型层统一处理：含数学记法的字符串先按 LaTeX 规则拆段再绘制，
+   measureText 同步返回拆段总宽，白底框长度自动跟着变。 */
+const NEED_MATH_HM = /[\u2070-\u209C\u00B2\u00B3\u00B9]|_\{?[A-Za-z0-9\u0370-\u03ff]|\^\{?[\d(\-]|\d(\.\d+)?[eE][+\-]\d|\u221A/;
+/* 原生 measureText：mathSegsHM 内部量宽必须走这一条，
+   否则 measureText 被钩子接管后会 self-recursion（RangeError）。 */
+var _mRawHM = null;
+function measureRawHM(g, s) { return (_mRawHM ? _mRawHM : g.measureText).call(g, s).width; }
+function mathSegsHM(g, s) {
+  const f = String(g.font || "");
+  const mm = /(\d+(?:\.\d+)?)px/.exec(f);
+  const size = mm ? parseFloat(mm[1]) : 12;
+  const family = f.replace(/^(?:\s*(?:italic|oblique|bold|[1-9]00)\s*)*\d+(?:\.\d+)?px\s*/, "");
+  const style = /italic|oblique/.test(f) ? "italic " : (/bold|[6-9]00/.test(f) ? "bold " : "");
+  const parts = AUTO(s), laid = [];
+  let w = 0;
+  for (const p of parts) {
+    const small = !!(p.sup || p.sub);
+    const fs = style + (small ? (size * 0.74).toFixed(2) : size.toFixed(2)) + "px " + family;
+    g.font = fs;
+    const tw = measureRawHM(g, p.s);
+    laid.push({ s: p.s, w: tw, fs: fs, dy: small ? (p.sup ? -size * 0.40 : size * 0.22) : 0 });
+    w += tw;
+  }
+  return { laid: laid, w: w, family: family, style: style, size: size };
+}
+(function hookMathHM() {
+  if (window.__MATH_HOOK) return; window.__MATH_HOOK = 1;
+  const P = CanvasRenderingContext2D.prototype;
+  const _fill = P.fillText, _stroke = P.strokeText, _measure = P.measureText;
+  function draw(drawRaw, g, s, x, y, rest) {
+    const info = mathSegsHM(g, s);
+    const al = g.textAlign, bl = g.textBaseline;
+    const cx = al === "right" ? x - info.w : (al === "center" ? x - info.w / 2 : x);
+    g.textAlign = "left";
+    let px = cx;
+    for (const L of info.laid) {
+      g.font = L.fs;
+      drawRaw.call(g, L.s, px, y + L.dy, ...rest);
+      px += L.w;
+    }
+    g.textAlign = al; g.textBaseline = bl;
+    g.font = info.style + info.size.toFixed(2) + "px " + info.family;
+    return info;
+  }
+  P.fillText = function (s, x, y) {
+    if (typeof s !== "string" || !NEED_MATH_HM.test(s)) return _fill.apply(this, arguments);
+    draw(_fill, this, s, x, y, Array.prototype.slice.call(arguments, 3));
+  };
+  P.strokeText = function (s, x, y) {
+    if (typeof s !== "string" || !NEED_MATH_HM.test(s)) return _stroke.apply(this, arguments);
+    draw(_stroke, this, s, x, y, Array.prototype.slice.call(arguments, 3));
+  };
+  if (!_mRawHM) _mRawHM = _measure;
+  P.measureText = function (s) {
+    if (window.__HM_IN || typeof s !== "string" || !NEED_MATH_HM.test(s)) return _measure.call(this, s);
+    window.__HM_IN = 1;
+    const save = this.font;
+    let info;
+    try { info = mathSegsHM(this, s); } finally { window.__HM_IN = 0; }
+    this.font = save;
+    return { width: info.w, get actualBoundingBoxLeft() { return 0; }, get actualBoundingBoxRight() { return info.w; } };
+  };
+})();
+
+/* ---------------- HTML 侧自动 LaTeX 排版 ----------------
+   读数 / 说明 / 按钮名里由 JS 拼出来的 cm⁻³、E_c、2.5e+8，
+   在写进 innerHTML 之前转成真 <sup>/<sub>；标签与属性原样放过（title 不会被塞进尖括号）。
+   与画布侧 AUTO() 对偶，保证网页和画布按同一套规则排版。 */
+const AUTOH_SUP = { "⁰": "0", "¹": "1", "²": "2", "³": "3", "⁴": "4", "⁵": "5", "⁶": "6",
+  "⁷": "7", "⁸": "8", "⁹": "9", "⁺": "+", "⁻": "−", "⁼": "=", "⁽": "(", "⁾": ")", "ⁿ": "n", "ⁱ": "i" };
+const AUTOH_SUB = { "₀": "0", "₁": "1", "₂": "2", "₃": "3", "₄": "4", "₅": "5", "₆": "6",
+  "₇": "7", "₈": "8", "₉": "9", "₊": "+", "₋": "−", "₌": "=", "₍": "(", "₎": ")",
+  "ₐ": "a", "ₑ": "e", "ₒ": "o", "ₓ": "x", "ₔ": "ə", "ₕ": "h", "ₖ": "k", "ₗ": "l",
+  "ₘ": "m", "ₙ": "n", "ₚ": "p", "ₛ": "s", "ₜ": "t", "ᵣ": "r", "ᵤ": "u", "ᵥ": "v" };
+const TEXH_NEED = /[\u2070-\u209C\u00B2\u00B3\u00B9]|_\{?[A-Za-z0-9\u0370-\u03ff]|\^\{?[\d(\-]|\d(\.\d+)?[eE][+\-]\d|\u221A/;
+/* 从 i 处（必须是 '<'）扫出一个"完整元素"的结束下标（含嵌套），失败返回 -1 */
+function TEXH_elemEnd(h, i) {
+  if (h.charAt(i) !== "<") return -1;
+  let depth = 0, j = i, guard = 0;
+  while (j < h.length && guard++ < 4000) {
+    if (h.charAt(j) !== "<") { j++; continue; }
+    const e = TEXH_tagEnd(h, j);
+    if (e < 0) return -1;
+    const isClose = h.charAt(j + 1) === "/";
+    const selfClose = h.charAt(e - 2) === "/";
+    if (isClose) { depth--; j = e; if (depth <= 0) return j; }
+    else if (selfClose) { j = e; if (depth === 0) return j; }
+    else { depth++; j = e; }
+  }
+  return -1;
+}
+/* √ 后面直接跟一个元素：√<i>E</i> → √‾E（前两条规则只吃 √(A) 与 √字母串） */
+function TEXHsqrtElem(s) {
+  let out = "", i = 0, guard = 0;
+  while (guard++ < 400) {
+    const k = s.indexOf("\u221A", i);
+    if (k < 0) break;
+    out += s.slice(i, k);
+    /* 守卫：√ 后面已是闭标签 ⇒ 该 √ 已排版过（对整段 HTML 重复跑 TEXH 会把 </span> 当成被开方式，
+       层层包出空壳根号，视觉上变成 √−3 / √−E），原样输出不再包裹 */
+    if (s.charAt(k + 1) === "<" && s.charAt(k + 2) === "/") { out += "\u221A"; i = k + 1; continue; }
+    let rad = null, end = k + 1;
+    if (s.charAt(k + 1) === "(") {
+      /* √(…) ：被开方式里常有标签，括号本身不在同一个文本片段里，必须整串扫 */
+      let depth = 0, p = k + 1;
+      while (p < s.length) {
+        const c = s.charAt(p);
+        if (c === "(") depth++;
+        else if (c === ")") { depth--; if (depth === 0) { rad = s.slice(k + 2, p); end = p + 1; break; } }
+        p++;
+      }
+    } else {
+      const e = TEXH_elemEnd(s, k + 1);
+      if (e > 0 && e - k < 500) { rad = s.slice(k + 1, e); end = e; }
+    }
+    if (rad !== null && rad.length) {
+      out += "<span class=\"sqrt\"><span class=\"rd\">\u221A</span><span class=\"rdc\">" + rad + "</span></span>";
+      i = end;
+    } else { out += "\u221A"; i = k + 1; }
+  }
+  return out + s.slice(i);
+}
+function TEXHpart(t) {
+  let s = t;
+  s = s.replace(/(\d(?:\.\d+)?)e([+-])(\d+)/g, function (m, a, sg, e) {
+    return a + "\u00d710<sup>" + (sg === "-" ? "\u2212" : "") + e + "</sup>";
+  });
+  s = s.replace(/([A-Za-z\u0370-\u03ff)\]])\^\{([^{}]{1,12})\}/g, "$1<sup>$2</sup>");
+  s = s.replace(/([A-Za-z\u0370-\u03ff)\]])\^(\d+(?:\.\d+)?)/g, "$1<sup>$2</sup>");
+  s = s.replace(/([A-Za-z\u0370-\u03ff])_\{([A-Za-z0-9\u0370-\u03ff+\-]{1,8})\}/g, "<span class='m'><i>$1</i><sub>$2</sub></span>");
+  s = s.replace(/([A-Za-z\u0370-\u03ff])_([A-Za-z0-9\u0370-\u03ff]{1,6})(?![A-Za-z0-9])/g, "<span class='m'><i>$1</i><sub>$2</sub></span>");
+  if (/[\u2070-\u209C\u00B2\u00B3\u00B9]/.test(s)) {
+    let out = "", i = 0;
+    while (i < s.length) {
+      const ch = s[i];
+      if (AUTOH_SUP[ch] !== undefined || AUTOH_SUB[ch] !== undefined) {
+        const isSup = AUTOH_SUP[ch] !== undefined, tab = isSup ? AUTOH_SUP : AUTOH_SUB;
+        let j = i, buf = "";
+        while (j < s.length && (isSup ? AUTOH_SUP[s[j]] !== undefined : AUTOH_SUB[s[j]] !== undefined)) {
+          buf += tab[s[j]]; j++;
+        }
+        out += "<" + (isSup ? "sup" : "sub") + ">" + buf + "</" + (isSup ? "sup" : "sub") + ">";
+        i = j;
+      } else { out += ch; i++; }
+    }
+    s = out;
+  }
+  return s.indexOf("\u221A") >= 0 ? TEXHsqrtElem(s) : s;
+}
+/* 只有真正的标签才整段跳过：正文里裸写的 '<'（如 "t₂ < 0"）必须当普通字符，
+   否则 indexOf('>') 会一路吞掉后面整段，E₂⁰ 这类记法就漏排了。 */
+function TEXH_tagEnd(h, i) {
+  if (h.charAt(i) !== "<") return -1;
+  const c = h.charAt(i + 1);
+  if (c === "!" || c === "/") { const j = h.indexOf(">", i); return (j >= 0 && j - i < 300) ? j + 1 : -1; }
+  if (!/[A-Za-z]/.test(c)) return -1;
+  let j = i + 1;
+  while (j < h.length && /[A-Za-z0-9]/.test(h.charAt(j))) j++;
+  if (j === i + 1) return -1;
+  if (h.charAt(j) === ">") return j + 1;
+  if (h.charAt(j) !== " " && h.charAt(j) !== "\n" && h.charAt(j) !== "\t") return -1;
+  const g = h.indexOf(">", j), nx = h.indexOf("<", j);
+  if (g < 0 || g - i > 300) return -1;
+  if (nx >= 0 && nx < g) return -1;
+  return g + 1;
+}
+function TEXH(h) {
+  if (typeof h !== "string" || !TEXH_NEED.test(h)) return h;
+  if (h.indexOf("\u221A") >= 0) h = h.replace(/<span class="(?:op|rm|fn|v|u)">\u221A<\/span>/g, "\u221A");
+  if (h.indexOf("<") < 0) return TEXHpart(h);
+  let out = "", i = 0, n = h.length, guard = 0;
+  while (i < n && guard++ < 40000) {
+    const e = TEXH_tagEnd(h, i);
+    if (e > 0) { out += h.slice(i, e); i = e; continue; }
+    let j = i;
+    while (j < n && TEXH_tagEnd(h, j) <= 0) j++;
+    out += TEXHpart(h.slice(i, j)); i = j;
+  }
+  const r = out + h.slice(i);
+  return r.indexOf("\u221A") >= 0 ? TEXHsqrtElem(r) : r;
+}
+(function hookHTML() {
+  if (window.__TEXH_HOOK) return; window.__TEXH_HOOK = 1;
+  const d = Object.getOwnPropertyDescriptor(Element.prototype, "innerHTML");
+  if (!d || !d.set) return;
+  Object.defineProperty(Element.prototype, "innerHTML", {
+    configurable: true, get: d.get,
+    set: function (v) { d.set.call(this, typeof v === "string" ? TEXH(v) : v); }
+  });
+  /* insertAdjacentHTML 也会被用到 */
+  const ia = Element.prototype.insertAdjacentHTML;
+  Element.prototype.insertAdjacentHTML = function (pos, v) {
+    return ia.call(this, pos, typeof v === "string" ? TEXH(v) : v);
+  };
+})();
+
+/* ---------------- 画布自动 LaTeX 排版 ----------------
+   老调用点 txt(g, "cm⁻³") / txt(g, "E_c") / txt(g, "2.5e+8") 一行都不用改，
+   只要在绘制前把字符串解析成分段零件即可。规则与网页侧一致：
+   物理量斜体、描述性下标与单位正体、幂次用真上标（不用 Unicode 伪字符）。 */
+const SUPMAP = { "⁰": "0", "¹": "1", "²": "2", "³": "3", "⁴": "4", "⁵": "5", "⁶": "6",
+  "⁷": "7", "⁸": "8", "⁹": "9", "⁺": "+", "⁻": "−", "⁼": "=", "⁽": "(", "⁾": ")", "ⁿ": "n", "ⁱ": "i" };
+const SUBMAP = { "₀": "0", "₁": "1", "₂": "2", "₃": "3", "₄": "4", "₅": "5", "₆": "6",
+  "₇": "7", "₈": "8", "₉": "9", "₊": "+", "₋": "−", "₌": "=", "₍": "(", "₎": ")",
+  "ₐ": "a", "ₑ": "e", "ₒ": "o", "ₓ": "x", "ₔ": "ə", "ₕ": "h", "ₖ": "k", "ₗ": "l",
+  "ₘ": "m", "ₙ": "n", "ₚ": "p", "ₛ": "s", "ₜ": "t", "ᵣ": "r", "ᵤ": "u", "ᵥ": "v" };
+const MATH_IDCH = /[A-Za-z\u0370-\u03ff]/;
+const NEED_MATH = /[\u2070-\u209C\u00B2\u00B3\u00B9]|_\{?[A-Za-z0-9\u0370-\u03ff]|\^\{?[\d(\-]|\d(\.\d+)?[eE][+\-]\d/;
+function AUTO(s) {
+  const out = [];
+  let buf = "", mode = 0;
+  const emit = (t, kind) => {
+    if (!t) return;
+    if (kind === 1) out.push({ s: t, sup: true });
+    else if (kind === -1) out.push({ s: t, sub: true });
+    else out.push({ s: t });
+  };
+  let i = 0, italicAll = false;
+  while (i < s.length) {
+    const ch = s[i];
+    if (SUPMAP[ch] !== undefined) { if (mode !== 1) { emit(buf, mode); buf = ""; mode = 1; } buf += SUPMAP[ch]; i++; continue; }
+    if (SUBMAP[ch] !== undefined) { if (mode !== -1) { emit(buf, mode); buf = ""; mode = -1; } buf += SUBMAP[ch]; i++; continue; }
+    if (mode) { emit(buf, mode); buf = ""; mode = 0; }
+    const rest = s.slice(i);
+    const sc = /^\d(\.\d+)?[eE][+\-]\d{1,3}/.exec(rest);       /* ASCII 伪科学计数 2.5e+8 */
+    if (sc) {
+      const parts = sc[0].split(/[eE]/);
+      emit(parts[0] + "\u00d710", 0); emit(String(+parts[1]).replace("-", "\u2212"), 1);
+      i += sc[0].length; continue;
+    }
+    if (MATH_IDCH.test(ch) && i + 1 < s.length && (s[i + 1] === "_" || s[i + 1] === "^")) {
+      const sup = s[i + 1] === "^";
+      let j = i + 2, grp = "";
+      if (s[j] === "{") { const e = s.indexOf("}", j); if (e > 0) { grp = s.slice(j + 1, e); j = e + 1; } }
+      else {
+        const RCJK = /[\u2E80-\u9FFF]/, RASC = /[A-Za-z0-9\u0370-\u03ff+\-]/;
+        if (RCJK.test(s[j])) { while (j < s.length && RCJK.test(s[j]) && j - i < 8) j++; }   /* 中文描述性下标：τ_直接、E_声子 */
+        else { while (j < s.length && RASC.test(s[j])) j++; }
+        grp = s.slice(i + 2, j);
+      }
+      if (grp) {
+        emit(ch, 0);
+        if (italicAll || /^[A-Za-z\u0370-\u03ff]$/.test(ch)) out[out.length - 1].i = true;
+        emit(sup ? grp.replace(/-/g, "\u2212") : grp, sup ? 1 : -1);
+        i = j; continue;
+      }
+    }
+    buf += ch; i++;
+  }
+  emit(buf, mode);
+  return out;
+}
+function fontInfo(font, dflt) {
+  const f = String(font || "");
+  const m = /(\d+(?:\.\d+)?)px/.exec(f);
+  return { fp: m ? parseFloat(m[1]) : (dflt || 12), bd: /bold|70\d|600/.test(f), it: /italic|oblique/.test(f) };
+}
+
+/* ---------------- HTML 字符串 → 画布零件（网页与画布共用同一份排版） ----------------
+   mtxt(g, TX(H_NA), x, y, col, fp) —— H_* 常量本来就在喂 innerHTML，
+   再喂给 TX() 就不会出现「网页斜体、画布正体」的两边不一致。
+   <i> 斜体、<sub> 下标、<sup> 上标；<span class="op|un|rm|sqrt|frac"> 只剥标签（保持正体）。 */
+const catA = (...a) => [].concat(...a);
+function TX(h) {
+  const t = String(h == null ? "" : h)
+    .replace(/<span\b[^>]*>/g, "").replace(/<\/span>/g, "")
+    .replace(/<i\b[^>]*>/g, "<i>").replace(/<b\b[^>]*>/g, "").replace(/<\/b>/g, "")
+    .replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&").replace(/&nbsp;/g, " ");
+  const out = [], re = /<i>([\s\S]*?)<\/i>|<sub>([\s\S]*?)<\/sub>|<sup>([\s\S]*?)<\/sup>|([^<]+)/g;
+  let m;
+  while ((m = re.exec(t))) {
+    const raw = s => s == null ? null : s.replace(/<[^>]*>/g, "");
+    if (m[1] != null) out.push({ s: raw(m[1]), i: true });
+    else if (m[2] != null) out.push({ s: raw(m[2]), sub: true });
+    else if (m[3] != null) out.push({ s: raw(m[3]), sup: true });
+    else if (m[4]) out.push({ s: m[4] });
+  }
+  return out;
+}
+function TXof(...a) { return catA(...a.map(TX)); }
+
+/* ---------------- 0. 小工具 ---------------- */
+const $ = id => document.getElementById(id);
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const fmt = (v, n) => (isFinite(v) ? v.toFixed(n === undefined ? 2 : n) : "—");
+const MM = h => '<span class="m">' + h + "</span>";
+
+/* ---------------- 3. 画布与画布内排版 ---------------- */
+const CV = {};
+function fitCanvas(id) {
+  const el = $(id);
+  if (!el || !el.clientWidth) return null;
+  const w = el.clientWidth, h = +el.dataset.h;
+  const dpr = window.devicePixelRatio || 1;
+  el.width = Math.round(w * dpr); el.height = Math.round(h * dpr);
+  el.style.height = h + "px";
+  const g = el.getContext("2d");
+  g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  CV[id] = { g: g, W: w, H: h, el: el };
+  return CV[id];
+}
+function fitAll() { ["chain", "disp", "zoom"].forEach(fitCanvas); }
+
+const FONT = "\"Microsoft YaHei\",\"PingFang SC\",sans-serif";
+const FONTM = "\"Cambria Math\",\"Times New Roman\",Times,serif";
+const SUBR = 0.74, SUBDY = 0.22, SUPDY = 0.40;
+const C_AC = "#1976d2", C_OP = "#d94a3d";
+const C_HEAVY = "#2f4a6b", C_LIGHT = "#7fb2e3";
+const C_ARROW = "#ef8c1a", C_SUB = "#6b7a8c", C_GRID = "#e7edf4", C_REF = "#9aa5b1";
+
+function txt(g, s, x, y, col, font, align, base) {
+  g.fillStyle = col; g.font = font || "12px " + FONT;
+  g.textAlign = align || "left"; g.textBaseline = base || "middle";
+  if (typeof s === "string" && NEED_MATH.test(s)) {
+    const fi = fontInfo(font, 12);
+    mRun(g, AUTO(s), x, y, fi.fp, fi.bd, align || "left", false);
+    return;
+  }
+  g.fillText(s, x, y);
+}
+function txtHalo(g, s, x, y, col, font, align, base) {
+  g.font = font || "12px " + FONT;  g.textAlign = align || "left"; g.textBaseline = base || "middle";
+  g.lineJoin = "round"; g.strokeStyle = "rgba(255,255,255,0.94)"; g.lineWidth = 3.2;
+  if (typeof s === "string" && NEED_MATH.test(s)) {
+    const fi = fontInfo(font, 12), parts = AUTO(s);
+    g.lineJoin = "round";
+    mRun(g, parts, x, y, fi.fp, fi.bd, align || "left", true);
+    g.fillStyle = col;
+    mRun(g, parts, x, y, fi.fp, fi.bd, align || "left", false);
+    return;
+  }
+  g.strokeText(s, x, y); g.fillStyle = col; g.fillText(s, x, y);
+}
+function isCJKch(ch) {
+  const c = ch.codePointAt(0);
+  return (c >= 0x2E80 && c <= 0x9FFF) || (c >= 0xF900 && c <= 0xFAFF) ||
+    (c >= 0xFF00 && c <= 0xFF60) || c === 0x2014 || c === 0x2015 || c === 0x2026;
+}
+function segRuns(s) {
+  const out = []; let cur = "", curC = null;
+  for (const ch of s) {
+    const c = isCJKch(ch);
+    if (curC === null) { cur = ch; curC = c; }
+    else if (c === curC) cur += ch;
+    else { out.push({ s: cur, cjk: curC }); cur = ch; curC = c; }
+  }
+  if (cur) out.push({ s: cur, cjk: curC });
+  return out;
+}
+function pFont(q, fp, bd, cjk) {
+  const sz = fp * ((q.sub || q.sup) ? SUBR : 1);
+  return (bd ? "bold " : "") + (!cjk && q.i ? "italic " : "") + sz.toFixed(2) + "px " + (cjk ? FONT : FONTM);
+}
+/* i18n 注入点①：画布 token。带 i / sub / sup / un 标记的是物理量、下标与单位，一律不动；
+   没有这些标记的 token 才是自然语言，交给 T() —— 所以这里的判断只看标记，不看内容。 */
+const partsOf = p => p.map(q => {
+  const o = (typeof q === "string" ? { s: q } : q);
+  const natural = !(o.i || o.sub || o.sup || o.un);
+  if (LANG === "en" && natural && typeof o.s === "string" && /[\u4E00-\u9FFF]/.test(o.s)) {
+    const t = T(o.s);
+    return t === o.s ? o : Object.assign({}, o, { s: t });
+  }
+  return o;
+});
+function mMeasure(g, parts, fp, bd) {
+  let w = 0;
+  for (const q of partsOf(parts))
+    for (const sg of segRuns(q.s)) { g.font = pFont(q, fp, bd, sg.cjk); w += g.measureText(sg.s).width; }
+  return w;
+}
+function mRun(g, parts, x, y, fp, bd, align, stroke) {
+  const ps = partsOf(parts), w = mMeasure(g, ps, fp, bd);
+  let cx = align === "right" ? x - w : (align === "center" ? x - w / 2 : x);
+  g.textAlign = "left"; g.textBaseline = "middle"; g.lineJoin = "round";
+  for (const q of ps) {
+    const dy = q.sub ? fp * SUBDY : (q.sup ? -fp * SUPDY : 0);
+    for (const sg of segRuns(q.s)) {
+      g.font = pFont(q, fp, bd, sg.cjk);
+      if (stroke) { g.lineWidth = (q.sub || q.sup) ? 2.4 : 3.2; g.strokeText(sg.s, cx, y + dy); }
+      else g.fillText(sg.s, cx, y + dy);
+      cx += g.measureText(sg.s).width;
+    }
+  }
+}
+function mtxt(g, parts, x, y, col, fp, align, bd) {
+  g.fillStyle = col; mRun(g, parts, x, y, fp, bd || false, align, false);
+}
+function mtxtHalo(g, parts, x, y, col, fp, align, bd) {
+  g.strokeStyle = "rgba(255,255,255,0.94)";
+  mRun(g, parts, x, y, fp, bd || false, align, true);
+  mtxt(g, parts, x, y, col, fp, align, bd);
+}
+function line(g, x1, y1, x2, y2, col, lw, dash) {
+  g.save();
+  g.strokeStyle = col; g.lineWidth = lw || 1;
+  if (dash) g.setLineDash(dash);
+  g.beginPath(); g.moveTo(x1, y1); g.lineTo(x2, y2); g.stroke();
+  g.restore();
+}
+function arrowHead(g, x, y, ang, sz, col) {
+  g.save(); g.translate(x, y); g.rotate(ang);
+  g.beginPath(); g.moveTo(0, 0); g.lineTo(-sz, sz * 0.42); g.lineTo(-sz, -sz * 0.42);
+  g.closePath(); g.fillStyle = col; g.fill(); g.restore();
+}
+function arrow(g, x1, y1, x2, y2, col, lw, sz) {
+  const dx = x2 - x1, dy = y2 - y1, L = Math.hypot(dx, dy);
+  if (L < 0.5) return;
+  line(g, x1, y1, x2, y2, col, lw || 1.4);
+  arrowHead(g, x2, y2, Math.atan2(dy, dx), sz || 6, col);
+}
+function chip(g, s, x, y, col, font, align) {
+  g.font = font || "11px " + FONT;
+  const w = g.measureText(s).width, al = align || "left";
+  const bx = al === "right" ? x - w : (al === "center" ? x - w / 2 : x);
+  g.fillStyle = "rgba(255,255,255,0.92)";
+  g.fillRect(bx - 4, y - 8, w + 8, 16);
+  txt(g, s, bx, y, col, font, "left", "middle");
+}
+
+
+/* ============ 直接带隙与间接带隙：物理内核 ============ */
+const QE = 1.602176634e-19, HBARC = 1239.84;      /* HBARC: ℏc = 1239.84 eV·nm */
+
+/* ---------- 高对称点与 k 空间路径（单位 2π/a）----------
+   两种晶体两套布里渊区，路径必须跟着换（别把 fcc 的路径套到六方上）：
+   ① 立方（金刚石 / 闪锌矿 → fcc BZ，截角八面体）：Γ → X → L
+        |ΓX| = 1、|XL| = √3/2 = 0.866；X 在 ⟨100⟩ 边界、L 在 ⟨111⟩ 边界。
+   ② 六方（纤锌矿 → 六棱柱 BZ，只走基面）：Γ → M → K
+        |ΓM| = 1/√3 = 0.5774（边心）、|MK| = 1/3 = 0.3333，|ΓK| = 2/3 = 0.6667（角）。
+        **六方 BZ 里没有 X 点**，所以纤锌矿材料既不标 X、也不标 L。
+   只走两段：三个高对称点各出现一次就够了；最后那段 L → Γ（或 K → Γ）只是把第一段
+   的下半支重复一遍（Γ 谷已经在最左边画过了），去掉它物理信息一点不丢，还能放宽第一段。
+   横轴按 k 空间的真实长度比摊开（不是按参数 s 均匀），各段才不会被拉长。 */
+const KG = [0, 0, 0];                              /* Γ 点，两种晶系都一样 */
+const GEO = {
+  cub: { A: [0, 0, 0], B: [1, 0, 0], C: [0.5, 0.5, 0.5], l1: 1, l2: Math.sqrt(0.75),
+         hp: [[0, "Γ"], [1, "X"], [2, "L"]], seg: "Γ → X → L", s1: "Γ→X", s2: "X→L",
+         vtx: ["Γ", "X", "L"] },
+  hex: { A: [0, 0, 0], B: [1 / Math.sqrt(3), 0, 0], C: [1 / Math.sqrt(3), 1 / 3, 0],
+         l1: 1 / Math.sqrt(3), l2: 1 / 3,
+         hp: [[0, "Γ"], [1, "M"], [2, "K"]], seg: "Γ → M → K", s1: "Γ→M", s2: "M→K",
+         vtx: ["Γ", "M", "K"] }
+};
+function geo(m) { return (m || MATS[OPT.mat]).hex ? GEO.hex : GEO.cub; }
+function kPath(s, m) {                             /* s ∈ [0,2] → k 矢量 */
+  const g = geo(m);
+  if (s <= 1) return [g.A[0] + (g.B[0] - g.A[0]) * s, g.A[1] + (g.B[1] - g.A[1]) * s, g.A[2] + (g.B[2] - g.A[2]) * s];
+  const t = s - 1;
+  return [g.B[0] + (g.C[0] - g.B[0]) * t, g.B[1] + (g.C[1] - g.B[1]) * t, g.B[2] + (g.C[2] - g.B[2]) * t];
+}
+function dPath(s, m) {                             /* 沿路径的累计长度 */
+  const g = geo(m);
+  return s <= 1 ? g.l1 * s : g.l1 + g.l2 * (s - 1);
+}
+const d2 = (p, q) => { const a = p[0] - q[0], b = p[1] - q[1], c = p[2] - q[2]; return a * a + b * b + c * c; };
+
+/* ---------- 材料库 ----------
+   vG / vX / vL：三个导带谷的能量（eV，以价带顶为 0），是 300 K 值。
+   最低的那个谷就是导带底 CBM —— 它决定带隙类型与 E_g。
+   Si 的导带底不在 X 点上，而在 Γ–X 方向的 Δ 点（≈0.85 X），用 xFrac 记下来。
+   卫星谷（非最低的那些）只作定性示意，能量取文献常见量级。
+   hex: true = 六方（纤锌矿）：走 GEO.hex 的 Γ → M → K 路径，且**不画卫星谷** ——
+   vX / vL 这两个示意值并没有对应的六方 k 点，硬画到 M / K 上就等于编造，见 valleys()。 */
+const MATS = [
+  { name: "Si", lat: "金刚石", a: 0.5431, eg0: 1.170, al: 4.73e-4, be: 636,
+    vG: 3.40, vX: 1.12, vL: 2.00, xFrac: 0.85, app: "集成电路、太阳能电池" },
+  { name: "Ge", lat: "金刚石", a: 0.5658, eg0: 0.744, al: 4.77e-4, be: 235,
+    vG: 0.80, vX: 1.00, vL: 0.66, xFrac: 1.00, app: "红外探测器、高频器件" },
+  { name: "GaAs", lat: "闪锌矿", a: 0.5653, eg0: 1.519, al: 5.41e-4, be: 204,
+    vG: 1.42, vX: 1.90, vL: 1.71, xFrac: 1.00, app: "LED、激光器、高效太阳能电池" },
+  { name: "GaN", lat: "纤锌矿", a: 0.3189, c: 0.5185, hex: true, eg0: 3.470, al: 9.09e-4, be: 830,
+    vG: 3.40, vX: 4.70, vL: 5.20, xFrac: 1.00, app: "蓝光 / 紫外 LED、功率器件" },
+  { name: "InP", lat: "闪锌矿", a: 0.5869, eg0: 1.421, al: 4.90e-4, be: 327,
+    vG: 1.34, vX: 2.20, vL: 2.00, xFrac: 1.00, app: "光通信激光器、探测器" },
+  { name: "ZnO", lat: "纤锌矿", a: 0.3250, c: 0.5207, hex: true, eg0: 3.410, al: 5.05e-4, be: 900,
+    vG: 3.37, vX: 5.00, vL: 5.40, xFrac: 1.00, app: "紫外 LED、透明导电薄膜" }
+];
+/* 抛物谷的曲率（eV per (2π/a)²，示意值）：只影响曲线的陡缓，不影响谷底能量 */
+const AG = 1.60, AX = 1.10, AL = 1.00, AH = 1.30;
+/* 声子能量（eV）：固定为 0.05 eV —— 布里渊区边界声子的典型量级。
+   它比带隙小，但**只小 1～2 个数量级**：六材料 300 K 实算 E_g/E_ph = Ge 13×、Si 22×、InP 27×、
+   GaAs 28×、ZnO 67×、GaN 68× —— 最大 68 < 100，够不上「两个数量级」，文案里别这么写
+   （定性结论「动量大、能量小」不受影响）。页面上一律现算 d.Eg/EPH，见 CHAL[1].a()。 */
+const EPH = 0.05;
+/* 吸收边系数（示意量级）：直接边 ~10⁵ cm⁻¹、间接边 ~10²–10³ cm⁻¹ */
+const AD = 1.0e5, AI = 5.0e2;
+
+/* 温度固定为 300 K（简化设计：本页不设温度滑块），三个谷的谷底就取 300 K 文献值，
+   E_g(0 K) 一行仍按 Varshni 关系外推给出，只作参考 */
+const TFIX = 300;
+const OPT = { mat: 0, T: TFIX, hw: 1.60, dir: 1, ph: 1 };
+/* dir: 1 吸收（价带→导带） / −1 发射复合（导带→价带）
+   ph : 1 ⇒ ℏω 的低能支 E_g − E_ph / −1 ⇒ 高能支 E_g + E_ph
+   ⚠ 这两个名（吸收 / 发射）说的是**吸收方向**下的过程；复合方向是把同一条几何路径反着走，
+     过程名必须对调 —— 详见 phAbsorb() 的注释，别再回到「两个方向共用一个名字」的老写法 */
+const HOV = { ek: null, abs: null };
+
+/* ---------- 数值格式 ---------- */
+const SUPS = { "-": "⁻", 0: "⁰", 1: "¹", 2: "²", 3: "³", 4: "⁴", 5: "⁵", 6: "⁶", 7: "⁷", 8: "⁸", 9: "⁹" };
+function supNum(e) { return String(e).split("").map(c => SUPS[c] || c).join(""); }
+function sci(v, n) {
+  if (!isFinite(v) || v === 0) return "0";
+  const e = Math.floor(Math.log10(Math.abs(v)));
+  return (v / Math.pow(10, e)).toFixed(n === undefined ? 2 : n) + "×10" + supNum(e);
+}
+
+/* ---------- 带隙随温度（Varshni） ---------- */
+function EgV(T, m) { return m.eg0 - m.al * T * T / (T + m.be); }
+function EgT(T, m) { const mm = m || MATS[OPT.mat]; return EgV(T, mm) - EgV(300, mm) + cbm300(mm); }
+/* 300 K 时 CBM 的能量（几个谷里最低的那个）。
+   纤锌矿只画 Γ 谷，所以直接取 vG，不去碰那两个纯示意的 vX / vL */
+function cbm300(m) { return m.hex ? m.vG : Math.min(m.vG, m.vX, m.vL); }
+
+/* ---------- 谷底位置与类型 ----------
+   六方（纤锌矿）只给 Γ 谷：vX / vL 是「文献常见量级」的示意值，并没有对应的六方 k 点，
+   把它们钉到 M / K 上就是在编造能带；而本页对纤锌矿的教学点（LED 的直接跃迁）全在 Γ。 */
+function valleys(m) {
+  const g = geo(m);
+  const list = [{ id: g.vtx[0], kc: KG, e300: m.vG, A: AG, sC: 0, dash: null }];
+  if (!m.hex) {
+    list.push({ id: g.vtx[1], kc: kPath(m.xFrac, m), e300: m.vX, A: AX, sC: m.xFrac, dash: [6, 3] });
+    list.push({ id: g.vtx[2], kc: g.C, e300: m.vL, A: AL, sC: 2, dash: [2, 3] });
+  }
+  let best = list[0];
+  for (const v of list) if (v.e300 < best.e300) best = v;
+  return { list: list, cbm: best };
+}
+
+/* ---------- 声子过程的命名（关键：跟着 dir 翻转） ----------
+   画面上那条斜虚串总是从 M(Γ, ℏω) 连到 P(k_C, ℏω + ph·E_ph)，k 端与 Γ 端相差 |E_ph|。
+   这条路的方向由 dir 决定：
+     dir = +1（吸收）沿 Γ → k_C 走 —— k 端更高 ⇒ 这一脚在给电子加能量 ⇒ 电子**吸收**声子；
+     dir = −1（复合）沿 k_C → Γ 走 —— 同一条几何路径反着走 ⇒ 电子把能量交出去 ⇒ 电子**发射**声子。
+   所以判定式是 dir·ph > 0（电子吸收）而不是 ph > 0。
+   反过来，两条支路的**数值** ℏω = E_g ∓ E_ph 与方向无关（能量守恒在两条方向上是同一个式子）：
+   复合时 E_g − E_ph 恰恰是「电子吐出一个声子」那条 Stokes 线（Si 发光里最亮的伴线，
+   初态 E_g = 末态 0 + 光子 E_g − E_ph + 交给晶格 E_ph），而不是吸收声子。
+   上一版只按吸收方向改对了名字，复合方向就自相矛盾：图上光子箭头朝下（电子在交能量），
+   芯片却写「吸收 ⇒ 电子 +0.05 eV」。 */
+function phAbsorb() { return OPT.dir * OPT.ph > 0; }          /* 电子吞进（true）/ 吐出（false）声子 */
+function phLowBranch() { return OPT.ph > 0; }                 /* true：ℏω = E_g − E_ph；false：E_g + E_ph */
+
+/* ---------- 当前状态的全部物理量 ---------- */
+function phys() {
+  const m = MATS[OPT.mat], T = OPT.T;
+  const vs = valleys(m);
+  const shift = EgV(T, m) - EgV(300, m);           /* 温度只把整组谷整体平移 */
+  const Eg = vs.cbm.e300 + shift;                  /* 最低谷 = 带隙 */
+  const EG = m.vG + shift;                         /* Γ 谷 = 直接跃迁阈值 */
+  const direct = vs.cbm.id === "Γ";
+  const Eg0 = vs.cbm.e300 - (EgV(300, m) - m.eg0); /* 0 K 的外推值 */
+  /* 动量差：|k_CBM − k_VBM|，VBM 在 Γ */
+  const dkRaw = Math.sqrt(d2(vs.cbm.kc, KG));      /* 单位 2π/a */
+  const kUnit = 2 * Math.PI / m.a;                 /* 1 nm⁻¹ per (2π/a) */
+  const dk = dkRaw * kUnit;                        /* nm⁻¹ */
+  /* 光子波矢：k_γ = 2π/λ，λ = ℏc/ℏω（用当前 ℏω，能量不足时仍按它算） */
+  const hw = OPT.hw;
+  const lamPh = hw > 1e-6 ? HBARC / hw : Infinity; /* nm */
+  const kPh = isFinite(lamPh) ? 2 * Math.PI / lamPh : 0;   /* nm⁻¹ */
+  const lamG = Eg > 1e-6 ? HBARC / Eg : Infinity;  /* 带隙对应的波长 nm */
+  /* 阈值（允许的最小 ℏω）与是否允许。
+     两个方向共用同一个数：E_g − E_ph（ph=+1）／E_g + E_ph（ph=−1）—— 能量守恒沿两个方向是同一式；
+     复合方向真正要改的是**过程名**（见 phAbsorb()），不是这个数值。 */
+  const need = direct ? EG : Eg - OPT.ph * EPH;
+  const ok = hw >= need - 1e-12;
+  const lack = Math.max(need - hw, 0);
+  /* 吸收系数 */
+  const al = alphaAt(hw, { EG: EG, Eg: Eg, direct: direct });
+  return {
+    m: m, T: T, Eg: Eg, EG: EG, Eg0: Eg0, direct: direct,
+    cbm: vs.cbm, list: vs.list, shift: shift,
+    dkRaw: dkRaw, dk: dk, kPh: kPh, lamPh: lamPh, lamG: lamG,
+    hw: hw, need: need, ok: ok, lack: lack, alpha: al,
+    hwRel: hw - Eg
+  };
+}
+
+/* ---------- 能带曲线（eV，价带顶 = 0） ---------- */
+function EvAt(s) { return -AH * d2(kPath(s), KG); }
+function EcValley(s, v) { return v.e300 + v.A * d2(kPath(s), v.kc); }
+/* 导带下包络（只用于填充禁带） */
+function EcMin(s, d) {
+  let e = Infinity;
+  for (const v of d.list) e = Math.min(e, EcValley(s, v));
+  return e + (d.shift || 0);
+}
+
+/* ---------- 吸收系数（cm⁻¹） ---------- */
+function alphaAt(hw, dd) {
+  let a = 0;
+  const dG = hw - dd.EG;
+  if (dG > 0) a += AD * Math.sqrt(dG);                     /* 直接边：∝√(ℏω−E_Γ) */
+  if (!dd.direct) {                                        /* 间接边：∝(Δ±E_ph)² */
+    const x = hw - dd.Eg;
+    if (x + EPH > 0) a += AI * Math.pow(x + EPH, 2);        /* 吸收声子 */
+    if (x - EPH > 0) a += AI * Math.pow(x - EPH, 2);        /* 发射声子 */
+  }
+  return a;
+}
+
+function fitAll() { ["ek", "abs"].forEach(fitCanvas); }
+
+/* ============ 模块一：E-k 能带图 + 光跃迁（能量守恒 / 动量守恒） ============ */
+const C_VAL = "#ef8c1a";    /* 价带（空穴） */
+const C_CON = "#1976d2";    /* 导带（电子） */
+const C_PHO = "#7b3fa0";    /* 光子 */
+const C_PHN = "#2e9e5b";    /* 声子 */
+const C_GAP = "#eef2f7";    /* 禁带 */
+const C_TXT = "#455a64";
+
+/* 带白底的浮动标签：自动钳进画布，并**登记占位**、冲突时自动下移 —— 
+   一块画布里最多十来个标签，手工算避让迟早会撞（参数一变位置就变），交给它自己排 */
+let OCC = [];
+/* 先量出标签框，再在「原地 / 上下各让 16、32、48、64 px」里挑第一个不撞的位置；
+   标签框登记进 OCC，后面的标签自己绕开。画布里就这么几张标签，交给它排比手算稳 */
+function place(g, w, x, y, align, W, H) {
+  let bx = align === "right" ? x - w : (align === "center" ? x - w / 2 : x);
+  bx = clamp(bx, 3, Math.max(3, W - w - 5));
+  const hit = yy => OCC.some(o =>
+    Math.min(bx + w, o.x2) - Math.max(bx, o.x1) > 2 && Math.min(yy + 9, o.y2) - Math.max(yy - 9, o.y1) > 2);
+  let by = clamp(y, 12, (H || 1e9) - 12);
+  for (const dy of [0, -16, 16, -32, 32, -48, 48, -64, 64]) {
+    const yy = clamp(y + dy, 12, (H || 1e9) - 12);
+    if (!hit(yy)) { by = yy; break; }
+  }
+  OCC.push({ x1: bx - 4, x2: bx + w + 4, y1: by - 9, y2: by + 9 });
+  return { x: bx, y: by };
+}
+/* 标题类标签：位置写死在顶部两角，只登记占位、不参与避让（否则它自己会被挤下来） */
+function chipFix(g, s, x, y, col, font, align, W) {
+  g.font = font;
+  const w = g.measureText(s).width;
+  const bx = clamp(align === "right" ? x - w : (align === "center" ? x - w / 2 : x), 3, Math.max(3, W - w - 5));
+  OCC.push({ x1: bx - 4, x2: bx + w + 4, y1: y - 9, y2: y + 9 });
+  g.fillStyle = "rgba(255,255,255,0.92)";
+  g.fillRect(bx - 4, y - 8, w + 8, 16);
+  txt(g, s, bx, y, col, font, "left", "middle");
+}
+/* 顶部两角标题的数学版（含公式时也走 FONTM） */
+function chipFixM(g, parts, x, y, col, fp, align, W) {
+  const w = mwP(g, parts, fp);
+  const bx = clamp(align === "right" ? x - w : (align === "center" ? x - w / 2 : x), 3, Math.max(3, W - w - 5));
+  OCC.push({ x1: bx - 4, x2: bx + w + 4, y1: y - 9, y2: y + 9 });
+  g.fillStyle = "rgba(255,255,255,0.92)";
+  g.fillRect(bx - 4, y - 8, w + 8, 16);
+  g.fillStyle = col;
+  mrP(g, parts, bx, y, fp);
+}
+function chipK(g, s, x, y, col, font, align, W, H) {
+  g.font = font;
+  const w = g.measureText(s).width;
+  const p = place(g, w, x, y, align, W, H);
+  g.fillStyle = "rgba(255,255,255,0.92)";
+  g.fillRect(p.x - 4, p.y - 8, w + 8, 16);
+  txt(g, s, p.x, p.y, col, font, "left", "middle");
+  return p.y;
+}
+/* 数学标签（下标 / 上标）走同一套避让，否则「ℏω = …」会压在谷标签上 */
+function mtxtOcc(g, parts, x, y, col, fp, align, W, H) {
+  const w = mMeasure(g, parts, fp, false);
+  const p = place(g, w, x, y, align, W, H);
+  mtxtHalo(g, parts, p.x, p.y, col, fp, "left", true);
+  return p.y;
+}
+function arrow2(g, x1, y1, x2, y2, col, lw) {
+  line(g, x1, y1, x2, y2, col, lw || 1.4);
+  arrowHead(g, x1, y1, Math.atan2(y1 - y2, x1 - x2), 5.5, col);
+  arrowHead(g, x2, y2, Math.atan2(y2 - y1, x2 - x1), 5.5, col);
+}
+/* 波浪线：声子（晶格振动） */
+function waveLine(g, x1, y1, x2, y2, col, lw, amp, cyc) {
+  const dx = x2 - x1, dy = y2 - y1, L = Math.hypot(dx, dy);
+  if (L < 2) return;
+  const px = -dy / L, py = dx / L, N = 72;
+  g.save(); g.strokeStyle = col; g.lineWidth = lw || 1.5; g.beginPath();
+  for (let i = 0; i <= N; i++) {
+    const t = i / N, off = Math.sin(t * 2 * Math.PI * (cyc || 3)) * (amp || 3);
+    const X = x1 + dx * t + px * off, Y = y1 + dy * t + py * off;
+    if (i === 0) g.moveTo(X, Y); else g.lineTo(X, Y);
+  }
+  g.stroke(); g.restore();
+}
+/* ---------- 公式零件（LaTeX 规则：物理量斜体 / 单位·算符·描述性下标正体） ----------
+   · E、k、α、ω、T、λ、a 是物理量 ⇒ 斜体 i:true
+   · ℏ 是符号、Δ 是算符、Γ X L 是点名、g / ph 是描述性下标 ⇒ 正体
+   · eV、cm⁻¹、nm⁻¹ 是单位 ⇒ 正体，且上标用真正的 sup 而不是 ⁻¹ 这类字符 */
+const P_EG = [{ s: "E", i: true }, { s: "g", sub: true }];
+const P_EPH = [{ s: "E", i: true }, { s: "ph", sub: true }];
+const P_EGA = [{ s: "E", i: true }, { s: "Γ", sub: true }];
+const P_HW = [{ s: "ℏ" }, { s: "ω", i: true }];
+const P_AL = [{ s: "α", i: true }];
+const P_DK = [{ s: "Δ" }, { s: "k", i: true }];
+const P_KK = [{ s: "k", i: true }];
+const U_EV = [{ s: " eV" }];
+const U_NM1 = [{ s: " nm" }, { s: "−1", sup: true }];
+const U_CM1 = [{ s: " cm" }, { s: "−1", sup: true }];
+const P_2PIA = [{ s: "·2" }, { s: "π" }, { s: "/" }, { s: "a", i: true }];   /* ·2π/a：π 正体、a 斜体 */
+const cat = (...a) => [].concat(...a);
+/* 科学计数法也按 LaTeX 写：尾数 × 10 的真上标 */
+function PSci(v, n) {
+  if (!isFinite(v) || v === 0) return [{ s: "0" }];
+  const e = Math.floor(Math.log10(Math.abs(v)));
+  const m = (v / Math.pow(10, e)).toFixed(n === undefined ? 1 : n);
+  /* 1 ≦ |v| < 10 时直接写尾数，不再拖一个 ×10⁰（与 sciH 一致） */
+  if (e === 0) return [{ s: m }];
+  /* 指数负号用 U+2212 */
+  return [{ s: m + "×10" },
+          { s: String(e).replace("-", "−"), sup: true }];
+}
+
+/* 支持 {sqrt:[…]} 的数学排版：√ 符号 + 一条压住被开方式的横线（canvas 版的 \sqrt{}） */
+function mwP(g, parts, fp) {
+  let w = 0;
+  for (const q of parts) {
+    if (q.sqrt) { g.font = (fp * 1.22).toFixed(2) + "px " + FONTM; w += g.measureText("√").width + 2 + mwP(g, q.sqrt, fp) + 2; }
+    else w += mMeasure(g, [q], fp, false);
+  }
+  return w;
+}
+function mrP(g, parts, x, y, fp) {
+  g.textAlign = "left"; g.textBaseline = "middle";
+  for (const q of parts) {
+    if (q.sqrt) {
+      const col = g.fillStyle;
+      g.font = (fp * 1.22).toFixed(2) + "px " + FONTM;
+      g.fillText("√", x, y + fp * 0.04);
+      x += g.measureText("√").width + 2;
+      const w = mwP(g, q.sqrt, fp);
+      mrP(g, q.sqrt, x, y, fp);
+      line(g, x - 1, y - fp * 0.46, x + w + 2, y - fp * 0.46, col, 1);
+      x += w + 2;
+    } else {
+      const w = mMeasure(g, [q], fp, false);
+      mRun(g, [q], x, y, fp, false, "left", false);
+      x += w;
+    }
+  }
+}
+/* 混合「中文 + 公式」的浮动标签：跟 chipK 同一套避让，但走数学排版 */
+function chipM(g, parts, x, y, col, fp, align, W, H) {
+  const w = mwP(g, parts, fp);
+  const p = place(g, w, x, y, align, W, H);
+  g.fillStyle = "rgba(255,255,255,0.92)";
+  g.fillRect(p.x - 4, p.y - 8, w + 8, 16);
+  g.fillStyle = col;
+  mrP(g, parts, p.x, p.y, fp);
+  return p.y;
+}
+
+function drawEK() {
+  const c = CV.ek; if (!c) return;
+  const g = c.g, W = c.W, H = c.H, d = phys();
+  const L = 54, R = W - 16, T = 26, B = H - 46;
+  const lo = -2.0, hi = Math.max(d.Eg + 2.2, d.EG + 0.9, 2.6);
+  const Y = e => B - (clamp(e, lo, hi) - lo) / (hi - lo) * (B - T);
+  const gg = geo(d.m);                       /* 当前晶系的 BZ 几何（立方 / 六方） */
+  const DT = gg.l1 + gg.l2;
+  const X = s => L + dPath(s, d.m) / DT * (R - L);
+  const XM = px => clamp((px - L) / (R - L), 0, 1) * DT;     /* 像素 → 路径长度 */
+  const sOf = px => { const dd = XM(px); return dd <= gg.l1 ? dd / gg.l1 : 1 + (dd - gg.l1) / gg.l2; };
+
+  g.clearRect(0, 0, W, H);
+  g.fillStyle = "#fff"; g.fillRect(0, 0, W, H);
+  const up = OPT.dir > 0;                     /* 吸收：箭头朝上；发射：朝下 */
+  OCC = [];                                   /* 每帧重排一次浮动标签 */
+  /* 顶部两角的标题先占位（它们不参与避让，但后面的标签要绕开它们） */
+  chipFixM(g, [{ s: d.m.name + "（" + d.m.lat + "）" }], L + 4, T - 12, "#2c3e50", 12.5, "left", W);
+  chipFixM(g, cat(d.direct ? [{ s: "直接带隙：CBM 与 VBM 同一个 " }] : [{ s: "间接带隙：CBM 与 VBM 差 " }],
+    d.direct ? P_KK : P_DK, [{ s: "　·　" + (up ? "吸收" : "发射（复合）") }]),
+    R, T - 12, d.direct ? C_CON : C_PHN, 11.5, "right", W);
+
+  /* ---- 禁带填充（价带顶到导带底之间） ---- */
+  g.save(); g.beginPath();
+  for (let i = 0; i <= 240; i++) { const s = 2 * i / 240; const x = X(s), y = Y(EvAt(s)); if (i === 0) g.moveTo(x, y); else g.lineTo(x, y); }
+  for (let i = 240; i >= 0; i--) { const s = 2 * i / 240; g.lineTo(X(s), Y(EcMin(s, d))); }
+  g.closePath(); g.fillStyle = C_GAP; g.fill(); g.restore();
+
+  /* ---- 网格与纵轴 ---- */
+  for (let e = Math.ceil(lo); e <= Math.floor(hi); e++) {
+    const y = Y(e);
+    line(g, L, y, R, y, C_GRID, 1);
+    txt(g, String(e), L - 6, y, C_SUB, "10.5px " + FONT, "right");
+  }
+  mtxt(g, [{ s: "E", i: true }, { s: " (eV)" }], L - 6, T - 12, C_SUB, 10.5, "right");
+  /* 价带顶那条 0 参考线加重 */
+  line(g, L, Y(0), R, Y(0), "#c3ccd6", 1.2);
+
+  /* ---- 高对称点：立方 Γ → X → L ／ 六方 Γ → M → K（右端就是 L / K，Γ 不再重复出现在右边） ---- */
+  for (const [s, nm] of gg.hp) {
+    const x = X(s);
+    line(g, x, T, x, B, "#dfe6ee", 1);
+    mtxt(g, [{ s: nm }], x, B + 16, C_TXT, 12, "center", true);
+    g.fillStyle = C_TXT; g.fillRect(x - 0.5, B, 1, 5);
+  }
+  mtxt(g, cat([{ s: "波矢 " }, { s: "k", i: true }, { s: "（沿 " + gg.seg + "，" + (d.m.hex ? "六方布里渊区基面" : "fcc 布里渊区") + "；横轴按 " }],
+    [{ s: "k", i: true }, { s: " 空间真实长度比例）" }]),
+    (L + R) / 2, B + 34, C_SUB, 10.5, "center");
+
+  /* ---- 能带曲线：价带 + 各导带谷（纤锌矿只有 Γ 谷） ---- */
+  const curve = (fn, col, lw, dash) => {
+    g.save(); g.strokeStyle = col; g.lineWidth = lw; if (dash) g.setLineDash(dash);
+    g.beginPath();
+    for (let i = 0; i <= 300; i++) {
+      const s = 2 * i / 300, x = X(s), y = Y(fn(s));
+      if (i === 0) g.moveTo(x, y); else g.lineTo(x, y);
+    }
+    g.stroke(); g.restore();
+  };
+  const EcMinS = s => EcMin(s, d);
+  curve(s => EvAt(s), C_VAL, 2.2);
+  for (const v of d.list) {
+    const isC = v.id === d.cbm.id;
+    curve(s => EcValley(s, v) + d.shift, isC ? C_CON : "#8fb4dc", isC ? 2.4 : 1.3, isC ? null : v.dash);
+  }
+  /* 谷底的小标签（非最低谷用淡色，一眼看出「哪一个谷最低」）。
+     L 谷现在落在图幅右边界上，标签翻到点的左侧，免得整条被钳到画框外 */
+  for (const v of d.list) {
+    const isC = v.id === d.cbm.id;
+    const x = X(v.sC), y = Y(v.e300 + d.shift);
+    const lft = x < L + 0.60 * (R - L);
+    chipM(g, [{ s: v.id }, { s: " 谷 " }, { s: fmt(v.e300 + d.shift, 2) }], x + (lft ? 8 : -8), y,
+      isC ? C_CON : "#8a94a3", isC ? 10.5 : 10, lft ? "left" : "right", W, H);
+  }
+
+  /* ---- VBM / CBM ---- */
+  const xG = X(0), xC = X(d.cbm.sC), yV = Y(0), yC = Y(d.Eg);
+  g.save();
+  g.beginPath(); g.arc(xG, yV, 5.2, 0, 7); g.fillStyle = C_VAL; g.fill();
+  g.lineWidth = 1.6; g.strokeStyle = "#fff"; g.stroke(); g.restore();
+  chipM(g, [{ s: "VBM（价带顶，Γ）" }], xG + 9, yV + 13, C_VAL, 10.5, "left", W, H);
+  g.save();
+  g.beginPath(); g.arc(xC, yC, 5.2, 0, 7); g.fillStyle = C_CON; g.fill();
+  g.lineWidth = 1.6; g.strokeStyle = "#fff"; g.stroke(); g.restore();
+  chipM(g, [{ s: "CBM（导带底，" + d.cbm.id + "）" }], xC + (d.direct ? 9 : -9), yC - 13, C_CON,
+    10.5, d.direct ? "left" : "right", W, H);
+
+  /* ---- E_g（能量差）与 Δk（动量差）分开标注 ---- */
+  const xEg = d.direct ? xG + 26 : xC - 16;
+  arrow2(g, xEg, yV, xEg, yC, "#54636f", 1.3);
+  mtxtOcc(g, cat(P_EG, [{ s: " = " + fmt(d.Eg, 3) }], U_EV), xEg + (d.direct ? 6 : -6),
+    (yV + yC) / 2, "#37474f", 11.5, d.direct ? "left" : "right", W, H);
+  if (!d.direct) {
+    const yk = Y(d.Eg * 0.45);                     /* 画在禁带里：不会跟价带、导带曲线缠在一起 */
+    arrow2(g, xG, yk, xC, yk, "#54636f", 1.3);
+    chipM(g, cat(P_DK, [{ s: " = " + fmt(d.dkRaw, 2) }], P_2PIA, [{ s: " = " + fmt(d.dk, 2) }], U_NM1,
+      [{ s: "（要声子来补）" }]), (xG + xC) / 2, yk - 12, "#37474f", 10.5, "center", W, H);
+  }
+
+  /* ---- 光跃迁：竖直段（光子，动量≈0）+ 斜段（声子，补 Δk） ----
+     吸收：VBM →(ℏω) M(Γ,ℏω) →(声子) P(k_C, ℏω ± E_ph)
+     发射：同一条路径，箭头反向 */
+  const yM = Y(d.hw), yP = Y(d.hw + OPT.ph * EPH);
+  arrow(g, xG, up ? yV : yM, xG, up ? yM : yV, C_PHO, 2.4, 7);
+  mtxtOcc(g, cat(P_HW, [{ s: " = " + fmt(d.hw, 3) }], U_EV), xG + 10, (yV + yM) / 2, C_PHO, 11.5, "left", W, H);
+  if (!d.direct) {
+    waveLine(g, xG, yM, xC, yP, C_PHN, 1.8, 3.2, 3);
+    arrowHead(g, up ? xC : xG, up ? yP : yM, Math.atan2((up ? yP - yM : yM - yP), (up ? xC - xG : xG - xC)), 7, C_PHN);
+    /* 符号只讲「电子在这一脚里拿到 / 交出多少能量」。
+       「吸收还是发射」必须沿当前 dir 走一遍才知道（phAbsorb()）：复合方向是把吸收路径反着走，
+       此时同一条几何路径是电子把能量交给晶格，若还写「吸收 ⇒ 电子 +0.05」就与朝下的光子箭头打架 */
+    chipM(g, cat([{ s: "声子：" }], P_DK, [{ s: "，" + (phAbsorb() ? "吸收 ⇒ 电子 +" : "发射 ⇒ 电子 −") + fmt(EPH, 2) + " " }], U_EV),
+      (xG + xC) / 2, yP + (up ? -13 : 13), C_PHN, 10.5, "center", W, H);
+  }
+  /* 终点：落进导带（允许）还是卡在禁带里（能量不够） */
+  const px = d.direct ? xG : xC, py = d.direct ? yM : yP;
+  g.save();
+  g.beginPath(); g.arc(px, py, 4.2, 0, 7);
+  g.fillStyle = d.ok ? C_PHO : "#fff"; g.fill();
+  g.lineWidth = 1.8; g.strokeStyle = d.ok ? C_PHO : C_OP; g.stroke(); g.restore();
+  chipM(g, d.ok ? [{ s: up ? "✓ 吸收：落进导带" : "✓ 复合：回到价带顶" }]
+    : cat([{ s: up ? "✗ 还差 " : "✗ 不匹配（差 " }], [{ s: fmt(d.lack, 3) }], U_EV,
+      [{ s: up ? "，进不了导带" : "，落不回价带顶）" }]),
+    px + 9, py + (up ? -12 : 12), d.ok ? C_PHO : C_OP, 10.5, "left", W, H);
+
+  /* ---- 底部一行补充说明 ---- */
+  if (!up) mtxt(g, cat([{ s: "光子带走 " }], P_HW, [{ s: "，动量差由声子补上" }]), L + 4, B - 8, C_SUB, 10, "left");
+  else if (d.m.hex) mtxt(g, [{ s: "六方（纤锌矿）只画 Γ 谷：直接跃迁就发生在 Γ，卫星谷不在本路径上，故不画" }],
+    L + 4, B - 8, C_SUB, 10, "left");
+
+  /* ---- 悬停 ---- */
+  if (HOV.ek) {
+    const hx = clamp(HOV.ek.x, L, R), s = sOf(hx);
+    line(g, hx, T, hx, B, "#8a94a3", 1, [3, 3]);
+    const kk = Math.sqrt(d2(kPath(s, d.m), KG));
+    const nm = s <= 1 ? gg.s1 : gg.s2;
+    chipM(g, cat(P_KK, [{ s: " = " + fmt(kk, 3) }], P_2PIA, [{ s: "（" + nm + "）　导带 " + fmt(EcMinS(s), 2) }], U_EV,
+      [{ s: "　价带 " + fmt(EvAt(s), 2) }], U_EV),
+      hx + 8, clamp(HOV.ek.y, T + 10, B - 10), "#2c3e50", 10.5, "left", W, H);
+  }
+}
+
+/* ============ 模块二：吸收系数 α(ℏω)（对数纵轴，看吸收边的形状） ============ */
+function drawAbs() {
+  const c = CV.abs; if (!c) return;
+  const g = c.g, W = c.W, H = c.H, d = phys();
+  const L = 56, R = W - 16, T = 22, B = H - 42;
+  const hw0 = Math.max(0.05, d.Eg - 0.55);
+  const hw1 = Math.max(d.Eg + 1.20, d.EG + 0.60);
+  const LA = 0, HA = 6;                                   /* log10 α */
+  const Xa = hw => L + (hw - hw0) / (hw1 - hw0) * (R - L);
+  const Ya = a => B - (clamp(Math.log10(Math.max(a, 1)), LA, HA) - LA) / (HA - LA) * (B - T);
+  const invX = px => hw0 + clamp((px - L) / (R - L), 0, 1) * (hw1 - hw0);
+
+  g.clearRect(0, 0, W, H);
+  g.fillStyle = "#fff"; g.fillRect(0, 0, W, H);
+  OCC = [];
+  chipFix(g, d.m.name + " 的吸收边", L + 4, T - 10, "#2c3e50", "bold 12.5px " + FONT, "left", W);
+  chipFixM(g, [{ s: d.direct ? "直接带隙：一条边，陡" : "间接带隙：先一条缓边（＋声子），到 Γ 谷再陡升" }],
+    R, T - 10, d.direct ? C_CON : C_PHN, 11, "right", W);
+
+  /* ---- 网格 ---- */
+  for (let e = LA; e <= HA; e++) {
+    const y = Ya(Math.pow(10, e));
+    line(g, L, y, R, y, C_GRID, 1);
+    /* 最顶上那条只画线不写标签：它和左上角的「α (cm⁻¹)」只差 9 px，写上去就是压盖 */
+    if (e < HA) mtxt(g, ["10", { s: String(e).replace("-", "−"), sup: true }], L - 6, y, C_SUB, 10.5, "right");
+  }
+  const step = (hw1 - hw0) > 3.2 ? 0.5 : 0.25;
+  for (let v = Math.ceil(hw0 / step) * step; v <= hw1 + 1e-9; v += step) {
+    const x = Xa(v);
+    line(g, x, T, x, B, C_GRID, 1);
+    txt(g, fmt(v, 2), x, B + 14, C_SUB, "10px " + FONT, "center");
+  }
+  mtxt(g, cat(P_AL, [{ s: " (cm" }, { s: "−1", sup: true }, { s: ")" }]), L - 6, T - 13, C_SUB, 10.5, "right");
+  mtxt(g, cat([{ s: "光子能量 " }], P_HW, [{ s: " (eV)" }]), (L + R) / 2, B + 32, C_SUB, 10.5, "center");
+
+  /* ---- 阈值竖线：E_g，以及间接材料的两条声子伴线 ---- */
+  const vline = (hw, col, dash, lab, dy) => {
+    if (hw < hw0 || hw > hw1) return;
+    const x = Xa(hw);
+    line(g, x, T, x, B, col, 1.4, dash);
+    chipM(g, lab, x + 3, T + (dy || 10), col, 10, "left", W, H);
+  };
+  vline(d.Eg, "#54636f", [5, 3], cat(P_EG, [{ s: " = " + fmt(d.Eg, 3) }], U_EV), 10);
+  if (!d.direct) {
+    vline(d.Eg - EPH, C_PHN, [3, 3], cat([{ s: "−" }], P_EPH, [{ s: "（吸收声子，阈值更低）" }]), 24);
+    vline(d.Eg + EPH, C_PHN, [3, 3], cat([{ s: "+" }], P_EPH, [{ s: "（发射声子）" }]), 38);
+  }
+
+  /* ---- α 曲线 ---- */
+  g.save(); g.beginPath(); g.rect(L, T, R - L, B - T); g.clip();
+  let started = false;
+  g.strokeStyle = C_CON; g.lineWidth = 2.2; g.beginPath();
+  for (let px = L; px <= R; px += 1) {
+    const hw = invX(px), a = alphaAt(hw, { EG: d.EG, Eg: d.Eg, direct: d.direct });
+    if (a < 1) { started = false; continue; }
+    const y = Ya(a);
+    if (!started) { g.moveTo(px, y); started = true; } else g.lineTo(px, y);
+  }
+  g.stroke(); g.restore();
+
+  /* ---- 边形状的标注：间接段是平方、直接段是平方根 ---- */
+  if (!d.direct) {
+    /* 标注要落在「直接边还没打开」的那一段里：Ge 的 Γ 谷只比带隙高 0.14 eV，取 0.55 会标到直接边上去 */
+    const off = clamp((d.EG - d.Eg) * 0.5, 0.04, 0.55);
+    const xa = Xa(d.Eg + off), ya = Ya(alphaAt(d.Eg + off, { EG: d.EG, Eg: d.Eg, direct: d.direct }));
+    chipM(g, cat(P_AL, [{ s: " ∝ (" }], P_HW, [{ s: " − " }], P_EG, [{ s: " ∓ " }], P_EPH,
+      [{ s: ")" }, { s: "2", sup: true }, { s: " —— 平方律，爬得慢" }]), xa + 8, ya - 2, "#37474f", 10.5, "left", W, H);
+  }
+  if (d.EG < hw1 - 0.15) {
+    const hb = d.EG + 0.35, xb = Xa(hb), yb = Ya(alphaAt(hb, { EG: d.EG, Eg: d.Eg, direct: d.direct }));
+    chipM(g, cat(P_AL, [{ s: " ∝ " }, { sqrt: cat(P_HW, [{ s: " − " }], P_EGA) },
+      { s: " —— 平方根，一下就窜上去" }]), xb + 8, yb + 2, "#37474f", 10.5, "left", W, H);
+  }
+
+  /* ---- 当前工作点 ---- */
+  if (d.hw >= hw0 && d.hw <= hw1) {
+    const x = Xa(d.hw), y = Ya(d.alpha);
+    line(g, x, T, x, B, C_OP, 1.4);
+    g.save(); g.beginPath(); g.arc(x, y, 4.6, 0, 7);
+    g.fillStyle = d.alpha >= 1 ? C_OP : "#fff"; g.fill();
+    g.lineWidth = 1.8; g.strokeStyle = C_OP; g.stroke(); g.restore();
+    chipM(g, cat([{ s: "当前：" }], P_HW, [{ s: " = " + fmt(d.hw, 3) }], U_EV, [{ s: "　" }], P_AL, [{ s: " = " }],
+      d.alpha >= 1 ? PSci(d.alpha, 2) : [{ s: "≈0（透明）" }], d.alpha >= 1 ? U_CM1 : []),
+      x + 8, clamp(y, T + 10, B - 12), C_OP, 10.5, "left", W, H);
+  }
+
+  /* ---- 悬停 ---- */
+  if (HOV.abs) {
+    const hx = clamp(HOV.abs.x, L, R), hw = invX(hx);
+    const a = alphaAt(hw, { EG: d.EG, Eg: d.Eg, direct: d.direct });
+    line(g, hx, T, hx, B, "#8a94a3", 1, [3, 3]);
+    chipM(g, cat(P_HW, [{ s: " = " + fmt(hw, 3) }], U_EV, [{ s: "　" }], P_AL, [{ s: " = " }],
+      a >= 1 ? PSci(a, 2) : [{ s: "≈0" }], a >= 1 ? U_CM1 : []),
+      hx + 8, clamp(HOV.abs.y, T + 10, B - 10), "#2c3e50", 10.5, "left", W, H);
+  }
+}
+
+/* ============ 图例 / 挑战卡 / 读数 / 绑定 ============ */
+/* HTML 侧的公式一律走 MM()（.m 容器 + i 斜体 + sub/sup + .un 单位），与画布里的排版同一套规则 */
+const UN = s => "<span class='un'>" + s + "</span>";
+function sciH(v, n) {
+  if (!isFinite(v) || v === 0) return "0";
+  const e = Math.floor(Math.log10(Math.abs(v)));
+  const m = (v / Math.pow(10, e)).toFixed(n === undefined ? 1 : n);
+  /* 1 ≦ |v| < 10 时直接写尾数，不再拖一个 ×10⁰ */
+  if (e === 0) return m;
+  /* 指数里的负号用 U+2212（LaTeX 减号），不用 ASCII 连字符 */
+  return m + "×10<sup>" + String(e).replace("-", "−") + "</sup>";
+}
+const P_HWE = MM("<span class='rm'>ℏ</span><i>ω</i>");          /* ℏω */
+const P_EGH = MM("<i>E</i><sub>g</sub>");                        /* E_g */
+const P_EPH2 = MM("<i>E</i><sub>ph</sub>");                      /* E_ph */
+const P_DKH = MM("Δ<i>k</i>");                                   /* Δk */
+const P_ALH = MM("<i>α</i>");                                    /* α */
+const U_EVH = UN("eV"), U_NMH = UN("nm"), U_CMH = UN("cm<sup>−1</sup>"), U_KH = UN("K");
+
+const LEGS = {
+  legEK: () => {
+    const g = geo();
+    const rows = [
+      [C_VAL, "价带 " + MM("<i>E</i><sub>v</sub>(<i>k</i>)") + "（空穴，VBM 在 Γ）"],
+      [C_CON, "导带 " + MM("<i>E</i><sub>c</sub>(<i>k</i>)") + "（电子）：CBM 所在的谷加粗"]
+    ];
+    /* 六方（纤锌矿）不画卫星谷：vX / vL 是示意值，没有对应的六方 k 点 */
+    if (!MATS[OPT.mat].hex)
+      rows.push(["#8fb4dc", "卫星谷（虚线 " + g.vtx[1] + " / 点线 " + g.vtx[2] + "，非最低谷）"]);
+    rows.push([C_PHO, "光子：竖直跃迁（光子动量 ≈ 0）"]);
+    /* 不再写「±E_ph」：吸收 = 声子给电子 +E_ph（阈值 E_g − E_ph）；发射 = 电子交出 E_ph（阈值 E_g + E_ph） */
+    rows.push([C_PHN, "声子：补上 " + P_DKH + "；吸收给电子 " + MM("<span class='op'>+</span>") + P_EPH2 +
+      "、发射拿走 " + P_EPH2]);
+    rows.push(["#54636f", P_EGH + "（竖直双向箭头）与 " + P_DKH + "（水平双向箭头）"]);
+    rows.push([C_GAP, "禁带"]);
+    return rows;
+  },
+  legAbs: [
+    [C_CON, MM("<i>α</i>(<span class='rm'>ℏ</span><i>ω</i>)") + "：吸收系数"],
+    ["#54636f", P_EGH + "：最低带隙（阈值）"],
+    [C_PHN, MM("<i>E</i><sub>g</sub><span class='op'>∓</span><i>E</i><sub>ph</sub>") + "：两条声子伴线（仅间接带隙）"],
+    [C_OP, "当前 " + P_HWE + " 与对应的 " + P_ALH]
+  ]
+};
+function buildLegends() {
+  for (const id in LEGS) {
+    const el = $(id); if (!el) continue;
+    const rows = typeof LEGS[id] === "function" ? LEGS[id]() : LEGS[id];   /* legEK 随晶系变 */
+    el.innerHTML = rows.map(r =>
+      '<span class="lg"><i style="background:' + r[0] + '"></i>' + r[1] + "</span>").join("");
+  }
+}
+
+const CHAL = [
+  {
+    q: "在 Si 和 GaAs 之间来回切换。两种材料的 CBM 分别在哪个 " + MM("<i>k</i>") + " 点？VBM 呢？加粗的那条导带谷是不是就是「最低的那条」？",
+    a: () => {
+      const d = phys(), g = geo(d.m);
+      return "当前是 <b>" + d.m.name + "</b>（" + d.m.lat + "）：<b>VBM 一直在 Γ</b>（价带顶，橙点），而 <b>CBM 在 " +
+        (d.direct ? "Γ" : (d.cbm.id === "X" ? "Γ–X 方向（" + d.m.name + " 实际在 Δ 点，≈0.85 X）" : d.cbm.id)) + "</b>（蓝点，加粗的那条谷）。" +
+        (d.direct
+          ? "两者在<b>同一个 " + MM("<i>k</i>") + " 点</b>，所以是<b>直接带隙</b>：" + MM("<i>E</i><span class='op'>–</span><i>k</i>") + " 图上一条竖线就能把价带顶接到导带底。"
+          : "两者<b>不在同一个 " + MM("<i>k</i>") + " 点</b>，所以是<b>间接带隙</b>：横向差着 <span class='m'>Δ<i>k</i><span class='op'>=</span>" +
+            fmt(d.dkRaw, 2) + "<span class='op'>·</span>2π<span class='sl'>/</span><i>a</i></span>（" + MM("<span class='op'>=</span>") + " " + fmt(d.dk, 2) + " " + UN("nm<sup>−1</sup>") + "）。") +
+        (d.m.hex
+          /* 六方：横轴是 Γ → M → K（六棱柱 BZ 的基面），六方里没有 X 点，别跟立方的 Γ → X → L 混 */
+          ? "注意 " + d.m.name + " 是<b>六方（纤锌矿）</b>：布里渊区是六棱柱，横轴走的是 <b>" + g.seg +
+            "</b>（" + g.vtx[1] + " = 边心、" + g.vtx[2] + " = 角），<b>六方里没有 X 点</b>；" +
+            "本图只画 Γ 谷 —— 直接跃迁就发生在 Γ。"
+          : "导带画了 " + g.vtx[0] + "、" + g.vtx[1] + "、" + g.vtx[2] + " 三条谷，加粗的永远是<b>能量最低</b>的那条 —— 看哪条谷的谷底最低，就知道带隙是不是直接的：" +
+            (d.direct
+              ? d.m.name + " 的 Γ 谷 " + fmt(d.EG, 2) + " eV 本身就是最低的，所以它是<b>直接带隙</b>。"
+              : d.m.name + " 的 Γ 谷在 " + fmt(d.EG, 2) + " eV、" + d.cbm.id + " 谷才 " + fmt(d.Eg, 3) + " eV，所以 " + d.m.name + " 的<b>最低</b>带隙是 " + fmt(d.Eg, 3) +
+                " eV（间接），但要<b>竖直</b>跃迁（不动 " + MM("<i>k</i>") + "）得掏到 " + fmt(d.EG, 2) + " eV 才够得着 Γ 谷。"));
+    }
+  },
+  {
+    q: "光子动量为什么可以忽略？读一读右侧读数面板里的 " + MM("<i>k</i><sub>γ</sub><span class='sl'>/</span>Δ<i>k</i>") + "。要是间接材料里没有声子参与，光跃迁会卡在哪一步？",
+    a: () => {
+      const d = phys();
+      /* 只在**存在**动量差（间接档）时才谈「差几个数量级」；比值也是随 ℏω 变的
+         （k_γ ∝ ℏω），所以两个量都现算，不写死。 */
+      const r = d.dk > 0 ? d.kPh / d.dk : 0;
+      const inv = d.dk > 0 && d.kPh > 0 ? d.dk / d.kPh : 0;
+      const head = "光子能量 " + fmt(d.hw, 3) + " eV 对应的波长 <span class='m'><i>λ</i><span class='op'>=</span>" +
+        fmt(d.lamPh, 1) + " " + UN("nm") + "</span>，于是 <span class='m'><i>k</i><sub>γ</sub><span class='op'>=</span>2π<span class='sl'>/</span><i>λ</i><span class='op'>=</span>" +
+        sciH(d.kPh, 2) + " " + UN("nm<sup>−1</sup>") + "</span>";
+      /* 直接档：CBM 与 VBM 同在 Γ ⇒ Δk = 0，根本没有「需要的动量差」可比，
+         此时「差几个数量级」这句话无意义；口径与读数面板那一行（显示「—（无需动量差）」）保持一致。 */
+      if (d.direct) {
+        return head + "。当前是<b>直接带隙</b>，CBM 与 VBM 都落在 Γ 点上，<span class='m'>Δ<i>k</i><span class='op'>=</span>0</span> —— " +
+          "本来就不存在「需要的动量差」这回事，<b>光子动量够不够的问题根本不成立</b>（读数面板里 " +
+          MM("<i>k</i><sub>γ</sub><span class='sl'>/</span>Δ<i>k</i>") + " 那一栏也显示「—（无需动量差）」）。" +
+          "光跃迁在 " + MM("<i>E</i><span class='op'>–</span><i>k</i>") + " 图上仍是一条<b>竖线</b>（" + P_DKH +
+          " ≈ 0），而这条竖线<b>一步就够得着导带底</b> —— 这就是它能直接跃迁的原因，也是它不需要声子的原因。";
+      }
+      return head + "；而间接跃迁需要的动量差 <span class='m'>Δ<i>k</i><span class='op'>=</span>" +
+        fmt(d.dk, 2) + " " + UN("nm<sup>−1</sup>") + "</span>。比值 <span class='m'><i>k</i><sub>γ</sub><span class='sl'>/</span>Δ<i>k</i><span class='op'>=</span>" +
+        sciH(r, 1) + "</span> —— 光子带的动量<b>只有需要的 1/" + fmt(inv, 0) + "</b>（差 " + fmt(Math.log10(inv), 1) +
+        " 个数量级），所以在 " + MM("<i>E</i><span class='op'>–</span><i>k</i>") + " 图上光跃迁只能是一条<b>竖线</b>（" + P_DKH + " ≈ 0）。" +
+        "当前是<b>间接带隙</b>，紫色竖线走完 <span class='m'><span class='rm'>ℏ</span><i>ω</i></span> 之后还悬在禁带里（横坐标为 Γ），必须让<b>声子</b>把它横着挪 <span class='m'>Δ<i>k</i></span> 才够得着导带底。" +
+        "声子正好补这个短板：布里渊区边界声子的波矢就是 <span class='m'>Δ<i>k</i></span> 这个量级，而能量只有 " + fmt(EPH, 2) +
+        " eV —— 只占当前带隙（" + fmt(d.Eg, 3) + " eV）的 <b>1/" + fmt(d.Eg / EPH, 0) + "</b>（即小 " +
+        fmt(Math.log10(d.Eg / EPH), 1) + " 个数量级）—— <b>动量大、能量小</b>，所以它在 " +
+        MM("<i>E</i><span class='op'>–</span><i>k</i>") + " 图上几乎只是<b>横着走</b>。";
+    }
+  },
+  {
+    q: "在模块二里对比 Si 和 GaAs：过了阈值同样 " + MM("0.2" + UN("eV")) + " 的时候，两条边的 " + P_ALH + " 各是多少？实验上怎么靠吸收边判断材料是哪种带隙？",
+    a: () => {
+      const d = phys();
+      const a1 = alphaAt(d.Eg + 0.2, { EG: d.EG, Eg: d.Eg, direct: d.direct });
+      const gg = MATS[2];                                  /* GaAs 作对照 */
+      const a2 = alphaAt(gg.vG + 0.2, { EG: gg.vG, Eg: gg.vG, direct: true });
+      return "当前 <b>" + d.m.name + "</b>（" + (d.direct ? "直接" : "间接") + "）：比阈值高 0.2 eV 时 <span class='m'><i>α</i><span class='op'>=</span>" +
+        (a1 >= 1 ? sciH(a1, 2) : "≈0") + " " + U_CMH + "</span>" +
+        (d.direct ? "" : "，而 GaAs 在同一个超出量下已经到 " + MM(sciH(a2, 2) + " " + UN("cm<sup>−1</sup>")) + " —— <b>差 " +
+          (a2 / Math.max(a1, 1e-9)).toExponential(1) + " 倍</b>。") +
+        "根源就是<b>边的幂次</b>：直接带隙 <span class='m'><i>α</i><span class='op'>∝</span><span class='sqrt'><span class='rd'>√</span><span class='rdc'><span class='rm'>ℏ</span><i>ω</i><span class='op'>−</span><i>E</i><sub>g</sub></span></span></span>，开根号在阈值附近涨得极快；" +
+        "间接带隙 <span class='m'><i>α</i><span class='op'>∝</span>(<span class='rm'>ℏ</span><i>ω</i><span class='op'>−</span><i>E</i><sub>g</sub><span class='op'>∓</span><i>E</i><sub>ph</sub>)<sup>2</sup></span>，平方在阈值附近几乎是贴着零爬。" +
+        "实验上把它画成 <b>Tauc 图</b>：若 <span class='m'>(<i>α</i><span class='rm'>ℏ</span><i>ω</i>)<sup>2</sup></span> 对 <span class='m'><span class='rm'>ℏ</span><i>ω</i></span> 是一条直线 ⇒ 直接带隙；" +
+        "若 <span class='m'>(<i>α</i><span class='rm'>ℏ</span><i>ω</i>)<sup><span class='frac'><span class='num'>1</span><span class='den'>2</span></span></sup></span> 对 <span class='m'><span class='rm'>ℏ</span><i>ω</i></span> 成直线 ⇒ 间接带隙。" +
+        "间接带隙还能看到<b>两条边</b>（相差 2<span class='m'><i>E</i><sub>ph</sub></span>），那是吸收声子与发射声子的两条分支。";
+    }
+  },
+  {
+    q: "温度升高时 " + P_EGH + " 是变大还是变小？对应的发光波长往哪个方向漂？读数面板里给出了 " + MM("<i>E</i><sub>g</sub>(0 <span class='un'>K</span>)") + "，跟 300 " + U_KH + " 的值比一比。",
+    a: () => {
+      const d = phys(), m = d.m;
+      const e0 = EgV(0, m) - EgV(300, m) + cbm300(m), e6 = EgV(600, m) - EgV(300, m) + cbm300(m);
+      return "当前 <span class='m'><i>T</i><span class='op'>=</span>" + d.T + " " + U_KH + "</span>，<span class='m'><i>E</i><sub>g</sub><span class='op'>=</span>" +
+        fmt(d.Eg, 3) + " " + U_EVH + "</span>（0 " + U_KH + " 时 " + fmt(e0, 3) + " " + U_EVH + "，600 " + U_KH + " 时 " + fmt(e6, 3) + " " + U_EVH + "）。" +
+        "温度升上去带隙<b>变窄</b>，按 Varshni 关系 <span class='m'><i>E</i><sub>g</sub>(<i>T</i>)<span class='op'>=</span><i>E</i><sub>g</sub>(0)<span class='op'>−</span><i>αT</i><sup>2</sup><span class='sl'>/</span>(<i>T</i><span class='op'>+</span><i>β</i>)</span>：" +
+        "低温段是 <span class='m'><i>T</i><sup>2</sup></span>（很平），高温段趋于线性下降。物理上是<b>热膨胀</b>＋<b>电子-声子相互作用</b>把能带推近了。" +
+        "带隙变窄 ⇒ 发光波长 <span class='m'><i>λ</i><span class='op'>=</span>1239.84<span class='sl'>/</span><i>E</i><sub>g</sub></span> 变长：现在 <b>" +
+        fmt(d.lamG, 1) + " " + U_NMH + "</b>，0 " + U_KH + " 时 " + fmt(HBARC / e0, 1) + " " + U_NMH + "、600 " + U_KH + " 时 " + fmt(HBARC / e6, 1) +
+        " " + U_NMH + " —— <b>往红端漂</b>。这正是 LED 和激光器要控温的原因：结温一升，波长就红移。";
+    }
+  },
+  {
+    q: "为什么 GaAs 适合做 LED、Si 不适合？可 Si 又是太阳能电池的主力，这矛盾吗？",
+    a: () => {
+      const d = phys();
+      const dep = d.alpha >= 1 ? 1 / d.alpha : null;
+      return "做 LED 要的是<b>辐射复合</b>：导带电子直接落回价带、把能量交给一个光子。直接带隙里这就是<b>一级过程</b>（一个光子 + 一个矩阵元），" +
+        "概率高，<span class='m'><i>η</i><sub>r</sub></span> 在 " + MM("10<sup>0</sup>") + " 量级、辐射寿命 ns 级；" +
+        "间接带隙里必须<b>同时</b>捎上一个声子来补 <span class='m'>Δ<i>k</i></span>，是<b>二级过程</b>，概率再乘一个声子因子，" +
+        "<span class='m'><i>η</i><sub>r</sub></span> 掉到 " + MM("10<sup>−6</sup>") + " 量级 —— 电子多半把能量交给晶格（发热）而不是发光。" +
+        "所以 LED / 激光器选 GaAs、GaN、InP 这些<b>直接带隙</b>材料。" +
+        "但太阳能电池要的是<b>把光吸收掉</b>，不是发光：<b>发光效率低 ≠ 吸收差</b>，只说明吸收边没那么陡。" +
+        "当前 <b>" + d.m.name + "</b> 在 <span class='m'><span class='rm'>ℏ</span><i>ω</i><span class='op'>=</span>" + fmt(d.hw, 3) + " eV</span> 处 <span class='m'><i>α</i><span class='op'>=</span>" +
+        (d.alpha >= 1 ? sciH(d.alpha, 2) + " " + UN("cm<sup>−1</sup>") : "≈0（透明）") + "</span>" +
+        (dep ? "，吸收长度 <span class='m'>1<span class='sl'>/</span><i>α</i><span class='op'>=</span>" + fmtDep(dep) + "</span>" : "") +
+        "。Si 的 " + P_ALH + " 在带边附近只有 " + MM("10<sup>2</sup>") + "–" + MM("10<sup>3</sup>") + " " + U_CMH + " ⇒ 要几十到上百微米厚才吸得干净，但 Si 便宜、晶圆大、钝化工艺成熟，" +
+        "这点厚度完全给得起；直接带隙材料 " + P_ALH + " 高达 " + MM("10<sup>5</sup>") + " " + U_CMH + " ⇒ 一微米就够，所以能做<b>薄膜</b>电池。" +
+        "结论：带隙类型决定的是「<b>发光</b>行不行」和「<b>要多厚</b>才吸干净」，两件事并不矛盾。";
+    }
+  }
+];
+let ANS_EL = [], ANS_SHOWN = false;
+function buildChal() {
+  const grid = $("chalGrid");
+  grid.innerHTML = ""; ANS_EL = [];
+  CHAL.forEach((c, i) => {
+    const el = document.createElement("div");
+    el.className = "chal";
+    el.innerHTML = '<div class="chal-head"><b>' + (i + 1) + ". " + c.q + '</b><span class="chev">▶</span></div>' +
+      '<div class="chal-body"><div class="ans"></div><div class="btn-row"><button>看看答案</button></div></div>';
+    grid.appendChild(el);
+    el.querySelector(".chal-head").onclick = () => el.classList.toggle("open");
+    const ans = el.querySelector(".ans");
+    ANS_EL.push(ans);
+    el.querySelector(".btn-row button").onclick = e => { e.stopPropagation(); ANS_SHOWN = true; ans.classList.toggle("show"); refreshAnswers(); };
+  });
+}
+function refreshAnswers() { if (!ANS_SHOWN) return; ANS_EL.forEach((el, i) => { el.innerHTML = CHAL[i].a(); }); }
+
+function fmtDep(L) {                                  /* 吸收长度 1/α，输入 cm */
+  if (L >= 0.1) return fmt(L, 3) + " " + UN("cm");
+  if (L * 1e4 >= 1) return fmt(L * 1e4, 2) + " " + UN("μm");
+  return fmt(L * 1e7, 1) + " " + UN("nm");
+}
+function kvRow(k, v) { return '<div class="row"><span class="k">' + k + '</span><span class="v">' + v + "</span></div>"; }
+function hd(s) { return '<div class="hd">' + s + "</div>"; }
+
+function updateReadout() {
+  /* 读数两区化（2026-10-23）：这里只留**本工具的主线** 12 行。
+     ⚠️ 判据（与 15 号同源）：**挑战题干点名要读的行不许折进去** ——
+     挑战三点名「光子波矢与动量差之比」、挑战五点名「0 K 带隙反推值」，这两行必须留在核心区。
+     可折的都是「派生量 / 背景量 / 固定参数回显」。 */
+  const d = phys(), m = d.m, h = [];
+  h.push(hd("材料"));
+  h.push(kvRow("材料 / 结构", "<b>" + m.name + "</b>　" + m.lat));
+  h.push(kvRow("带隙类型", d.direct
+    ? "<b>直接</b>（CBM 在 Γ）" : "<b>间接</b>（CBM 在 " + (d.cbm.id === "X" ? "Γ–X 的 Δ 点" : "L") + "）"));
+  h.push(hd("带隙"));
+  h.push(kvRow(MM("<i>E</i><sub>g</sub>") + "（300 " + U_KH + "）", "<b>" + fmt(d.Eg, 3) + "</b> " + U_EVH));
+  /* 0 K 值：本页 = 300 K 谷底实测值 + Varshni 温差反推（≠ Varshni 参数里的 E_g(0)），
+     两者差几个 meV（InP 最大，约 11 meV，是两套文献取值的差别），所以两个数都列出来。
+     挑战五要点名读这一行，故留在核心区。 */
+  h.push(kvRow(MM("<i>E</i><sub>g</sub>(0 <span class='un'>K</span>)") + "（反推）",
+    "<b>" + fmt(d.Eg0, 3) + "</b> " + U_EVH + "　·　文献 " + fmt(m.eg0, 3) + " " + U_EVH));
+  h.push(kvRow("Γ 谷（竖直跃迁阈值）", fmt(d.EG, 3) + " " + U_EVH));
+  h.push(hd("动量"));
+  h.push(kvRow(MM("Δ<i>k</i><span class='op'>=</span><i>k</i><sub>CBM</sub><span class='op'>−</span><i>k</i><sub>VBM</sub>"),
+    "<b>" + fmt(d.dkRaw, 2) + "</b> " + MM("<span class='op'>·</span>2π<span class='sl'>/</span><i>a</i><span class='op'>=</span>") + " " + fmt(d.dk, 2) + " " + UN("nm<sup>−1</sup>")));
+  h.push(kvRow(MM("<i>k</i><sub>γ</sub><span class='sl'>/</span>Δ<i>k</i>"), d.direct ? "—（无需动量差）" : "<b>" + sciH(d.kPh / d.dk, 1) + "</b>"));
+  h.push(hd("当前跃迁"));
+  h.push(kvRow(P_HWE + " / 阈值", "<b>" + fmt(d.hw, 3) + "</b> / " + fmt(d.need, 3) + " " + U_EVH));
+  h.push(kvRow("跃迁", d.ok ? "<b>允许</b>（" + (OPT.dir > 0 ? "吸收进导带" : "复合回价带") + "）" : "<b>不允许</b>，还差 " + fmt(d.lack, 3) + " eV"));
+  /* 声子行：过程名随 dir 翻转（phAbsorb()），两条支路的 ℏω 数值不随 dir 变（总是 E_g ∓ E_ph）。
+     复合方向的 E_g − E_ph 是电子**吐出**声子换来的 Stokes 线 —— 上一版仍叫「吸收 ⇒ 阈值降低」，
+     把「谁给谁能量」讲反了，也和朝下的光子箭头自相矛盾。 */
+  const P_EGA = MM("<i>E</i><sub>g</sub><span class='op'>−</span><i>E</i><sub>ph</sub>");
+  const P_EGB = MM("<i>E</i><sub>g</sub><span class='op'>+</span><i>E</i><sub>ph</sub>");
+  h.push(kvRow("声子", d.direct ? "不需要（同一 " + MM("<i>k</i>") + " 点）"
+    : (OPT.dir > 0
+      ? (phLowBranch()
+        ? "吸收 1 个声子：声子给电子 " + MM("<span class='op'>+</span>" + fmt(EPH, 2)) + " " + U_EVH +
+        " ⇒ 阈值 " + MM("<span class='op'>−</span>" + fmt(EPH, 2)) + " " + U_EVH + "（" + P_EGA + "）"
+        : "发射 1 个声子：电子交出 " + fmt(EPH, 2) + " " + U_EVH +
+        " ⇒ 阈值 " + MM("<span class='op'>+</span>" + fmt(EPH, 2)) + " " + U_EVH + "（" + P_EGB + "）")
+      : (phLowBranch()
+        ? "发射 1 个声子：电子把 " + fmt(EPH, 2) + " " + U_EVH + " 交给晶格" +
+        " ⇒ 发出的光子只有 " + P_EGA + "（Stokes 线，间接带隙发光的主线）"
+        : "吸收 1 个声子：电子又从晶格借 " + fmt(EPH, 2) + " " + U_EVH +
+        " ⇒ 发出的光子可达 " + P_EGB + "（反 Stokes 线，弱得多）"))));
+  h.push(hd("吸收"));
+  h.push(kvRow(MM("<i>α</i>(<span class='rm'>ℏ</span><i>ω</i>)"), d.alpha >= 1 ? "<b>" + sciH(d.alpha, 2) + "</b> " + U_CMH : "≈ 0（透明）"));
+  h.push(kvRow(MM("1<span class='sl'>/</span><i>α</i>") + "（吸收长度）", d.alpha >= 1 ? fmtDep(1 / d.alpha) : "—（几乎不吸收）"));
+  $("readout").innerHTML = h.join("");
+
+  /* 折叠区：派生量（发光波长、光子波矢绝对量、光子能量与带隙之差）、
+     背景量（典型应用）与固定参数回显（温度固定 300 K）。 */
+  const h2 = [];
+  h2.push(hd("材料"));
+  h2.push(kvRow("典型应用", m.app));
+  h2.push(hd("带隙"));
+  h2.push(kvRow(MM("<i>λ</i><sub>g</sub>") + "（发光波长）", fmt(d.lamG, 1) + " " + U_NMH));
+  h2.push(hd("动量"));
+  h2.push(kvRow(MM("<i>k</i><sub>γ</sub><span class='op'>=</span>2π<span class='sl'>/</span><i>λ</i>") + "（光子波矢）",
+    sciH(d.kPh, 2) + " " + UN("nm<sup>−1</sup>") + "（" + MM("<i>λ</i><span class='op'>=</span>") + " " + fmt(d.lamPh, 1) + " " + U_NMH + "）"));
+  h2.push(hd("当前跃迁"));
+  h2.push(kvRow(MM("<span class='rm'>ℏ</span><i>ω</i><span class='op'>−</span><i>E</i><sub>g</sub>"),
+    (d.hwRel >= 0 ? "+" : "") + fmt(d.hwRel, 3) + " " + U_EVH));
+  h2.push(hd("固定参数"));
+  h2.push(kvRow("温度 " + MM("<i>T</i>") + "（固定）", "<b>" + d.T + "</b> " + U_KH));
+  $("readoutMore").innerHTML = h2.join("");
+  refreshAnswers();
+}
+
+const PRESETS = () => {
+  const d = phys();
+  return [
+    { name: "阈值", hw: d.need + 0.001 },
+    { name: "带上方 0.3 eV", hw: d.Eg + 0.30 },
+    d.direct
+      ? { name: "带上方 1.0 eV", hw: d.Eg + 1.00 }
+      : { name: "Γ 谷直接跃迁", hw: d.EG + 0.02 }
+  ];
+};
+
+function buildMatBtns() {
+  const box = $("matBtns"); box.innerHTML = "";
+  MATS.forEach((m, i) => {
+    const b = document.createElement("button");
+    const vs = valleys(m);
+    b.innerHTML = m.name + " <span style=\"color:#6b7a8c;font-size:11px\">" + (vs.cbm.id === "Γ" ? "直接" : "间接") + "</span>";
+    b.onclick = () => { OPT.mat = i; syncInputs(); render(); };
+    box.appendChild(b);
+  });
+}
+function buildPreBtns() {
+  const box = $("preBtns"); box.innerHTML = "";
+  PRESETS().forEach(p => {
+    const b = document.createElement("button");
+    b.textContent = p.name;
+    b.onclick = () => { OPT.hw = clamp(p.hw, 0.2, 6); syncInputs(); render(); };
+    box.appendChild(b);
+  });
+}
+function selBtns() {
+  const d = phys();
+  const mb = $("matBtns").children;
+  for (let i = 0; i < mb.length; i++) mb[i].className = i === OPT.mat ? "sel" : "";
+  $("btnAbs").className = OPT.dir > 0 ? "sel" : "";
+  $("btnEmi").className = OPT.dir < 0 ? "sel" : "";
+  $("btnPhA").className = OPT.ph > 0 ? "sel" : "";
+  $("btnPhE").className = OPT.ph < 0 ? "sel" : "";
+  /* 复合方向的过程名要对调：同一个按钮，吸收时是「吞声子」，复合时是「吐声子」（见 phAbsorb()） */
+  const nmA = OPT.dir > 0 ? "吸收" : "发射", nmE = OPT.dir > 0 ? "发射" : "吸收";
+  $("btnPhA").innerHTML = nmA + "声子 " +
+    MM("<span class='rm'>ℏ</span><i>ω</i><span class='op'>=</span><i>E</i><sub>g</sub><span class='op'>−</span><i>E</i><sub>ph</sub>");
+  $("btnPhE").innerHTML = nmE + "声子 " +
+    MM("<span class='rm'>ℏ</span><i>ω</i><span class='op'>=</span><i>E</i><sub>g</sub><span class='op'>+</span><i>E</i><sub>ph</sub>");
+  $("btnPhA").disabled = d.direct; $("btnPhE").disabled = d.direct;
+}
+
+function syncInputs() {
+  const d = phys(), m = d.m;
+  $("matVal").innerHTML = m.name + "（" + (d.direct ? "直接" : "间接") + "）";
+  /* 六方（纤锌矿）要给两个晶格常数 a（基面）与 c（轴），只写 a 会让人误以为是立方 */
+  $("matSub").innerHTML = m.lat + "结构，" + MM("<i>a</i><span class='op'>=</span>" + fmt(m.a, 4) + UN("nm")) +
+    (m.c ? "，" + MM("<i>c</i><span class='op'>=</span>" + fmt(m.c, 4) + UN("nm")) : "") + "　·　" + m.app;
+  $("hwSlider").value = OPT.hw; $("hwVal").innerHTML = fmt(OPT.hw, 3) + " eV";
+  $("hwSub").innerHTML = "阈值 " + fmt(d.need, 3) + " " + U_EVH + "　·　" +
+    MM("<span class='rm'>ℏ</span><i>ω</i><span class='op'>−</span><i>E</i><sub>g</sub><span class='op'>=</span>") + " " + (d.hwRel >= 0 ? "+" : "") +
+    fmt(d.hwRel, 3) + " " + U_EVH + "　·　" + (d.ok ? "<b>允许跃迁</b>" : "还差 " + fmt(d.lack, 3) + " " + U_EVH);
+  $("dirSub").innerHTML = OPT.dir > 0
+    ? "吸收：价带顶的电子吃掉一个光子往上走（竖直），间接材料再让声子补 " + P_DKH + "。"
+    : "复合：导带底的电子落回价带顶，发出一个光子；间接材料同样得先靠声子把动量还回去。";
+  /* 复合方向要把名字翻过来：同一条几何路径反着走，吞 / 吐互换（见 phAbsorb()） */
+  $("phSub").innerHTML = d.direct
+    ? "当前是直接带隙：CBM 与 VBM 同一个 " + MM("<i>k</i>") + "，<b>不需要声子</b>（按钮已禁用）。"
+    : (MM("<i>E</i><sub>ph</sub><span class='op'>=</span>") + " " + fmt(EPH, 2) + " " + U_EVH + "：" + (OPT.dir > 0
+      ? (phLowBranch()
+        ? "吸收一个声子 ⇒ 阈值降到 " + MM("<i>E</i><sub>g</sub><span class='op'>−</span><i>E</i><sub>ph</sub>")
+        : "发射一个声子 ⇒ 阈值升到 " + MM("<i>E</i><sub>g</sub><span class='op'>+</span><i>E</i><sub>ph</sub>"))
+      : (phLowBranch()
+        ? "电子一路的最后一脚是<b>发射</b>一个声子：把 " + fmt(EPH, 2) + " " + U_EVH + " 交给晶格" +
+        " ⇒ 发出的光子只有 " + MM("<i>E</i><sub>g</sub><span class='op'>−</span><i>E</i><sub>ph</sub>") +
+        " —— 正好比带隙低一个声子能量，就是间接带隙发光里最亮的那条 Stokes 伴线"
+        : "电子还得多<b>吸收</b>一个声子（从晶格再借 " + fmt(EPH, 2) + " " + U_EVH + "）" +
+        " ⇒ 发出的光子可以高到 " + MM("<i>E</i><sub>g</sub><span class='op'>+</span><i>E</i><sub>ph</sub>") +
+        " —— 反 Stokes 线，要靠晶格里本来就有这个声子，比 Stokes 线弱得多")));
+  selBtns();
+  buildPreBtns();
+}
+
+function render() { fitAll(); selBtns(); buildLegends(); drawEK(); drawAbs(); updateReadout(); }
+
+function init() {
+  buildLegends(); buildChal(); buildMatBtns();
+  const sl = (id, fn) => $(id).addEventListener("input", e => fn(+e.target.value));
+  sl("hwSlider", v => { OPT.hw = v; syncInputs(); render(); });
+  $("btnAbs").onclick = () => { OPT.dir = 1; syncInputs(); render(); };
+  $("btnEmi").onclick = () => { OPT.dir = -1; syncInputs(); render(); };
+  $("btnPhA").onclick = () => { OPT.ph = 1; syncInputs(); render(); };
+  $("btnPhE").onclick = () => { OPT.ph = -1; syncInputs(); render(); };
+  const hover = (id, key, fn) => {
+    $(id).addEventListener("mousemove", e => {
+      const r = $(id).getBoundingClientRect();
+      HOV[key] = { x: e.clientX - r.left, y: e.clientY - r.top };
+      fn();
+    });
+    $(id).addEventListener("mouseleave", () => { HOV[key] = null; fn(); });
+  };
+  hover("ek", "ek", drawEK); hover("abs", "abs", drawAbs);
+  /* 折叠区（.fold）：事件委托，新增折叠块不用再逐个绑定。
+     与挑战区的 .chal 完全独立，两者互不影响。 */
+  document.addEventListener("click", e => {
+    const fh = e.target.closest ? e.target.closest(".fold-head") : null;
+    if (!fh) return;
+    const f = fh.parentNode;
+    if (f && f.classList && f.classList.contains("fold")) f.classList.toggle("open");
+  });
+  syncInputs(); render();
+  window.addEventListener("resize", () => render());
+}
+init();
+
+/* i18n 启动必须在 init() 之后：setLang() 会重跑 syncInputs()/render()，
+   放到 init() 之前会在 fitAll() 之前触发绘制，一旦抛异常整个 init() 就跑不到（挑战与画布会空）。 */
+(function () {
+  try {
+    i18nWatch();
+    ORIG_TITLE = ORIG_TITLE || document.title;
+    var btn = document.getElementById("langBtn");
+    if (btn) btn.onclick = function () { setLang(LANG === "en" ? "zh" : "en"); };
+    if (LANG === "en") setLang("en"); else { document.title = ORIG_TITLE; i18nWalk(document.body); }
+  } catch (e) { }
+})();
+</script>
+</body>
+</html>

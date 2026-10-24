@@ -1,0 +1,1688 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<!-- SPDX-License-Identifier: MIT -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>一维方形势阱交互教学工具</title>
+<style>
+  :root {
+    --bg: #f7f9fb;
+    --panel: #ffffff;
+    --border: #dde4ec;
+    --text: #2c3e50;
+    --text-sub: #6b7a8c;
+    --blue: #1976d2;
+    --blue-light: #e3f0fb;
+    --orange: #ef8c1a;
+    --red: #d94a3d;
+    --teal: #0f9b8e;
+    --green: #2e9e5b;
+    --purple: #7b3fa0;
+    --gray-ref: #9aa5b1;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Microsoft YaHei", "PingFang SC", "Segoe UI", sans-serif;
+    background: var(--bg); color: var(--text); padding: 14px;
+  }
+  header { position: relative; display: flex; align-items: baseline; justify-content: center; gap: 14px; flex-wrap: wrap; text-align: center; margin-bottom: 2px; }
+  .lang-btn { position: absolute; right: 0; top: 0; border: 1px solid var(--border); background: #fff;
+    color: var(--text-sub); padding: 3px 10px; border-radius: 7px; cursor: pointer; font-size: 12px; font-weight: 600; }
+  .lang-btn:hover { border-color: var(--blue); color: var(--blue); }
+  header h1 { font-size: 20px; }
+  header .formula { font-size: 14.5px; color: var(--text-sub); }
+  .sub-note { text-align: center; font-size: 12.5px; color: var(--text-sub); margin-bottom: 12px; line-height: 1.75; }
+  .sub-note b { color: var(--blue); }
+
+  .layout { display: flex; gap: 14px; align-items: flex-start; max-width: 1500px; margin: 0 auto; }
+  .viz { flex: 0 0 66%; min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+  .side { flex: 1; min-width: 310px; display: flex; flex-direction: column; gap: 12px; }
+  .duo { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; align-items: start; }
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; }
+  .sec-title { font-size: 13.5px; font-weight: 700; margin: 2px 0 6px; }
+  canvas { display: block; width: 100%; border-radius: 6px; touch-action: none; }
+  .hint { font-size: 12px; color: var(--text-sub); margin-top: 6px; line-height: 1.6; }
+  .ctrl-grid { display: flex; flex-direction: column; gap: 10px; }
+  .ctrl-head { display: flex; justify-content: space-between; align-items: baseline; font-size: 13px; font-weight: 600; margin-bottom: 2px; }
+  .ctrl-head .val { color: var(--blue); font-variant-numeric: tabular-nums; font-weight: 700; }
+  .ctrl input[type=range] { width: 100%; accent-color: var(--blue); }
+  .ctrl input[type=range]:disabled { opacity: .45; }
+  .ctrl .sub { font-size: 11.5px; color: var(--text-sub); margin-top: 1px; line-height: 1.5; }
+  .btn-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+  .btn-row button {
+    border: 1px solid var(--border); background: #fff; color: var(--text);
+    padding: 5px 11px; border-radius: 7px; cursor: pointer; font-size: 12.5px;
+  }
+  .btn-row button:hover { border-color: var(--blue); color: var(--blue); }
+  .mode-switch { display: flex; gap: 6px; }
+  .mode-switch button {
+    flex: 1; border: 1px solid var(--border); background: #fff; color: var(--text-sub);
+    padding: 6px 10px; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600;
+  }
+  .mode-switch button.active { background: var(--blue); border-color: var(--blue); color: #fff; }
+  .chk-row { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12.5px; color: var(--text-sub); margin-top: 8px; }
+  .chk-row label { display: inline-flex; align-items: center; gap: 5px; cursor: pointer; }
+  .chk-row input[type=checkbox] { accent-color: var(--blue); }
+  .legend { display: flex; gap: 6px 14px; flex-wrap: wrap; align-items: center; font-size: 12px; color: var(--text-sub); margin-top: 6px; }
+  .swatch { display: inline-block; vertical-align: middle; width: 20px; height: 0; border-top: 3px solid currentColor; border-radius: 2px; margin-right: 6px; }
+  .swatch.dash { border-top-style: dashed; }
+  /* 模块编号徽标：只有教学内容模块才带编号；控制面板等辅助面板不是模块，不加 */
+  .sec-title .mtag {
+    display: inline-block; background: var(--blue); color: #fff;
+    font-size: 11px; font-weight: 700; padding: 1.5px 7px;
+    border-radius: 5px; margin-right: 6px; vertical-align: 1.5px; letter-spacing: .3px;
+  }
+  .chal .q { color: var(--text); }
+  .chal .a { margin-top: 7px; padding: 7px 10px; background: var(--blue-light);
+             border-radius: 6px; color: var(--text); }
+  .chal .a b { color: var(--blue); }
+  .chal .act { margin-top: 8px; }
+  .chal .act button { border: 1px solid var(--border); background: #fff; color: var(--text);
+    padding: 4px 10px; border-radius: 7px; cursor: pointer; font-size: 12px; }
+  .chal .act button:hover { border-color: var(--blue); color: var(--blue); }
+  /* ---- LaTeX 风格数学排版（纯 CSS，无外部库） ---- */
+  .m { font-family: "Cambria Math", "STIX Two Math", "Latin Modern Math", "Times New Roman", Times, serif;
+       font-size: 1.05em; font-style: normal; white-space: nowrap; letter-spacing: .01em; }
+  .m i, .m var { font-style: italic; }
+  .m .rm { font-style: normal; }
+  .m sub, .m sup { font-size: .70em; font-style: normal; line-height: 1; }
+  .m sub { vertical-align: -.28em; }
+  .m sup { vertical-align: .50em; }
+.m .m { font-size: 1em; }   /* 嵌套容器（TEXH 下标转换叠加）不再放大字号 */
+  .m sub i, .m sup i { font-style: italic; }
+  .m .op { font-style: normal; padding: 0 .24em; }
+  .m .sl { font-style: normal; padding: 0 .05em; }
+  .m .un { font-style: normal; padding-left: .16em; }
+  .frac { display: inline-block; vertical-align: -0.52em; text-align: center; margin: 0 .16em; font-size: .86em; line-height: 1.18; }
+  .frac > .num { display: block; padding: 0 .34em; border-bottom: 1px solid currentColor; }
+  .frac > .den { display: block; padding: 0 .34em; }
+  .sqrt { display: inline-flex; align-items: flex-start; vertical-align: baseline; margin: 0 .08em; }
+  .sqrt > .rd { font-size: 1.20em; line-height: 1; padding-right: .04em; }
+  .sqrt > .rdc { border-top: 1px solid currentColor; padding: .12em .12em 0 .14em; margin-top: .16em; }
+  /* ---- 读数区 ---- */
+  .kv { display: grid; grid-template-columns: 1fr; gap: 2px 22px; font-size: 12.5px; }
+  .kv .row { display: flex; justify-content: space-between; gap: 8px; border-bottom: 1px dotted #eef2f7; padding: 2px 0; }
+  .kv .k { color: var(--text-sub); white-space: nowrap; }
+  .kv .v { font-variant-numeric: tabular-nums; text-align: right; }
+  .kv .v b { color: var(--blue); }
+  .kv .hd { grid-column: 1 / -1; font-weight: 700; color: var(--text); font-size: 12px; margin: 6px 0 2px; }
+  .kv .hd:first-child { margin-top: 0; }
+  /* ---- 挑战卡 ---- */
+  .chal-wrap { max-width: 1500px; margin: 14px auto 0; }
+  .chal-bar { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+  .chal-bar b { font-size: 14.5px; }
+  .chal-bar span { font-size: 12px; color: var(--text-sub); }
+  .chal-grid { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+  .chal { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 8px 12px; }
+  .chal-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; cursor: pointer; }
+  .chal-head b { font-size: 13.5px; }
+  .chal-head .chev { color: var(--text-sub); font-size: 12px; transition: transform .15s; display: inline-block; }
+  .chal.open .chal-head .chev { transform: rotate(90deg); }
+  .chal.open { border-color: var(--blue); }
+  .chal-body { display: none; margin-top: 6px; font-size: 12.5px; color: var(--text-sub); line-height: 1.75; }
+  .chal.open .chal-body { display: block; }
+  .chal-body .ans { display: none; margin-top: 6px; padding: 7px 10px; background: var(--blue-light); border-radius: 6px; color: var(--text); }
+  .chal-body .ans.show { display: block; }
+  .chal-body .ans b { color: var(--blue); }
+  .chal-body .btn-row { margin-top: 8px; }
+  @media (max-width: 1100px) {
+    .layout { flex-direction: column; }
+    .viz { flex: 1 1 auto; width: 100%; }
+  }
+  @media (max-width: 720px) {
+    .duo { grid-template-columns: 1fr; }
+  }
+  /* ---- 课程页脚 ---- */
+  .site-foot { max-width: 1500px; margin: 18px auto 0; padding: 12px 16px 24px;
+    border-top: 1px solid var(--border); color: var(--text-sub);
+    font-size: 12.5px; line-height: 1.8; text-align: center; }
+  .site-foot a { color: var(--blue, #1976d2); text-decoration: none; }
+  .site-foot a:hover { text-decoration: underline; }
+  .sqrt > .rdc, .sqrt .rdc { display: inline-block; position: static; font-size: 1em;
+             border-top: .055em solid currentColor; padding: .06em .12em 0 .10em; margin: 0; line-height: 1; }
+
+  /* 公式排版：分式 / 根式 —— 全站统一为「回旋共振 v06」写法（置于末尾，覆盖本文件早期变体） */
+  .frac { display: inline-block; vertical-align: -0.52em; text-align: center; font-size: .78em; margin: 0 .12em; }
+  .frac > .num, .frac .num { display: block; padding: 0 .22em; border-bottom: .055em solid currentColor; line-height: inherit; }
+  .frac > .den, .frac .den { display: block; padding: 0 .22em; line-height: inherit; }
+  .sqrt { display: inline-block; white-space: nowrap; vertical-align: baseline; margin: 0; font-size: 1em; }
+  .sqrt > .rd, .sqrt .rd { display: inline-block; position: static; font-size: 1em; line-height: inherit; padding: 0 .02em 0 0; margin: 0; }
+  .sqrt > .rdc, .sqrt .rdc { display: inline-block; position: static; font-size: 1em;
+             border-top: .055em solid currentColor; padding: .06em .12em 0 .10em; margin: 0; line-height: 1; }
+  .sqrt .rdc:has(sup) { padding-top: .18em; }
+</style>
+</head>
+<body>
+
+<header>
+  <button id="langBtn" class="lang-btn" data-noi18n title="中文 / English">EN</button>
+  <h1>一维方形势阱交互教学工具</h1>
+  <div class="formula"><span class="m"><i>E</i><sub><i>n</i></sub><span class="op">=</span><i>n</i><sup>2</sup><i>π</i><sup>2</sup><i>ℏ</i><sup>2</sup><span class="sl">/</span>2<i>mL</i><sup>2</sup></span>，　<span class="m"><i>k</i><sub><i>n</i></sub><span class="op">=</span><i>n</i>π<span class="sl">/</span><i>L</i></span></div>
+</header>
+<div class="sub-note">
+  波函数在边界上必须「正好装进」势阱 → 只有特定波长成立 → <b>能量量子化</b>；
+  把阱壁改成有限高之后，波函数<b>泄漏</b>到阱外按指数衰减，能级整体<b>下移</b>，束缚态数目也变得有限。
+</div>
+
+<div class="layout">
+  <div class="viz">
+
+    <div class="card">
+      <div class="sec-title"><span class="mtag">模块一</span>势阱形状与波函数 <span class="m"><i>ψ</i><sub><i>n</i></sub>(<i>x</i>)</span></div>
+      <canvas id="well" data-h="470"></canvas>
+      <div class="legend" id="wellLegend"></div>
+      <div class="hint" id="wellHint"></div>
+    </div>
+
+    <div class="duo">
+      <div class="card">
+        <div class="sec-title"><span class="mtag">模块二</span>能级图：能量随 <span class="m"><i>n</i></span> 的分布</div>
+        <canvas id="wellLv" data-h="260"></canvas>
+        <div class="hint" id="wellLvHint"></div>
+      </div>
+
+      <div class="card">
+        <div class="sec-title"><span class="mtag">模块三</span><span class="m"><i>E</i><span class="op">−</span><i>k</i></span> 色散与允许的 <span class="m"><i>k</i></span></div>
+        <canvas id="wellEk" data-h="260"></canvas>
+        <div class="hint" id="wellEkHint"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="side">
+    <div class="card">
+      <div class="sec-title">控制面板</div>
+      <div class="mode-switch" id="wellType">
+        <button class="active" data-t="finite">有限深势阱</button>
+        <button data-t="inf">无限深势阱</button>
+      </div>
+      <div class="ctrl-grid" style="margin-top:10px;">
+        <div class="ctrl">
+          <div class="ctrl-head"><span>阱宽 <span class="m"><i>L</i></span></span><span class="val" id="vL">5.00 nm</span></div>
+          <input type="range" id="sL" min="1" max="10" step="0.05" value="5">
+          <div class="sub" id="subL"></div>
+        </div>
+        <div class="ctrl">
+          <div class="ctrl-head"><span>势阱深度 <span class="m"><i>V</i><sub>0</sub></span></span><span class="val" id="vV">1.50 eV</span></div>
+          <input type="range" id="sV" min="0.05" max="6" step="0.05" value="1.5">
+          <div class="sub" id="subV"></div>
+        </div>
+        <div class="ctrl">
+          <div class="ctrl-head"><span>粒子质量 <span class="m"><i>m</i><span class="sl">/</span><i>m</i><sub>0</sub></span></span><span class="val" id="vM">1.00</span></div>
+          <input type="range" id="sM" min="0.05" max="2" step="0.01" value="1">
+          <div class="sub" id="subM"></div>
+        </div>
+        <div class="ctrl">
+          <div class="ctrl-head"><span>主量子数 <span class="m"><i>n</i></span></span><span class="val" id="vN">1</span></div>
+          <input type="range" id="sN" min="1" max="6" step="1" value="1">
+          <div class="sub" id="subN"></div>
+        </div>
+      </div>
+      <div class="chk-row">
+        <label><input type="checkbox" id="ckProb" checked>概率密度 <span class="m">|<i>ψ</i>|<sup>2</sup></span></label>
+        <label><input type="checkbox" id="ckNode" checked>节点标记</label>
+        <label><input type="checkbox" id="ckInf" checked>无限深对比曲线</label>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="sec-title">读数面板</div>
+      <div class="kv" id="wellRead"></div>
+    </div>
+  </div>
+</div>
+
+<div class="chal-wrap">
+  <div class="card">
+    <div class="chal-bar">
+      <b>引导探究（点击展开，先自己试一试再看答案）</b>
+      <span>挑战任务</span>
+    </div>
+    <div class="chal-grid" id="chalGrid"></div>
+  </div>
+</div>
+
+<script>
+/* ==================================================================
+   i18n（C1 单文件双语：物理代码仍然只有一份）
+   LANG 取值优先级：URL ?lang=en / ?lang=zh  >  localStorage('opl_lang')  >  默认中文。
+   不做 location 跳转——保住「单文件拷走也能用」。
+   三个注入点，**业务字符串一个都不改**：
+     ① partsOf()   画布 token：带 i/sub/sup/un 标记的是物理量、下标与单位，跳过
+     ② fillText/measureText 原型挂钩：兜住直接写进画布的中文串
+     ③ DOM 文本节点：静态 HTML 与 JS 写进来的 innerHTML，用 MutationObserver 兜住新增节点
+   T() 先查整句词典，未命中再按「最长优先」做短语替换，因此拼接串也能翻。
+   漏翻会被记进 window.__MISS，可导出核对。 */
+var LANG = (function () {
+  var m = /[?&]lang=([a-zA-Z]+)/.exec(location.search);
+  var q = m ? m[1].toLowerCase() : "";
+  if (q === "en" || q === "zh") return q;
+  var s = "";
+  try { s = localStorage.getItem("opl_lang") || ""; } catch (e) { }
+  return (s === "en" || s === "zh") ? s : "zh";
+})();
+var ORIG_TITLE = document.title;
+var __MISS = [];
+try { window.__MISS = __MISS; } catch (e) { }
+function noteMiss(s) { if (__MISS.indexOf(s) < 0) __MISS.push(s); }
+function TSoft(s) {
+  if (!T._K) T._K = Object.keys(I18N).sort(function (a, b) { return b.length - a.length; });
+  var out = s, i, k, orig = s;
+  /* 两遍：第一遍只吃长度 ≥ 2 的短语；第二遍的单字 key 只在「传进来的串
+     恰好就是这一个字」时才上场——画布逐字排版会拿单字去 measureText，那一
+     路必须翻。反过来，绝不让单字 key 去切更长的句子：否则「导」「子」「原」
+     会把「半导体」「电子数」「泡利原理」切成半 conduction 体、电 quantum 数、
+     泡利 origin 理这类中英混排。同一条理由也适用于「下」：整句不该被切碎。 */
+  for (var pass = 0; pass < 2; pass++) {
+    for (i = 0; i < T._K.length; i++) {
+      k = T._K[i];
+      if (k.length < 2 && (pass === 0 || orig !== k)) continue;
+      if (out.indexOf(k) >= 0) out = out.split(k).join(I18N[k]);
+    }
+  }
+  return out;
+}
+/* 同一句被 DOM 切成好几个文本节点时，首尾空格会随机落在 data 里；
+   所以除了「整句命中」，再试一次「去空格后命中」并原样补回首尾空白。 */
+function trimMap() {
+  if (T._TM) return T._TM;
+  var m = {};
+  for (var k in I18N) if (Object.prototype.hasOwnProperty.call(I18N, k)) {
+    var t = k.replace(/^\s+|\s+$/g, "");
+    if (t && m[t] === undefined) m[t] = I18N[k];
+  }
+  T._TM = m;
+  return m;
+}
+/* eslint-disable no-use-before-define */
+function T(s) {
+  if (LANG !== "en" || typeof s !== "string" || !s) return s;
+  if (!/[一-鿿]/.test(s)) return s;
+  if (Object.prototype.hasOwnProperty.call(I18N, s)) return I18N[s];
+  var tm = trimMap(), core = s.replace(/^\s+|\s+$/g, "");
+  if (core && tm[core] !== undefined) {
+    var lead = s.slice(0, s.length - s.replace(/^\s+/, "").length);
+    var tail = s.slice(s.replace(/\s+$/, "").length);
+    return lead + tm[core] + tail;
+  }
+  var v = TSoft(s);
+  /* 译完还剩汉字也算漏翻：只翻掉一半的「半吊子译文」曾经让 __MISS 恒为 0。 */
+  if (v === s || /[\u3400-\u9FFF]/.test(v)) noteMiss(s);
+  return v;
+}
+var I18N = {
+  /* ---- 词典：中文原文 → 英文。key 禁含运行时数字（换个参数就漏），数字前后要拆开 ---- */
+  /* ---- 标题与页脚 ---- */
+  "一维方形势阱交互教学工具": "One-Dimensional Square Well — Interactive Toolkit",
+  "本工具是 EIT-SP（半导体物理交互式教学工具箱）的一部分（武汉大学物理学院《半导体物理》智慧课程），以 MIT 协议开源，可自由使用与二次开发；转载请保留出处。": "This tool is part of EIT-SP, the Educational Interactive Toolkit for Semiconductor Physics (School of Physics and Technology, Wuhan University). Released under the MIT licence: free to use, modify and redistribute, including commercially. Please keep this attribution.",
+  "反馈意见": " Feedback",
+  /* ---- 页首导语 ---- */
+  "\n  波函数在边界上必须「正好装进」势阱 → 只有特定波长成立 → ": "\n  At the boundaries the wave function has to “fit exactly” into the well → only certain wavelengths survive → ",
+  "能量量子化": "energy quantisation",
+  "；\n  把阱壁改成有限高之后，波函数": ";\n  once the walls are made finitely high, the wave function",
+  "泄漏": " leaks",
+  "到阱外按指数衰减，能级整体": "out and decays exponentially, and the levels as a whole move",
+  "下移": " downwards",
+  "，束缚态数目也变得有限。\n": ", while the number of bound states becomes finite.\n",
+  /* ---- 模块与图例 ---- */
+  "模块一": "Module 1",
+  "势阱形状与波函数 ": "Shape of the well and the wave function ",
+  "同 ": "Same ",
+  " 的无限深解": " as the infinite-well solution",
+  "● 节点": "● Node",
+  "有限深势阱：阱内振荡，阱外按 ": "Finite well: it oscillates inside and decays as ",
+  " 指数衰减（": " outside the well (",
+  " 是到阱壁的距离，衰减长度 ": " is the distance to the wall and the decay length is ",
+  "）—— 经典物理完全禁止的区域里也有概率。 束缚态数目有限：当前只有 ": ") — there is probability even in the region classical physics forbids outright. The bound states are finite in number: at present only ",
+  " 个，且每个能级都比无限深时": " exist, and every level sits ",
+  "更低": "lower than in the infinite well",
+  "模块二": "Module 2",
+  "能级图：能量随 ": "Energy-level diagram: energy versus ",
+  " 的分布": " ",
+  "灰色虚线是同宽度无限深势阱的能级；细线是有限深的真实能级 —— 全部下移，而且只有 ": "The grey dashed lines are the infinite-well levels for the same width; the thin lines are the true finite-well levels — all shifted down, and only ",
+  " 条（其余不再是束缚态）。　": " of them remain (the rest are no longer bound).　",
+  "橙色高亮": "Highlighted in orange",
+  "的那条就是当前选中的 ": " is the level currently selected, ",
+  "模块三": "Module 3",
+  " 色散与允许的 ": " dispersion and the allowed ",
+  " 是同一条抛物线；边界条件只让离散的 ": " lie on one and the same parabola; the boundary condition admits only discrete ",
+  " 值（圆点）成立。 阱外 ": " values (the dots). Outside the well ",
+  " 变成虚数 ": " turns imaginary ",
+  "，振荡解随之变成衰减解。　": ", and the oscillating solution turns into a decaying one.　",
+  "的点是当前选中的 ": "The dot marks the selected ",
+  "，同时标出它的 ": ", together with its ",
+  " 与 ": " and ",
+  /* ---- 控制面板 ---- */
+  "控制面板": "Control Panel",
+  "有限深势阱": "Finite well",
+  "无限深势阱": "Infinite well",
+  "阱宽 ": "Well width ",
+  "：阱越宽，能级越密": ": the wider the well, the closer the levels",
+  "势阱深度 ": "Well depth ",
+  "束缚态要求 ": "Bound states require ",
+  "；当前 ": "; at the present ",
+  " 下有 ": " there are ",
+  " 个束缚态": " bound states",
+  "粒子质量 ": "Particle mass ",
+  "：粒子越重，能级越低": ": the heavier the particle, the lower the levels",
+  "主量子数 ": "Principal quantum number ",
+  "共 ": "In total ",
+  " 个束缚态；": " bound states; ",
+  "（无限深口径）": " (infinite-well convention)",
+  "概率密度 ": "Probability density ",
+  "节点标记": "Node markers",
+  "无限深对比曲线": "Infinite-well comparison curves",
+  "读数面板": "Readout Panel",
+  "势阱参数": "Well parameters",
+  "束缚态数目": "Number of bound states",
+  "选中态 ": "Selected state ",
+  "节点数": "Number of nodes",
+  "宇称": "Parity",
+  "偶（对称）": "even (symmetric)",
+  "奇（反对称）": "odd (antisymmetric)",
+  "阱外概率": "Probability outside the well",
+  "比无限深低 ": "Below the infinite-well value by ",
+  /* ---- 画布标注 ---- */
+  "势能 ": "Potential energy ",
+  "势能": "potential energy",
+  "能量 ": "Energy ",
+  "能量": "energy",
+  "波矢 ": "Wave vector ",
+  "波矢": "wave vector",
+  "阱内 ": "Inside the well ",
+  "阱内": "inside the well",
+  " 仍为实数，但整体更低": " is still real, but lower overall",
+  "仍为实数，但整体更低": "still real, but lower overall",
+  "束缚态：": "Bound state: ",
+  "能级整体下移，束缚态有限": "All levels shift down and the bound states are finite",
+  /* ---- 引导探究与挑战 ---- */
+  "引导探究（点击展开，先自己试一试再看答案）": "Guided inquiry (click to expand — try it yourself before opening the answers)",
+  "挑战任务": "Challenges",
+  "看答案": "Show answer",
+  "挑战一 · 势阱的量子化": "Challenge 1 · Quantisation in the well",
+  "切到「无限深势阱」，把量子数 ": "Switch to “infinite well” and run the quantum number ",
+  " 从 1 依次调到 6，观察波函数与波矢。能量与 ": " up from 1 to 6, watching the wave function and the wave vector. How does the energy depend on ",
+  " 是什么关系？节点数与 ": "? And how does the number of nodes depend on ",
+  " 是什么关系？": "?",
+  "挑战二 · 无限深 vs 有限深": "Challenge 2 · Infinite versus finite well",
+  "在有限深与无限深之间来回切换，看波函数在边界处的行为。有限深时阱外是什么形状？能级比无限深高还是低？阱外的概率有多少？": "Switch back and forth between the finite and the infinite well and watch the wave function at the boundary. What shape does it take outside a finite well? Are the levels higher or lower than for the infinite well? How much probability sits outside?",
+  "挑战三 · 阱宽与质量": "Challenge 3 · Width and mass",
+  "切到「无限深势阱」，把阱宽 ": "Switch to “infinite well” and pull the well width ",
+  " 从 1 nm 拉到 10 nm，": " from 1 nm out to 10 nm; ",
+  " 变成原来的几分之一？再把质量调到半导体里常见的有效质量 ": " ends up smaller by what factor? Then set the mass to the effective mass common in semiconductors, ",
+  "，能级又怎么变？": ", and how do the levels move?",
+  "挑战四 · 节点与宇称": "Challenge 4 · Nodes and parity",
+  "在同一个势阱里依次看 ": "In the same well, look at ",
+  "…4：节点出现在什么位置？波函数关于阱心是对称还是反对称？": " in turn: where do the nodes fall, and is the wave function symmetric or antisymmetric about the centre of the well?",
+  /* ---- 单字兜底（最后才生效；单字 key 只在「整串就是一个字」时命中，
+         不参与更长的句子的替换） ---- */
+  "个": "bound states",
+  /* 读数里是「<b>N</b> 个」这样拼出来的，整串含数字，单字 key 够不到，
+     所以补一条带前导空格的双字 key，让 TSoft 第一遍就能吃到 */
+  " 个": " bound states",
+  /* ---- 挑战一答案 ---- */
+  "无限深势阱里 ": "In the infinite well ",
+  "：当前 ": ": at present ",
+  "，于是 ": ", so ",
+  " 也成整数倍，节点数恰为 ": " also come in integer multiples, and the number of nodes is exactly ",
+  " —— 半波长必须整好装进阱里才会相消干涉，这就是量子化的来源。": " — a half wavelength must fit exactly into the well for the reflected waves to cancel; that is where quantisation comes from.",
+  /* ---- 挑战二答案 ---- */
+  "有限深时阱外不再是零，而是 ": "For the finite well the wave function outside is no longer zero but an exponential decay ",
+  " 的指数衰减（": " (",
+  " 为到阱壁的距离，「泄漏」进经典禁区）。 以当前参数第 ": " is the distance to the wall; the “leak” into the classically forbidden region). For the present parameters, state ",
+  " 个态为例：": ":",
+  "，比同宽度无限深解的 ": ", versus ",
+  "低": "lower by",
+  " 了 ": " ",
+  "了 ": " ",
+  "，衰减长度 ": "; the decay length ",
+  "，阱外概率 ": ", probability outside the well ",
+  "。势阱越深、越宽，泄漏越少，能级就越接近无限深的结果。": ". The deeper and wider the well, the smaller the leakage and the closer the levels are to the infinite-well result.",
+  /* ---- 挑战三答案 ---- */
+  "，所以宽度翻倍能量变 1/4、宽度变成 10 倍能量只剩 1/100：": ", so doubling the width gives 1/4 the energy and 10× the width leaves only 1/100: ",
+  " 时 ": ": ",
+  " 时降到 ": " down to ",
+  "（正好 ": " (exactly ",
+  " 时只剩 ": " only ",
+  "。 再把质量换成 GaAs 里电子的有效质量 ": ". Now switch the mass to the electron effective mass in GaAs, ",
+  "（宽度仍是 10 nm），由 ": " (width still 10 nm); from ",
+  " 得 ": " we get ",
+  " —— 质量轻了约 15 倍，能量就抬高约 15 倍，这已经到了几十 meV 的量级，正是量子阱、超晶格里那些可观测子带的由来。": " — the mass is ~15× lighter, so the energy is ~15× higher, already in the tens of meV: exactly where the observable subbands of quantum wells and superlattices come from.",
+  /* ---- 挑战四答案 ---- */
+  " 为奇数时 ": " odd: ",
+  "（偶宇称，关于阱心对称），偶数时为奇宇称（反对称）—— 这是势阱本身左右对称的必然结果。节点数恒为 ": " (even parity, symmetric about the centre); even n gives odd parity (antisymmetric) — an inevitable consequence of the left-right symmetry of the well itself. The number of nodes is always ",
+  "，无限深阱里等间距排布（相邻间距 ": ", evenly spaced in the infinite well (spacing ",
+  "）。 改成有限深后， ": "). In the finite well, ",
+  "）。 改成有限深后，": "). In the finite well, ",
+  "偏离阱心的那些节点会向阱壁一侧外移": "the nodes off the centre shift outwards towards the walls",
+  "（仍在阱内，不会跑到阱外）：波函数有一部分「漏」进阱壁，等效阱宽变大、": " (still inside the well, never outside): part of the wave function “leaks” into the walls, the effective width grows and ",
+  " 变小，节点间距随之拉开。以 ": " shrinks, so the node spacing stretches. Take ",
+  " 时为例：偏离阱心的节点从 ": " as an example: the nodes off the centre move from ",
+  " 移到 ": " to ",
+  "（外移 ": " (outward by ",
+  "），而阱心那个节点仍停在 ": "), while the node at the centre stays put at ",
+  " 未动。 ": ". ",
+  "唯一的例外": "The one exception",
+  " 是奇宇称态（": " is the odd-parity state (",
+  " 为偶数）位于阱心的那个节点：它由 ": " even) at the centre: the antisymmetry of ",
+  " 的反对称性": " ",
+  "钉死在": " pins it at ",
+  "，阱深阱宽怎么变都一动不动 —— 所以 ": ", no matter how the depth or width changes — so ",
+  " 从头到尾就只有阱心这一个节点，而 ": " has only the single central node from start to finish, while ",
+  " 是「两侧外移 + 中心不动」。": " is “outer pair shifts, centre stays”.",
+  /* ---- 标点兜底 ---- */
+  "（": " (",
+  "）": ")",
+  "，间距越往上越大": ", and the spacing widens towards the top",
+  " 只能取 ": " can only take ",
+  "只能取": "can only take",
+  "∞（无限深）": "∞ (infinitely deep)",
+  "无限多个": "infinitely many",
+  "无限深：阱外 ": "Infinitely deep: outside the well ",
+  "无限深势阱：边界上 ": "Infinite square well: at the boundary ",
+  "，只有 ": ", only ",
+  " 的波长能「正好装进」阱里 —— 这就是量子化。阱外 ": " fit exactly into the well — that is quantisation. Outside the well ",
+  "，概率为 ": ", with probability ",
+  "：能级间距 ": ": the level spacing ",
+  " 随 ": " with ",
+  " 越拉越大。　": " stretched wider and wider.　",
+  " 值（圆点）成立。　": " values (dots).　",
+  "当前就是": "which is exactly the present case",
+  "无限深": "infinitely deep",
+  "阱：阱壁是不可穿透的硬边界，阱外严格 ": " well: the walls are impenetrable hard boundaries, so outside the well it is strictly ",
+  "、没有泄漏，阱外概率就是 ": " with no leakage at all, and the probability outside is exactly ",
+  " —— 既然不漏，也就谈不上衰减长度 ": " — with nothing leaking out, there is no decay length to speak of ",
+  "。第 ": ". The ",
+  "个态的能量正好是解析值 ": "th state has exactly the analytic value ",
+  "，它和「同宽度无限深解」本来就是同一个东西，不存在「下移」。切到「有限深」再点开这一条，才能看到能级下移多少、阱外漏出去多少。": ", which is one and the same thing as the infinite-well solution of equal width — there is no \"downward shift\" here. Switch to \"finite depth\" and expand this item again to see how far the level shifts down and how much leaks out.",
+  "节点 ": " nodes",
+  "节点": "nodes",
+  "能级下移，共 ": " levels shift down, ",
+  "条（只画前 ": " in total (only the first ",
+  "条）": " are drawn)",
+  "能级": "level",
+  "条（只画前": " in total (only the first",
+  " 变小，节点间距随之拉开。": " shrinks, so the node spacing stretches.",
+};
+
+/* 注入点②：画布直写字符串。老工具直接调 g.fillText()，这里在原型上兜住。
+   measureText 必须一起挂钩，否则「量的宽度」和「量的文字」用的不是同一个串。 */
+(function () {
+  if (typeof CanvasRenderingContext2D === "undefined") return;
+  var ft = CanvasRenderingContext2D.prototype.fillText;
+  CanvasRenderingContext2D.prototype.fillText = function (s, x, y) {
+    if (typeof s === "string") arguments[0] = T(s);
+    return ft.apply(this, arguments);
+  };
+  var mt = CanvasRenderingContext2D.prototype.measureText;
+  CanvasRenderingContext2D.prototype.measureText = function (s) {
+    return mt.call(this, typeof s === "string" ? T(s) : s);
+  };
+})();
+
+/* 注入点④：逐字绘制的画布串。drawMath 一类把中文按单字拆成 token 再逐个 fillText，
+   T() 每次只见到一个汉字 ⇒ 整句词条永远命中不了。这里在整串进入分词之前先整体翻译，
+   于是画布标注也走「整句优先」，与 DOM 同一个口径。没有这些函数的工具自动跳过。
+   ⚠️ 签名坑：drawMath / measureMath 的第一个参数是 canvas context（对象），文本在第
+   二位；早期版本照着 arguments[0] 翻，等于把 context 送去 T()，补丁全程空转。
+   这里改为「找到第一个含中文的字符串参数」再翻，既躲开 context，也不会误伤
+   align / weight 之类以英文字符串传的选项。 */
+(function () {
+  ["drawMath", "drawMathHalo", "measureMath"].forEach(function (n) {
+    var f = window[n];
+    if (typeof f !== "function") return;
+    window[n] = function () {
+      for (var i = 0; i < arguments.length; i++) {
+        if (typeof arguments[i] === "string" && /[\u3400-\u9FFF]/.test(arguments[i])) {
+          arguments[i] = T(arguments[i]);
+          break;
+        }
+      }
+      return f.apply(this, arguments);
+    };
+  });
+})();
+
+
+/* ---- DOM 文本节点 ---- */
+function i18nNode(n) {
+  var el = n.parentElement;
+  if (!el) return;
+  var tag = el.tagName;
+  if (tag === "SCRIPT" || tag === "STYLE") return;
+  if (el.closest && el.closest("[data-noi18n]")) return;
+  var cur = n.nodeValue;
+  if (n.__orig === undefined || (cur !== n.__last && cur !== n.__orig)) n.__orig = cur;
+  var want = LANG === "en" ? T(n.__orig) : n.__orig;
+  if (want !== cur) n.nodeValue = want;
+  n.__last = want;
+}
+/* 属性（title / placeholder / optgroup label …）不是文本节点，MutationObserver 覆盖不到，
+   必须单独过一遍：否则悬停提示、下拉分组名会残留中文。原文缓存在元素 expando 上，
+   切回中文时原样写回。改属性不会触发 childList/characterData 观察器，不会递归。 */
+var I18N_ATTRS = ["title", "placeholder", "aria-label", "alt", "label"];
+function i18nAttrs(root) {
+  var els = [root], i, j;
+  if (root.querySelectorAll) els = els.concat(Array.prototype.slice.call(root.querySelectorAll("*")));
+  for (i = 0; i < els.length; i++) {
+    var el = els[i];
+    if (!el.getAttribute) continue;
+    if (el.closest && el.closest("[data-noi18n]")) continue;
+    for (j = 0; j < I18N_ATTRS.length; j++) {
+      var a = I18N_ATTRS[j];
+      if (!el.hasAttribute(a)) continue;
+      var key = "__a_" + a;
+      if (el[key] === undefined) el[key] = el.getAttribute(a);
+      var want = LANG === "en" ? T(el[key]) : el[key];
+      if (want !== el.getAttribute(a)) el.setAttribute(a, want);
+    }
+  }
+}
+function i18nWalk(root) {
+  var w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null, false), n, c = 0;
+  while ((n = w.nextNode())) { i18nNode(n); c++; }
+  i18nAttrs(root);
+  return c;
+}
+var _i18nBusy = false;
+function i18nWatch() {
+  if (typeof MutationObserver === "undefined") return;
+  var mo = new MutationObserver(function (ms) {
+    if (_i18nBusy) return;
+    _i18nBusy = true;
+    try {
+      for (var i = 0; i < ms.length; i++) {
+        var m = ms[i];
+        if (m.type === "childList") {
+          for (var j = 0; j < m.addedNodes.length; j++) {
+            var nd = m.addedNodes[j];
+            if (nd.nodeType === 3) i18nNode(nd);
+            else if (nd.nodeType === 1) i18nWalk(nd);
+          }
+        } else if (m.type === "characterData") i18nNode(m.target);
+      }
+    } finally { _i18nBusy = false; }
+  });
+  mo.observe(document.body, { childList: true, subtree: true, characterData: true });
+}
+function setLang(l) {
+  LANG = l;
+  try { localStorage.setItem("opl_lang", l); } catch (e) { }
+  document.documentElement.lang = l === "en" ? "en" : "zh-CN";
+  var btn = document.getElementById("langBtn");
+  if (btn) btn.textContent = l === "en" ? "中文" : "EN";
+  document.title = l === "en" ? T(ORIG_TITLE) : ORIG_TITLE;
+  i18nWalk(document.body);
+  if (typeof syncInputs === "function") syncInputs();
+  if (typeof render === "function") render();
+}
+"use strict";
+
+
+
+
+/* ---------------- 直接 fillText / strokeText 的自动排版钩子 ----------------
+   有些标注不走 txt() 而是直接 g.fillText()（状态徽标、能带边等），
+   这里在原型层统一处理：含数学记法的字符串先按 LaTeX 规则拆段再绘制，
+   measureText 同步返回拆段总宽，白底框长度自动跟着变。 */
+const NEED_MATH_HM = /[\u2070-\u209C\u00B2\u00B3\u00B9]|_\{?[A-Za-z0-9\u0370-\u03ff]|\^\{?[\d(\-]|\d(\.\d+)?[eE][+\-]\d|\u221A/;
+/* 原生 measureText：mathSegsHM 内部量宽必须走这一条，
+   否则 measureText 被钩子接管后会 self-recursion（RangeError）。 */
+var _mRawHM = null;
+function measureRawHM(g, s) { return (_mRawHM ? _mRawHM : g.measureText).call(g, s).width; }
+function mathSegsHM(g, s) {
+  const f = String(g.font || "");
+  const mm = /(\d+(?:\.\d+)?)px/.exec(f);
+  const size = mm ? parseFloat(mm[1]) : 12;
+  const family = f.replace(/^(?:\s*(?:italic|oblique|bold|[1-9]00)\s*)*\d+(?:\.\d+)?px\s*/, "");
+  const style = /italic|oblique/.test(f) ? "italic " : (/bold|[6-9]00/.test(f) ? "bold " : "");
+  const parts = AUTO(s), laid = [];
+  let w = 0;
+  for (const p of parts) {
+    const small = !!(p.sup || p.sub);
+    const fs = style + (small ? (size * 0.74).toFixed(2) : size.toFixed(2)) + "px " + family;
+    g.font = fs;
+    const tw = measureRawHM(g, p.s);
+    laid.push({ s: p.s, w: tw, fs: fs, dy: small ? (p.sup ? -size * 0.40 : size * 0.22) : 0 });
+    w += tw;
+  }
+  return { laid: laid, w: w, family: family, style: style, size: size };
+}
+(function hookMathHM() {
+  if (window.__MATH_HOOK) return; window.__MATH_HOOK = 1;
+  const P = CanvasRenderingContext2D.prototype;
+  const _fill = P.fillText, _stroke = P.strokeText, _measure = P.measureText;
+  function draw(drawRaw, g, s, x, y, rest) {
+    const info = mathSegsHM(g, s);
+    const al = g.textAlign, bl = g.textBaseline;
+    const cx = al === "right" ? x - info.w : (al === "center" ? x - info.w / 2 : x);
+    g.textAlign = "left";
+    let px = cx;
+    for (const L of info.laid) {
+      g.font = L.fs;
+      drawRaw.call(g, L.s, px, y + L.dy, ...rest);
+      px += L.w;
+    }
+    g.textAlign = al; g.textBaseline = bl;
+    g.font = info.style + info.size.toFixed(2) + "px " + info.family;
+    return info;
+  }
+  P.fillText = function (s, x, y) {
+    if (typeof s !== "string" || !NEED_MATH_HM.test(s)) return _fill.apply(this, arguments);
+    draw(_fill, this, s, x, y, Array.prototype.slice.call(arguments, 3));
+  };
+  P.strokeText = function (s, x, y) {
+    if (typeof s !== "string" || !NEED_MATH_HM.test(s)) return _stroke.apply(this, arguments);
+    draw(_stroke, this, s, x, y, Array.prototype.slice.call(arguments, 3));
+  };
+  if (!_mRawHM) _mRawHM = _measure;
+  P.measureText = function (s) {
+    if (window.__HM_IN || typeof s !== "string" || !NEED_MATH_HM.test(s)) return _measure.call(this, s);
+    window.__HM_IN = 1;
+    const save = this.font;
+    let info;
+    try { info = mathSegsHM(this, s); } finally { window.__HM_IN = 0; }
+    this.font = save;
+    return { width: info.w, get actualBoundingBoxLeft() { return 0; }, get actualBoundingBoxRight() { return info.w; } };
+  };
+})();
+
+/* ---------------- HTML 侧自动 LaTeX 排版 ----------------
+   读数 / 说明 / 按钮名里由 JS 拼出来的 cm⁻³、E_c、2.5e+8，
+   在写进 innerHTML 之前转成真 <sup>/<sub>；标签与属性原样放过（title 不会被塞进尖括号）。
+   与画布侧 AUTO() 对偶，保证网页和画布按同一套规则排版。 */
+const AUTOH_SUP = { "⁰": "0", "¹": "1", "²": "2", "³": "3", "⁴": "4", "⁵": "5", "⁶": "6",
+  "⁷": "7", "⁸": "8", "⁹": "9", "⁺": "+", "⁻": "−", "⁼": "=", "⁽": "(", "⁾": ")", "ⁿ": "n", "ⁱ": "i" };
+const AUTOH_SUB = { "₀": "0", "₁": "1", "₂": "2", "₃": "3", "₄": "4", "₅": "5", "₆": "6",
+  "₇": "7", "₈": "8", "₉": "9", "₊": "+", "₋": "−", "₌": "=", "₍": "(", "₎": ")",
+  "ₐ": "a", "ₑ": "e", "ₒ": "o", "ₓ": "x", "ₔ": "ə", "ₕ": "h", "ₖ": "k", "ₗ": "l",
+  "ₘ": "m", "ₙ": "n", "ₚ": "p", "ₛ": "s", "ₜ": "t", "ᵣ": "r", "ᵤ": "u", "ᵥ": "v" };
+const TEXH_NEED = /[\u2070-\u209C\u00B2\u00B3\u00B9]|_\{?[A-Za-z0-9\u0370-\u03ff]|\^\{?[\d(\-]|\d(\.\d+)?[eE][+\-]\d|\u221A/;
+/* 从 i 处（必须是 '<'）扫出一个"完整元素"的结束下标（含嵌套），失败返回 -1 */
+function TEXH_elemEnd(h, i) {
+  if (h.charAt(i) !== "<") return -1;
+  let depth = 0, j = i, guard = 0;
+  while (j < h.length && guard++ < 4000) {
+    if (h.charAt(j) !== "<") { j++; continue; }
+    const e = TEXH_tagEnd(h, j);
+    if (e < 0) return -1;
+    const isClose = h.charAt(j + 1) === "/";
+    const selfClose = h.charAt(e - 2) === "/";
+    if (isClose) { depth--; j = e; if (depth <= 0) return j; }
+    else if (selfClose) { j = e; if (depth === 0) return j; }
+    else { depth++; j = e; }
+  }
+  return -1;
+}
+/* √ 后面直接跟一个元素：√<i>E</i> → √‾E（前两条规则只吃 √(A) 与 √字母串） */
+function TEXHsqrtElem(s) {
+  let out = "", i = 0, guard = 0;
+  while (guard++ < 400) {
+    const k = s.indexOf("\u221A", i);
+    if (k < 0) break;
+    out += s.slice(i, k);
+    /* 守卫：√ 后面已是闭标签 ⇒ 该 √ 已排版过（对整段 HTML 重复跑 TEXH 会把 </span> 当成被开方式，
+       层层包出空壳根号，视觉上变成 √−3 / √−E），原样输出不再包裹 */
+    if (s.charAt(k + 1) === "<" && s.charAt(k + 2) === "/") { out += "\u221A"; i = k + 1; continue; }
+    let rad = null, end = k + 1;
+    if (s.charAt(k + 1) === "(") {
+      /* √(…) ：被开方式里常有标签，括号本身不在同一个文本片段里，必须整串扫 */
+      let depth = 0, p = k + 1;
+      while (p < s.length) {
+        const c = s.charAt(p);
+        if (c === "(") depth++;
+        else if (c === ")") { depth--; if (depth === 0) { rad = s.slice(k + 2, p); end = p + 1; break; } }
+        p++;
+      }
+    } else {
+      const e = TEXH_elemEnd(s, k + 1);
+      if (e > 0 && e - k < 500) { rad = s.slice(k + 1, e); end = e; }
+    }
+    if (rad !== null && rad.length) {
+      out += "<span class=\"sqrt\"><span class=\"rd\">\u221A</span><span class=\"rdc\">" + rad + "</span></span>";
+      i = end;
+    } else { out += "\u221A"; i = k + 1; }
+  }
+  return out + s.slice(i);
+}
+function TEXHpart(t) {
+  let s = t;
+  /* 根号：√ 或 √(A) → <span class="sqrt">√<span class="rd"><span class="rdc">A</span></span></span>（A 内不含嵌套括号） */
+  s = s.replace(/<span class="(?:op|rm|fn|v|u)">\u221A<\/span>/g, "\u221A");
+  s = s.replace(/\u221A<span class="(?:op|rm)">\(<\/span>([^()]{1,120}?)<span class="(?:op|rm)">\)<\/span>/g, function (m, a) {
+    return "<span class=\"sqrt\"><span class=\"rd\">\u221A</span><span class=\"rdc\">" + a + "</span></span>";
+  });
+  s = s.replace(/\u221A\(([^()]{1,120})\)/g, function (m, a) {
+    return "<span class=\"sqrt\"><span class=\"rd\">\u221A</span><span class=\"rdc\">" + a + "</span></span>";
+  });
+  s = s.replace(/\u221A([A-Za-z0-9\u0370-\u03ff]{1,6})/g, function (m, a) {
+    return "<span class=\"sqrt\"><span class=\"rd\">\u221A</span><span class=\"rdc\">" + a + "</span></span>";
+  });
+  s = s.replace(/(\d(?:\.\d+)?)e([+-])(\d+)/g, function (m, a, sg, e) {
+    return a + "\u00d710<sup>" + (sg === "-" ? "\u2212" : "") + e + "</sup>";
+  });
+  s = s.replace(/([A-Za-z\u0370-\u03ff)\]])\^\{([^{}]{1,12})\}/g, "$1<sup>$2</sup>");
+  s = s.replace(/([A-Za-z\u0370-\u03ff)\]])\^(\d+(?:\.\d+)?)/g, "$1<sup>$2</sup>");
+  s = s.replace(/([A-Za-z\u0370-\u03ff])_\{([A-Za-z0-9\u0370-\u03ff+\-]{1,8})\}/g, "<span class='m'><i>$1</i><sub>$2</sub></span>");
+  s = s.replace(/([A-Za-z\u0370-\u03ff])_([A-Za-z0-9\u0370-\u03ff]{1,6})(?![A-Za-z0-9])/g, "<span class='m'><i>$1</i><sub>$2</sub></span>");
+  if (/[\u2070-\u209C\u00B2\u00B3\u00B9]/.test(s)) {
+    let out = "", i = 0;
+    while (i < s.length) {
+      const ch = s[i];
+      if (AUTOH_SUP[ch] !== undefined || AUTOH_SUB[ch] !== undefined) {
+        const isSup = AUTOH_SUP[ch] !== undefined, tab = isSup ? AUTOH_SUP : AUTOH_SUB;
+        let j = i, buf = "";
+        while (j < s.length && (isSup ? AUTOH_SUP[s[j]] !== undefined : AUTOH_SUB[s[j]] !== undefined)) {
+          buf += tab[s[j]]; j++;
+        }
+        out += "<" + (isSup ? "sup" : "sub") + ">" + buf + "</" + (isSup ? "sup" : "sub") + ">";
+        i = j;
+      } else { out += ch; i++; }
+    }
+    s = out;
+  }
+  return s.indexOf("\u221A") >= 0 ? TEXHsqrtElem(s) : s;
+}
+/* 只有真正的标签才整段跳过：正文里裸写的 '<'（如 "t₂ < 0"）必须当普通字符，
+   否则 indexOf('>') 会一路吞掉后面整段，E₂⁰ 这类记法就漏排了。 */
+function TEXH_tagEnd(h, i) {
+  if (h.charAt(i) !== "<") return -1;
+  const c = h.charAt(i + 1);
+  if (c === "!" || c === "/") { const j = h.indexOf(">", i); return (j >= 0 && j - i < 300) ? j + 1 : -1; }
+  if (!/[A-Za-z]/.test(c)) return -1;
+  let j = i + 1;
+  while (j < h.length && /[A-Za-z0-9]/.test(h.charAt(j))) j++;
+  if (j === i + 1) return -1;
+  if (h.charAt(j) === ">") return j + 1;
+  if (h.charAt(j) !== " " && h.charAt(j) !== "\n" && h.charAt(j) !== "\t") return -1;
+  const g = h.indexOf(">", j), nx = h.indexOf("<", j);
+  if (g < 0 || g - i > 300) return -1;
+  if (nx >= 0 && nx < g) return -1;
+  return g + 1;
+}
+function TEXH(h) {
+  if (typeof h !== "string" || !TEXH_NEED.test(h)) return h;
+  if (h.indexOf("\u221A") >= 0) h = h.replace(/<span class="(?:op|rm|fn|v|u)">\u221A<\/span>/g, "\u221A");
+  if (h.indexOf("<") < 0) return TEXHpart(h);
+  let out = "", i = 0, n = h.length, guard = 0;
+  while (i < n && guard++ < 40000) {
+    const e = TEXH_tagEnd(h, i);
+    if (e > 0) { out += h.slice(i, e); i = e; continue; }
+    let j = i;
+    while (j < n && TEXH_tagEnd(h, j) <= 0) j++;
+    out += TEXHpart(h.slice(i, j)); i = j;
+  }
+  const r = out + h.slice(i);
+  return r.indexOf("\u221A") >= 0 ? TEXHsqrtElem(r) : r;
+}
+(function hookHTML() {
+  if (window.__TEXH_HOOK) return; window.__TEXH_HOOK = 1;
+  const d = Object.getOwnPropertyDescriptor(Element.prototype, "innerHTML");
+  if (!d || !d.set) return;
+  Object.defineProperty(Element.prototype, "innerHTML", {
+    configurable: true, get: d.get,
+    set: function (v) { d.set.call(this, typeof v === "string" ? TEXH(v) : v); }
+  });
+  /* insertAdjacentHTML 也会被用到 */
+  const ia = Element.prototype.insertAdjacentHTML;
+  Element.prototype.insertAdjacentHTML = function (pos, v) {
+    return ia.call(this, pos, typeof v === "string" ? TEXH(v) : v);
+  };
+})();
+
+/* ---------------- 画布自动 LaTeX 排版 ----------------
+   老调用点 txt(g, "cm⁻³") / txt(g, "E_c") / txt(g, "2.5e+8") 一行都不用改，
+   只要在绘制前把字符串解析成分段零件即可。规则与网页侧一致：
+   物理量斜体、描述性下标与单位正体、幂次用真上标（不用 Unicode 伪字符）。 */
+const SUPMAP = { "⁰": "0", "¹": "1", "²": "2", "³": "3", "⁴": "4", "⁵": "5", "⁶": "6",
+  "⁷": "7", "⁸": "8", "⁹": "9", "⁺": "+", "⁻": "−", "⁼": "=", "⁽": "(", "⁾": ")", "ⁿ": "n", "ⁱ": "i" };
+const SUBMAP = { "₀": "0", "₁": "1", "₂": "2", "₃": "3", "₄": "4", "₅": "5", "₆": "6",
+  "₇": "7", "₈": "8", "₉": "9", "₊": "+", "₋": "−", "₌": "=", "₍": "(", "₎": ")",
+  "ₐ": "a", "ₑ": "e", "ₒ": "o", "ₓ": "x", "ₔ": "ə", "ₕ": "h", "ₖ": "k", "ₗ": "l",
+  "ₘ": "m", "ₙ": "n", "ₚ": "p", "ₛ": "s", "ₜ": "t", "ᵣ": "r", "ᵤ": "u", "ᵥ": "v" };
+const MATH_IDCH = /[A-Za-z\u0370-\u03ff]/;
+const NEED_MATH = /[\u2070-\u209C\u00B2\u00B3\u00B9]|_\{?[A-Za-z0-9\u0370-\u03ff]|\^\{?[\d(\-]|\d(\.\d+)?[eE][+\-]\d/;
+function AUTO(s) {
+  const out = [];
+  let buf = "", mode = 0;
+  const emit = (t, kind) => {
+    if (!t) return;
+    if (kind === 1) out.push({ s: t, sup: true });
+    else if (kind === -1) out.push({ s: t, sub: true });
+    else out.push({ s: t });
+  };
+  let i = 0, italicAll = false;
+  while (i < s.length) {
+    const ch = s[i];
+    if (SUPMAP[ch] !== undefined) { if (mode !== 1) { emit(buf, mode); buf = ""; mode = 1; } buf += SUPMAP[ch]; i++; continue; }
+    if (SUBMAP[ch] !== undefined) { if (mode !== -1) { emit(buf, mode); buf = ""; mode = -1; } buf += SUBMAP[ch]; i++; continue; }
+    if (mode) { emit(buf, mode); buf = ""; mode = 0; }
+    const rest = s.slice(i);
+    const sc = /^\d(\.\d+)?[eE][+\-]\d{1,3}/.exec(rest);       /* ASCII 伪科学计数 2.5e+8 */
+    if (sc) {
+      const parts = sc[0].split(/[eE]/);
+      emit(parts[0] + "\u00d710", 0); emit(String(+parts[1]).replace("-", "\u2212"), 1);
+      i += sc[0].length; continue;
+    }
+    if (MATH_IDCH.test(ch) && i + 1 < s.length && (s[i + 1] === "_" || s[i + 1] === "^")) {
+      const sup = s[i + 1] === "^";
+      let j = i + 2, grp = "";
+      if (s[j] === "{") { const e = s.indexOf("}", j); if (e > 0) { grp = s.slice(j + 1, e); j = e + 1; } }
+      else {
+        const RCJK = /[\u2E80-\u9FFF]/, RASC = /[A-Za-z0-9\u0370-\u03ff+\-]/;
+        if (RCJK.test(s[j])) { while (j < s.length && RCJK.test(s[j]) && j - i < 8) j++; }   /* 中文描述性下标：τ_直接、E_声子 */
+        else { while (j < s.length && RASC.test(s[j])) j++; }
+        grp = s.slice(i + 2, j);
+      }
+      if (grp) {
+        emit(ch, 0);
+        if (italicAll || /^[A-Za-z\u0370-\u03ff]$/.test(ch)) out[out.length - 1].i = true;
+        emit(sup ? grp.replace(/-/g, "\u2212") : grp, sup ? 1 : -1);
+        i = j; continue;
+      }
+    }
+    buf += ch; i++;
+  }
+  emit(buf, mode);
+  return out;
+}
+function fontInfo(font, dflt) {
+  const f = String(font || "");
+  const m = /(\d+(?:\.\d+)?)px/.exec(f);
+  return { fp: m ? parseFloat(m[1]) : (dflt || 12), bd: /bold|70\d|600/.test(f), it: /italic|oblique/.test(f) };
+}
+
+/* ---------------- HTML 字符串 → 画布零件（网页与画布共用同一份排版） ----------------
+   mtxt(g, TX(H_NA), x, y, col, fp) —— H_* 常量本来就在喂 innerHTML，
+   再喂给 TX() 就不会出现「网页斜体、画布正体」的两边不一致。
+   <i> 斜体、<sub> 下标、<sup> 上标；<span class="op|un|rm|sqrt|frac"> 只剥标签（保持正体）。 */
+const catA = (...a) => [].concat(...a);
+function TX(h) {
+  const t = String(h == null ? "" : h)
+    .replace(/<span\b[^>]*>/g, "").replace(/<\/span>/g, "")
+    .replace(/<i\b[^>]*>/g, "<i>").replace(/<b\b[^>]*>/g, "").replace(/<\/b>/g, "")
+    .replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&").replace(/&nbsp;/g, " ");
+  const out = [], re = /<i>([\s\S]*?)<\/i>|<sub>([\s\S]*?)<\/sub>|<sup>([\s\S]*?)<\/sup>|([^<]+)/g;
+  let m;
+  while ((m = re.exec(t))) {
+    const raw = s => s == null ? null : s.replace(/<[^>]*>/g, "");
+    if (m[1] != null) out.push({ s: raw(m[1]), i: true });
+    else if (m[2] != null) out.push({ s: raw(m[2]), sub: true });
+    else if (m[3] != null) out.push({ s: raw(m[3]), sup: true });
+    else if (m[4]) out.push({ s: m[4] });
+  }
+  return out;
+}
+function TXof(...a) { return catA(...a.map(TX)); }
+
+
+function PSci(v, n) {
+  if (!isFinite(v) || v === 0) return [{ s: "0" }];
+  const e = Math.floor(Math.log10(Math.abs(v)));
+  const m = (v / Math.pow(10, e)).toFixed(n === undefined ? 1 : n);
+  /* 1 ≦ |v| < 10 时直接写尾数，不再拖一个 ×10⁰（与 sciH 一致） */
+  if (e === 0) return [{ s: m }];
+  /* 指数负号用 U+2212 */
+  return [{ s: m + "×10" },
+          { s: String(e).replace("-", "−"), sup: true }];
+}
+
+/* ==================================================================
+   0. 小工具
+   ================================================================== */
+const $ = id => document.getElementById(id);
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+function fmtE(v) {                       // 能量：eV / meV 自动切换
+  const a = Math.abs(v);
+  if (a === 0) return "0";
+  return a >= 1 ? v.toFixed(3) + " eV" : (v * 1000).toFixed(1) + " meV";
+}
+const MM = h => '<span class="m">' + h + '</span>';
+
+/* ==================================================================
+   1. 常数与状态
+   ================================================================== */
+const HB2M0 = 3.80998212;    // ℏ²/(2m₀)  in eV·Å²
+
+const OPT = {
+  L: 5,          // 阱宽 nm
+  V0: 1.5,       // 阱深 eV
+  inf: false,    // true = 无限深
+  mr: 1.0,       // m/m₀
+  n: 1,
+  ckProb: true, ckNode: true, ckInf: true
+};
+
+/* ==================================================================
+   2. 一维方形势阱：内核（能量 eV，长度 Å）
+   ================================================================== */
+const HB = () => HB2M0 / OPT.mr;                 // ℏ²/2m  [eV·Å²]
+const LA = () => OPT.L * 10;                     // 阱宽 Å
+
+let WST = null, WKEY = "";
+function wellStates() {
+  const key = [OPT.L, OPT.V0, OPT.mr, OPT.inf].join("|");
+  if (WKEY === key) return WST;
+  const L = LA(), a = L / 2, HBv = HB();
+  const list = [];
+  if (OPT.inf) {
+    for (let n = 1; n <= 10; n++) {
+      const k = n * Math.PI / L;
+      list.push({ n: n, E: HBv * k * k, k: k, par: n % 2 === 1 ? 1 : -1, kap: Infinity, inf: true });
+    }
+  } else {
+    /* 对称有限深方阱：奇偶宇称分别满足 z·tan z 与 −z/tan z = √(z₀²−z²)，二分求解 */
+    const kap0 = Math.sqrt(OPT.V0 / HBv);       // κ_max
+    const z0 = a * kap0;
+    const N = Math.max(1, Math.floor(2 * z0 / Math.PI) + 1);
+    for (let i = 0; i < N; i++) {
+      const lo = i * Math.PI / 2 + 1e-7;
+      const hi = Math.min((i + 1) * Math.PI / 2 - 1e-7, z0 - 1e-9);
+      if (hi <= lo) continue;
+      const f = z => (i % 2 === 0 ? z * Math.tan(z) : -z / Math.tan(z)) - Math.sqrt(Math.max(0, z0 * z0 - z * z));
+      if (f(lo) > 0 || f(hi) < 0) continue;
+      let A = lo, B = hi;
+      for (let it = 0; it < 120; it++) { const m = (A + B) / 2; if (f(A) * f(m) <= 0) B = m; else A = m; }
+      const z = (A + B) / 2;
+      const k = 2 * z / L, E = HBv * k * k;
+      if (E >= OPT.V0) continue;
+      list.push({
+        n: i + 1, E: E, k: k, par: i % 2 === 0 ? 1 : -1,
+        kap: Math.sqrt(Math.max(0, (OPT.V0 - E) / HBv)), z: z, inf: false
+      });
+    }
+  }
+  /* 归一化 + 阱外概率（数值积分，域取到尾巴可忽略处） */
+  list.forEach(st => {
+    const pad = OPT.inf ? 0.25 * L : Math.min(6 * L, Math.max(0.5 * L, 6 / Math.max(st.kap, 1e-6)));
+    const xm = a + pad, M = 4001, dx = 2 * xm / (M - 1);
+    let s = 0, out = 0;
+    for (let i = 0; i < M; i++) {
+      const x = -xm + i * dx;
+      const p = Math.pow(rawPsi(x, st), 2);
+      s += p * dx;
+      if (Math.abs(x) > a) out += p * dx;
+    }
+    st.norm = s > 0 ? 1 / Math.sqrt(s) : 1;
+    st.pOut = s > 0 ? out / s : 0;
+    st.domain = xm;
+  });
+  WKEY = key; WST = list;
+  return list;
+}
+/* 未归一化的波函数（阱心在 x = 0，阱宽 L） */
+function rawPsi(x, st) {
+  const L = LA(), a = L / 2, ax = Math.abs(x);
+  if (OPT.inf) {
+    if (ax >= a) return 0;
+    return Math.sin(st.n * Math.PI * (x + a) / L);
+  }
+  if (ax <= a) return st.par === 1 ? Math.cos(st.k * x) : Math.sin(st.k * x);
+  const b = st.par === 1 ? Math.cos(st.k * a) : Math.sin(st.k * a);
+  const sgn = st.par === 1 ? 1 : (x < 0 ? -1 : 1);
+  return sgn * b * Math.exp(-st.kap * (ax - a));
+}
+const psiAt = (x, st) => st.norm * rawPsi(x, st);
+/* 无限深势阱第 n 态（用于对比曲线），已归一化 √(2/L) */
+function psiInfAt(x, n) {
+  const L = LA(), a = L / 2;
+  if (Math.abs(x) >= a) return 0;
+  return Math.sqrt(2 / L) * Math.sin(n * Math.PI * (x + a) / L);
+}
+const eigInf = n => { const L = LA(); return HB() * Math.pow(n * Math.PI / L, 2); };
+function curState() {
+  const list = wellStates();
+  return list[clamp(OPT.n - 1, 0, list.length - 1)] || list[0];
+}
+
+/* ==================================================================
+   3. 画布与画布内 LaTeX 风格排版（原生实现，无外部库）
+   ================================================================== */
+const CV = {};
+function fitCanvas(id) {
+  const el = $(id);
+  if (!el || !el.clientWidth) return null;
+  const w = el.clientWidth, h = +el.dataset.h;
+  const dpr = window.devicePixelRatio || 1;
+  el.width = Math.round(w * dpr); el.height = Math.round(h * dpr);
+  el.style.height = h + "px";
+  const g = el.getContext("2d");
+  g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  CV[id] = { g: g, W: w, H: h, el: el };
+  return CV[id];
+}
+const FONT = "\"Microsoft YaHei\",\"PingFang SC\",sans-serif";
+const FONTM = "\"Cambria Math\",\"Times New Roman\",Times,serif";
+const SUBR = 0.74, SUBDY = 0.22, SUPDY = 0.40;
+/* 选中量子数（当前 n）的强调配色：图形用橙，文字用深橙以保证在白底上的可读性。
+   与氢原子工具「最可几半径 / ⟨r⟩」一类强调标注同规格（线 #ef8c1a、字 #b07a12）。 */
+const COL_SEL = "#ef8c1a", COL_SEL_TXT = "#b07a12";
+/* 画布文字规格（与氢原子工具模块一对齐）：
+   面板小标题 12/bold　·　强调标注 11–11.5/bold/halo　·　一般标注 11
+   轴标签与单位 10.5 灰　·　刻度数字 10.5px FONT 灰　·　悬停读数 11 */
+/* 中日韩字符（含全角标点）改用正文无衬线字体，拉丁/希腊/数学符号仍用数学字体 */
+function isCJKch(ch) {
+  const c = ch.codePointAt(0);
+  return (c >= 0x2E80 && c <= 0x9FFF) || (c >= 0xF900 && c <= 0xFAFF) ||
+    (c >= 0xFF00 && c <= 0xFF60) || c === 0x2014 || c === 0x2015 || c === 0x2026;
+}
+function segRuns(s) {                       // 把一段文字切成「中文段 / 数学段」交替
+  const out = [];
+  let cur = "", curC = null;
+  for (const ch of s) {
+    const c = isCJKch(ch);
+    if (curC === null) { cur = ch; curC = c; }
+    else if (c === curC) cur += ch;
+    else { out.push({ s: cur, cjk: curC }); cur = ch; curC = c; }
+  }
+  if (cur) out.push({ s: cur, cjk: curC });
+  return out;
+}
+function pFont(q, fp, bd, cjk) {
+  const sz = fp * ((q.sub || q.sup) ? SUBR : 1);
+  return (bd ? "bold " : "") + (!cjk && q.i ? "italic " : "") + sz.toFixed(2) + "px " + (cjk ? FONT : FONTM);
+}
+/* i18n 注入点①：画布 token。带 i / sub / sup / un 标记的是物理量、下标与单位，一律不动；
+   没有这些标记的 token 才是自然语言，交给 T() —— 所以这里的判断只看标记，不看内容。 */
+const partsOf = p => p.map(q => {
+  const o = (typeof q === "string" ? { s: q } : q);
+  const natural = !(o.i || o.sub || o.sup || o.un);
+  if (LANG === "en" && natural && typeof o.s === "string" && /[\u4E00-\u9FFF]/.test(o.s)) {
+    const t = T(o.s);
+    return t === o.s ? o : Object.assign({}, o, { s: t });
+  }
+  return o;
+});
+function mMeasure(g, parts, fp, bd) {
+  let w = 0;
+  for (const q of partsOf(parts))
+    for (const sg of segRuns(q.s)) { g.font = pFont(q, fp, bd, sg.cjk); w += g.measureText(sg.s).width; }
+  return w;
+}
+function mRun(g, parts, x, y, fp, bd, align, stroke) {
+  const ps = partsOf(parts), w = mMeasure(g, ps, fp, bd);
+  let cx = align === "right" ? x - w : (align === "center" ? x - w / 2 : x);
+  g.textAlign = "left"; g.textBaseline = "middle"; g.lineJoin = "round";
+  for (const q of ps) {
+    const dy = q.sub ? fp * SUBDY : (q.sup ? -fp * SUPDY : 0);
+    for (const sg of segRuns(q.s)) {
+      g.font = pFont(q, fp, bd, sg.cjk);
+      if (stroke) { g.lineWidth = (q.sub || q.sup) ? 2.4 : 3.2; g.strokeText(sg.s, cx, y + dy); }
+      else g.fillText(sg.s, cx, y + dy);
+      cx += g.measureText(sg.s).width;
+    }
+  }
+}
+function mtxt(g, parts, x, y, col, fp, align, bd) { g.fillStyle = col; mRun(g, parts, x, y, fp, bd, align, false); }
+function mtxtHalo(g, parts, x, y, col, fp, align, bd) {
+  g.strokeStyle = "rgba(255,255,255,0.94)";
+  mRun(g, parts, x, y, fp, bd, align, true);
+  mtxt(g, parts, x, y, col, fp, align, bd);
+}
+function txt(g, s, x, y, col, font, align, base) {
+  g.fillStyle = col; g.font = font || "12px " + FONT;
+  g.textAlign = align || "left"; g.textBaseline = base || "middle";
+  if (typeof s === "string" && NEED_MATH.test(s)) {
+    const fi = fontInfo(font, 12);
+    mRun(g, AUTO(s), x, y, fi.fp, fi.bd, align || "left", false);
+    return;
+  }
+  g.fillText(s, x, y);
+}
+function rrect(g, x, y, w, h, r) {
+  g.beginPath();
+  g.moveTo(x + r, y); g.lineTo(x + w - r, y); g.quadraticCurveTo(x + w, y, x + w, y + r);
+  g.lineTo(x + w, y + h - r); g.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  g.lineTo(x + r, y + h); g.quadraticCurveTo(x, y + h, x, y + h - r);
+  g.lineTo(x, y + r); g.quadraticCurveTo(x, y, x + r, y);
+  g.closePath();
+}
+/* 悬停状态 */
+const HOV = {};
+function bindHover(id) {
+  const el = $(id);
+  el.addEventListener("mousemove", e => {
+    const r = el.getBoundingClientRect();
+    HOV[id] = { x: e.clientX - r.left, y: e.clientY - r.top };
+    requestDraw();
+  });
+  el.addEventListener("mouseleave", () => { HOV[id] = null; requestDraw(); });
+}
+
+/* ==================================================================
+   4. 三张图
+   ================================================================== */
+function drawWell() {
+  const c = fitCanvas("well"); if (!c) return;
+  const g = c.g, W = c.W, H = c.H;
+  g.clearRect(0, 0, W, H);
+  const L = LA(), a = L / 2, st = curState();
+  const pad = OPT.inf ? 0.22 * L : clamp(Math.max(0.45 * L, 5 / Math.max(st.kap, 1e-9)), 0.3 * L, 3 * L);
+  const xm = a + pad;
+  const XL = 52, XR = W - 14;
+  const X = x => XL + (x + xm) / (2 * xm) * (XR - XL);
+  const xOf = px => (px - XL) / (XR - XL) * 2 * xm - xm;
+
+  /* ---------- 上半：势阱形状 V(x) ---------- */
+  const yT = 16, yB = 148, yV0 = yB - 26;              // yV0：阱内 V=0 的基准线
+  const Vmax = OPT.inf ? Math.max(st.E * 1.35, eigInf(1) * 1.2) : OPT.V0 * 1.3;
+  const YV = V => yV0 - V / Vmax * (yV0 - yT - 4);
+
+  /* 阱外区域（势垒） */
+  g.save();
+  g.fillStyle = "rgba(120,130,145,0.14)";
+  if (OPT.inf) {
+    g.fillRect(XL, yT, X(-a) - XL, yV0 - yT);
+    g.fillRect(X(a), yT, XR - X(a), yV0 - yT);
+  } else {
+    g.fillRect(XL, YV(OPT.V0), X(-a) - XL, yV0 - YV(OPT.V0));
+    g.fillRect(X(a), YV(OPT.V0), XR - X(a), yV0 - YV(OPT.V0));
+  }
+  g.restore();
+  /* 势阱边界 */
+  g.save();
+  if (OPT.inf) {
+    g.strokeStyle = "#5b6b7c"; g.lineWidth = 4;
+    [X(-a), X(a)].forEach(x => { g.beginPath(); g.moveTo(x, yV0 + 6); g.lineTo(x, yT); g.stroke(); });
+    txt(g, "∞", X(-a) - 8, yT + 10, "#5b6b7c", "bold 13px " + FONTM, "right");
+    txt(g, "∞", X(a) + 8, yT + 10, "#5b6b7c", "bold 13px " + FONTM, "left");
+  } else {
+    g.strokeStyle = "#7b8798"; g.lineWidth = 2.4;
+    g.beginPath();
+    g.moveTo(XL, YV(OPT.V0)); g.lineTo(X(-a), YV(OPT.V0));
+    g.lineTo(X(-a), yV0); g.lineTo(X(a), yV0); g.lineTo(X(a), YV(OPT.V0)); g.lineTo(XR, YV(OPT.V0));
+    g.stroke();
+    mtxtHalo(g, [{ s: "V", i: 1 }, { s: "0", sub: 1 }, " = " + OPT.V0.toFixed(2) + " eV"], X(a) + 8, YV(OPT.V0) - 9, "#5b6b7c", 11, "left", true);
+  }
+  /* V = 0 基准 */
+  g.save(); g.strokeStyle = "#b9c4d0"; g.lineWidth = 1; g.setLineDash([4, 4]);
+  g.beginPath(); g.moveTo(XL, yV0); g.lineTo(XR, yV0); g.stroke(); g.restore();
+  mtxt(g, [{ s: "V", i: 1 }, " = 0"], XL - 4, yV0, "#93a0ae", 10.5, "right");
+  mtxt(g, ["势能 ", { s: "V", i: 1 }, "(", { s: "x", i: 1 }, ")"], XL + 2, yT + 2, "#2c3e50", 12, "left", true);
+
+  /* ---------- 下半：波函数 ---------- */
+  const yW0 = 186, yW1 = H - 34, yz = (yW0 + yW1) / 2 + 6;
+  const AMP = (yW1 - yW0) / 2 - 16;
+  /* 采样 */
+  const M = 900, xs = [], ys = [], infs = [];
+  let pmx = 1e-12;
+  for (let i = 0; i < M; i++) {
+    const x = -xm + 2 * xm * i / (M - 1);
+    const v = psiAt(x, st);
+    xs.push(x); ys.push(v);
+    infs.push(OPT.inf ? v : psiInfAt(x, st.n));
+    pmx = Math.max(pmx, Math.abs(v), Math.abs(infs[i]));
+  }
+  const YP = v => yz - v / pmx * AMP;
+  /* 坐标轴 */
+  g.save(); g.strokeStyle = "#d7dee7"; g.lineWidth = 1;
+  g.beginPath(); g.moveTo(XL, yW0 - 12); g.lineTo(XL, yW1); g.lineTo(XR, yW1); g.stroke(); g.restore();
+  g.save(); g.strokeStyle = "#b9c4d0"; g.lineWidth = 1.2;
+  g.beginPath(); g.moveTo(XL, yz); g.lineTo(XR, yz); g.stroke(); g.restore();
+  /* 势阱边界竖线 */
+  g.save(); g.strokeStyle = "#c3ccd7"; g.setLineDash([5, 4]); g.lineWidth = 1.2;
+  [X(-a), X(a)].forEach(x => { g.beginPath(); g.moveTo(x, yW0 - 12); g.lineTo(x, yW1); g.stroke(); });
+  g.restore();
+  mtxt(g, ["−", { s: "L", i: 1 }, "/2"], X(-a), yW1 + 12, "#93a0ae", 10.5, "center");
+  mtxt(g, [{ s: "L", i: 1 }, "/2"], X(a), yW1 + 12, "#93a0ae", 10.5, "center");
+
+  /* |ψ|² 填充 */
+  if (OPT.ckProb) {
+    g.save();
+    g.fillStyle = "rgba(25,118,210,0.16)";
+    g.beginPath(); g.moveTo(X(xs[0]), yz);
+    for (let i = 0; i < M; i++) {
+      const v = ys[i] * ys[i] / (pmx * pmx) * pmx;   // |ψ|²/|ψ|max ，与 ψ 同坐标尺度
+      g.lineTo(X(xs[i]), YP(v));
+    }
+    g.lineTo(X(xs[M - 1]), yz); g.closePath(); g.fill();
+    g.restore();
+  }
+  /* 无限深对比曲线 */
+  if (!OPT.inf && OPT.ckInf) {
+    g.save(); g.strokeStyle = "#9aa5b1"; g.lineWidth = 1.4; g.setLineDash([5, 4]);
+    g.beginPath();
+    for (let i = 0; i < M; i++) {
+      const y = YP(infs[i]);
+      if (i === 0) g.moveTo(X(xs[i]), y); else g.lineTo(X(xs[i]), y);
+    }
+    g.stroke(); g.restore();
+  }
+  /* 波函数曲线 */
+  g.save();
+  g.strokeStyle = "#1976d2"; g.lineWidth = 2.4; g.lineJoin = "round";
+  g.beginPath();
+  for (let i = 0; i < M; i++) { const y = YP(ys[i]); if (i === 0) g.moveTo(X(xs[i]), y); else g.lineTo(X(xs[i]), y); }
+  g.stroke(); g.restore();
+
+  /* 节点 */
+  if (OPT.ckNode) {
+    const nd = [];
+    for (let i = 1; i < M; i++) if (ys[i - 1] * ys[i] < 0) {
+      let A = xs[i - 1], B = xs[i];
+      for (let it = 0; it < 40; it++) { const m = (A + B) / 2; if (psiAt(A, st) * psiAt(m, st) <= 0) B = m; else A = m; }
+      nd.push((A + B) / 2);
+    }
+    g.save(); g.fillStyle = "#d94a3d";
+    nd.forEach(x => { g.beginPath(); g.arc(X(x), yz, 4, 0, 6.2832); g.fill(); });
+    g.restore();
+    if (nd.length) mtxtHalo(g, ["节点 " + nd.length + " 个"], X(nd[nd.length - 1]), yz + 16, "#d94a3d", 11, "center");
+  }
+
+  /* 能级线（画在势阱面板里） */
+  const yE = YV(st.E);
+  g.save(); g.strokeStyle = "#1976d2"; g.lineWidth = 1.6; g.setLineDash([7, 4]);
+  g.beginPath(); g.moveTo(X(-a) - 4, yE); g.lineTo(X(a) + 4, yE); g.stroke(); g.restore();
+  mtxtHalo(g, [{ s: "E", i: 1 }, { s: "" + st.n, sub: 1 }, " = " + fmtE(st.E)], X(a) + 26, yE, "#1976d2", 11, "left", true);
+  if (!OPT.inf) {
+    mtxt(g, ["束缚态：", { s: "E", i: 1 }, " < ", { s: "V", i: 1 }, { s: "0", sub: 1 }], X(-a) - 6, yE - 13, "#5b6b7c", 10.5, "right");
+  }
+
+  /* 横轴刻度（nm） */
+  g.save(); g.font = "10.5px " + FONT; g.fillStyle = "#93a0ae"; g.textAlign = "center";
+  const stepNm = OPT.L > 6 ? 2 : 1;
+  for (let v = -Math.floor(OPT.L); v <= Math.ceil(OPT.L) + 0.001; v += stepNm) {
+    const x = X(v * 10);
+    if (x < XL - 2 || x > XR + 2) continue;
+    g.fillText(v.toFixed(0), x, yW1 + 12);
+  }
+  g.restore();
+  mtxt(g, [{ s: "x", i: 1 }, " (nm)"], XR, yW1 + 24, "#93a0ae", 10.5, "right");
+  mtxt(g, [{ s: "ψ", i: 1 }, { s: "" + st.n, sub: 1 }, "(", { s: "x", i: 1 }, ")"], XL + 2, yW0 - 22, "#1976d2", 12, "left", true);
+
+  /* 悬停读数 */
+  const hv = HOV["well"];
+  if (hv && hv.x >= XL && hv.x <= XR && hv.y >= yW0 - 30 && hv.y <= yW1) {
+    const x = xOf(hv.x), v = psiAt(x, st);
+    g.save(); g.strokeStyle = "rgba(25,118,210,0.55)"; g.lineWidth = 1; g.setLineDash([3, 3]);
+    g.beginPath(); g.moveTo(hv.x, yW0 - 24); g.lineTo(hv.x, yW1); g.stroke(); g.restore();
+    const bx = clamp(hv.x + 10, XL, XR - 128), by = yW0 - 20;
+    g.save(); g.fillStyle = "rgba(255,255,255,0.95)"; g.strokeStyle = "#dde4ec";
+    rrect(g, bx, by, 124, 34, 5); g.fill(); g.stroke(); g.restore();
+    mtxt(g, [{ s: "x", i: 1 }, " = " + (x / 10).toFixed(3) + " nm"], bx + 6, by + 10, "#2c3e50", 11, "left");
+    mtxt(g, [{ s: "ψ", i: 1 }, " = " + v.toFixed(4)], bx + 6, by + 24, "#1976d2", 11, "left");
+  }
+}
+
+function drawWellLv() {
+  const c = fitCanvas("wellLv"); if (!c) return;
+  const g = c.g, W = c.W, H = c.H;
+  g.clearRect(0, 0, W, H);
+  const list = wellStates(), curN = curState().n;
+  /* 宽而深的阱可以有几十个束缚态，图上只画前若干条，其余在提示里说明 */
+  const nMax = OPT.inf ? Math.min(8, list.length) : clamp(list.length, 4, 12);
+  /* 有限深时横轴顶取 V₀·1.12：束缚态恒有 E < V₀，这样浅阱也能把能级铺开。
+     旧写法是 max(V₀·1.12, eigInf(nMax), eigInf(3)) —— 浅阱（L=1 nm、V₀=0.05 eV 只有 1 条
+     束缚态）会被 eigInf(4)=6.02 eV 顶到 6.02 eV，最高能级落在 0.6% 处、整张图挤成一条线。 */
+  const Emax = OPT.inf ? Math.max(eigInf(nMax), eigInf(3)) : OPT.V0 * 1.12;
+  const XL = 40, XR = W - 62, yT = 30, yB = H - 26;
+  const XP = E => XL + E / Emax * (XR - XL);
+  const YP = i => yT + (i - 1) / Math.max(1, nMax - 1) * (yB - yT);
+
+  g.save(); g.strokeStyle = "#d7dee7"; g.lineWidth = 1;
+  g.beginPath(); g.moveTo(XL, yT - 6); g.lineTo(XL, yB + 6); g.lineTo(XR, yB + 6); g.stroke(); g.restore();
+  mtxt(g, ["能量 ", { s: "E", i: 1 }, " (eV)"], (XL + XR) / 2, H - 10, "#93a0ae", 10.5, "center");
+  /* 轴标题上移：YP(1) = yT，第一条能级标签画在 yT−2，与 yT−6 的标题会压字 */
+  mtxt(g, [{ s: "n", i: 1 }], XL - 4, yT - 15, "#93a0ae", 10.5, "right", true);
+
+  /* V₀ 参考线 */
+  if (!OPT.inf) {
+    g.save(); g.strokeStyle = "#7b8798"; g.lineWidth = 1.4; g.setLineDash([6, 4]);
+    g.beginPath(); g.moveTo(XP(OPT.V0), yT - 10); g.lineTo(XP(OPT.V0), yB + 8); g.stroke(); g.restore();
+    mtxt(g, [{ s: "V", i: 1 }, { s: "0", sub: 1 }], XP(OPT.V0) + 4, yB + 18, "#5b6b7c", 10.5, "left", true);
+  }
+  for (let i = 1; i <= nMax; i++) {
+    const y = YP(i), has = i <= list.length;
+    const E = list[clamp(i - 1, 0, list.length - 1)].E;
+    const on = has && i === curN;
+    /* 选中的那条：整行刷淡橙底，E_n 一眼可见 */
+    if (on) {
+      g.save(); g.fillStyle = "rgba(239,140,26,0.14)";
+      g.fillRect(XL - 38, y - 11, (XR - XL) + 100, 18); g.restore();
+    }
+    /* 无限深参照：浅阱时 eigInf(i) 可能超出 V₀·1.12 的量程 ⇒ 截到右边并补一个箭头 */
+    if (has) {
+      const xRaw = XP(eigInf(i)), over = xRaw > XR - 1, xInf = over ? XR : xRaw;
+      g.save(); g.strokeStyle = "#c3ccd7"; g.lineWidth = 1.2; g.setLineDash([4, 4]);
+      g.beginPath(); g.moveTo(XL + 2, y + 4); g.lineTo(xInf, y + 4); g.stroke(); g.restore();
+      if (over) {
+        g.save(); g.fillStyle = "#c3ccd7";
+        g.beginPath(); g.moveTo(XR + 3, y + 4); g.lineTo(XR - 4, y + 0.5); g.lineTo(XR - 4, y + 7.5);
+        g.closePath(); g.fill(); g.restore();
+      }
+    }
+    /* 实际能级（非束缚态只留占位说明，不画能级线，免得被误读成真实能级） */
+    const col = has ? (on ? COL_SEL : "#6b9fd4") : "#dfe4ea";
+    if (has) {
+      g.save(); g.strokeStyle = col; g.lineWidth = on ? 3.6 : 2;
+      g.beginPath(); g.moveTo(XL + 2, y - 4); g.lineTo(XP(E), y - 4); g.stroke(); g.restore();
+      g.save(); g.fillStyle = col;
+      g.beginPath(); g.arc(XP(E), y - 4, on ? 5.6 : 3.2, 0, 6.2832); g.fill();
+      if (on) { g.strokeStyle = "#ffffff"; g.lineWidth = 1.8; g.stroke(); }
+      g.restore();
+    }
+    mtxt(g, [{ s: "n", i: 1 }, " = " + i], XL - 4, y - 2, on ? COL_SEL_TXT : "#6b7a8c", on ? 11.5 : 10.5, "right", true);
+    if (has) {
+      if (on) mtxtHalo(g, [{ s: "E", i: 1 }, { s: "" + i, sub: 1 }, " = " + E.toFixed(3) + " eV"], XP(E) + 10, y - 4, COL_SEL_TXT, 11.5, "left", true);
+      else mtxt(g, [E.toFixed(3)], XP(E) + 8, y - 4, "#93a0ae", 10, "left");
+    } else mtxt(g, ["非束缚态（", { s: "E", i: 1 }, " > ", { s: "V", i: 1 }, { s: "0", sub: 1 }, "）"], XL + 8, y - 4, "#c3ccd7", 10.5, "left");
+  }
+  mtxt(g, OPT.inf
+    ? [{ s: "E", i: 1 }, { s: "n", sub: 1 }, { s: "∝" }, { s: "n", i: 1 }, { s: "2", sup: 1 }, "，间距越往上越大"]
+    : (list.length > nMax ? ["能级下移，共 ", { s: "N", i: 1 }, " = " + list.length + " 条（只画前 " + nMax + " 条）"]
+      : ["能级整体下移，束缚态有限"]),
+    XR + 56, yT - 16, "#5b6b7c", 10.5, "right");
+}
+
+function drawWellEk() {
+  const c = fitCanvas("wellEk"); if (!c) return;
+  const g = c.g, W = c.W, H = c.H;
+  g.clearRect(0, 0, W, H);
+  const list = wellStates(), HBv = HB(), L = LA(), curN = curState().n;
+  const nRef = OPT.inf ? Math.min(6, list.length) : clamp(list.length, 3, 8);
+  const kTop = Math.max(nRef * Math.PI / L, list.length ? list[list.length - 1].k : 0) * 1.18;
+  /* 纵轴上限必须容得下 V₀，否则参考线会被顶出画面 */
+  const Emax = Math.max(HBv * kTop * kTop * 1.12, OPT.inf ? 0 : OPT.V0 * 1.10);
+  const XL = 46, XR = W - 16, yT = 30, yB = H - 28;
+  const XP = k => XL + k / kTop * (XR - XL);
+  const YP = E => yB - E / Emax * (yB - yT);
+
+  g.save(); g.strokeStyle = "#d7dee7"; g.lineWidth = 1;
+  g.beginPath(); g.moveTo(XL, yT - 6); g.lineTo(XL, yB); g.lineTo(XR, yB); g.stroke(); g.restore();
+  mtxt(g, ["波矢 ", { s: "k", i: 1 }, " (nm", { s: "−1", sup: 1 }, ")"], (XL + XR) / 2, H - 10, "#93a0ae", 10.5, "center");
+  mtxt(g, [{ s: "E", i: 1 }, " (eV)"], XL - 4, yT - 6, "#93a0ae", 10.5, "right", true);
+
+  /* 抛物线 */
+  g.save(); g.strokeStyle = "#9aa5b1"; g.lineWidth = 1.8;
+  g.beginPath();
+  for (let i = 0; i <= 200; i++) {
+    const k = kTop * i / 200, y = YP(HBv * k * k);
+    if (i === 0) g.moveTo(XP(k), y); else g.lineTo(XP(k), y);
+  }
+  g.stroke(); g.restore();
+  mtxt(g, [{ s: "E", i: 1 }, " = ", { s: "ℏ", i: 1 }, { s: "2", sup: 1 }, { s: "k", i: 1 }, { s: "2", sup: 1 }, "/2", { s: "m", i: 1 }],
+    XP(kTop * 0.55), YP(HBv * Math.pow(kTop * 0.66, 2)) - 14, "#6b7a8c", 11, "center");
+
+  /* V₀ */
+  if (!OPT.inf && YP(OPT.V0) >= yT) {
+    g.save(); g.strokeStyle = "#7b8798"; g.lineWidth = 1.4; g.setLineDash([6, 4]);
+    g.beginPath(); g.moveTo(XL, YP(OPT.V0)); g.lineTo(XR, YP(OPT.V0)); g.stroke(); g.restore();
+    mtxtHalo(g, [{ s: "V", i: 1 }, { s: "0", sub: 1 }], XL + 6, YP(OPT.V0) - 9, "#5b6b7c", 10.5, "left", true);
+  }
+  /* 允许的 k：选中的那个用「橙粗点 + 白描边 + 橙虚线 + k_n / E_n 双行标注」突出 */
+  list.forEach(st => {
+    const on = st.n === curN;
+    const x = XP(st.k), y = YP(st.E);
+    const col = on ? COL_SEL : "#6b9fd4";
+    g.save();
+    g.strokeStyle = col; g.lineWidth = on ? 1.8 : 1; g.setLineDash(on ? [6, 3] : [3, 3]);
+    g.beginPath(); g.moveTo(x, yB); g.lineTo(x, y); g.lineTo(XL, y); g.stroke(); g.restore();
+    g.save(); g.fillStyle = col;
+    g.beginPath(); g.arc(x, y, on ? 6.5 : 4, 0, 6.2832); g.fill();
+    if (on) { g.strokeStyle = "#ffffff"; g.lineWidth = 2; g.stroke(); }
+    g.restore();
+    if (on) {
+      mtxtHalo(g, [{ s: "k", i: 1 }, { s: "" + st.n, sub: 1 }, " = " + (st.k * 10).toFixed(3) + " nm", { s: "−1", sup: 1 }],
+        x + 10, y - 16, COL_SEL_TXT, 11.5, "left", true);
+      mtxtHalo(g, [{ s: "E", i: 1 }, { s: "" + st.n, sub: 1 }, " = " + fmtE(st.E)], x + 10, y + 2, COL_SEL_TXT, 11, "left", true);
+    }
+  });
+  mtxt(g, OPT.inf
+    ? [{ s: "k", i: 1 }, " 只能取 ", { s: "n", i: 1 }, { s: "π", i: 1 }, "/", { s: "L", i: 1 }]
+    : ["阱内 ", { s: "k", i: 1 }, " 仍为实数，但整体更低"],
+    XR, yT - 16, "#5b6b7c", 10.5, "right");
+}
+
+/* ==================================================================
+   5. 读数面板与提示
+   ================================================================== */
+function row(k, v) { return '<div class="row"><span class="k">' + k + '</span><span class="v">' + v + '</span></div>'; }
+function hd(t) { return '<div class="hd">' + t + "</div>"; }
+
+function updatePanels() {
+  const st = curState(), list = wellStates(), L = LA();
+  const kInf = st.n * Math.PI / L;                 // 与「当前选中的态」同 n，避免 n 被截断后口径不一致
+  const Einf = HB() * kInf * kInf;
+  const nodes = st.n - 1;
+  let h = hd("势阱参数");
+  h += row("阱宽 " + MM("<i>L</i>"), "<b>" + OPT.L.toFixed(2) + " nm</b>");
+  h += row("势阱深度 " + MM("<i>V</i><sub>0</sub>"), OPT.inf ? "<b>∞（无限深）</b>" : "<b>" + OPT.V0.toFixed(2) + " eV</b>");
+  h += row("粒子质量 " + MM("<i>m</i>"), "<b>" + OPT.mr.toFixed(2) + " " + MM("<i>m</i><sub>0</sub>") + "</b>");
+  h += row("束缚态数目", OPT.inf ? "<b>无限多个</b>" : "<b>" + list.length + " 个</b>");
+  h += hd("选中态 " + MM("<i>n</i><span class=\"op\">=</span>" + st.n));
+  h += row("能量 " + MM("<i>E</i><sub><i>n</i></sub>"), "<b>" + fmtE(st.E) + "</b>");
+  h += row("波矢 " + MM("<i>k</i><sub><i>n</i></sub>"), "<b>" + (st.k * 10).toFixed(3) + "</b> nm<sup>−1</sup>");
+  h += row("节点数", "<b>" + nodes + "</b>　" + MM("<span class=\"op\">=</span><i>n</i><span class=\"op\">−</span>1"));
+  h += row("宇称", "<b>" + (st.par === 1 ? "偶（对称）" : "奇（反对称）") + "</b>");
+  if (!OPT.inf) {
+    h += row("阱外概率", "<b>" + (st.pOut * 100).toFixed(2) + " %</b>");
+    h += row("比无限深低 " + MM("<i>ΔE</i>"), "<b>" + fmtE(Einf - st.E) + "</b>");
+  }
+  $("wellRead").innerHTML = h;
+
+  $("vL").textContent = OPT.L.toFixed(2) + " nm";
+  $("vV").textContent = OPT.inf ? "∞" : OPT.V0.toFixed(2) + " eV";
+  $("vM").textContent = OPT.mr.toFixed(2);
+  $("vN").textContent = String(st.n);
+  $("subL").innerHTML = MM("<i>E</i><sub>1</sub><span class=\"op\">∝</span>1<span class=\"sl\">/</span><i>L</i><sup>2</sup>") + "：阱越宽，能级越密";
+  $("subV").innerHTML = OPT.inf
+    ? "无限深：阱外 " + MM("<i>ψ</i><span class=\"op\">=</span>0")
+    : "束缚态要求 " + MM("<i>E</i><span class=\"op\"><</span><i>V</i><sub>0</sub>") + "；当前 " + MM("<i>V</i><sub>0</sub>") + " 下有 <b>" + list.length + "</b> 个束缚态";
+  $("subM").innerHTML = MM("<i>E</i><span class=\"op\">∝</span>1<span class=\"sl\">/</span><i>m</i>") + "：粒子越重，能级越低";
+  /* 有限深时 E_n ≠ n²E₁（那是无限深的结果），故两种模式给不同的说明 */
+  $("subN").innerHTML = OPT.inf
+    ? MM("<i>E</i><sub><i>n</i></sub><span class=\"op\">=</span><i>n</i><sup>2</sup><i>E</i><sub>1</sub>") + "，" + MM("<i>E</i><sub>1</sub><span class=\"op\">=</span>" + fmtE(eigInf(1)))
+    : "共 <b>" + list.length + "</b> 个束缚态；" + MM("<i>E</i><sub><i>n</i></sub><span class=\"op\"><</span><i>n</i><sup>2</sup><i>E</i><sub>1</sub>") +
+      "，" + MM("<i>E</i><sub>1</sub><span class=\"op\">=</span>" + fmtE(eigInf(1))) + "（无限深口径）";
+  $("sV").disabled = OPT.inf;
+  $("sN").max = String(OPT.inf ? 6 : Math.max(1, list.length));
+
+  const lg = [];
+  lg.push('<span><i class="swatch" style="color:#1976d2"></i>' + MM("<i>ψ</i><sub><i>n</i></sub>(<i>x</i>)") + "</span>");
+  lg.push('<span><i class="swatch" style="color:rgba(25,118,210,0.4)"></i>' + MM("|<i>ψ</i>|<sup>2</sup>") + "</span>");
+  if (!OPT.inf) {
+    lg.push('<span><i class="swatch dash" style="color:#9aa5b1"></i>同 ' + MM("<i>n</i>") + ' 的无限深解</span>');
+  }
+  lg.push('<span style="color:#d94a3d">● 节点</span>');
+  $("wellLegend").innerHTML = lg.join("");
+
+  $("wellHint").innerHTML = OPT.inf
+    ? "无限深势阱：边界上 " + MM("<i>ψ</i><span class=\"op\">=</span>0") + "，只有 " + MM("<i>k</i><span class=\"op\">=</span><i>n</i>π<span class=\"sl\">/</span><i>L</i>") +
+      " 的波长能「正好装进」阱里 —— 这就是量子化。阱外 " + MM("<i>ψ</i><span class=\"op\">=</span>0") + "，概率为 0。"
+    : "有限深势阱：阱内振荡，阱外按 " + MM("<span class='rm'>e</span><sup>−<i>κ</i><i>d</i></sup>") + " 指数衰减（" + MM("<i>d</i>") + " 是到阱壁的距离，衰减长度 " +
+      MM("1<span class=\"sl\">/</span><i>κ</i>") + "）—— 经典物理完全禁止的区域里也有概率。" +
+      " 束缚态数目有限：当前只有 <b>" + list.length + "</b> 个，且每个能级都比无限深时<b>更低</b>。";
+
+  $("wellLvHint").innerHTML = OPT.inf
+    ? MM("<i>E</i><sub><i>n</i></sub><span class=\"op\">=</span><i>n</i><sup>2</sup><i>E</i><sub>1</sub>") + "：能级间距 " + MM("(2<i>n</i><span class=\"op\">+</span>1)<i>E</i><sub>1</sub>") + " 随 " + MM("<i>n</i>") + " 越拉越大。"
+    : "灰色虚线是同宽度无限深势阱的能级；细线是有限深的真实能级 —— 全部下移，而且只有 " + list.length + " 条（其余不再是束缚态）。";
+  $("wellLvHint").innerHTML += '　<b style="color:' + COL_SEL_TXT + '">橙色高亮</b>的那条就是当前选中的 ' + MM("<i>n</i>") + "。";
+  $("wellEkHint").innerHTML = MM("<i>E</i><span class=\"op\">=</span><i>ℏ</i><sup>2</sup><i>k</i><sup>2</sup><span class=\"sl\">/</span>2<i>m</i>") +
+    " 是同一条抛物线；边界条件只让离散的 " + MM("<i>k</i>") + " 值（圆点）成立。" +
+    (OPT.inf ? "" : " 阱外 " + MM("<i>k</i>") + " 变成虚数 " + MM("<i>iκ</i>") + "，振荡解随之变成衰减解。") +
+    '　<b style="color:' + COL_SEL_TXT + '">橙色高亮</b>的点是当前选中的 ' + MM("<i>n</i>") + "，同时标出它的 " + MM("<i>k</i><sub><i>n</i></sub>") + " 与 " + MM("<i>E</i><sub><i>n</i></sub>") + "。";
+}
+
+/* ==================================================================
+   6. 挑战任务
+   ================================================================== */
+const CHALS = [
+  {
+    t: "挑战一 · 势阱的量子化",
+    q: "切到「无限深势阱」，把量子数 " + MM("<i>n</i>") + " 从 1 依次调到 6，观察波函数与波矢。能量与 " + MM("<i>n</i>") + " 是什么关系？节点数与 " + MM("<i>n</i>") + " 是什么关系？",
+    a: () => {
+      const E1 = eigInf(1);
+      return "无限深势阱里 " + MM("<i>E</i><sub><i>n</i></sub><span class=\"op\">=</span><i>n</i><sup>2</sup><i>E</i><sub>1</sub>") + "：当前 " + MM("<i>L</i><span class=\"op\">=</span>" + OPT.L.toFixed(2) + "<span class=\"un\">nm</span>") +
+        "，" + MM("<i>E</i><sub>1</sub><span class=\"op\">=</span>" + fmtE(E1)) + "，于是 " + MM("<i>E</i><sub>2</sub><span class=\"op\">=</span>4<i>E</i><sub>1</sub><span class=\"op\">=</span>" + fmtE(4 * E1)) +
+        "、" + MM("<i>E</i><sub>6</sub><span class=\"op\">=</span>36<i>E</i><sub>1</sub><span class=\"op\">=</span>" + fmtE(36 * E1)) + "。" +
+        "波矢 " + MM("<i>k</i><sub><i>n</i></sub><span class=\"op\">=</span><i>n</i>π<span class=\"sl\">/</span><i>L</i>") + " 也成整数倍，节点数恰为 " + MM("<i>n</i><span class=\"op\">−</span>1") +
+        " —— 半波长必须整好装进阱里才会相消干涉，这就是量子化的来源。";
+    }
+  },
+  {
+    t: "挑战二 · 无限深 vs 有限深",
+    q: "在有限深与无限深之间来回切换，看波函数在边界处的行为。有限深时阱外是什么形状？能级比无限深高还是低？阱外的概率有多少？",
+    a: () => {
+      const st = curState(), L = LA();
+      const Ei = HB() * Math.pow(st.n * Math.PI / L, 2);
+      /* 必须按模式分支：无限深档没有 κ、也没有阱外概率，套有限深那套模板会印出
+         「1/κ = 0.00 Å、低了 −0.0 meV、阱外概率 0.0%」这种自相矛盾的读数。 */
+      if (OPT.inf) {
+        return "当前就是<b>无限深</b>阱：阱壁是不可穿透的硬边界，阱外严格 " + MM("<i>ψ</i><span class=\"op\">=</span>0") +
+          "、没有泄漏，阱外概率就是 0% —— 既然不漏，也就谈不上衰减长度 " + MM("1<span class=\"sl\">/</span><i>κ</i>") + "。" +
+          "第 " + st.n + " 个态的能量正好是解析值 " + MM("<i>E</i><sub><i>n</i></sub><span class=\"op\">=</span><i>n</i><sup>2</sup><i>E</i><sub>1</sub><span class=\"op\">=</span>" + fmtE(st.E)) +
+          "，它和「同宽度无限深解」本来就是同一个东西，不存在「下移」。切到「有限深」再点开这一条，才能看到能级下移多少、阱外漏出去多少。";
+      }
+      return "有限深时阱外不再是零，而是 " + MM("<span class='rm'>e</span><sup>−<i>κ</i><i>d</i></sup>") + " 的指数衰减（" + MM("<i>d</i>") + " 为到阱壁的距离，「泄漏」进经典禁区）。" +
+        " 以当前参数第 " + st.n + " 个态为例：" + MM("<i>E</i><span class=\"op\">=</span>" + fmtE(st.E)) + "，比同宽度无限深解的 " + fmtE(Ei) +
+        " <b>低</b>了 " + fmtE(Ei - st.E) + "，衰减长度 " + MM("1<span class=\"sl\">/</span><i>κ</i><span class=\"op\">=</span>" + (1 / (st.kap || 1)).toFixed(2) + "<span class=\"un\">Å</span>") +
+        "，阱外概率 " + (st.pOut * 100).toFixed(1) + "%。势阱越深、越宽，泄漏越少，能级就越接近无限深的结果。";
+    }
+  },
+  {
+    t: "挑战三 · 阱宽与质量",
+    q: "切到「无限深势阱」，把阱宽 " + MM("<i>L</i>") + " 从 1 nm 拉到 10 nm，" + MM("<i>E</i><sub>1</sub>") + " 变成原来的几分之一？再把质量调到半导体里常见的有效质量 " + MM("<i>m</i><span class=\"op\">=</span>0.067<i>m</i><sub>0</sub>") + "，能级又怎么变？",
+    a: () => {
+      const keep = OPT.L, keepm = OPT.mr;
+      OPT.L = 1; OPT.mr = 1; const e1 = eigInf(1);
+      OPT.L = 2; const e2 = eigInf(1);
+      OPT.L = 10; const e10 = eigInf(1);
+      OPT.mr = 0.067; const em = eigInf(1);          // 宽度仍是 10 nm，只换质量
+      OPT.L = keep; OPT.mr = keepm;
+      return MM("<i>E</i><sub><i>n</i></sub><span class=\"op\">∝</span>1<span class=\"sl\">/</span>(<i>m</i><i>L</i><sup>2</sup>)") +
+        "，所以宽度翻倍能量变 1/4、宽度变成 10 倍能量只剩 1/100：" +
+        MM("<i>L</i><span class=\"op\">=</span>1<span class=\"un\">nm</span>") + " 时 " + MM("<i>E</i><sub>1</sub><span class=\"op\">=</span>" + fmtE(e1)) +
+        "，" + MM("<i>L</i><span class=\"op\">=</span>2<span class=\"un\">nm</span>") + " 时降到 " + fmtE(e2) + "（正好 1/4）" +
+        "，" + MM("<i>L</i><span class=\"op\">=</span>10<span class=\"un\">nm</span>") + " 时只剩 " + fmtE(e10) + "（正好 1/100）。" +
+        " 再把质量换成 GaAs 里电子的有效质量 " + MM("<i>m</i><span class=\"op\">=</span>0.067<i>m</i><sub>0</sub>") +
+        "（宽度仍是 10 nm），由 " + MM("<i>E</i><span class=\"op\">∝</span>1<span class=\"sl\">/</span><i>m</i>") +
+        " 得 " + MM("<i>E</i><sub>1</sub><span class=\"op\">=</span>" + fmtE(em)) +
+        " —— 质量轻了约 15 倍，能量就抬高约 15 倍，这已经到了几十 meV 的量级，正是量子阱、超晶格里那些可观测子带的由来。";
+    }
+  },
+  {
+    t: "挑战四 · 节点与宇称",
+    q: "在同一个势阱里依次看 " + MM("<i>n</i><span class=\"op\">=</span>1") + "…4：节点出现在什么位置？波函数关于阱心是对称还是反对称？",
+    a: () => {
+      /* 节点位置实时求根：阱内 ψ 为 cos(kx)（偶宇称）或 sin(kx)（奇宇称），
+         零点分别为 (2j−1)π/2k 与 jπ/k；奇宇称态 j=0 那个根恒在 x=0，由反对称性钉死。 */
+      const L = LA(), a0 = L / 2, keep = OPT.inf;
+      const ndOf = st => {
+        const out = st.par === -1 ? [0] : [];
+        for (let j = 1; j <= 8; j++) {
+          const x = st.par === 1 ? (2 * j - 1) * Math.PI / (2 * st.k) : j * Math.PI / st.k;
+          if (x < a0 - 1e-6) { out.push(-x); out.push(x); } else break;
+        }
+        return out.sort((p, q) => p - q);
+      };
+      OPT.inf = false; WKEY = ""; const lf = wellStates();
+      OPT.inf = true; WKEY = ""; const li = wellStates();
+      OPT.inf = keep; WKEY = "";
+      const nmv = v => (v / 10).toFixed(2);
+      let ex = "";
+      for (const n of [4, 3, 2]) {
+        const sf = lf[n - 1]; if (!sf) continue;
+        const nf = ndOf(sf), ni = ndOf(li[n - 1]);
+        const offF = nf.filter(v => Math.abs(v) > 1e-6), offI = ni.filter(v => Math.abs(v) > 1e-6);
+        if (!offF.length) {
+          ex = "以 " + MM("<i>n</i><span class=\"op\">=</span>" + n) + " 时为例：它<b>只有阱心那一个</b>节点，改有限深后位置不变。";
+        } else {
+          ex = "以 " + MM("<i>n</i><span class=\"op\">=</span>" + n) + " 时为例：偏离阱心的节点从 " +
+            MM("<span class=\"op\">±</span>" + nmv(Math.abs(offI[0])) + "<span class=\"un\">nm</span>") + " 移到 " +
+            MM("<span class=\"op\">±</span>" + nmv(Math.abs(offF[0])) + "<span class=\"un\">nm</span>") +
+            "（外移 " + ((Math.abs(offF[0]) - Math.abs(offI[0])) / 10).toFixed(3) + " nm）" +
+            (nf.length > offF.length ? "，而阱心那个节点仍停在 " + MM("<i>x</i><span class=\"op\">=</span>0") + " 未动" : "") + "。";
+        }
+        break;
+      }
+      return MM("<i>n</i>") + " 为奇数时 " + MM("<i>ψ</i>(<span class=\"op\">−</span><i>x</i>)<span class=\"op\">=</span><span class=\"op\">+</span><i>ψ</i>(<i>x</i>)") + "（偶宇称，关于阱心对称），偶数时为奇宇称（反对称）—— " +
+        "这是势阱本身左右对称的必然结果。节点数恒为 " + MM("<i>n</i><span class=\"op\">−</span>1") + "，无限深阱里等间距排布（相邻间距 " + MM("<i>L</i><span class=\"sl\">/</span><i>n</i>") + "）。" +
+        " 改成有限深后，<b>偏离阱心的那些节点会向阱壁一侧外移</b>（仍在阱内，不会跑到阱外）：波函数有一部分「漏」进阱壁，等效阱宽变大、" +
+        MM("<i>k</i>") + " 变小，节点间距随之拉开。" + ex +
+        " <b>唯一的例外</b>是奇宇称态（" + MM("<i>n</i>") + " 为偶数）位于阱心的那个节点：它由 " +
+        MM("<i>ψ</i>(<span class=\"op\">−</span><i>x</i>)<span class=\"op\">=</span><span class=\"op\">−</span><i>ψ</i>(<i>x</i>)") +
+        " 的反对称性<b>钉死在</b> " + MM("<i>x</i><span class=\"op\">=</span>0") + "，阱深阱宽怎么变都一动不动 —— 所以 " + MM("<i>n</i><span class=\"op\">=</span>2") +
+        " 从头到尾就只有阱心这一个节点，而 " + MM("<i>n</i><span class=\"op\">=</span>4") + " 是「两侧外移 + 中心不动」。";
+    }
+  }
+];
+function buildChals() {
+  $("chalGrid").innerHTML = CHALS.map((c, i) =>
+    '<div class="chal" data-i="' + i + '"><div class="chal-head"><b>' + c.t + '</b><span class="chev">›</span></div>' +
+    '<div class="chal-body"><div class="q">' + c.q + '</div>' +
+    '<div class="btn-row"><button data-act="ans" data-i="' + i + '">看答案</button></div>' +
+    '<div class="ans" id="ans' + i + '"></div></div></div>').join("");
+  document.querySelectorAll(".chal-head").forEach(h =>
+    h.addEventListener("click", () => h.parentElement.classList.toggle("open")));
+  document.querySelectorAll('.chal-body button[data-act="ans"]').forEach(b =>
+    b.addEventListener("click", () => {
+      const i = +b.dataset.i;
+      const box = $("ans" + i);
+      box.innerHTML = CHALS[i].a();
+      box.classList.toggle("show");
+    }));
+}
+
+/* ==================================================================
+   7. 交互绑定与渲染循环
+   ================================================================== */
+let NEED = false;
+function requestDraw() { if (!NEED) { NEED = true; requestAnimationFrame(doDraw); } }
+function doDraw() {
+  NEED = false;
+  drawWell(); drawWellLv(); drawWellEk();
+  updatePanels();
+}
+function fitAll() { ["well", "wellLv", "wellEk"].forEach(fitCanvas); }
+
+function clampN() {
+  const list = wellStates();
+  OPT.n = clamp(OPT.n, 1, OPT.inf ? 6 : Math.max(1, list.length));
+  $("sN").value = String(OPT.n);
+}
+function setMode(inf) {
+  OPT.inf = inf;
+  document.querySelectorAll("#wellType button").forEach(b => b.classList.toggle("active", (b.dataset.t === "inf") === inf));
+  clampN(); requestDraw();
+}
+function bind() {
+  document.querySelectorAll("#wellType button").forEach(b =>
+    b.addEventListener("click", () => setMode(b.dataset.t === "inf")));
+
+  const sl = (id, fn) => $(id).addEventListener("input", () => { fn(+$(id).value); requestDraw(); });
+  sl("sL", v => { OPT.L = v; clampN(); });
+  sl("sV", v => { OPT.V0 = v; clampN(); });
+  sl("sM", v => { OPT.mr = v; clampN(); });
+  sl("sN", v => { OPT.n = v; });
+  const ck = (id, key) => $(id).addEventListener("change", () => { OPT[key] = $(id).checked; requestDraw(); });
+  ck("ckProb", "ckProb"); ck("ckNode", "ckNode"); ck("ckInf", "ckInf");
+
+  bindHover("well");
+  window.addEventListener("resize", () => { fitAll(); doDraw(); });
+}
+
+function init() {
+  bind();
+  buildChals();
+  fitAll();
+  updatePanels();
+  doDraw();
+}
+init();
+/* i18n 启动必须在 init() 之后：setLang() 会重跑 syncInputs()/render()，
+   放到 init() 之前会在 fitAll() 之前触发绘制，一旦抛异常整个 init() 就跑不到（挑战与画布会空）。 */
+(function () {
+  try {
+    i18nWatch();
+    ORIG_TITLE = ORIG_TITLE || document.title;
+    var btn = document.getElementById("langBtn");
+    if (btn) btn.onclick = function () { setLang(LANG === "en" ? "zh" : "en"); };
+    if (LANG === "en") setLang("en"); else { document.title = ORIG_TITLE; i18nWalk(document.body); }
+  } catch (e) { }
+})();
+</script>
+<div class="site-foot">本工具是 EIT-SP（半导体物理交互式教学工具箱）的一部分（武汉大学物理学院《半导体物理》智慧课程），以 MIT 协议开源，可自由使用与二次开发；转载请保留出处。反馈意见 <a href="mailto:doctorwanghao@qq.com">doctorwanghao@qq.com</a></div>
+</body>
+</html>

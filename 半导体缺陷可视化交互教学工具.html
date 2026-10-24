@@ -1,0 +1,2625 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<!-- SPDX-License-Identifier: MIT -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>半导体点缺陷、线缺陷、面缺陷可视化交互教学工具</title>
+<style>
+
+  :root {
+    --bg: #f7f9fb;
+    --panel: #ffffff;
+    --border: #dde4ec;
+    --text: #2c3e50;
+    --text-sub: #6b7a8c;
+    --blue: #1976d2;
+    --blue-light: #e3f0fb;
+    --orange: #ef8c1a;
+    --red: #d94a3d;
+    --teal: #0f9b8e;
+    --green: #2e9e5b;
+    --purple: #7b3fa0;
+    --gray-ref: #9aa5b1;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Microsoft YaHei", "PingFang SC", "Segoe UI", sans-serif;
+    background: var(--bg); color: var(--text); padding: 14px;
+  }
+  header { position: relative; display: flex; align-items: baseline; justify-content: center; gap: 14px; flex-wrap: wrap; text-align: center; margin-bottom: 2px; }
+  .lang-btn { position: absolute; right: 0; top: 0; border: 1px solid var(--border); background: #fff;
+    color: var(--text-sub); padding: 3px 10px; border-radius: 7px; cursor: pointer; font-size: 12px; font-weight: 600; }
+  .lang-btn:hover { border-color: var(--blue); color: var(--blue); }
+  header h1 { font-size: 20px; }
+  header .formula { font-size: 14.5px; color: var(--text-sub); }
+  .sub-note { text-align: center; font-size: 12.5px; color: var(--text-sub); margin-bottom: 12px; line-height: 1.75; }
+  .sub-note b { color: var(--blue); }
+
+  .layout { display: flex; gap: 14px; align-items: flex-start; max-width: 1500px; margin: 0 auto; }
+  .viz { flex: 0 0 64%; min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+  .side { flex: 1; min-width: 310px; display: flex; flex-direction: column; gap: 12px; }
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; }
+  .sec-title { font-size: 13.5px; font-weight: 700; margin: 2px 0 6px; }
+  /* 模块编号徽标：只有教学内容模块才带编号；控制面板等辅助面板不是模块，不加 */
+  .sec-title .mtag {
+    display: inline-block; background: var(--blue); color: #fff;
+    font-size: 11px; font-weight: 700; padding: 1.5px 7px;
+    border-radius: 5px; margin-right: 6px; vertical-align: 1.5px; letter-spacing: .3px;
+  }
+  canvas { display: block; width: 100%; border-radius: 6px; touch-action: none; }
+  canvas:focus { outline: 2px solid rgba(25,118,210,.45); outline-offset: 1px; }
+  .chart-wrap { position: relative; }
+  .hint { font-size: 12px; color: var(--text-sub); margin-top: 6px; line-height: 1.6; }
+  .ctrl { margin-bottom: 10px; }
+  .ctrl:last-child { margin-bottom: 0; }
+  .ctrl-head { display: flex; justify-content: space-between; align-items: baseline; font-size: 13px; font-weight: 600; margin-bottom: 2px; gap: 8px; }
+  .ctrl-head .val { color: var(--blue); font-variant-numeric: tabular-nums; font-weight: 700; white-space: nowrap; }
+  .ctrl input[type=range] { width: 100%; accent-color: var(--blue); }
+  .ctrl .sub { font-size: 11.5px; color: var(--text-sub); margin-top: 1px; line-height: 1.5; }
+  .btn-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+  .btn-row button {
+    border: 1px solid var(--border); background: #fff; color: var(--text);
+    padding: 5px 11px; border-radius: 7px; cursor: pointer; font-size: 12.5px;
+  }
+  .btn-row button:hover { border-color: var(--blue); color: var(--blue); }
+  .btn-row.tight button { padding: 4px 9px; font-size: 12px; }
+  .btn-row button.sel { background: var(--blue); border-color: var(--blue); color: #fff; font-weight: 600; }
+  .btn-row button.primary { background: var(--blue-light); border-color: var(--blue); color: var(--blue); font-weight: 600; }
+  .btn-row button:disabled { opacity: .45; cursor: default; }
+  .btn-row button:disabled:hover { border-color: var(--border); color: var(--text); }
+  .mode-switch { display: flex; gap: 6px; flex-wrap: wrap; }
+  .mode-switch button {
+    flex: 1; border: 1px solid var(--border); background: #fff; color: var(--text-sub);
+    padding: 6px 10px; border-radius: 8px; cursor: pointer; font-size: 12.5px; font-weight: 600;
+  }
+  .mode-switch button.active { background: var(--blue); border-color: var(--blue); color: #fff; }
+  .chk-row { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12.5px; color: var(--text-sub); margin-top: 4px; }
+  .chk-row label { display: inline-flex; align-items: center; gap: 5px; cursor: pointer; }
+  .chk-row input[type=checkbox] { accent-color: var(--blue); }
+  .legend { display: flex; gap: 6px 14px; flex-wrap: wrap; align-items: center; font-size: 12px; color: var(--text-sub); margin-top: 6px; }
+  .swatch { display: inline-block; vertical-align: middle; width: 20px; height: 0; border-top: 3px solid currentColor; border-radius: 2px; margin-right: 6px; }
+  .swatch.dash { border-top-style: dashed; }
+  .swatch.dot { width: 11px; height: 11px; border: none; border-radius: 50%; }
+  .swatch.sq { width: 11px; height: 11px; border: none; border-radius: 3px; }
+  /* ---- LaTeX 风格数学排版（纯 CSS，无外部库） ---- */
+  .m { font-family: "Cambria Math", "STIX Two Math", "Latin Modern Math", "Times New Roman", Times, serif;
+       font-size: 1.05em; font-style: normal; white-space: nowrap; letter-spacing: .01em; }
+  .m i, .m var { font-style: italic; }
+  .m .rm { font-style: normal; }
+  .m sub, .m sup { font-size: .70em; font-style: normal; line-height: 1; }
+  .m sub { vertical-align: -.28em; }
+  .m sup { vertical-align: .50em; }
+.m .m { font-size: 1em; }   /* 嵌套容器（TEXH 下标转换叠加）不再放大字号 */
+  .m sub i, .m sup i { font-style: italic; }
+  .m .op { font-style: normal; padding: 0 .24em; }
+  .m .sl { font-style: normal; padding: 0 .05em; }
+  .m .un { font-style: normal; padding-left: .16em; }
+  .frac { display: inline-block; vertical-align: -0.52em; text-align: center; margin: 0 .16em; font-size: .86em; line-height: 1.18; }
+  .frac > .num { display: block; padding: 0 .34em; border-bottom: 1px solid currentColor; }
+  .frac > .den { display: block; padding: 0 .34em; }
+  /* ---- 读数区 ---- */
+  .kv { display: grid; grid-template-columns: 1fr; gap: 2px 22px; font-size: 12.5px; }
+  .kv .row { display: flex; justify-content: space-between; gap: 8px; border-bottom: 1px dotted #eef2f7; padding: 2px 0; }
+  .kv .k { color: var(--text-sub); white-space: nowrap; }
+  .kv .v { font-variant-numeric: tabular-nums; text-align: right; }
+  .kv .v b { color: var(--blue); }
+  .kv .hd { grid-column: 1 / -1; font-weight: 700; color: var(--text); font-size: 12px; margin: 6px 0 2px; }
+  .kv .hd:first-child { margin-top: 0; }
+  .unit-note { font-size: 11.5px; color: var(--text-sub); line-height: 1.55; margin-top: 6px; }
+  /* ---- 引导探究 ---- */
+  .chal-wrap { max-width: 1500px; margin: 14px auto 0; }
+  .chal-bar { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+  .chal-bar b { font-size: 14.5px; }
+  .chal-bar span { font-size: 12px; color: var(--text-sub); }
+  .chal-grid { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+  .chal { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 8px 12px; }
+  .chal-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; cursor: pointer; }
+  .chal-head b { font-size: 13.5px; }
+  .chal-head .chev { color: var(--text-sub); font-size: 12px; transition: transform .15s; display: inline-block; }
+  .chal.open .chal-head .chev { transform: rotate(90deg); }
+  .chal.open { border-color: var(--blue); }
+  .chal-body { display: none; margin-top: 6px; font-size: 12.5px; color: var(--text-sub); line-height: 1.75; }
+  .chal.open .chal-body { display: block; }
+  .chal-body .ans { display: none; margin-top: 6px; padding: 7px 10px; background: var(--blue-light); border-radius: 6px; color: var(--text); }
+  .chal-body .ans.show { display: block; }
+  .chal-body .ans b { color: var(--blue); }
+  .chal-body .btn-row { margin-top: 8px; }
+  @media (max-width: 1100px) {
+    .layout { flex-direction: column; }
+    .viz { flex: 1 1 auto; width: 100%; }
+  }
+  /* ---- 课程页脚 ---- */
+  .site-foot { max-width: 1500px; margin: 18px auto 0; padding: 12px 16px 24px;
+    border-top: 1px solid var(--border); color: var(--text-sub);
+    font-size: 12.5px; line-height: 1.8; text-align: center; }
+  .site-foot a { color: var(--blue, #1976d2); text-decoration: none; }
+  .site-foot a:hover { text-decoration: underline; }
+
+  .grp { border-top: 1px dotted #e6ecf3; padding-top: 8px; margin-top: 8px; }
+  .grp:first-child { border-top: 0; padding-top: 0; margin-top: 0; }
+  .bar { height: 8px; background: #eef2f7; border-radius: 4px; overflow: hidden; margin-top: 2px; }
+  .bar > i { display: block; height: 100%; border-radius: 4px; }
+  .barlab { display: flex; justify-content: space-between; font-size: 11.5px; color: var(--text-sub); margin-top: 6px; gap: 8px; }
+  .barlab b { color: var(--blue); }
+  .mode-switch { margin-bottom: 2px; }
+  .sqrt > .rdc, .sqrt .rdc { display: inline-block; position: static; font-size: 1em;
+             border-top: .055em solid currentColor; padding: .06em .12em 0 .10em; margin: 0; line-height: 1; }
+
+  /* 公式排版：分式 / 根式 —— 全站统一为「回旋共振 v06」写法（置于末尾，覆盖本文件早期变体） */
+  .frac { display: inline-block; vertical-align: -0.52em; text-align: center; font-size: .78em; margin: 0 .12em; }
+  .frac > .num, .frac .num { display: block; padding: 0 .22em; border-bottom: .055em solid currentColor; line-height: inherit; }
+  .frac > .den, .frac .den { display: block; padding: 0 .22em; line-height: inherit; }
+  .sqrt { display: inline-block; white-space: nowrap; vertical-align: baseline; margin: 0; font-size: 1em; }
+  .sqrt > .rd, .sqrt .rd { display: inline-block; position: static; font-size: 1em; line-height: inherit; padding: 0 .02em 0 0; margin: 0; }
+  .sqrt > .rdc, .sqrt .rdc { display: inline-block; position: static; font-size: 1em;
+             border-top: .055em solid currentColor; padding: .06em .12em 0 .10em; margin: 0; line-height: 1; }
+  .sqrt .rdc:has(sup) { padding-top: .18em; }
+</style>
+</head>
+<body>
+
+<header>
+  <button id="langBtn" class="lang-btn" data-noi18n title="中文 / English">EN</button>
+  <h1>半导体点缺陷、线缺陷、面缺陷可视化交互教学工具</h1>
+  <div class="formula"><span class="m">闭合差<span class="op">=</span><i>b</i>（柏氏矢量）</span>　·　<span class="m"><i>D</i><span class="op">=</span><span class="frac"><span class="num"><i>b</i></span><span class="den">2<span class="rm">sin</span><span class="op">(</span><i>θ</i><span class="sl">/</span>2<span class="op">)</span></span></span></span>　·　<span class="m"><i>Γ</i><span class="op">=</span><i>ν</i><sub>0</sub><span class="rm">e</span><sup><span class="op">−</span><i>E</i><sub>a</sub><span class="sl">/</span><i>kT</i></sup></span>　·　<span class="m">⟨<i>R</i><sup>2</sup>⟩<span class="op">=</span><i>n</i><i>a</i><sup>2</sup></span>　·　<span class="m"><i>μ</i><span class="sl">/</span><i>μ</i><sub>0</sub><span class="op">=</span><span class="frac"><span class="num">1</span><span class="den">1<span class="op">+</span><i>N</i><sub>t</sub><span class="sl">/</span><i>N</i><sub>μ</sub></span></span></span><span style="color:var(--text-sub)">（示意参数化）</span></div>
+</header>
+<div class="sub-note">
+  真实晶体从来不是完美的：少了一个原子（<b>空位</b>）、多挤进一个原子（<b>间隙原子</b>）、插进半张原子面（<b>刃位错</b>）、两个取向不同的晶粒撞在一起（<b>晶界</b>）—— 按被打乱的范围分就是<b>点（0D）、线（1D）、面（2D）缺陷</b>。它们共同决定了三件事：<b>载流子浓度</b>（替位杂质是掺杂的来源）、<b>迁移率</b>（缺陷散射载流子）、<b>少子寿命</b>（深能级当复合中心）。按下<b>播放</b>，就能看见缺陷<b>怎样一步一步跳</b>：空位、间隙原子跳得飞快，而替位杂质即便在 1000 K 也几乎不动 —— 这正是<b>掺杂后必须高温退火 / 推进</b>的原因。两种位错请对照着看：<b>刃位错</b>多了一张半原子面、<b>螺位错</b>把一张完整的原子面拧成了螺旋（实际晶体里的位错多是两者的混合，这里只讲两个纯的极限情形）。
+</div>
+
+<div class="layout">
+  <div class="viz">
+    <div class="card">
+      <div class="sec-title"><span class="mtag">模块一</span>原子排列视图：点缺陷 / 线缺陷 / 面缺陷（可拖拽平移、滚轮缩放、悬停读原子）</div>
+      <div class="chart-wrap"><canvas id="lat" data-h="500" tabindex="0"></canvas></div>
+      <div class="legend" id="legLat"></div>
+    </div>
+  </div>
+
+  <div class="side">
+    <div class="card">
+      <div class="sec-title">控制面板</div>
+
+      <div class="ctrl grp">
+        <div class="ctrl-head"><span>缺陷维度</span><span class="val" id="dimVal">点缺陷 0D</span></div>
+        <div class="mode-switch" id="dimBtns"></div>
+        <div class="ctrl-head" style="margin-top:6px;"><span>缺陷类型</span><span class="val" id="subVal">空位</span></div>
+        <div class="btn-row tight" id="subBtns"></div>
+        <div class="sub" id="subNote"></div>
+      </div>
+
+      <div class="ctrl grp">
+        <div class="ctrl-head"><span>动画</span><span class="val" id="animVal"></span></div>
+        <div class="btn-row tight">
+          <button id="btnPlay" class="primary" title="快捷键：空格（画布获得焦点时）">▶ 播放</button>
+          <button id="btnReset" title="快捷键：R（画布获得焦点时）">⟲ 回到起点</button>
+          <button id="btnEnd" style="display:none;" title="直接跳到粘合完成后的螺旋面（快捷键：E）">⏭ 到末态</button>
+        </div>
+        <div class="sub" id="animSub"></div>
+        <div class="ctrl-head" style="margin-top:6px;"><span>播放速度</span><span class="val" id="spVal">1.00×</span></div>
+        <input type="range" id="spSlider" min="10" max="400" step="5" value="100">
+      </div>
+
+      <div class="ctrl grp">
+        <div class="ctrl-head"><span>晶界取向差 <span class="m"><i>θ</i></span>（仅晶界）</span><span class="val" id="thVal">12°</span></div>
+        <input type="range" id="thSlider" min="3" max="30" step="1" value="12">
+        <div class="sub" id="thSub"></div>
+        <div class="sub" style="margin-top:6px;">固定参数：<span class="m"><i>T</i><span class="op">=</span>1000 K</span>、<span class="m"><i>N</i><sub>t</sub><span class="op">=</span>10<sup>16</sup> cm<sup><span class="op">−</span>3</sup></span>（示意量级）。</div>
+      </div>
+
+      <div class="ctrl grp">
+        <div class="ctrl-head"><span>读数面板</span></div>
+        <div class="sub" id="lvlBox"></div>
+        <div class="sub" id="elecNote" style="margin-top:8px;"></div>
+      </div>
+
+      <div class="ctrl grp">
+        <div class="ctrl-head"><span>显示项目</span></div>
+        <div class="chk-row">
+          <label><input type="checkbox" id="ckDisp" checked> 弛豫位移箭头</label>
+          <label><input type="checkbox" id="ckBurg"> 柏氏回路</label>
+          <label><input type="checkbox" id="ckDang" checked> 悬挂键</label>
+          <label><input type="checkbox" id="ckPath" checked> 跳跃 / 迁移路径</label>
+          <label><input type="checkbox" id="ckTop"> 螺位错俯视图</label>
+        </div>
+        <div class="btn-row tight" style="margin-top:8px;">
+          <button id="btnView" title="只复位平移 / 缩放 / 视角，不影响动画">⤢ 复位视图</button>
+        </div>
+        <div class="sub">画布上：拖拽平移 · 滚轮缩放 · 螺位错可拖拽旋转视角；快捷键 <b>空格</b> 播放/暂停、<b>R</b> 回到起点、<b>E</b> 到末态。</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="chal-wrap">
+  <div class="card">
+    <div class="chal-bar">
+      <b>引导探究（点击展开，先自己试一试再看答案）</b>
+      <span>挑战任务</span>
+    </div>
+    <div class="chal-grid" id="chalGrid"></div>
+  </div>
+</div>
+
+<div class="site-foot">本工具是 EIT-SP（半导体物理交互式教学工具箱）的一部分（武汉大学物理学院《半导体物理》智慧课程），以 MIT 协议开源，可自由使用与二次开发；转载请保留出处。反馈意见 <a href="mailto:doctorwanghao@qq.com">doctorwanghao@qq.com</a></div>
+
+<script>
+/* ==================================================================
+   i18n（C1 单文件双语：物理代码仍然只有一份）
+   LANG 取值优先级：URL ?lang=en / ?lang=zh  >  localStorage('opl_lang')  >  默认中文。
+   不做 location 跳转——保住「单文件拷走也能用」。
+   三个注入点，**业务字符串一个都不改**：
+     ① partsOf()   画布 token：带 i/sub/sup/un 标记的是物理量、下标与单位，跳过
+     ② fillText/measureText 原型挂钩：兜住直接写进画布的中文串
+     ③ DOM 文本节点：静态 HTML 与 JS 写进来的 innerHTML，用 MutationObserver 兜住新增节点
+   T() 先查整句词典，未命中再按「最长优先」做短语替换，因此拼接串也能翻。
+   漏翻会被记进 window.__MISS，可导出核对。 */
+var LANG = (function () {
+  var m = /[?&]lang=([a-zA-Z]+)/.exec(location.search);
+  var q = m ? m[1].toLowerCase() : "";
+  if (q === "en" || q === "zh") return q;
+  var s = "";
+  try { s = localStorage.getItem("opl_lang") || ""; } catch (e) { }
+  return (s === "en" || s === "zh") ? s : "zh";
+})();
+var ORIG_TITLE = document.title;
+var __MISS = [];
+try { window.__MISS = __MISS; } catch (e) { }
+function noteMiss(s) { if (__MISS.indexOf(s) < 0) __MISS.push(s); }
+function TSoft(s) {
+  if (!T._K) T._K = Object.keys(I18N).sort(function (a, b) { return b.length - a.length; });
+  var out = s, i, k, orig = s;
+  /* 两遍：第一遍只吃长度 ≥ 2 的短语；第二遍的单字 key 只在「传进来的串
+     恰好就是这一个字」时才上场——画布逐字排版会拿单字去 measureText，那一
+     路必须翻。反过来，绝不让单字 key 去切更长的句子：否则「导」「子」「原」
+     会把「半导体」「电子数」「泡利原理」切成半 conduction 体、电 quantum 数、
+     泡利 origin 理这类中英混排。同一条理由也适用于「下」：整句不该被切碎。 */
+  for (var pass = 0; pass < 2; pass++) {
+    for (i = 0; i < T._K.length; i++) {
+      k = T._K[i];
+      if (k.length < 2 && (pass === 0 || orig !== k)) continue;
+      if (out.indexOf(k) < 0) continue;
+      /* 中文片段之间没有空格：前一片段已翻成英文时，本片段英文直连进去会粘连
+         （「更深」「或」「更浅」逐段替换成 deeper、or、shallower 会拼出 deeperor），
+         所以替换时看上下文：key 以中文开头、前一字符已是英文 ⇒ 前面补一个空格。 */
+      out = out.replace(new RegExp(k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "g"), function (m, off, str) {
+        var v = I18N[k];
+        var pre = off > 0 ? str.charAt(off - 1) : "";
+        if (/[A-Za-z0-9]/.test(pre) && /^[A-Za-z0-9(]/.test(v) && /[\u3400-\u9FFF]/.test(k.charAt(0))) v = " " + v;
+        return v;
+      });
+    }
+  }
+  return out;
+}
+/* 同一句被 DOM 切成好几个文本节点时，首尾空格会随机落在 data 里；
+   所以除了「整句命中」，再试一次「去空格后命中」并原样补回首尾空白。 */
+function trimMap() {
+  if (T._TM) return T._TM;
+  var m = {};
+  for (var k in I18N) if (Object.prototype.hasOwnProperty.call(I18N, k)) {
+    var t = k.replace(/^\s+|\s+$/g, "");
+    if (t && m[t] === undefined) m[t] = I18N[k];
+  }
+  T._TM = m;
+  return m;
+}
+/* eslint-disable no-use-before-define */
+function T(s) {
+  if (LANG !== "en" || typeof s !== "string" || !s) return s;
+  if (!/[一-鿿]/.test(s)) return s;
+  if (Object.prototype.hasOwnProperty.call(I18N, s)) return I18N[s];
+  var tm = trimMap(), core = s.replace(/^\s+|\s+$/g, "");
+  if (core && tm[core] !== undefined) {
+    var lead = s.slice(0, s.length - s.replace(/^\s+/, "").length);
+    var tail = s.slice(s.replace(/\s+$/, "").length);
+    return lead + tm[core] + tail;
+  }
+  var v = TSoft(s);
+  /* 译完还剩汉字也算漏翻：只翻掉一半的「半吊子译文」曾经让 __MISS 恒为 0。 */
+  if (v === s || /[\u3400-\u9FFF]/.test(v)) noteMiss(s);
+  return v;
+}
+var I18N = {
+  /* ---- 词典：中文原文 → 英文。key 禁含运行时数字（换个参数就漏），数字前后要拆开 ---- */
+  "半导体点缺陷、线缺陷、面缺陷可视化交互教学工具": "Point, Line and Planar Defects in Semiconductors — Interactive Toolkit",
+  "箭头＝周围原子的弛豫位移（放大 3×）": "Arrows = the relaxation displacement of the surrounding atoms (magnified 3×)",
+  "闭合差": "Closure failure",
+  "（柏氏矢量）": " (Burgers vector)",
+  "（示意参数化）": " (parametric sketch)",
+  "\n  真实晶体从来不是完美的：少了一个原子（": "\n  Real crystals are never perfect: one atom missing (a ",
+  "）": ")",
+  "（": " (",
+  "间隙原子": "interstitial",
+  "刃位错": "edge dislocation",
+  "螺位错": "screw dislocation",
+  "晶界": "grain boundary",
+  "点（0D）、线（1D）、面（2D）缺陷": "point (0D), line (1D) and planar (2D) defects",
+  "。它们共同决定了三件事：": ". Together they decide three things: ",
+  "载流子浓度": "the carrier concentration",
+  "（替位杂质是掺杂的来源）、": " (substitutional impurities are the source of doping), ",
+  "迁移率": "the mobility",
+  "（缺陷散射载流子）、": " (defects scatter the carriers), ",
+  "少子寿命": "the minority-carrier lifetime",
+  "（深能级当复合中心）。按下": " (deep levels act as recombination centres). Press ",
+  "播放": "Play",
+  "，就能看见缺陷": " and you can watch a defect ",
+  "怎样一步一步跳": "hopping step by step",
+  "：空位、间隙原子跳得飞快，而替位杂质即便在 1000 K 也几乎不动 —— 这正是": ": vacancies and interstitials hop extremely fast, whereas a substitutional impurity hardly moves even at 1000 K — exactly why ",
+  "掺杂后必须高温退火 / 推进": "doping must be followed by high-temperature annealing / drive-in",
+  " 的原因。两种位错请对照着看：": " is required. Compare the two kinds of dislocation: ",
+  "多了一张半原子面、": " has one extra half-plane of atoms, while the ",
+  "把一张完整的原子面拧成了螺旋（实际晶体里的位错多是两者的混合，这里只讲两个纯的极限情形）。": " twists one complete atomic plane into a helix (dislocations in real crystals are mostly a mixture of the two; only the two pure limiting cases are treated here).",
+  "模块一": "Module 1",
+  "原子排列视图：点缺陷 / 线缺陷 / 面缺陷（可拖拽平移、滚轮缩放、悬停读原子）": "Atomic arrangement: point / line / planar defects (drag to pan, wheel to zoom, hover an atom to read it)",
+  "主体原子（灰球）": "Host atoms (grey spheres)",
+  "空位（虚线圈＝缺一个原子）": "Vacancy (dashed circle = one atom missing)",
+  "自间隙原子（主体原子挤进间隙）": "Self-interstitial (a host atom squeezed into an interstice)",
+  "替位杂质 / 额外半原子面": "Substitutional impurity / extra half-plane",
+  "晶粒 1": "Grain 1",
+  "晶粒 2": "Grain 2",
+  "悬挂键（缺了近邻的断键）": "Dangling bond (a bond whose neighbour is missing)",
+  "三层原子面（各被拧成螺旋，首尾相接成一整张）": "Three atomic planes (each twisted into a helix, joined end to end into one sheet)",
+  "绕一圈上升 ": "Rise per turn ",
+  "（同一根竖直原子柱上相邻两层的高差）": " (the height difference between adjacent layers of one vertical column of atoms)",
+  "俯视图配色＝标高（一圈循环）": "Top view: colour = height (one cycle per turn)",
+  "跳跃 / 迁移路径": "Hopping / migration path",
+  "界面（晶界 / 孪晶面）": "Interface (grain boundary / twin plane)",
+  "控制面板": "Control Panel",
+  "缺陷维度": "Defect dimension",
+  "点缺陷 0D": "Point defects 0D",
+  "线缺陷 1D": "Line defects 1D",
+  "面缺陷 2D": "Planar defects 2D",
+  "缺陷类型": "Defect type",
+  "空位": "Vacancy",
+  "自间隙": "Self-interstitial",
+  "替位杂质": "Substitutional impurity",
+  "间隙杂质": "Interstitial impurity",
+  /* ---- 悬停气泡（画布直写：坐标与近邻数是运行时拼的，key 只能取到空格为止） ---- */
+  "主体原子": "Host atom",
+  "自间隙原子": "Self-interstitial atom",
+  "缺一个原子": "one atom missing",
+  "额外半原子面上的原子": "Atom on the extra half-plane",
+  "晶界区原子": "Grain-boundary atom",
+  "螺旋面上的原子": "Atom on the helical plane",
+  "堆垛层 ": "Stacking layer ",
+  " 的原子": " atom",
+  "原子": "atom",
+  "　坐标 (": "　at (",
+  "　近邻数 ": "　nearest neighbours ",
+  "弗仑克尔对": "Frenkel pair",
+  "肖特基型空位对": "Schottky-type divacancy",
+  "层错（抽出型）": "Stacking fault (intrinsic)",
+  "层错（插入型）": "Stacking fault (extrinsic)",
+  "孪晶界": "Twin boundary",
+  "某个格点上": "One lattice site has ",
+  "少了一个原子": "one atom too few",
+  "，周围原子朝空位": ", and the neighbours relax ",
+  "向内": "inwards",
+  "弛豫。": " towards the vacancy.",
+  "主体原子自己": "A host atom itself ",
+  "挤进晶格间隙": "squeezes into a lattice interstice",
+  "，把周围原子": ", pushing the neighbours ",
+  "挤开": "out of the way",
+  "杂质原子": "An impurity atom ",
+  "占据了晶格位置": "occupies a lattice site",
+  "（如 P、B 替代 Si），半径不同 ⇒ 局域畸变。": " (P or B replacing Si, for example); the radius differs, so a local distortion remains.",
+  "待在晶格间隙": "stays in a lattice interstice",
+  "里（Si 中的 Cu、Fe、Ni 就是典型）。": " (Cu, Fe and Ni in Si are typical examples).",
+  "一个空位 + 一个自间隙原子": "A vacancy plus a self-interstitial",
+  "成对出现（原子被撞离座位，停在旁边）。": " appear as a pair (the atom is knocked out of its seat and stops nearby).",
+  "两个相邻空位": "Two neighbouring vacancies",
+  "（双空位）；化合物半导体中成对出现以保持化学计量比。": " (a divacancy); in compound semiconductors they appear in pairs so as to keep the stoichiometry.",
+  "多插了半张原子面": "an extra half-plane of atoms",
+  "（红球那一列），": " (the column of red spheres), ",
+  " 处是位错线；滑移面以上": " marks the dislocation line; above the slip plane the crystal is ",
+  "受压": "compressed",
+  "、以下": " and below it ",
+  "受拉": "stretched",
+  "原子面绕位错线": "An atomic plane winds around the dislocation line and ",
+  "螺旋上升": "rises helically",
+  "成一个螺旋面（": " into a helicoid (",
+  "），": "), and ",
+  "没有": "no",
+  " 额外半原子面。": " extra half-plane.",
+  "两个": "Two grains of ",
+  "取向不同": "different orientation",
+  " 的晶粒相接，界面上原子对不上号 ⇒ 出现": " meet: the atoms at the interface do not match up, so ",
+  "悬挂键": "dangling bonds",
+  "（红点）。": " appear (red dots).",
+  "堆垛顺序 ": "In the stacking sequence ",
+  " 里": ", ",
+  "少了一层": "one layer is missing",
+  "：…ABCAB": ": …ABCAB",
+  "ABC…（虚线球＝缺失的那层）。": "ABC… (the dashed spheres are the missing layer).",
+  "多塞了一层": "one extra layer is inserted",
+  "：…ABC": ": …ABC",
+  "ABC…（红球＝多出的那层）。": "ABC… (the red spheres are the extra layer).",
+  "两侧原子排列呈": "The two sides are arranged in ",
+  "镜像对称": "mirror symmetry",
+  "（虚线＝孪晶面），原子一一对应、": " (the dashed line is the twin plane): the atoms correspond one to one and there are ",
+  "几乎没有悬挂键。": "almost no dangling bonds.",
+  "某个格点上少了一个原子，周围原子朝空位向内弛豫": "One lattice site has one atom too few; the neighbours relax inwards towards the vacancy",
+  "主体原子自己挤进晶格间隙，把周围原子挤开": "A host atom itself squeezes into a lattice interstice, pushing the neighbours out of the way",
+  "杂质原子占据了晶格位置（如 P、B 替代 Si），半径不同 ⇒ 局域畸变": "An impurity atom occupies a lattice site (P or B replacing Si); the radius differs, so a local distortion remains",
+  "杂质原子待在晶格间隙里（Si 中的 Cu、Fe、Ni 就是典型）": "An impurity atom stays in a lattice interstice (Cu, Fe and Ni in Si are typical)",
+  "一个空位 + 一个自间隙原子成对出现（原子被撞离座位，停在旁边）": "A vacancy plus a self-interstitial appear as a pair (the atom is knocked out of its seat and stops nearby)",
+  "两个相邻空位（双空位）；化合物半导体中成对出现以保持化学计量比": "Two neighbouring vacancies (a divacancy); in compound semiconductors they appear in pairs to keep the stoichiometry",
+  "多插了半张原子面（红球那一列），⊥ 处是位错线；滑移面以上受压、以下受拉": "An extra half-plane of atoms (the column of red spheres); ⊥ marks the dislocation line; above the slip plane the crystal is compressed, below it stretched",
+  "原子面绕位错线螺旋上升成一个螺旋面（⟳），没有额外半原子面": "An atomic plane rises helically around the dislocation line into a helicoid (⟳), with no extra half-plane",
+  "两个取向不同的晶粒相接，界面上原子对不上号 ⇒ 出现悬挂键（红点）": "Two grains of different orientation meet; the atoms at the interface do not match up, so dangling bonds appear (red dots)",
+  "堆垛顺序 ABCABC 里少了一层：…ABCAB|ABC…（虚线球＝缺失的那层）": "In the stacking sequence ABCABC one layer is missing: …ABCAB|ABC… (the dashed spheres are the missing layer)",
+  "堆垛顺序 ABCABC 里多塞了一层：…ABC+B|ABC…（红球＝多出的那层）": "In the stacking sequence ABCABC one extra layer is inserted: …ABC+B|ABC… (the red spheres are the extra layer)",
+  "两侧原子排列呈镜像对称（虚线＝孪晶面），原子一一对应、几乎没有悬挂键": "The two sides are arranged in mirror symmetry (the dashed line is the twin plane); the atoms correspond one to one and there are almost no dangling bonds",
+  "动画": "Animation",
+  "第 ": "Step ",
+  " 步": "",
+  "已走完 ": "Finished all ",
+  "▶ 播放": "▶ Play",
+  "⟲ 回到起点": "⟲ Back to start",
+  "⏭ 到末态": "⏭ Jump to end",
+  "　画面 ": "　frames ",
+  " 步/s。画面速度按 lg ": " steps/s. The frame rate is compressed logarithmically in ",
+  " 压缩，": ", so it ",
+  "不代表真实的快慢比例": "does not represent the true ratio of speeds",
+  "播放速度": "Playback speed",
+  "晶界取向差 ": "Grain-boundary misorientation ",
+  "（仅晶界）": " (grain boundary only)",
+  "仅在「晶界」模式下起作用。": "Effective only in the “grain boundary” mode.",
+  "固定参数：": "Fixed parameters: ",
+  "（示意量级）。": " (order-of-magnitude values).",
+  "末态：一整张螺旋面": "final state: one complete helicoid",
+  "初态：错开的书页": "initial state: the offset pages",
+  "往复播放 ": "playing back and forth ",
+  "定格 ": "frozen at ",
+  "读数面板": "Readout Panel",
+  "禁带能级位置（": "Gap-level position (",
+  "示意": "schematic",
+  "，以 Si 的 ": ", on the scale of the Si band gap ",
+  " 为标尺）：": "): ",
+  "深能级（复合中心）": "Deep level (recombination centre)",
+  "浅能级": "Shallow level",
+  "一维能带": "One-dimensional band",
+  "界面态带": "Interface-state band",
+  "由上面这套": "The readouts computed from this",
+  "示意参数化": "parametric sketch",
+  "算出的读数（": " (",
+  "）：": "): ",
+  "、（本缺陷 ": ", and (for this defect ",
+  "；两个特征浓度都是": "; both characteristic concentrations are",
+  "示意量级": "order-of-magnitude values",
+  "，不是文献值）": ", not literature values)",
+  "小角晶界 ≈ 一列刃位错，间距 ": "A low-angle grain boundary ≈ a row of edge dislocations, spacing ",
+  "显示项目": "Display",
+  " 弛豫位移箭头": " relaxation-displacement arrows",
+  " 柏氏回路": " Burgers circuit",
+  " 悬挂键": " dangling bonds",
+  " 跳跃 / 迁移路径": " hopping / migration paths",
+  " 螺位错俯视图": " screw-dislocation top view",
+  "⤢ 复位视图": "⤢ Reset view",
+  "画布上：拖拽平移 · 滚轮缩放 · 螺位错可拖拽旋转视角；快捷键 ": "On the canvas: drag to pan, wheel to zoom, and for the screw dislocation drag to rotate; shortcut keys ",
+  "空格": "space",
+  " 播放/暂停、": " play/pause, ",
+  " 回到起点、": " back to start, ",
+  " 到末态。": " jump to the end.",
+  "快捷键：空格（画布获得焦点时）": "Shortcut: space (when the canvas has focus)",
+  "快捷键：R（画布获得焦点时）": "Shortcut: R (when the canvas has focus)",
+  "直接跳到粘合完成后的螺旋面（快捷键：E）": "Jump straight to the helicoid after gluing (shortcut: E)",
+  "只复位平移 / 缩放 / 视角，不影响动画": "Resets pan / zoom / view only; the animation is unaffected",
+  "引导探究（点击展开，先自己试一试再看答案）": "Guided inquiry (click to expand — try it yourself before opening the answers)",
+  "挑战任务": "Challenges",
+  "看看答案": "Show answer",
+  "1. 在「点缺陷」里依次点开": "1. In “point defects”, open in turn ",
+  "空位、自间隙、替位杂质、间隙杂质": "vacancy, self-interstitial, substitutional impurity, interstitial impurity",
+  "。它们分别": ". For each of them, what is ",
+  "少了": "missing",
+  "什么或": " and what is ",
+  "多了": "extra",
+  "什么？周围原子的弛豫方向一样吗？": "? Do the neighbouring atoms relax in the same direction?",
+  "四种点缺陷的区别只有一句话：": "The four point defects differ in a single sentence: ",
+  "看原子是「少了」还是「多了」，以及多的那个原子坐在哪里": "look at whether atoms are “missing” or “extra”, and at where the extra atom sits",
+  "是格点上": " is a lattice site with ",
+  "少一个": "one fewer",
+  "原子（虚线圈），周围原子": " atom (the dashed circle); the neighbours relax ",
+  "弛豫（蓝箭头）去填补那个坑；": " (blue arrows) to fill the hole; ",
+  "是主体原子": " is a host atom that is ",
+  "多一个": "one too many",
+  "，但它挤在": ", but it is squeezed into ",
+  "格点之间": "the space between lattice sites",
+  "（蓝球），把周围原子": " (the blue sphere), pushing the neighbours ",
+  "推开（红箭头）；": " outwards (red arrows); ",
+  "是杂质原子": " is an impurity atom that ",
+  "占了格点": "occupies a lattice site",
+  "（红球）—— 原子总数没变，只是换了一个人坐，因为半径不同，周围仍有局域畸变；": " (the red sphere) — the number of atoms is unchanged, only someone else sits there; because the radius differs, a local distortion remains; ",
+  "（绿球）是杂质原子": " (the green sphere) is an impurity atom ",
+  "待在间隙里": "staying in an interstice",
+  "，和自间隙的区别只在于「是不是外来户」。当前选的是": "; the only difference from the self-interstitial is whether the atom is foreign. The current choice is ",
+  "2. 切到「刃位错」，打开": "2. Switch to “edge dislocation” and turn on ",
+  "柏氏回路": "Burgers circuit",
+  "。额外半原子面在哪一侧？滑移面上方与下方的原子间距各是多少？应力方向是什么？": ". On which side is the extra half-plane? What are the atomic spacings above and below the slip plane? What is the direction of the stress?",
+  "刃位错的形象就是": "An edge dislocation is simply ",
+  "：那一张面在滑移面": ": that plane sits ",
+  "上方": "above",
+  "（红球那一列），到 ": " the slip plane (the column of red spheres) and runs only as far as ",
+  " 处戛然而止 —— ": " — ",
+  " 就是位错线。": " is the dislocation line.",
+  "因为这张面是硬塞进去的，": "Because this plane is forced in, ",
+  "上面被挤、下面被拉": "the upper side is compressed and the lower side stretched",
+  "：滑移面": ": above the slip plane the ",
+  "近邻间距 ": "nearest-neighbour spacing is ",
+  "小于": "less than",
+  " 1 ⇒ ": " 1 ⇒ ",
+  "下方": "below",
+  "大于": "greater than",
+  "。把": ". Turning on the ",
+  "打开可以看到：绕位错沿格点走一圈（5 右 / 5 下 / 5 左 / 5 上）": " shows that a circuit along lattice sites around the dislocation (5 right / 5 down / 5 left / 5 up) ",
+  "回不到原点": "does not close",
+  "，闭合差正好是一个原子间距 —— 当前闭合差 ": "; the closure failure is exactly one atomic spacing — the present closure failure is ",
+  "，这就是": ", and this is the ",
+  "柏氏矢量 ": "Burgers vector ",
+  "，也是「位错」的定量定义。注意：位错": ", the quantitative definition of a dislocation. Note that a dislocation is ",
+  "不是": "not",
+  "一条线上少了一排原子，而是": " a row of atoms missing along one line, but ",
+  "整个晶体的弹性畸变": "an elastic distortion of the whole crystal",
+  "，越远越弱。": ", growing weaker with distance.",
+  "3. 切到「螺位错」，": "3. Switch to “screw dislocation”: ",
+  "拖动画面转一圈": "drag the view around one full turn",
+  "、再打开": " and turn on the ",
+  "俯视图": "top view",
+  "对照。同一张原子面是怎么绕位错线": " for comparison. How does one and the same atomic plane ",
+  "一圈一圈盘上去": "wind upwards turn by turn",
+  " 的？红色双箭头标出的 ": "? How is the quantity marked by the red double arrow, ",
+  " 是怎么量出来的？它为什么": ", measured? Why does it ",
+  "不需要": "not need",
+  " 额外半原子面？": " an extra half-plane of atoms?",
+  "先按": "First press ",
+  "把全过程看一遍，这就是教科书的「书页」比喻：": " and watch the whole process — this is the “pages of a book” analogy of the textbooks: ",
+  "完整晶体 = 一叠平行的原子面": "a perfect crystal = a stack of parallel atomic planes",
+  " → 沿一条半径": " → cut it open along one radius and ",
+  "剪开": "open it up",
+  "（俯视图里那条红色虚线），剪口两侧沿竖直方向相对滑移 ": " (the red dashed line in the top view); the two sides of the cut slide vertically relative to each other by ",
+  "，成了一叠「": ", giving a stack of pages that are ",
+  "错了一页": "out by one page",
+  "」的书页 → 再": " → then ",
+  "粘合、弹性弛豫": "glue them and let them relax elastically",
+  " —— 粘好之后：第 ": " — once glued, the end of page ",
+  " 页的末端正好接到第 ": " meets exactly the beginning of page ",
+  " 页的开头，整叠书页连成图中的": ", and the whole stack joins into the ",
+  "一张连续螺旋面": "single continuous helicoid of the figure",
+  "，没有任何多余的半原子面，也没有受压区 / 受拉区。主图里标了 ①、② 两点：": ", with no extra half-plane and no compressed / stretched region. The main figure marks two points, ① and ②: ",
+  "① 是起点": "① is the starting point",
+  "，沿最外圈走一整圈到 ": "; going once round the outermost circle to ",
+  "，位置回到了起点的": " brings you back to a position ",
+  "正上方": "directly above the starting point",
+  "，高度正好抬升 ": ", with the height raised by exactly ",
+  "（红色双箭头量出来的就是它）—— 所以": " (that is what the red double arrow measures) — hence ",
+  "每绕一圈上升一个原子间距": "every turn rises by one atomic spacing",
+  "，球的颜色深浅表示标高，转一圈颜色正好由浅变深再回到浅（循环一次 = 上升一个 b）。": "; the shade of a sphere encodes its height, and one turn takes the colour from light to dark and back (one cycle = a rise of one b).",
+  "因为它任何时候都在表面露出一个": "Because at any moment it exposes at the surface a ",
+  "永不消失的台阶": "step that never disappears",
+  "，螺位错是晶体": ", a screw dislocation is the ",
+  "螺旋生长的台阶源": "step source of spiral growth",
+  "，这正是它在半导体外延里格外重要的原因。": " of the crystal — which is why it matters so much in semiconductor epitaxy.",
+  "与刃位错的本质区别": "There are two essential differences from an edge dislocation",
+  "有两条：① 没有额外半原子面；② 柏氏矢量 ": ": first, there is no extra half-plane; second, the Burgers vector ",
+  " 平行": " is parallel",
+  "于位错线（刃位错是": " to the dislocation line (for an edge dislocation it is ",
+  "垂直": "perpendicular",
+  " 的）。顺带一个反直觉的事实：": "). One counter-intuitive fact in passing: ",
+  "俯视图里每个原子的位置并未被挪动": "in the top view no atom has been displaced",
+  "（位错的位移只有垂直分量），所以从上往下看仍是一排排整齐的格子 —— 乱的只是「标高」。把位错线与 ": " (the displacement of a dislocation has only a vertical component), so from above one still sees neat rows — only the “height” is scrambled. If the angle between the dislocation line and ",
+  " 的夹角记作 ": " is called ",
+  " 就是": " means ",
+  "纯刃型": "pure edge",
+  "、": ", ",
+  "纯螺型": "pure screw",
+  "，本工具只演示这两个极限情形（真实晶体里的位错大多是斜交的": "; this tool demonstrates only these two limiting cases (dislocations in real crystals are mostly oblique, i.e. ",
+  "混合型": "mixed",
+  "）。（实用提示：打开": "). (Practical hint: turning on the ",
+  " 只对刃位错有意义 —— 螺位错的闭合差是": " is meaningful only for the edge dislocation — the closure failure of a screw dislocation is ",
+  "垂直纸面": "perpendicular to the plane of the page",
+  " 的，在这张投影里看不出来。）": ", and cannot be seen in this projection.)",
+  "4. 切到「晶界」，把取向差 ": "4. Switch to “grain boundary” and drag the misorientation ",
+  " 从 3° 拖到 30°。界面上的": " from 3° to 30°. How does the number of ",
+  "数量怎么变？小角晶界里的": " on the interface change? In a low-angle grain boundary, what is the relation between the ",
+  "位错间距 ": "dislocation spacing ",
+  " 与 ": " and ",
+  " 什么关系？": "?",
+  "两个晶粒取向差 ": "Two grains misoriented by ",
+  "，界面上的原子就": " make the atoms at the interface ",
+  "对不上号": "fail to match up",
+  "：有些方向找不到近邻 ⇒ 留下": ": in some directions no neighbour is found, leaving ",
+  "断键（悬挂键）": "broken bonds (dangling bonds)",
+  "，图中用红色短线标出，当前共 ": ", drawn as short red lines; at present there are ",
+  " 个 —— 注意它们": " of them — note that they ",
+  "全部": "all",
+  "长在界面那一两个原子层上，体内每个原子的配位数仍是 4（这正是面缺陷「二维」的含义：破坏只发生在一个面上）。": " sit in the one or two atomic layers of the interface, while every atom in the bulk still has coordination number 4 (that is exactly what “two-dimensional” means for a planar defect: the damage is confined to one plane).",
+  " 越大，两侧晶格越对不上，失配区越宽、断键越密（普通大角晶界几乎是一条连续的悬挂键带）；不过某些特殊角度两侧恰好对得整齐，断键会明显变少 —— 那就是真实存在的": "The larger the misorientation, the worse the two lattices match: the misfit region widens and the broken bonds get denser (an ordinary high-angle boundary is almost a continuous band of dangling bonds); at certain special angles, however, the two sides match exactly and the number of broken bonds drops markedly — that is the real ",
+  "重位晶界": "coincidence-site lattice boundary",
+  "。小角晶界有个漂亮的结果：": ". A low-angle grain boundary has a beautiful result: ",
+  "它其实就是一列刃位错": "it is really a row of edge dislocations",
+  "，间距 ": ", with spacing ",
+  "。当前 ": ". At present ",
+  " ⇒ ": " ⇒ ",
+  "，而 ": ", while ",
+  " —— 两者只差一个正弦修正，": " — the two differ only by a sine correction, and the ",
+  " 越小越吻合。位错间距越小（": " the smaller, the better they agree. The smaller the dislocation spacing (the larger the ",
+  " 越大）⇒ 位错核心重叠 ⇒ 就不再是「一列位错」而是真正的界面了。": "), the more the dislocation cores overlap, until it is no longer “a row of dislocations” but a genuine interface.",
+  " 是反例：两侧镜像对称、原子一一对应，几乎没有悬挂键，所以它的电学活性远低于普通晶界。": " is the counterexample: the two sides are mirror images with a one-to-one correspondence of atoms and almost no dangling bonds, so its electrical activity is far lower than that of an ordinary grain boundary.",
+  "本工具是 EIT-SP（半导体物理交互式教学工具箱）的一部分（武汉大学物理学院《半导体物理》智慧课程），以 MIT 协议开源，可自由使用与二次开发；转载请保留出处。": "This tool is part of EIT-SP, the Educational Interactive Toolkit for Semiconductor Physics (School of Physics and Technology, Wuhan University). Released under the MIT licence: free to use, modify and redistribute, including commercially. Please keep this attribution.",
+  "反馈意见": " Feedback",
+  "向外": "outwards",
+  "多挤进一个原子": "an extra atom squeezed in",
+  "插进半张原子面": "half an atomic plane inserted",
+  "两个取向不同": "Two grains with different orientations",
+  "的晶粒撞在一起（": " colliding (",
+  "的晶粒相接，界面上原子对不上号 ⇒ 出现": " meet; the atoms of the interface do not match up, so ",
+  "）—— 按被打乱的范围分就是": ") — classified by the range they disturb, they are ",
+  "（本缺陷 ": " (for this defect ",
+  "（切到刃位错即可读数）。把": " (switch to the edge dislocation to read them). Turning on the ",
+  "，闭合差正好是一个原子间距 —— ": "; the closure failure is exactly one atomic spacing — ",
+  "当前未显示，这就是": "at present it is not shown, and this is the ",
+  /* ---- 画布标注（chipC / fillText 直接写的中文串，词典此前漏收） ---- */
+  "空位 ← 间隙原子游回来即复合": "Vacancy ← when the interstitial wanders back, the pair recombines",
+  "相邻双空位": "two adjacent vacancies",
+  "1000 K 下跳跃频率 ": "hop rate at 1000 K ",
+  " —— 一步不跳，视为": " — not a single hop; it counts as ",
+  "（这正是掺杂后必须高温退火 / 推进的原因）。": "(this is exactly why doping must be followed by high-temperature annealing / drive-in).",
+  " 或 ": " or ",
+  "滑移面": "slip plane",
+  "额外半原子面": "extra half-plane of atoms",
+  "⊥ 位错线": "⊥ dislocation line",
+  "受压：间距变小": "compressed: the spacing shrinks",
+  "受拉：间距变大": "stretched: the spacing grows",
+  "同一列原子：": "Atoms in one column:",
+  "一动没动，只是整体抬升了": "has not moved at all — the whole column has simply risen",
+  "绕一圈": "one full turn",
+  "正好一个面间距": "exactly one interplanar spacing",
+  "① 起点": "① Start",
+  "② 绕一圈：回到起点正上方": "② After one full turn: back directly above the start",
+  "位错线（": "dislocation line (",
+  "与它平行，竖直向上）": "parallel to it, straight up)",
+  "位错线": "dislocation line",
+  "三个深浅＝三层原子面；虚线圈＝位错核心（畸变剧烈，连续介质解失效）": "Three shades = three atomic planes; the dashed circle = dislocation core (the distortion there is severe and the continuum solution breaks down)",
+  "按住拖动可旋转视角 · 滚轮缩放 · 播放 = 「书页剪开—错动—粘合」全过程": "Drag to rotate the view · wheel to zoom · Play = the whole sequence “cut the page — shear it — glue it back”",
+  "剪口（上下两页相差": "the cut (the two pages differ by",
+  "剪口": "the cut",
+  "上下两页相差": "the two pages differ by",
+  "纸面，": "the sheet,",
+  "同向": "in the same direction",
+  "俯视图：位置整齐，标高却在绕圈": "Top view: the positions line up, yet the heights wind round in a circle",
+  "粘合弛豫后：一整张连续螺旋面": "after gluing and relaxation: one continuous helical plane",
+  "小角": "small-angle",
+  "一列": "a row of",
+  "多出的一层（插入型）": "extra layer (insertion type)",
+  "堆垛顺序（自下而上）：": "Stacking sequence (bottom to top):",
+  "孪晶面（两侧镜像对称，几乎无悬挂键）": "Twin plane (the two sides are mirror images, almost no dangling bonds)",
+  "冻结": "frozen",
+  "几乎无悬挂键": "almost no dangling bonds",
+  "缺失的一层 ": "missing layer ",
+  "（虚线＝本来该有却没有）": " (dashed = the layer that should have been there but is not)",
+  "刚剪开并错动 b：一叠「错了一页」的书页": "just cut and sheared by b: a stack of pages “off by one”",
+  "已走 ": "steps: ",
+  "粘合中": "gluing",
+  "⏸ 暂停": "⏸ Pause",
+  "几乎": "almost ",
+  "柏氏回路：绕位错走一圈回不到原点（完美晶体里必然闭合）": "Burgers circuit: a loop around the dislocation fails to close (in a perfect crystal it necessarily closes)",
+  "（箭头方向，已超出视野）": "(in the direction of the arrow, outside the field of view)",
+  "相邻 ⊥ 相距 ": "adjacent ⊥ apart ",
+  "相邻": "adjacent",
+  "相距": "apart",
+  "晶粒 1（−θ/2）": "Grain 1 (−θ/2)",
+  "晶粒 2（+θ/2）": "Grain 2 (+θ/2)",
+};
+
+/* 注入点②：画布直写字符串。老工具直接调 g.fillText()，这里在原型上兜住。
+   measureText 必须一起挂钩，否则「量的宽度」和「量的文字」用的不是同一个串。 */
+(function () {
+  if (typeof CanvasRenderingContext2D === "undefined") return;
+  var ft = CanvasRenderingContext2D.prototype.fillText;
+  CanvasRenderingContext2D.prototype.fillText = function (s, x, y) {
+    if (typeof s === "string") arguments[0] = T(s);
+    return ft.apply(this, arguments);
+  };
+  var mt = CanvasRenderingContext2D.prototype.measureText;
+  CanvasRenderingContext2D.prototype.measureText = function (s) {
+    return mt.call(this, typeof s === "string" ? T(s) : s);
+  };
+})();
+
+/* 注入点④：逐字绘制的画布串。drawMath 一类把中文按单字拆成 token 再逐个 fillText，
+   T() 每次只见到一个汉字 ⇒ 整句词条永远命中不了。这里在整串进入分词之前先整体翻译，
+   于是画布标注也走「整句优先」，与 DOM 同一个口径。没有这些函数的工具自动跳过。
+   ⚠️ 签名坑：drawMath / measureMath 的第一个参数是 canvas context（对象），文本在第
+   二位；早期版本照着 arguments[0] 翻，等于把 context 送去 T()，补丁全程空转。
+   这里改为「找到第一个含中文的字符串参数」再翻，既躲开 context，也不会误伤
+   align / weight 之类以英文字符串传的选项。 */
+(function () {
+  ["drawMath", "drawMathHalo", "measureMath"].forEach(function (n) {
+    var f = window[n];
+    if (typeof f !== "function") return;
+    window[n] = function () {
+      for (var i = 0; i < arguments.length; i++) {
+        if (typeof arguments[i] === "string" && /[\u3400-\u9FFF]/.test(arguments[i])) {
+          arguments[i] = T(arguments[i]);
+          break;
+        }
+      }
+      return f.apply(this, arguments);
+    };
+  });
+})();
+
+
+/* ---- DOM 文本节点 ---- */
+function i18nNode(n) {
+  var el = n.parentElement;
+  if (!el) return;
+  var tag = el.tagName;
+  if (tag === "SCRIPT" || tag === "STYLE") return;
+  if (el.closest && el.closest("[data-noi18n]")) return;
+  var cur = n.nodeValue;
+  if (n.__orig === undefined || (cur !== n.__last && cur !== n.__orig)) n.__orig = cur;
+  var want = LANG === "en" ? T(n.__orig) : n.__orig;
+  if (want !== cur) n.nodeValue = want;
+  n.__last = want;
+}
+/* 属性（title / placeholder / optgroup label …）不是文本节点，MutationObserver 覆盖不到，
+   必须单独过一遍：否则悬停提示、下拉分组名会残留中文。原文缓存在元素 expando 上，
+   切回中文时原样写回。改属性不会触发 childList/characterData 观察器，不会递归。 */
+var I18N_ATTRS = ["title", "placeholder", "aria-label", "alt", "label"];
+function i18nAttrs(root) {
+  var els = [root], i, j;
+  if (root.querySelectorAll) els = els.concat(Array.prototype.slice.call(root.querySelectorAll("*")));
+  for (i = 0; i < els.length; i++) {
+    var el = els[i];
+    if (!el.getAttribute) continue;
+    if (el.closest && el.closest("[data-noi18n]")) continue;
+    for (j = 0; j < I18N_ATTRS.length; j++) {
+      var a = I18N_ATTRS[j];
+      if (!el.hasAttribute(a)) continue;
+      var key = "__a_" + a;
+      if (el[key] === undefined) el[key] = el.getAttribute(a);
+      var want = LANG === "en" ? T(el[key]) : el[key];
+      if (want !== el.getAttribute(a)) el.setAttribute(a, want);
+    }
+  }
+}
+/* 英文补空格（跨节点）：中文片段被行内标签切开时，各自翻成英文后直连会粘连。
+   判定用 DOM 结构而不是渲染矩形——折叠区（挑战答案）矩形为零，矩形法会漏。
+   两文本节点在文档序里紧邻（中间没有任何文本节点，包括空格节点）、
+   前段末尾与后段开头都是字母、双方词条都没自带空格、且不在上下标里 ⇒ 插一个空格。
+   空格节点记录在案，切回中文时移除。只动 i18n 注入层，不改业务文本。 */
+function fixGlue(root) {
+  var all = [];
+  var w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null, false), n;
+  while ((n = w.nextNode())) all.push(n);
+  function subbed(el) {
+    while (el) { var t = el.tagName; if (t === "SUB" || t === "SUP") return true; el = el.parentElement; }
+    return false;
+  }
+  for (var i = 0; i + 1 < all.length; i++) {
+    var a = all[i], b = all[i + 1];
+    if (!a.nodeValue || !b.nodeValue) continue;
+    if (/\s$/.test(a.nodeValue) || /^\s/.test(b.nodeValue)) continue;
+    if (!/[A-Za-z0-9]$/.test(a.nodeValue) || !/^[A-Za-z]/.test(b.nodeValue)) continue;
+    var pa = a.parentElement, pb = b.parentElement;
+    if (!pa || !pb || subbed(pa) || subbed(pb)) continue;
+    var sp = document.createTextNode(" ");
+    sp.__glue = 1;
+    (fixGlue._n = fixGlue._n || []).push(sp);
+    b.parentNode.insertBefore(sp, b);
+  }
+}
+function removeGlue() {
+  if (!fixGlue._n) return;
+  for (var i = 0; i < fixGlue._n.length; i++) { var g = fixGlue._n[i]; if (g.parentNode) g.parentNode.removeChild(g); }
+  fixGlue._n = [];
+}
+/* 全局防抖补空格：挑战答案这类「点击时才重建」的区域，observer 回调里对子树跑
+   fixGlue 的时机不全（答案重写、延迟渲染都会错过）。任何 DOM 变更后 60ms
+   对整页补一次；空格本身不触发新插入，收敛。 */
+var _glueTimer = null;
+function _glueKick() {
+  if (LANG !== "en") return;
+  if (_glueTimer) clearTimeout(_glueTimer);
+  _glueTimer = setTimeout(function () {
+    _glueTimer = null;
+    if (LANG === "en") fixGlue(document.body);
+  }, 60);
+}
+function i18nWalk(root) {
+  var w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null, false), n, c = 0;
+  while ((n = w.nextNode())) { i18nNode(n); c++; }
+  i18nAttrs(root);
+  if (LANG === "en") fixGlue(root === document ? document.body : root);
+  return c;
+}
+var _i18nBusy = false;
+function i18nWatch() {
+  if (typeof MutationObserver === "undefined") return;
+  var mo = new MutationObserver(function (ms) {
+    if (_i18nBusy) return;
+    _i18nBusy = true;
+    try {
+      for (var i = 0; i < ms.length; i++) {
+        var m = ms[i];
+        if (m.type === "childList") {
+          for (var j = 0; j < m.addedNodes.length; j++) {
+            var nd = m.addedNodes[j];
+            if (nd.nodeType === 3) i18nNode(nd);
+            else if (nd.nodeType === 1) i18nWalk(nd);
+          }
+        } else if (m.type === "characterData") i18nNode(m.target);
+      }
+    } finally { _i18nBusy = false; }
+    _glueKick();
+  });
+  mo.observe(document.body, { childList: true, subtree: true, characterData: true });
+}
+function setLang(l) {
+  LANG = l;
+  try { localStorage.setItem("opl_lang", l); } catch (e) { }
+  document.documentElement.lang = l === "en" ? "en" : "zh-CN";
+  var btn = document.getElementById("langBtn");
+  if (btn) btn.textContent = l === "en" ? "中文" : "EN";
+  document.title = l === "en" ? T(ORIG_TITLE) : ORIG_TITLE;
+  if (l !== "en") removeGlue();
+  i18nWalk(document.body);
+  _glueKick();
+  if (typeof syncInputs === "function") syncInputs();
+  if (typeof render === "function") render();
+}
+
+
+
+
+
+/* ---------------- 直接 fillText / strokeText 的自动排版钩子 ----------------
+   有些标注不走 txt() 而是直接 g.fillText()（状态徽标、能带边等），
+   这里在原型层统一处理：含数学记法的字符串先按 LaTeX 规则拆段再绘制，
+   measureText 同步返回拆段总宽，白底框长度自动跟着变。 */
+const NEED_MATH_HM = /[\u2070-\u209C\u00B2\u00B3\u00B9]|_\{?[A-Za-z0-9\u0370-\u03ff]|\^\{?[\d(\-]|\d(\.\d+)?[eE][+\-]\d|\u221A/;
+/* 原生 measureText：mathSegsHM 内部量宽必须走这一条，
+   否则 measureText 被钩子接管后会 self-recursion（RangeError）。 */
+var _mRawHM = null;
+function measureRawHM(g, s) { return (_mRawHM ? _mRawHM : g.measureText).call(g, s).width; }
+function mathSegsHM(g, s) {
+  const f = String(g.font || "");
+  const mm = /(\d+(?:\.\d+)?)px/.exec(f);
+  const size = mm ? parseFloat(mm[1]) : 12;
+  const family = f.replace(/^(?:\s*(?:italic|oblique|bold|[1-9]00)\s*)*\d+(?:\.\d+)?px\s*/, "");
+  const style = /italic|oblique/.test(f) ? "italic " : (/bold|[6-9]00/.test(f) ? "bold " : "");
+  const parts = AUTO(s), laid = [];
+  let w = 0;
+  for (const p of parts) {
+    const small = !!(p.sup || p.sub);
+    const fs = style + (small ? (size * 0.74).toFixed(2) : size.toFixed(2)) + "px " + family;
+    g.font = fs;
+    const tw = measureRawHM(g, p.s);
+    laid.push({ s: p.s, w: tw, fs: fs, dy: small ? (p.sup ? -size * 0.40 : size * 0.22) : 0 });
+    w += tw;
+  }
+  return { laid: laid, w: w, family: family, style: style, size: size };
+}
+(function hookMathHM() {
+  if (window.__MATH_HOOK) return; window.__MATH_HOOK = 1;
+  const P = CanvasRenderingContext2D.prototype;
+  const _fill = P.fillText, _stroke = P.strokeText, _measure = P.measureText;
+  function draw(drawRaw, g, s, x, y, rest) {
+    const info = mathSegsHM(g, s);
+    const al = g.textAlign, bl = g.textBaseline;
+    const cx = al === "right" ? x - info.w : (al === "center" ? x - info.w / 2 : x);
+    g.textAlign = "left";
+    let px = cx;
+    for (const L of info.laid) {
+      g.font = L.fs;
+      drawRaw.call(g, L.s, px, y + L.dy, ...rest);
+      px += L.w;
+    }
+    g.textAlign = al; g.textBaseline = bl;
+    g.font = info.style + info.size.toFixed(2) + "px " + info.family;
+    return info;
+  }
+  P.fillText = function (s, x, y) {
+    if (typeof s !== "string" || !NEED_MATH_HM.test(s)) return _fill.apply(this, arguments);
+    draw(_fill, this, s, x, y, Array.prototype.slice.call(arguments, 3));
+  };
+  P.strokeText = function (s, x, y) {
+    if (typeof s !== "string" || !NEED_MATH_HM.test(s)) return _stroke.apply(this, arguments);
+    draw(_stroke, this, s, x, y, Array.prototype.slice.call(arguments, 3));
+  };
+  if (!_mRawHM) _mRawHM = _measure;
+  P.measureText = function (s) {
+    if (window.__HM_IN || typeof s !== "string" || !NEED_MATH_HM.test(s)) return _measure.call(this, s);
+    window.__HM_IN = 1;
+    const save = this.font;
+    let info;
+    try { info = mathSegsHM(this, s); } finally { window.__HM_IN = 0; }
+    this.font = save;
+    return { width: info.w, get actualBoundingBoxLeft() { return 0; }, get actualBoundingBoxRight() { return info.w; } };
+  };
+})();
+
+/* ---------------- HTML 侧自动 LaTeX 排版 ----------------
+   读数 / 说明 / 按钮名里由 JS 拼出来的 cm⁻³、E_c、2.5e+8，
+   在写进 innerHTML 之前转成真 <sup>/<sub>；标签与属性原样放过（title 不会被塞进尖括号）。
+   与画布侧 AUTO() 对偶，保证网页和画布按同一套规则排版。 */
+const AUTOH_SUP = { "⁰": "0", "¹": "1", "²": "2", "³": "3", "⁴": "4", "⁵": "5", "⁶": "6",
+  "⁷": "7", "⁸": "8", "⁹": "9", "⁺": "+", "⁻": "−", "⁼": "=", "⁽": "(", "⁾": ")", "ⁿ": "n", "ⁱ": "i" };
+const AUTOH_SUB = { "₀": "0", "₁": "1", "₂": "2", "₃": "3", "₄": "4", "₅": "5", "₆": "6",
+  "₇": "7", "₈": "8", "₉": "9", "₊": "+", "₋": "−", "₌": "=", "₍": "(", "₎": ")",
+  "ₐ": "a", "ₑ": "e", "ₒ": "o", "ₓ": "x", "ₔ": "ə", "ₕ": "h", "ₖ": "k", "ₗ": "l",
+  "ₘ": "m", "ₙ": "n", "ₚ": "p", "ₛ": "s", "ₜ": "t", "ᵣ": "r", "ᵤ": "u", "ᵥ": "v" };
+const TEXH_NEED = /[\u2070-\u209C\u00B2\u00B3\u00B9]|_\{?[A-Za-z0-9\u0370-\u03ff]|\^\{?[\d(\-]|\d(\.\d+)?[eE][+\-]\d|\u221A/;
+/* 从 i 处（必须是 '<'）扫出一个"完整元素"的结束下标（含嵌套），失败返回 -1 */
+function TEXH_elemEnd(h, i) {
+  if (h.charAt(i) !== "<") return -1;
+  let depth = 0, j = i, guard = 0;
+  while (j < h.length && guard++ < 4000) {
+    if (h.charAt(j) !== "<") { j++; continue; }
+    const e = TEXH_tagEnd(h, j);
+    if (e < 0) return -1;
+    const isClose = h.charAt(j + 1) === "/";
+    const selfClose = h.charAt(e - 2) === "/";
+    if (isClose) { depth--; j = e; if (depth <= 0) return j; }
+    else if (selfClose) { j = e; if (depth === 0) return j; }
+    else { depth++; j = e; }
+  }
+  return -1;
+}
+/* √ 后面直接跟一个元素：√<i>E</i> → √‾E（前两条规则只吃 √(A) 与 √字母串） */
+function TEXHsqrtElem(s) {
+  let out = "", i = 0, guard = 0;
+  while (guard++ < 400) {
+    const k = s.indexOf("\u221A", i);
+    if (k < 0) break;
+    out += s.slice(i, k);
+    /* 守卫：√ 后面已是闭标签 ⇒ 该 √ 已排版过（对整段 HTML 重复跑 TEXH 会把 </span> 当成被开方式，
+       层层包出空壳根号，视觉上变成 √−3 / √−E），原样输出不再包裹 */
+    if (s.charAt(k + 1) === "<" && s.charAt(k + 2) === "/") { out += "\u221A"; i = k + 1; continue; }
+    let rad = null, end = k + 1;
+    if (s.charAt(k + 1) === "(") {
+      /* √(…) ：被开方式里常有标签，括号本身不在同一个文本片段里，必须整串扫 */
+      let depth = 0, p = k + 1;
+      while (p < s.length) {
+        const c = s.charAt(p);
+        if (c === "(") depth++;
+        else if (c === ")") { depth--; if (depth === 0) { rad = s.slice(k + 2, p); end = p + 1; break; } }
+        p++;
+      }
+    } else {
+      const e = TEXH_elemEnd(s, k + 1);
+      if (e > 0 && e - k < 500) { rad = s.slice(k + 1, e); end = e; }
+    }
+    if (rad !== null && rad.length) {
+      out += "<span class=\"sqrt\"><span class=\"rd\">\u221A</span><span class=\"rdc\">" + rad + "</span></span>";
+      i = end;
+    } else { out += "\u221A"; i = k + 1; }
+  }
+  return out + s.slice(i);
+}
+function TEXHpart(t) {
+  let s = t;
+  /* 根号：√ 或 √(A) → <span class="sqrt">√<span class="rd"><span class="rdc">A</span></span></span>（A 内不含嵌套括号） */
+  s = s.replace(/<span class="(?:op|rm|fn|v|u)">\u221A<\/span>/g, "\u221A");
+  s = s.replace(/\u221A<span class="(?:op|rm)">\(<\/span>([^()]{1,120}?)<span class="(?:op|rm)">\)<\/span>/g, function (m, a) {
+    return "<span class=\"sqrt\"><span class=\"rd\">\u221A</span><span class=\"rdc\">" + a + "</span></span>";
+  });
+  s = s.replace(/\u221A\(([^()]{1,120})\)/g, function (m, a) {
+    return "<span class=\"sqrt\"><span class=\"rd\">\u221A</span><span class=\"rdc\">" + a + "</span></span>";
+  });
+  s = s.replace(/\u221A([A-Za-z0-9\u0370-\u03ff]{1,6})/g, function (m, a) {
+    return "<span class=\"sqrt\"><span class=\"rd\">\u221A</span><span class=\"rdc\">" + a + "</span></span>";
+  });
+  s = s.replace(/(\d(?:\.\d+)?)e([+-])(\d+)/g, function (m, a, sg, e) {
+    return a + "\u00d710<sup>" + (sg === "-" ? "\u2212" : "") + e + "</sup>";
+  });
+  s = s.replace(/([A-Za-z\u0370-\u03ff)\]])\^\{([^{}]{1,12})\}/g, "$1<sup>$2</sup>");
+  s = s.replace(/([A-Za-z\u0370-\u03ff)\]])\^(\d+(?:\.\d+)?)/g, "$1<sup>$2</sup>");
+  s = s.replace(/([A-Za-z\u0370-\u03ff])_\{([A-Za-z0-9\u0370-\u03ff+\-]{1,8})\}/g, "<span class='m'><i>$1</i><sub>$2</sub></span>");
+  s = s.replace(/([A-Za-z\u0370-\u03ff])_([A-Za-z0-9\u0370-\u03ff]{1,6})(?![A-Za-z0-9])/g, "<span class='m'><i>$1</i><sub>$2</sub></span>");
+  if (/[\u2070-\u209C\u00B2\u00B3\u00B9]/.test(s)) {
+    let out = "", i = 0;
+    while (i < s.length) {
+      const ch = s[i];
+      if (AUTOH_SUP[ch] !== undefined || AUTOH_SUB[ch] !== undefined) {
+        const isSup = AUTOH_SUP[ch] !== undefined, tab = isSup ? AUTOH_SUP : AUTOH_SUB;
+        let j = i, buf = "";
+        while (j < s.length && (isSup ? AUTOH_SUP[s[j]] !== undefined : AUTOH_SUB[s[j]] !== undefined)) {
+          buf += tab[s[j]]; j++;
+        }
+        out += "<" + (isSup ? "sup" : "sub") + ">" + buf + "</" + (isSup ? "sup" : "sub") + ">";
+        i = j;
+      } else { out += ch; i++; }
+    }
+    s = out;
+  }
+  return s.indexOf("\u221A") >= 0 ? TEXHsqrtElem(s) : s;
+}
+/* 只有真正的标签才整段跳过：正文里裸写的 '<'（如 "t₂ < 0"）必须当普通字符，
+   否则 indexOf('>') 会一路吞掉后面整段，E₂⁰ 这类记法就漏排了。 */
+function TEXH_tagEnd(h, i) {
+  if (h.charAt(i) !== "<") return -1;
+  const c = h.charAt(i + 1);
+  if (c === "!" || c === "/") { const j = h.indexOf(">", i); return (j >= 0 && j - i < 300) ? j + 1 : -1; }
+  if (!/[A-Za-z]/.test(c)) return -1;
+  let j = i + 1;
+  while (j < h.length && /[A-Za-z0-9]/.test(h.charAt(j))) j++;
+  if (j === i + 1) return -1;
+  if (h.charAt(j) === ">") return j + 1;
+  if (h.charAt(j) !== " " && h.charAt(j) !== "\n" && h.charAt(j) !== "\t") return -1;
+  const g = h.indexOf(">", j), nx = h.indexOf("<", j);
+  if (g < 0 || g - i > 300) return -1;
+  if (nx >= 0 && nx < g) return -1;
+  return g + 1;
+}
+function TEXH(h) {
+  if (typeof h !== "string" || !TEXH_NEED.test(h)) return h;
+  if (h.indexOf("\u221A") >= 0) h = h.replace(/<span class="(?:op|rm|fn|v|u)">\u221A<\/span>/g, "\u221A");
+  if (h.indexOf("<") < 0) return TEXHpart(h);
+  let out = "", i = 0, n = h.length, guard = 0;
+  while (i < n && guard++ < 40000) {
+    const e = TEXH_tagEnd(h, i);
+    if (e > 0) { out += h.slice(i, e); i = e; continue; }
+    let j = i;
+    while (j < n && TEXH_tagEnd(h, j) <= 0) j++;
+    out += TEXHpart(h.slice(i, j)); i = j;
+  }
+  const r = out + h.slice(i);
+  return r.indexOf("\u221A") >= 0 ? TEXHsqrtElem(r) : r;
+}
+(function hookHTML() {
+  if (window.__TEXH_HOOK) return; window.__TEXH_HOOK = 1;
+  const d = Object.getOwnPropertyDescriptor(Element.prototype, "innerHTML");
+  if (!d || !d.set) return;
+  Object.defineProperty(Element.prototype, "innerHTML", {
+    configurable: true, get: d.get,
+    set: function (v) { d.set.call(this, typeof v === "string" ? TEXH(v) : v); }
+  });
+  /* insertAdjacentHTML 也会被用到 */
+  const ia = Element.prototype.insertAdjacentHTML;
+  Element.prototype.insertAdjacentHTML = function (pos, v) {
+    return ia.call(this, pos, typeof v === "string" ? TEXH(v) : v);
+  };
+})();
+
+/* ---------------- 画布自动 LaTeX 排版 ----------------
+   老调用点 txt(g, "cm⁻³") / txt(g, "E_c") / txt(g, "2.5e+8") 一行都不用改，
+   只要在绘制前把字符串解析成分段零件即可。规则与网页侧一致：
+   物理量斜体、描述性下标与单位正体、幂次用真上标（不用 Unicode 伪字符）。 */
+const SUPMAP = { "⁰": "0", "¹": "1", "²": "2", "³": "3", "⁴": "4", "⁵": "5", "⁶": "6",
+  "⁷": "7", "⁸": "8", "⁹": "9", "⁺": "+", "⁻": "−", "⁼": "=", "⁽": "(", "⁾": ")", "ⁿ": "n", "ⁱ": "i" };
+const SUBMAP = { "₀": "0", "₁": "1", "₂": "2", "₃": "3", "₄": "4", "₅": "5", "₆": "6",
+  "₇": "7", "₈": "8", "₉": "9", "₊": "+", "₋": "−", "₌": "=", "₍": "(", "₎": ")",
+  "ₐ": "a", "ₑ": "e", "ₒ": "o", "ₓ": "x", "ₔ": "ə", "ₕ": "h", "ₖ": "k", "ₗ": "l",
+  "ₘ": "m", "ₙ": "n", "ₚ": "p", "ₛ": "s", "ₜ": "t", "ᵣ": "r", "ᵤ": "u", "ᵥ": "v" };
+const MATH_IDCH = /[A-Za-z\u0370-\u03ff]/;
+const NEED_MATH = /[\u2070-\u209C\u00B2\u00B3\u00B9]|_\{?[A-Za-z0-9\u0370-\u03ff]|\^\{?[\d(\-]|\d(\.\d+)?[eE][+\-]\d/;
+function AUTO(s) {
+  const out = [];
+  let buf = "", mode = 0;
+  const emit = (t, kind) => {
+    if (!t) return;
+    if (kind === 1) out.push({ s: t, sup: true });
+    else if (kind === -1) out.push({ s: t, sub: true });
+    else out.push({ s: t });
+  };
+  let i = 0, italicAll = false;
+  while (i < s.length) {
+    const ch = s[i];
+    if (SUPMAP[ch] !== undefined) { if (mode !== 1) { emit(buf, mode); buf = ""; mode = 1; } buf += SUPMAP[ch]; i++; continue; }
+    if (SUBMAP[ch] !== undefined) { if (mode !== -1) { emit(buf, mode); buf = ""; mode = -1; } buf += SUBMAP[ch]; i++; continue; }
+    if (mode) { emit(buf, mode); buf = ""; mode = 0; }
+    const rest = s.slice(i);
+    const sc = /^\d(\.\d+)?[eE][+\-]\d{1,3}/.exec(rest);       /* ASCII 伪科学计数 2.5e+8 */
+    if (sc) {
+      const parts = sc[0].split(/[eE]/);
+      emit(parts[0] + "\u00d710", 0); emit(String(+parts[1]).replace("-", "\u2212"), 1);
+      i += sc[0].length; continue;
+    }
+    if (MATH_IDCH.test(ch) && i + 1 < s.length && (s[i + 1] === "_" || s[i + 1] === "^")) {
+      const sup = s[i + 1] === "^";
+      let j = i + 2, grp = "";
+      if (s[j] === "{") { const e = s.indexOf("}", j); if (e > 0) { grp = s.slice(j + 1, e); j = e + 1; } }
+      else {
+        const RCJK = /[\u2E80-\u9FFF]/, RASC = /[A-Za-z0-9\u0370-\u03ff+\-]/;
+        if (RCJK.test(s[j])) { while (j < s.length && RCJK.test(s[j]) && j - i < 8) j++; }   /* 中文描述性下标：τ_直接、E_声子 */
+        else { while (j < s.length && RASC.test(s[j])) j++; }
+        grp = s.slice(i + 2, j);
+      }
+      if (grp) {
+        emit(ch, 0);
+        if (italicAll || /^[A-Za-z\u0370-\u03ff]$/.test(ch)) out[out.length - 1].i = true;
+        emit(sup ? grp.replace(/-/g, "\u2212") : grp, sup ? 1 : -1);
+        i = j; continue;
+      }
+    }
+    buf += ch; i++;
+  }
+  emit(buf, mode);
+  return out;
+}
+function fontInfo(font, dflt) {
+  const f = String(font || "");
+  const m = /(\d+(?:\.\d+)?)px/.exec(f);
+  return { fp: m ? parseFloat(m[1]) : (dflt || 12), bd: /bold|70\d|600/.test(f), it: /italic|oblique/.test(f) };
+}
+
+/* ---------------- HTML 字符串 → 画布零件（网页与画布共用同一份排版） ----------------
+   mtxt(g, TX(H_NA), x, y, col, fp) —— H_* 常量本来就在喂 innerHTML，
+   再喂给 TX() 就不会出现「网页斜体、画布正体」的两边不一致。
+   <i> 斜体、<sub> 下标、<sup> 上标；<span class="op|un|rm|sqrt|frac"> 只剥标签（保持正体）。 */
+const catA = (...a) => [].concat(...a);
+function TX(h) {
+  const t = String(h == null ? "" : h)
+    .replace(/<span\b[^>]*>/g, "").replace(/<\/span>/g, "")
+    .replace(/<i\b[^>]*>/g, "<i>").replace(/<b\b[^>]*>/g, "").replace(/<\/b>/g, "")
+    .replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&").replace(/&nbsp;/g, " ");
+  const out = [], re = /<i>([\s\S]*?)<\/i>|<sub>([\s\S]*?)<\/sub>|<sup>([\s\S]*?)<\/sup>|([^<]+)/g;
+  let m;
+  while ((m = re.exec(t))) {
+    const raw = s => s == null ? null : s.replace(/<[^>]*>/g, "");
+    if (m[1] != null) out.push({ s: raw(m[1]), i: true });
+    else if (m[2] != null) out.push({ s: raw(m[2]), sub: true });
+    else if (m[3] != null) out.push({ s: raw(m[3]), sup: true });
+    else if (m[4]) out.push({ s: m[4] });
+  }
+  return out;
+}
+function TXof(...a) { return catA(...a.map(TX)); }
+
+
+function PSci(v, n) {
+  if (!isFinite(v) || v === 0) return [{ s: "0" }];
+  const e = Math.floor(Math.log10(Math.abs(v)));
+  const m = (v / Math.pow(10, e)).toFixed(n === undefined ? 1 : n);
+  /* 1 ≦ |v| < 10 时直接写尾数，不再拖一个 ×10⁰（与 sciH 一致） */
+  if (e === 0) return [{ s: m }];
+  /* 指数负号用 U+2212 */
+  return [{ s: m + "×10" },
+          { s: String(e).replace("-", "−"), sup: true }];
+}
+
+/* ---------------- 0. 小工具 ---------------- */
+const $ = id => document.getElementById(id);
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const fmt = (v, n) => (isFinite(v) ? v.toFixed(n === undefined ? 2 : n) : "—");
+const MM = h => '<span class="m">' + h + "</span>";
+/* 原生 title 只吃纯文本：剥标签必须用临时 span 的 textContent，
+   用 replace(/<[^>]+>/g) 会把 &lt; 这类实体原样留在提示里。 */
+function stripTags(h) {
+  /* 原生 title tooltip 只吃纯文本，所以先把排版还原成可读的线性写法：
+     frac → A/B、sub → _x、sup → ^x，最后用临时 span 的 textContent 剥标签
+     （不能用正则剥：< 这类实体会原样留下）。 */
+  var s0 = String(h === undefined || h === null ? "" : h)
+    .replace(/<span class=[^>]*sqrt[^>]*>\s*<span class=[^>]*rd[^>]*>√<\/span><span class=[^>]*rdc[^>]*>([\s\S]*?)<\/span><\/span>/g, "√$1")
+    .replace(/<span class=[^>]*frac[^>]*>\s*<span class=[^>]*num[^>]*>([\s\S]*?)<\/span><span class=[^>]*den[^>]*>([\s\S]*?)<\/span><\/span>/g, "$1/$2")
+    .replace(/([\u2070\u00B9\u00B2\u00B3\u2074-\u2079\u207A\u207B\u207D\u207E\u2071\u207F]+)/g, function (m) { return "^" + m.replace(/[\u2070-\u209C\u00B2\u00B3\u00B9]/g, function (c) { return AUTOH_SUP[c] || c; }); })
+    .replace(/([\u2080-\u2089\u208A\u208B\u208C\u208D\u208E\u2090-\u209C]+)/g, function (m) { return "_" + m.replace(/[\u2070-\u209C]/g, function (c) { return AUTOH_SUB[c] || c; }); })
+    .replace(/<sub>([\s\S]*?)<\/sub>/g, "_$1")
+    .replace(/<sup>([\s\S]*?)<\/sup>/g, "^$1");
+  var t = document.createElement("span"); t.innerHTML = s0;
+  return t.textContent.replace(/\s+/g, " ").trim();
+}
+/* ---- LaTeX 风格内联数学助手 ---- */
+const VI = s => "<i>" + s + "</i>";                        // 斜体变量
+const WSUB = (v, s) => VI(v) + "<sub>" + s + "</sub>";     // 下标（描述符/数字，正体）
+const OPR = s => '<span class="op">' + s + "</span>";      // 运算符（带间距、正体）
+const SL = () => '<span class="sl">/</span>';              // 斜杠
+const RM = s => '<span class="rm">' + s + "</span>";       // 函数名/多字母缩写（正体）
+const FRAC = (n, d) => '<span class="frac"><span class="num">' + n + '</span><span class="den">' + d + "</span></span>";
+/* 本工具高频符号 */
+const M_B = MM(VI("b"));
+const M_SUP_S = " s<sup>" + OPR("−") + "1</sup>";          // s⁻¹（正体单位）
+
+/* ---------------- 3. 画布与画布内排版 ---------------- */
+const CV = {};
+function fitCanvas(id) {
+  const el = $(id);
+  if (!el || !el.clientWidth) return null;
+  const w = el.clientWidth, h = +el.dataset.h;
+  const dpr = window.devicePixelRatio || 1;
+  el.width = Math.round(w * dpr); el.height = Math.round(h * dpr);
+  el.style.height = h + "px";
+  const g = el.getContext("2d");
+  g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  CV[id] = { g: g, W: w, H: h, el: el };
+  return CV[id];
+}
+function fitAll() { ["chain", "disp", "zoom"].forEach(fitCanvas); }
+
+const FONT = "\"Microsoft YaHei\",\"PingFang SC\",sans-serif";
+const FONTM = "\"Cambria Math\",\"Times New Roman\",Times,serif";
+const SUBR = 0.74, SUBDY = 0.22, SUPDY = 0.40;
+const C_AC = "#1976d2", C_OP = "#d94a3d";
+const C_HEAVY = "#2f4a6b", C_LIGHT = "#7fb2e3";
+const C_ARROW = "#ef8c1a", C_SUB = "#6b7a8c", C_GRID = "#e7edf4", C_REF = "#9aa5b1";
+
+function txt(g, s, x, y, col, font, align, base) {
+  g.fillStyle = col; g.font = font || "12px " + FONT;
+  g.textAlign = align || "left"; g.textBaseline = base || "middle";
+  if (typeof s === "string" && NEED_MATH.test(s)) {
+    const fi = fontInfo(font, 12);
+    mRun(g, AUTO(s), x, y, fi.fp, fi.bd, align || "left", false);
+    return;
+  }
+  g.fillText(s, x, y);
+}
+function txtHalo(g, s, x, y, col, font, align, base) {
+  g.font = font || "12px " + FONT;  g.textAlign = align || "left"; g.textBaseline = base || "middle";
+  g.lineJoin = "round"; g.strokeStyle = "rgba(255,255,255,0.94)"; g.lineWidth = 3.2;
+  if (typeof s === "string" && NEED_MATH.test(s)) {
+    const fi = fontInfo(font, 12), parts = AUTO(s);
+    g.lineJoin = "round";
+    mRun(g, parts, x, y, fi.fp, fi.bd, align || "left", true);
+    g.fillStyle = col;
+    mRun(g, parts, x, y, fi.fp, fi.bd, align || "left", false);
+    return;
+  }
+  g.strokeText(s, x, y); g.fillStyle = col; g.fillText(s, x, y);
+}
+function isCJKch(ch) {
+  const c = ch.codePointAt(0);
+  return (c >= 0x2E80 && c <= 0x9FFF) || (c >= 0xF900 && c <= 0xFAFF) ||
+    (c >= 0xFF00 && c <= 0xFF60) || c === 0x2014 || c === 0x2015 || c === 0x2026;
+}
+function segRuns(s) {
+  const out = []; let cur = "", curC = null;
+  for (const ch of s) {
+    const c = isCJKch(ch);
+    if (curC === null) { cur = ch; curC = c; }
+    else if (c === curC) cur += ch;
+    else { out.push({ s: cur, cjk: curC }); cur = ch; curC = c; }
+  }
+  if (cur) out.push({ s: cur, cjk: curC });
+  return out;
+}
+function pFont(q, fp, bd, cjk) {
+  const sz = fp * ((q.sub || q.sup) ? SUBR : 1);
+  return (bd ? "bold " : "") + (!cjk && q.i ? "italic " : "") + sz.toFixed(2) + "px " + (cjk ? FONT : FONTM);
+}
+/* i18n 注入点①：画布 token。带 i / sub / sup / un 标记的是物理量、下标与单位，一律不动；
+   没有这些标记的 token 才是自然语言，交给 T() —— 所以这里的判断只看标记，不看内容。 */
+const partsOf = p => p.map(q => {
+  const o = (typeof q === "string" ? { s: q } : q);
+  const natural = !(o.i || o.sub || o.sup || o.un);
+  if (LANG === "en" && natural && typeof o.s === "string" && /[\u4E00-\u9FFF]/.test(o.s)) {
+    const t = T(o.s);
+    return t === o.s ? o : Object.assign({}, o, { s: t });
+  }
+  return o;
+});
+function mMeasure(g, parts, fp, bd) {
+  let w = 0;
+  for (const q of partsOf(parts))
+    for (const sg of segRuns(q.s)) { g.font = pFont(q, fp, bd, sg.cjk); w += g.measureText(sg.s).width; }
+  return w;
+}
+function mRun(g, parts, x, y, fp, bd, align, stroke) {
+  const ps = partsOf(parts), w = mMeasure(g, ps, fp, bd);
+  let cx = align === "right" ? x - w : (align === "center" ? x - w / 2 : x);
+  g.textAlign = "left"; g.textBaseline = "middle"; g.lineJoin = "round";
+  for (const q of ps) {
+    const dy = q.sub ? fp * SUBDY : (q.sup ? -fp * SUPDY : 0);
+    for (const sg of segRuns(q.s)) {
+      g.font = pFont(q, fp, bd, sg.cjk);
+      if (stroke) { g.lineWidth = (q.sub || q.sup) ? 2.4 : 3.2; g.strokeText(sg.s, cx, y + dy); }
+      else g.fillText(sg.s, cx, y + dy);
+      cx += g.measureText(sg.s).width;
+    }
+  }
+}
+function mtxt(g, parts, x, y, col, fp, align, bd) {
+  g.fillStyle = col; mRun(g, parts, x, y, fp, bd || false, align, false);
+}
+function mtxtHalo(g, parts, x, y, col, fp, align, bd) {
+  g.strokeStyle = "rgba(255,255,255,0.94)";
+  mRun(g, parts, x, y, fp, bd || false, align, true);
+  mtxt(g, parts, x, y, col, fp, align, bd);
+}
+function line(g, x1, y1, x2, y2, col, lw, dash) {
+  g.save();
+  g.strokeStyle = col; g.lineWidth = lw || 1;
+  if (dash) g.setLineDash(dash);
+  g.beginPath(); g.moveTo(x1, y1); g.lineTo(x2, y2); g.stroke();
+  g.restore();
+}
+function arrowHead(g, x, y, ang, sz, col) {
+  g.save(); g.translate(x, y); g.rotate(ang);
+  g.beginPath(); g.moveTo(0, 0); g.lineTo(-sz, sz * 0.42); g.lineTo(-sz, -sz * 0.42);
+  g.closePath(); g.fillStyle = col; g.fill(); g.restore();
+}
+function arrow(g, x1, y1, x2, y2, col, lw, sz) {
+  const dx = x2 - x1, dy = y2 - y1, L = Math.hypot(dx, dy);
+  if (L < 0.5) return;
+  line(g, x1, y1, x2, y2, col, lw || 1.4);
+  arrowHead(g, x2, y2, Math.atan2(dy, dx), sz || 6, col);
+}
+function chip(g, s, x, y, col, font, align) {
+  g.font = font || "11px " + FONT;
+  const w = g.measureText(s).width, al = align || "left";
+  const bx = al === "right" ? x - w : (al === "center" ? x - w / 2 : x);
+  g.fillStyle = "rgba(255,255,255,0.92)";
+  g.fillRect(bx - 4, y - 8, w + 8, 16);
+  txt(g, s, bx, y, col, font, "left", "middle");
+}
+
+
+/* ---------------- 1. 常数与缺陷库 ---------------- */
+const QE = 1.602176634e-19, KB = 1.380649e-23;
+const KTof = T => KB * T / QE;                 // eV（数值上等于 kT/q 的伏特数）
+const NU0 = 1e13;                              // 尝试频率 s⁻¹（示意）
+/* 视觉速率的对数映射基准：Γ₀ = 10^V_G0 s⁻¹ 以下的跳跃视为「冻结」（≈ 几年才跳一次） */
+const V_G0 = -7.6;                             // ⇒ Γ₀ ≈ 2.5×10⁻⁸ s⁻¹
+const V_K = 0.15;                              // 每差一个数量级，视觉速度差 0.15 步/秒
+const EG_SI = 1.12;                            // 以 Si 为例
+
+const DIMS = [{ name: "点缺陷", tag: "0D" }, { name: "线缺陷", tag: "1D" }, { name: "面缺陷", tag: "2D" }];
+
+/* lvl：shallow 浅能级（掺杂） / deep 深能级（复合中心） / band1 一维能带（位错） / band2 界面态带 */
+const SUBS = [
+  [
+    { k: "vac", name: "空位", en: "Vacancy", walk: "site",
+      feat: "某个格点上<b>少了一个原子</b>，周围原子朝空位<b>向内</b>弛豫",
+      Ea: 0.5, Nmu: 1e18, Ntau: 1e15, lvl: "deep" },
+    { k: "self", name: "自间隙", en: "Self-interstitial", walk: "int",
+      feat: "主体原子自己<b>挤进晶格间隙</b>，把周围原子<b>挤开</b>",
+      Ea: 0.4, Nmu: 1e18, Ntau: 1e15, lvl: "deep" },
+    { k: "sub", name: "替位杂质", en: "Substitutional", walk: "site",
+      feat: "杂质原子<b>占据了晶格位置</b>（如 P、B 替代 Si），半径不同 ⇒ 局域畸变",
+      Ea: 4.1, Nmu: 1e17, Ntau: 5e18, lvl: "shallow" },
+    { k: "imp", name: "间隙杂质", en: "Interstitial impurity", walk: "int",
+      feat: "杂质原子<b>待在晶格间隙</b>里（Si 中的 Cu、Fe、Ni 就是典型）",
+      Ea: 0.7, Nmu: 1e18, Ntau: 1e14, lvl: "deep" },
+    { k: "fren", name: "弗仑克尔对", en: "Frenkel pair", walk: "int",
+      feat: "<b>一个空位 + 一个自间隙原子</b>成对出现（原子被撞离座位，停在旁边）",
+      Ea: 0.4, Nmu: 1e18, Ntau: 1e15, lvl: "deep" },
+    { k: "sch", name: "肖特基型空位对", en: "Schottky-type divacancy", walk: "site",
+      feat: "<b>两个相邻空位</b>（双空位）；化合物半导体中成对出现以保持化学计量比",
+      Ea: 0.6, Nmu: 1e18, Ntau: 1e15, lvl: "deep" }
+  ],
+  [
+    { k: "edge", name: "刃位错", en: "Edge dislocation", walk: "line",
+      feat: "<b>多插了半张原子面</b>（红球那一列），<span class='m'>⊥</span> 处是位错线；滑移面以上<b>受压</b>、以下<b>受拉</b>",
+      Ea: 2.0, Nmu: 1e15, Ntau: 1e14, lvl: "band1" },
+    { k: "screw", name: "螺位错", en: "Screw dislocation", walk: "line",
+      feat: "原子面绕位错线<b>螺旋上升</b>成一个螺旋面（<span class='m'>⟳</span>），<b>没有</b>额外半原子面",
+      Ea: 2.0, Nmu: 1e15, Ntau: 1e14, lvl: "band1" }
+  ],
+  [
+    { k: "gb", name: "晶界", en: "Grain boundary", walk: "plane",
+      feat: "两个<b>取向不同</b>的晶粒相接，界面上原子对不上号 ⇒ 出现<b>悬挂键</b>（红点）",
+      Ea: 2.5, Nmu: 1e14, Ntau: 1e13, lvl: "band2" },
+    { k: "sf", name: "层错（抽出型）", en: "Intrinsic stacking fault", walk: "plane",
+      feat: "堆垛顺序 <span class='m'>ABCABC</span> 里<b>少了一层</b>：…ABCAB<span class='op'>|</span>ABC…（虚线球＝缺失的那层）",
+      Ea: 2.2, Nmu: 1e15, Ntau: 1e14, lvl: "band2" },
+    { k: "sfe", name: "层错（插入型）", en: "Extrinsic stacking fault", walk: "plane",
+      feat: "堆垛顺序 <span class='m'>ABCABC</span> 里<b>多塞了一层</b>：…ABC<span class='op'>+</span>B<span class='op'>|</span>ABC…（红球＝多出的那层）",
+      Ea: 2.2, Nmu: 1e15, Ntau: 1e14, lvl: "band2" },
+    { k: "twin", name: "孪晶界", en: "Twin boundary", walk: "plane",
+      feat: "两侧原子排列呈<b>镜像对称</b>（虚线＝孪晶面），原子一一对应、<b>几乎没有悬挂键</b>",
+      Ea: 2.5, Nmu: 3e15, Ntau: 1e15, lvl: "band2" }
+  ]
+];
+
+const COL = {
+  host: "#9aa5b1", vac: "#455a64", self: "#1976d2", sub: "#d94a3d",
+  imp: "#2e9e5b", extra: "#d94a3d", dang: "#d94a3d",
+  g0: "#4a90d9", g1: "#e08a2e", lay: ["#1976d2", "#ef8c1a", "#2e9e5b"],
+  path: "#0f9b8e", step: "#7b3fa0"
+};
+
+/* ---------------- 2. 状态 ---------------- */
+/* 简化设计：温度、缺陷浓度、原子大小都固定（不再提供滑块） */
+const TFIX = 1000;            // K：取高温，位错/晶界的定向迁移才动得起来
+const NTFIX = 1e16;           // cm⁻³：示意量级
+const RFIX = 1.0;             // 原子大小倍率
+const OPT = {
+  dim: 0, sub: 0, thS: 12, speed: 1, playing: false,
+  /* ckBond / ckLab 是底图（键/晶格线、缺陷标注），固定常开、不设复选 */
+  ckBond: true, ckDisp: true, ckLab: true, ckBurg: false, ckDang: true,
+  ckPath: true, ckTop: true
+};
+const VIEW = { ox: 0, oy: 0, s: 1 };
+const HOV = { lat: null };
+
+function curSub() { const a = SUBS[OPT.dim] || SUBS[0]; return a[Math.min(OPT.sub | 0, a.length - 1)] || a[0]; }
+/* 螺位错靠「书页 → 剪开错动 → 粘合成螺旋面」的形成动画才讲得清 ⇒ 只有它默认开播，其余默认静止 */
+const isScrew = () => curSub().k === "screw";
+
+/* ---------------- 3. 数值小工具 ---------------- */
+function sci(v, nd) {
+  if (!isFinite(v) || v === 0) return "0";
+  const a = Math.abs(v), e = Math.floor(Math.log10(a)), m = a / Math.pow(10, e);
+  /* 本函数只喂 DOM（不容器画布），按全站约定幂次写**真上标** <sup>，不用 Unicode 上标字符 */
+  return (v < 0 ? "−" : "") + m.toFixed(nd === undefined ? 2 : nd) + "×10<sup>" + (e < 0 ? "−" : "") + Math.abs(e) + "</sup>";
+}
+const sgn = v => (v > 0 ? 1 : (v < 0 ? -1 : 0));
+function nearest(A, x, y) {
+  let b = null, bd = 1e18;
+  for (const a of A) { const d = (a.x - x) * (a.x - x) + (a.y - y) * (a.y - y); if (d < bd) { bd = d; b = a; } }
+  return b;
+}
+
+/* ---------------- 4. 晶格构造 ---------------- */
+const NC = 7, NR = 5;                        // 方格晶格半宽/半高（行在 y = j + 0.5，滑移面 y = 0）
+const DIRS = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+
+function relax(A, src) {
+  for (const a of A) {
+    if (a.t !== "host") continue;
+    let dx = 0, dy = 0;
+    for (const s of src) {
+      const ux = a.x - s.x, uy = a.y - s.y, r = Math.hypot(ux, uy);
+      if (r < 1e-6) continue;
+      const m = clamp(s.amp * Math.exp(-(Math.max(r, 0.55) - 0.55) / 1.4), -0.20, 0.20);
+      dx += m * ux / r; dy += m * uy / r;
+    }
+    a.dx += dx; a.dy += dy; a.x += dx; a.y += dy;
+  }
+}
+function markSite(A, i, j, t) {
+  for (const a of A) if (a.ii === i && a.jj === j) { a.t = t; return a; }
+  return null;
+}
+
+/* --- 点缺陷 --- */
+function buildPoint(sub) {
+  const A = [], src = [], w = WALK;
+  for (let i = -NC; i <= NC; i++)
+    for (let j = -NR; j <= NR; j++)
+      A.push({ x: i, y: j + 0.5, t: "host", g: 0, dx: 0, dy: 0, ii: i, jj: j });
+  if (sub.k === "vac" || sub.k === "sch") {
+    markSite(A, w.x, w.y, "vac"); src.push({ x: w.x, y: w.y + 0.5, amp: -0.13 });
+    if (sub.k === "sch") { markSite(A, w.x + 1, w.y, "vac"); src.push({ x: w.x + 1, y: w.y + 0.5, amp: -0.13 }); }
+  } else if (sub.k === "sub") {
+    markSite(A, w.x, w.y, "sub"); src.push({ x: w.x, y: w.y + 0.5, amp: -0.07 });
+  } else {
+    const ix = w.x + 0.5, iy = w.y + 1.0;
+    A.push({ x: ix, y: iy, t: sub.k === "imp" ? "imp" : "self", g: 0, dx: 0, dy: 0, ii: 0, jj: 0 });
+    src.push({ x: ix, y: iy, amp: 0.20 });
+    if (sub.k === "fren") { markSite(A, -3, 0, "vac"); src.push({ x: -3, y: 0.5, amp: -0.13 }); }
+  }
+  relax(A, src);
+  return { kind: "grid", A: A, src: src, core: { x: src.length ? src[0].x : 0, y: src.length ? src[0].y : 0 },
+    box: [-NC - 0.7, NC + 0.7, -NR - 0.2, NR + 1.2], point: true };
+}
+
+/* --- 刃位错 / 混合位错 --- */
+function buildEdge(sub) {
+  const A = [], xc = 0.5 + WALK.x;
+  const B = 0.24, lam = 2.6;
+  for (let i = -NC; i <= NC; i++)
+    for (let j = -NR; j <= NR; j++) {
+      const x0 = i, y0 = j + 0.5;
+      const dx = B * sgn(x0 - xc) * Math.exp(-Math.abs(x0 - xc) / lam) * Math.exp(-Math.abs(y0) / 3.2);
+      const dy = 0.10 * Math.sign(y0) * Math.exp(-Math.pow((x0 - xc) / 2.2, 2)) * Math.exp(-Math.abs(y0) / 3.2);
+      A.push({ x: x0 + dx, y: y0 + dy, t: "host", g: 0, dx: dx, dy: dy, ii: i, jj: j });
+    }
+  for (let j = 0; j <= NR; j++) A.push({ x: xc, y: j + 0.5, t: "extra", g: 0, dx: 0, dy: 0, ii: 0, jj: j });
+  return { kind: "grid", A: A, src: [], core: { x: xc, y: 0 }, edge: true,
+    box: [-NC - 0.7, NC + 0.7, -NR - 0.2, NR + 1.2] };
+}
+
+/* --- 螺位错（斜视螺旋面） --- */
+function buildScrew() {
+  return { kind: "helix", A: [], core: { x: 0, y: 0 }, phase: WALK.x * 0.30,
+    box: [-3.2, 3.2, -3.4, 3.0] };
+}
+
+/* --- 晶界 --- */
+function buildGB() {
+  const th = OPT.thS * Math.PI / 180, half = th / 2, xb = WALK.x, raw = [];
+  for (const sg of [-1, 1]) {
+    const a = sg * half;
+    for (let i = -16; i <= 16; i++)
+      for (let j = -9; j <= 9; j++) {
+        const rx = i * Math.cos(a) - j * Math.sin(a), ry = i * Math.sin(a) + j * Math.cos(a);
+        const x = rx + xb, y = ry;
+        if (sg < 0 && x > xb + 1e-9) continue;
+        if (sg > 0 && x < xb - 1e-9) continue;
+        raw.push({ x: x, y: y, t: "host", g: sg < 0 ? 0 : 1, dx: 0, dy: 0, nn: 0 });
+      }
+  }
+  raw.sort((a, b) => a.x - b.x);
+  const A = [];
+  for (const p of raw) {                       // 界面上过近的原子 ⇒ 挤掉（失配、无序）
+    let ok = true;
+    for (let k = A.length - 1; k >= 0; k--) {
+      const q = A[k];
+      if (p.x - q.x > 0.72) break;
+      if (Math.hypot(p.x - q.x, p.y - q.y) < 0.62) { ok = false; break; }
+    }
+    if (ok) A.push(p);
+  }
+  for (let i = 0; i < A.length; i++) {          // 配位数（近邻 < 1.35）
+    let c = 0;
+    for (let k = i - 1; k >= 0; k--) { if (A[i].x - A[k].x > 1.35) break; if (Math.hypot(A[i].x - A[k].x, A[i].y - A[k].y) < 1.35) c++; }
+    for (let k = i + 1; k < A.length; k++) { if (A[k].x - A[i].x > 1.35) break; if (Math.hypot(A[i].x - A[k].x, A[i].y - A[k].y) < 1.35) c++; }
+    A[i].nn = c;
+  }
+  const vis = [];
+  for (const a of A) {
+    if (Math.abs(a.x - xb) > 7.2 || Math.abs(a.y) > 5.2) continue;
+    if (Math.abs(a.x - xb) < 1.5) a.t = "gb";
+    vis.push(a);
+  }
+  /* 只统计界面附近（|x−x_b| < 3）的断键：画幅边缘的原子本来就缺邻居，
+     算进去会让「悬挂键数」随 θ 的变化失去意义 */
+  let dang = 0;
+  for (const a of vis) if (Math.abs(a.x - xb) < 3.0) dang += Math.max(0, 4 - a.nn);
+  const D = 1 / (2 * Math.sin(half));          // 小角晶界 ≈ 一列刃位错，间距 b/θ
+  return { kind: "gb", A: vis, core: { x: xb, y: 0 }, D: D, dang: dang, th: OPT.thS,
+    box: [xb - 7.4, xb + 7.4, -5.4, 5.4] };
+}
+
+/* --- 层错 / 孪晶界 --- */
+function buildStack(sub) {
+  const N = 12, base = [];
+  for (let k = 0; k < N; k++) base.push(k % 3);
+  const p = clamp(5 + WALK.x, 2, 8);
+  let seq = [], hi = -1, ghost = -1, mir = -1;
+  if (sub.k === "sf") { seq = base.slice(0, p).concat(base.slice(p + 1)); ghost = p; hi = p - 1; }
+  else if (sub.k === "twin") {
+    mir = p;
+    for (let k = 0; k < p; k++) seq.push(k % 3);
+    for (let k = 0; k < N - p; k++) seq.push((p - 1 - k + 9) % 3);
+  } else { seq = base.slice(0, p).concat([(base[p] + 2) % 3], base.slice(p)); hi = p; }
+  const rows = [], len = seq.length;
+  for (let k = 0; k < len; k++) {
+    let y = k - (len - 1) / 2;
+    if (sub.k === "sf" && k >= p) y -= 0.14;
+    if (sub.k !== "sf" && sub.k !== "twin" && k > p) y += 0.14;
+    rows.push({ y: y, s: seq[k], off: seq[k] / 3 });
+  }
+  const A = [];
+  for (let k = 0; k < len; k++)
+    for (let m = -6; m <= 6; m++)
+      A.push({ x: m + rows[k].off, y: rows[k].y, t: "lay", g: rows[k].s, dx: 0, dy: 0, ii: m, jj: k });
+  let gy = null;
+  if (ghost >= 0) gy = { y: (rows[p - 1].y + rows[p].y) / 2, off: base[p] / 3, s: base[p] };
+  let my = null;
+  if (mir >= 0) my = (rows[mir - 1].y + rows[mir].y) / 2;
+  return { kind: "stack", A: A, rows: rows, hi: hi, ghost: gy, mir: my, mirIdx: mir,
+    box: [-6.8, 6.8, -(len - 1) / 2 - 0.7, (len - 1) / 2 + 0.7] };
+}
+
+let LAT = null;
+function buildLattice() {
+  const sub = curSub();
+  if (OPT.dim === 0) LAT = buildPoint(sub);
+  else if (OPT.dim === 1) LAT = sub.k === "screw" ? buildScrew() : buildEdge(sub);
+  else LAT = sub.k === "gb" ? buildGB() : buildStack(sub);
+  LAT.sub = sub;
+  return LAT;
+}
+
+/* ---------------- 5. 应变/位错的可测量 ---------------- */
+/* 刃位错：滑移面以上（含额外半原子面）近邻间距 vs 以下间距。
+   ⚠ 取样点必须<b>跟着位错核走</b>：播放时整张额外半原子面随 xc = 0.5 + WALK.x 向右滑移，
+   若死盯固定列号 0 / 1，滑走之后那两列早已远离位错核，测出来的是远处完好晶格的列距
+   （above 会从 0.669 一路涨到 5.5），配上写死的「小于 1 ⇒ 受压」就成了自相矛盾的读数。
+   这里改取 xc 两侧最近的两个 host 原子 —— 位移场是相对 xc 平移不变的，故读数与播放步数无关。 */
+function strainStats() {
+  if (!LAT || !LAT.edge) return null;
+  const ex = LAT.A.filter(a => a.t === "extra");
+  const ep = ex.length ? ex.reduce((b, a) => (a.y < b.y ? a : b), ex[0]) : null;
+  if (!ep) return null;
+  const xc = ep.x;                                   /* 位错核（额外半原子面）当前所在的 x */
+  const row = j => LAT.A.filter(a => a.t === "host" && a.jj === j);
+  /* xc 某一侧最近的 host 原子（sg = −1 左、+1 右） */
+  const side = (arr, sg) => {
+    let best = null, bd = 1e9;
+    for (const a of arr) {
+      const d = a.x - xc;
+      if (sg * d <= 0) continue;
+      if (Math.abs(d) < bd) { bd = Math.abs(d); best = a; }
+    }
+    return best;
+  };
+  const up = row(0), dn = row(-1);                   /* 滑移面上方第一行 / 下方第一行 */
+  const uL = side(up, -1), uR = side(up, 1), dL = side(dn, -1), dR = side(dn, 1);
+  if (!uL || !uR || !dL || !dR) return null;
+  return { above: Math.min(ep.x - uL.x, uR.x - ep.x), below: dR.x - dL.x };
+}
+/* 沿某个方向走到「下一个近邻」：在给定方向上的最近原子（必须真的朝那边偏）
+   注意不能用「坐标为 p+dir 的最近原子」—— 额外半原子面把间距压到 0.67 a，
+   固定步长 1 会一步跨过它，回路就永远闭合了（看不出位错）。*/
+function stepTo(A, p, dir) {
+  let best = null, bd = 1e9;
+  for (const a of A) {
+    if (a === p) continue;
+    const vx = a.x - p.x, vy = a.y - p.y, L = Math.hypot(vx, vy);
+    if (L > 1.5 || L < 1e-6) continue;
+    if ((vx * dir[0] + vy * dir[1]) / L < 0.25) continue;
+    if (L < bd) { bd = L; best = a; }
+  }
+  return best || p;
+}
+/* 柏氏回路：沿近邻走 5 右 / 5 下 / 5 左 / 5 上，闭合差即柏氏矢量 */
+function burgers() {
+  if (!LAT || LAT.kind !== "grid" || !LAT.edge) return null;
+  const A = LAT.A, c = LAT.core;
+  let p = nearest(A, c.x - 3, 3.2), st = p;
+  if (!p) return null;
+  const walk = (d, n) => { for (let k = 0; k < n; k++) p = stepTo(A, p, d); };
+  walk([1, 0], 5); walk([0, -1], 5); walk([-1, 0], 5); walk([0, 1], 5);
+  return { sx: st.x, sy: st.y, ex: p.x, ey: p.y, cx: p.x - st.x, cy: p.y - st.y,
+    b: Math.hypot(p.x - st.x, p.y - st.y) };
+}
+
+/* ---------------- 6. 随机行走 / 定向迁移 ---------------- */
+const WALK = { n: 0, x: 0, y: 0, path: [], ens: [], ms: [], rec: 0, done: false };
+function resetWalk() {
+  WALK.n = 0; WALK.x = 0; WALK.y = 0; WALK.rec = 0; WALK.done = false;
+  WALK.path = [[0, 0]]; WALK.ms = []; WALK.ens = [];
+  for (let k = 0; k < 60; k++) WALK.ens.push({ x: 0, y: 0 });
+}
+const NMAX = 400;
+function stepWalk() {
+  const sub = curSub();
+  if (WALK.n >= NMAX) { WALK.done = true; return; }
+  if (OPT.dim === 0) {
+    const d = DIRS[(Math.random() * 4) | 0];
+    const nx = WALK.x + d[0], ny = WALK.y + d[1];
+    if (Math.abs(nx) <= 6 && Math.abs(ny) <= 4) { WALK.x = nx; WALK.y = ny; }
+    let s = 0;
+    for (const e of WALK.ens) { const q = DIRS[(Math.random() * 4) | 0]; e.x += q[0]; e.y += q[1]; s += e.x * e.x + e.y * e.y; }
+    WALK.n++; WALK.path.push([WALK.x, WALK.y]);
+    if (sub.k === "fren" && Math.hypot(WALK.x + 3, WALK.y) < 0.8) {
+      WALK.rec++; WALK.x = 0; WALK.y = 0; WALK.path = [[0, 0]];   // 间隙原子遇到空位 ⇒ 复合
+    }
+    WALK.ms.push([WALK.n, s / WALK.ens.length]);
+  } else {
+    WALK.x += 1; WALK.n++;
+    WALK.path.push([WALK.x, 0]);
+    WALK.ms.push([WALK.n, WALK.x * WALK.x]);
+    if (Math.abs(WALK.x) >= 5) { WALK.x = 0; WALK.path = [[0, 0]]; }
+  }
+  if (WALK.path.length > 400) WALK.path.shift();
+}
+
+/* ---------------- 7. 速率与性质 ---------------- */
+function hopRate(sub, T) { return NU0 * Math.exp(-sub.Ea / KTof(T)); }
+/* 视觉速率（步/秒）。各缺陷的真实跳跃频率 Γ 在 1000 K 下横跨约 19 个数量级
+   （自间隙 10¹¹ s⁻¹ ↔ 替位杂质 2×10⁻⁸ s⁻¹），无论正比于 Γ 还是 Γ^(1/3)，
+   点缺陷都会快到糊成一片、而位错/晶界又完全冻住。
+   故改用**十进制对数映射**：每秒步数 ∝ lg Γ，Γ 每差一个数量级，视觉速度差一个固定步长。
+   T = 1000 K 的实际取值：自间隙 2.79 / 空位 2.71 / 肖特基 2.64 / 间隙杂质 2.56 /
+   刃·螺位错 1.58 / 层错 1.43 / 孪晶·晶界 1.20 步每秒；替位杂质 = 0（冻结）。
+   保留下来的是「顺序」与「谁冻结」这两个定性结论，不代表真实的快慢比例。 */
+function visRate(sub) {
+  const u = Math.log10(Math.max(hopRate(sub, TFIX), 1e-30));
+  return clamp(OPT.speed * V_K * (u - V_G0), 0, 15);
+}
+function muTau(sub, Nt) { return { mu: 1 / (1 + Nt / sub.Nmu), tau: 1 / (1 + Nt / sub.Ntau) }; }
+function levelOf(sub) {
+  if (sub.lvl === "shallow") return { kind: "shallow", lo: EG_SI - 0.045, hi: EG_SI - 0.045 };
+  if (sub.lvl === "deep") return { kind: "deep", lo: 0.50, hi: 0.62 };
+  if (sub.lvl === "band1") return { kind: "band1", lo: 0.34, hi: 0.76 };
+  return { kind: "band2", lo: 0.24, hi: 0.86 };
+}
+function fitAll() { ["lat"].forEach(fitCanvas); }
+
+/* ---------------- 8. 模块一：原子排列视图 ---------------- */
+let TR = { S: 22, ox: 0, oy: 0, mx: 0, my: 0 };
+let SCR = [];
+const PXX = x => TR.ox + (x - TR.mx) * TR.S;
+const PYY = y => TR.oy - (y - TR.my) * TR.S;
+const IXX = px => (px - TR.ox) / TR.S + TR.mx;
+const IYY = py => TR.my - (py - TR.oy) / TR.S;
+
+function setTR(box, W, H) {
+  const S = Math.min((W - 96) / Math.max(box[1] - box[0], 0.1), (H - 70) / Math.max(box[3] - box[2], 0.1)) * VIEW.s;
+  TR = { S: S, ox: W / 2 + VIEW.ox, oy: H / 2 + VIEW.oy, mx: (box[0] + box[1]) / 2, my: (box[2] + box[3]) / 2 };
+}
+function atomR() { return clamp(0.30 * TR.S * RFIX, 3, 24); }
+function shade(hex, f) {
+  const n = parseInt(hex.slice(1), 16);
+  let r = (n >> 16) & 255, gg = (n >> 8) & 255, b = n & 255;
+  if (f < 0) { r *= 1 + f; gg *= 1 + f; b *= 1 + f; } else { r += (255 - r) * f; gg += (255 - gg) * f; b += (255 - b) * f; }
+  return "rgb(" + (r | 0) + "," + (gg | 0) + "," + (b | 0) + ")";
+}
+function atom(g, x, y, r, col) {
+  const gr = g.createRadialGradient(x - r * 0.35, y - r * 0.42, r * 0.08, x, y, r);
+  gr.addColorStop(0, "#ffffff"); gr.addColorStop(0.34, col); gr.addColorStop(1, shade(col, -0.22));
+  g.fillStyle = gr; g.beginPath(); g.arc(x, y, r, 0, 6.2832); g.fill();
+  g.strokeStyle = shade(col, -0.45); g.lineWidth = 1; g.stroke();
+}
+function chipC(g, s, x, y, col, font, align, W, H) {
+  g.font = font || "11px " + FONT;
+  const w = g.measureText(s).width, al = align || "left";
+  let bx = al === "right" ? x - w : (al === "center" ? x - w / 2 : x);
+  bx = clamp(bx, 5, Math.max(5, W - w - 7));
+  const by = clamp(y, 11, Math.max(11, H - 7));
+  g.fillStyle = "rgba(255,255,255,0.93)";
+  g.fillRect(bx - 4, by - 8, w + 8, 16);
+  txt(g, s, bx, by, col, font, "left", "middle");
+}
+/* chipC 的数学排版版：parts 为 token 数组（见 mtxt），fp 为字号数值；同样钳进画布 */
+function chipM(g, parts, x, y, col, fp, align, bd, W, H) {
+  fp = fp || 11;
+  const ps = partsOf(parts), w = mMeasure(g, ps, fp, !!bd);
+  const al = align || "left";
+  let bx = al === "right" ? x - w : (al === "center" ? x - w / 2 : x);
+  bx = clamp(bx, 5, Math.max(5, (W || 1e4) - w - 7));
+  const by = clamp(y, 11, Math.max(11, (H || 1e4) - 7));
+  g.fillStyle = "rgba(255,255,255,0.93)";
+  g.fillRect(bx - 4, by - 8, w + 8, 16);
+  mtxt(g, ps, bx, by, col, fp, "left", bd);
+}
+/* token 数组宽度（多行提示框取最大宽用） */
+const mw = (g, parts, fp) => mMeasure(g, partsOf(parts), fp || 11, false);
+function pathLC() {
+  const sub = curSub(), P = WALK.path, out = [];
+  if (OPT.dim === 0) {
+    const it = sub.walk === "int";
+    for (const p of P) out.push(it ? [p[0] + 0.5, p[1] + 1.0] : [p[0], p[1] + 0.5]);
+  } else if (OPT.dim === 1) { for (const p of P) out.push([0.5 + p[0], 0]); }
+  else if (sub.k === "gb") { for (const p of P) out.push([p[0], 0]); }
+  else { for (const p of P) out.push([0, p[0]]); }
+  return out;
+}
+
+function drawLat() {
+  const c = CV.lat; if (!c) return;
+  const g = c.g, W = c.W, H = c.H;
+  g.clearRect(0, 0, W, H);
+  g.fillStyle = "#fbfcfe"; g.fillRect(0, 0, W, H);
+  SCR = [];
+  setTR(LAT.box, W, H);
+  if (LAT.kind === "grid") drawGridView(g, W, H);
+  else if (LAT.kind === "helix") drawHelixView(g, W, H);
+  else if (LAT.kind === "gb") drawGBView(g, W, H);
+  else drawStackView(g, W, H);
+  if (OPT.ckPath && LAT.kind !== "helix") drawPath(g, W, H);
+  if (OPT.ckBurg && LAT.edge) drawBurgers(g, W, H);
+  drawStateBadge(g, W, H);
+  drawProbe(g, W, H);
+}
+
+/* --- 通用：方格晶格（点缺陷 / 刃位错 / 混合位错） --- */
+function drawGridView(g, W, H) {
+  const A = LAT.A, R = atomR();
+  if (OPT.ckBond) {
+    g.strokeStyle = "rgba(154,165,177,0.5)"; g.lineWidth = 1;
+    g.beginPath();
+    for (let i = 0; i < A.length; i++)
+      for (let j = i + 1; j < A.length; j++) {
+        const dx = A[i].x - A[j].x, dy = A[i].y - A[j].y;
+        if (dx * dx + dy * dy < 1.82) {
+          g.moveTo(PXX(A[i].x), PYY(A[i].y)); g.lineTo(PXX(A[j].x), PYY(A[j].y));
+        }
+      }
+    g.stroke();
+  }
+  for (const a of A) {
+    const x = PXX(a.x), y = PYY(a.y);
+    if (x < -30 || x > W + 30 || y < -30 || y > H + 30) { SCR.push({ a: a, x: x, y: y }); continue; }
+    SCR.push({ a: a, x: x, y: y });
+    if (a.t === "vac") {
+      g.save(); g.setLineDash([3.2, 3]); g.strokeStyle = COL.vac; g.lineWidth = 1.7;
+      g.beginPath(); g.arc(x, y, R * 0.88, 0, 6.2832); g.stroke(); g.restore();
+      continue;
+    }
+    let col = COL.host, r = R;
+    if (a.t === "sub") { col = COL.sub; r = R * 1.18; }
+    else if (a.t === "self") { col = COL.self; r = R * 1.18; }
+    else if (a.t === "imp") { col = COL.imp; r = R * 1.18; }
+    else if (a.t === "extra") { col = COL.extra; r = R * 1.06; }
+    atom(g, x, y, r, col);
+  }
+  /* 弛豫位移箭头（点缺陷） */
+  if (OPT.ckDisp && OPT.dim === 0 && LAT.src) {
+    for (const a of LAT.A) {
+      if (a.t !== "host") continue;
+      const m = Math.hypot(a.dx, a.dy);
+      if (m < 0.008) continue;
+      const x = PXX(a.x), y = PYY(a.y), k = 3.0 * TR.S;
+      const col = (a.dx * (LAT.core.x - a.x) + a.dy * (LAT.core.y - a.y)) > 0 ? "#1976d2" : "#d94a3d";
+      arrow(g, x - a.dx * k, y + a.dy * k, x, y, col, 1.5, 5);
+    }
+    chipC(g, "箭头＝周围原子的弛豫位移（放大 3×）", 10, H - 12, "#6b7a8c", "11px " + FONT, "left", W, H);
+  }
+  /* 标注 */
+  if (!OPT.ckLab) return;
+  const sub = curSub();
+  if (OPT.dim === 0) {
+    const src = LAT.src[0];
+    if (src) chipC(g, sub.name, PXX(src.x) + 14, PYY(src.y) - 16, COL.sub, "12px " + FONT, "left", W, H);
+    if (sub.k === "fren") chipC(g, "空位 ← 间隙原子游回来即复合", 10, 18, COL.vac, "11px " + FONT, "left", W, H);
+    if (sub.k === "sch") chipC(g, "相邻双空位", 10, 18, COL.vac, "11px " + FONT, "left", W, H);
+  } else {
+    const xc = LAT.core.x;
+    /* 滑移面 */
+    line(g, PXX(LAT.box[0] + 0.3), PYY(0), PXX(LAT.box[1] - 0.3), PYY(0), "#7b8794", 1.2, [6, 4]);
+    chipC(g, "滑移面", PXX(LAT.box[0] + 0.4), PYY(0) - 11, "#7b8794", "11px " + FONT, "left", W, H);
+    /* 额外半原子面 */
+    const ex = LAT.A.filter(a => a.t === "extra");
+    if (ex.length) {
+      const top = ex.reduce((b, a) => (a.y > b.y ? a : b), ex[0]);
+      line(g, PXX(xc), PYY(top.y) + 12, PXX(xc), PYY(0.4), COL.extra, 1.6, [5, 3]);
+      chipC(g, "额外半原子面", PXX(xc) + 6, PYY(top.y) - 2, COL.extra, "12px " + FONT, "left", W, H);
+    }
+    /* ⊥ 位错线符号 */
+    const px = PXX(xc), py = PYY(0);
+    g.strokeStyle = COL.extra; g.lineWidth = 2.2;
+    g.beginPath(); g.moveTo(px - 7, py - 8); g.lineTo(px + 7, py - 8);
+    g.moveTo(px, py - 8); g.lineTo(px, py + 7); g.stroke();
+    chipC(g, "⊥ 位错线", px + 10, py + 6, COL.extra, "11px " + FONT, "left", W, H);
+    /* 压 / 张 */
+    const yA = PYY(2.6), yB = PYY(-2.6), sp = 1.7 * TR.S;
+    arrow(g, PXX(xc - 1.8), yA, PXX(xc - 0.35), yA, "#7b3fa0", 1.6, 6);
+    arrow(g, PXX(xc + 1.8), yA, PXX(xc + 0.35), yA, "#7b3fa0", 1.6, 6);
+    chipC(g, "受压：间距变小", PXX(xc), yA - 13, "#7b3fa0", "11px " + FONT, "center", W, H);
+    arrow(g, PXX(xc - 0.35), yB, PXX(xc - 1.8), yB, "#0f9b8e", 1.6, 6);
+    arrow(g, PXX(xc + 0.35), yB, PXX(xc + 1.8), yB, "#0f9b8e", 1.6, 6);
+    chipC(g, "受拉：间距变大", PXX(xc), yB + 13, "#0f9b8e", "11px " + FONT, "center", W, H);
+    /* 柏氏矢量 b */
+    arrow(g, PXX(xc + 1.2), PYY(-4.2), PXX(xc + 2.2), PYY(-4.2), "#455a64", 1.8, 7);
+    chipM(g, [{ s: "b", i: 1 }], PXX(xc + 1.15), PYY(-4.2) - 11, "#455a64", 12, "left", false, W, H);
+  }
+}
+
+/* --- 螺位错：一张完整的原子面被拧成螺旋面（斜视主图 + 俯视针轮插图） --- */
+/* 标高 0..1（占一个面间距 b 的比例）→ 颜色：浅灰 → 深蓝。主图与俯视图共用同一套配色 */
+function hMix(t) {
+  const k = clamp(t, 0, 1);
+  const c0 = [220, 226, 233], c1 = [21, 101, 186];
+  return "rgb(" + Math.round(c0[0] + (c1[0] - c0[0]) * k) + "," +
+    Math.round(c0[1] + (c1[1] - c0[1]) * k) + "," +
+    Math.round(c0[2] + (c1[2] - c0[2]) * k) + ")";
+}
+
+/* --- 螺位错：真 3D（可拖拽旋转）+「书页」形变演示 -------------------------------
+   物理图像（Volterra 构造 / 教科书的「书页」比喻）：
+   ① 完整晶体 = 一叠平行的原子面（水平书页，间距 b）；
+   ② 沿半径方向剪开，把剪口两侧上下错动一个 b（书页错了一页）；
+   ③ 再粘合、弹性弛豫：层 n 的高度变为 (n + m·θ/2π)·b。
+      m=0：错动的书页（剪口处上下相差整整 b）；m=1：首尾相接 —— 一整张连续螺旋面。
+   两个不变量（无论 m）：
+      x、y 一动没动（位移只有竖直分量 u_z = b·θ/2π）⇒ 俯视仍是整齐方格；
+      同一根竖直原子柱上相邻两层的高差 = b（这就是柏氏矢量）。
+   作图约定：水平方向以原子间距 a 为单位（相邻格点 = 1 a）；竖直方向的 1 个面间距 b
+   画成 ZB 个水平单位（夸张，否则几十层挤在一起看不出螺旋）。
+   MORPH.m：0 = 刚剪开错动的一叠书页，1 = 粘合后的完整螺旋面（播放按钮驱动往返）。 */
+const ROT = { yaw: -0.62, pitch: 0.52 };
+const MORPH = { m: 1, dir: -1 };
+/* 每层一个颜色：三个深浅蓝 = 三层原子面（俯视图仍用标高连续配色 hMix） */
+const PLC = ["#c9d9ec", "#6f9fce", "#1a6aa8"];
+const PLE = ["#9fbcd9", "#4a7fb4", "#12507f"];
+let HX = { cols: 0, lay: 0, Rpx: 0, ZB: 0 };
+
+function drawHelixView(g, W, H) {
+  const TAU = 6.283185307179586;
+  const showIns = OPT.ckTop && W > 560;
+  const insW = showIns ? Math.min(250, Math.max(190, W * 0.28)) : 0;
+  const availW = W - insW - 30;
+  const NLAY = 3, ZB = 0.86, RIN = 0.06, RCORE = 0.22, ST = 1 / 6, AU = 6;
+  const mm = MORPH.m;                               /* 形变程度：0 书页 → 1 螺旋面 */
+  const spin = ROT.yaw + (LAT.phase || 0);
+  const cs = Math.cos(spin), sn = Math.sin(spin);
+  const cp = Math.cos(ROT.pitch), sp = Math.sin(ROT.pitch);
+  const PW = 7.5;                                    /* 弱透视的「焦距」（以柱半径为单位） */
+  const unit = (x, y, z) => {
+    const xr = x * cs - y * sn, yr = x * sn + y * cs;   /* 绕竖直轴自转 */
+    const up = yr * sp + z * cp;                        /* 屏幕竖直方向（向上为正） */
+    const dp = yr * cp - z * sp;                        /* 深度：越大越靠近观察者 */
+    return { sx: xr, up: up, d: dp, k: PW / (PW - dp * 0.45) };
+  };
+  const thOf = (x, y) => { const t = Math.atan2(y, x); return t < 0 ? t + TAU : t; };
+  const zOf = (t, n) => (n + mm * t / TAU) * ZB;
+  const CW = (t, r) => [r * Math.cos(t), r * Math.sin(t)];
+
+  /* 1) 原子柱：横坐标落在方格点上；每根柱子上 NLAY 个原子，标高依次为 zOf(θ,n) */
+  const cols = [], NG = Math.ceil(1 / ST) + 1;
+  for (let i = -NG; i <= NG; i++)
+    for (let j = -NG; j <= NG; j++) {
+      const x = i * ST, y = j * ST, r = Math.hypot(x, y);
+      if (r < RIN - 1e-9 || r > 1.0000001) continue;
+      cols.push({ x: x, y: y, r: r, th: thOf(x, y), ci: cols.length });
+    }
+  /* 2) 面片：每页在环带上按角向切成四边形（画家算法排序后由远及近画） */
+  const NFQ = 72, quads = [];
+  for (let n = 0; n < NLAY; n++)
+    for (let i = 0; i < NFQ; i++) quads.push([i / NFQ * TAU, (i + 1) / NFQ * TAU, n]);
+  /* 3) 剪口立面：θ=0 半平面上、层 n 的上端与层 n+1 的下端之间的高差
+        = (1−mm)·ZB —— mm=0 时正好错开一个 b，粘合后（mm=1）自动消失 */
+  const cuts = [];
+  for (let n = 0; n < NLAY - 1; n++) cuts.push(n);
+
+  /* 4) 自适应缩放：先在单位空间取包围盒，再算出像素比例 */
+  const zTop = NLAY * ZB + 0.75, zBot = -0.5;
+  const axA = unit(0, 0, zBot), axB = unit(0, 0, zTop);
+  let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
+  const acc = p => {
+    const X = p.sx * p.k, Y = -p.up * p.k;
+    if (X < x0) x0 = X; if (X > x1) x1 = X; if (Y < y0) y0 = Y; if (Y > y1) y1 = Y;
+  };
+  for (const c of cols) for (let n = 0; n < NLAY; n++) acc(unit(c.x, c.y, zOf(c.th, n)));
+  for (const q of quads)
+    for (const t of [q[0], q[1]]) {
+      const w = CW(t, 1), v = CW(t, RIN);
+      acc(unit(w[0], w[1], zOf(t, q[2]))); acc(unit(v[0], v[1], zOf(t, q[2])));
+    }
+  for (const n of cuts)
+    for (const rr of [RIN, 1])
+      for (const z of [zOf(0, n), zOf(TAU, n)]) acc(unit(rr, 0, z));
+  acc(axA); acc(axB);
+  const Rpx = Math.min(availW / Math.max(x1 - x0, 0.01), (H - 56) / Math.max(y1 - y0, 0.01)) * VIEW.s;
+  const cx = 15 + availW / 2 - Rpx * (x0 + x1) / 2 + VIEW.ox;
+  const cy = H * 0.5 - Rpx * (y0 + y1) / 2 + VIEW.oy;
+  const P3 = (x, y, z) => {
+    const u = unit(x, y, z);
+    return { X: cx + u.sx * u.k * Rpx, Y: cy - u.up * u.k * Rpx, d: u.d, k: u.k };
+  };
+  HX = { cols: cols.length, lay: NLAY, Rpx: Rpx, ZB: ZB };
+
+  /* 5) 底层：底面参考圆（先画，被螺旋面挡住才是对的） */
+  g.save(); g.setLineDash([4, 4]); g.strokeStyle = "rgba(140,155,172,0.5)"; g.lineWidth = 1;
+  g.beginPath();
+  for (let i = 0; i <= 72; i++) {
+    const w = CW(i / 72 * TAU, 1), p = P3(w[0], w[1], 0);
+    i ? g.lineTo(p.X, p.Y) : g.moveTo(p.X, p.Y);
+  }
+  g.stroke(); g.restore();
+
+  /* 6) 面片 + 剪口立面 + 原子：统一按深度排序（画家算法） */
+  const prims = [];
+  for (const q of quads) {
+    const A = (() => { const w = CW(q[0], RIN); return P3(w[0], w[1], zOf(q[0], q[2])); })();
+    const B = (() => { const w = CW(q[0], 1); return P3(w[0], w[1], zOf(q[0], q[2])); })();
+    const C = (() => { const w = CW(q[1], 1); return P3(w[0], w[1], zOf(q[1], q[2])); })();
+    const D = (() => { const w = CW(q[1], RIN); return P3(w[0], w[1], zOf(q[1], q[2])); })();
+    prims.push({ d: (A.d + B.d + C.d + D.d) / 4, t: 0, A: A, B: B, C: C, D: D, n: q[2] });
+  }
+  if (mm < 0.995)
+    for (const n of cuts) {
+      const A = P3(RIN, 0, zOf(0, n)), B = P3(1, 0, zOf(0, n));
+      const C = P3(1, 0, zOf(0, n + 1)), D = P3(RIN, 0, zOf(0, n + 1));
+      prims.push({ d: (A.d + B.d + C.d + D.d) / 4, t: 2, A: A, B: B, C: C, D: D, n: n });
+    }
+  const rW = 0.066;                                   /* 原子半径（水平单位） */
+  for (const c of cols)
+    for (let n = 0; n < NLAY; n++) {
+      const zb = zOf(c.th, n), p = P3(c.x, c.y, zb);
+      prims.push({ d: p.d, t: 1, X: p.X, Y: p.Y, r: rW * p.k * Rpx, zb: zb,
+        ci: c.ci, rr: c.r, n: n, core: c.r < RCORE });
+    }
+  prims.sort((a, b) => a.d - b.d);
+  for (const p of prims) {
+    const cue = 0.34 + 0.66 * clamp((p.d + 1.35) / 2.7, 0, 1);   /* 深度雾化：远淡近实 */
+    if (p.t === 0) {
+      g.beginPath();
+      g.moveTo(p.A.X, p.A.Y); g.lineTo(p.B.X, p.B.Y); g.lineTo(p.C.X, p.C.Y); g.lineTo(p.D.X, p.D.Y);
+      g.closePath();
+      g.globalAlpha = 0.14 + 0.16 * cue;
+      g.fillStyle = PLC[p.n]; g.fill();
+      g.globalAlpha = 0.30 + 0.68 * cue;
+      g.strokeStyle = PLE[p.n]; g.lineWidth = 1.6;    /* 外缘螺旋线：把「盘旋而上」画实 */
+      g.beginPath(); g.moveTo(p.B.X, p.B.Y); g.lineTo(p.C.X, p.C.Y); g.stroke();
+      g.globalAlpha = 1;
+    } else if (p.t === 2) {                            /* 剪口立面：错开的那一页 */
+      g.beginPath();
+      g.moveTo(p.A.X, p.A.Y); g.lineTo(p.B.X, p.B.Y); g.lineTo(p.C.X, p.C.Y); g.lineTo(p.D.X, p.D.Y);
+      g.closePath();
+      g.globalAlpha = 0.16 + 0.14 * cue;
+      g.fillStyle = "#d94a3d"; g.fill();
+      g.globalAlpha = 0.5 + 0.4 * cue;
+      g.strokeStyle = "#d94a3d"; g.lineWidth = 1.4; g.setLineDash([5, 3]);
+      g.beginPath(); g.moveTo(p.A.X, p.A.Y); g.lineTo(p.B.X, p.B.Y); g.stroke();
+      g.setLineDash([]); g.globalAlpha = 1;
+    } else {
+      SCR.push({ a: { t: "helix", x: p.rr * AU, y: p.zb / ZB, nn: 4 }, x: p.X, y: p.Y, ci: p.ci });
+      g.globalAlpha = cue * (p.core ? 0.42 : 1);
+      atom(g, p.X, p.Y, p.r, PLC[p.n]);
+      g.globalAlpha = 1;
+    }
+  }
+
+  /* 7) 位错线（贯穿核心；画在最后并半透明，保证始终可见） */
+  const aA = P3(0, 0, zBot), aB = P3(0, 0, zTop);
+  g.save(); g.globalAlpha = 0.75;
+  line(g, aA.X, aA.Y, aB.X, aB.Y, "#455a64", 2.2, [7, 4]);
+  g.restore();
+
+  if (!OPT.ckLab) { if (showIns) drawHelixTop(g, W - insW / 2 - 6, H * 0.52, Math.min(insW * 0.42, H * 0.34), W, H); return; }
+
+  /* 8) 位错核心：原子剧烈畸变、连续介质解失效（淡化显示 + 脚印虚线圈） */
+  g.save(); g.setLineDash([3, 3]); g.strokeStyle = "rgba(191,84,63,0.75)"; g.lineWidth = 1.4;
+  g.beginPath();
+  for (let i = 0; i <= 48; i++) {
+    const w = CW(i / 48 * TAU, RCORE), p = P3(w[0], w[1], 0.015);
+    i ? g.lineTo(p.X, p.Y) : g.moveTo(p.X, p.Y);
+  }
+  g.stroke(); g.restore();
+
+  if (mm > 0.985) {
+    /* ---- 状态 A：完整螺旋面 ---- */
+    /* 最靠近观察者的那一列：原子竖直排成一列，x、y 从未挪动 */
+    let best = null, bd = -1e9;
+    for (const c of cols) {
+      const p = P3(c.x, c.y, zOf(c.th, (NLAY - 1) / 2));
+      if (p.d > bd) { bd = p.d; best = c; }
+    }
+    if (best) {
+      const b1 = P3(best.x, best.y, zBot + 0.1), b2 = P3(best.x, best.y, zTop - 0.1);
+      g.save(); g.setLineDash([2, 4]); g.strokeStyle = "rgba(15,155,142,0.85)"; g.lineWidth = 1.4;
+      g.beginPath(); g.moveTo(b1.X, b1.Y); g.lineTo(b2.X, b2.Y); g.stroke(); g.restore();
+      chipM(g, ["同一列原子：", { s: "x", i: 1 }, "、", { s: "y", i: 1 }, " 一动没动，只是整体抬升了 ",
+        { s: "b", i: 1 }, { s: "·" }, { s: "θ", i: 1 }, { s: "/2π" }], b1.X, b1.Y + 16,
+        "#0f9b8e", 11, "center", false, W, H);
+    }
+    /* 绕一圈正好上升一个面间距 b（取最靠前的方位来标） */
+    let thF = 0, dF = -1e9;
+    for (let i = 0; i < 72; i++) {
+      const t = i / 72 * TAU, w = CW(t, 1), p = P3(w[0], w[1], 0);
+      if (p.d > dF) { dF = p.d; thF = t; }
+    }
+    const mk = n => { const w = CW(thF, 1); return P3(w[0], w[1], zOf(thF, n)); };
+    const p0 = mk(0), p1 = mk(1), p2 = mk(2);
+    g.save(); g.setLineDash([3, 3]); g.strokeStyle = "#d94a3d"; g.lineWidth = 1.4;
+    g.beginPath(); g.moveTo(p0.X, p0.Y); g.lineTo(p2.X, p2.Y); g.stroke(); g.restore();
+    atom(g, p0.X, p0.Y, 6, "#0f9b8e");
+    atom(g, p1.X, p1.Y, 6.4, "#d94a3d");
+    atom(g, p2.X, p2.Y, 6, "#d94a3d");
+    arrow(g, p0.X, p0.Y, p1.X, p1.Y, "#d94a3d", 1.8, 7);
+    arrow(g, p1.X, p1.Y, p0.X, p0.Y, "#d94a3d", 1.8, 7);
+    chipM(g, ["绕一圈 ↑ 正好一个面间距 ", { s: "b", i: 1 }], (p0.X + p1.X) / 2 + 10, (p0.Y + p1.Y) / 2,
+      "#d94a3d", 11.5, "left", false, W, H);
+    chipC(g, "① 起点", p0.X, p0.Y + 22, "#0f9b8e", "10.5px " + FONT, "center", W, H);
+    chipC(g, "② 绕一圈：回到起点正上方", p1.X, p1.Y - 20, "#d94a3d", "10.5px " + FONT, "center", W, H);
+  } else {
+    /* ---- 状态 B / 过渡：书页剪开—错动，剪口处上下相差 (1−mm)·b ---- */
+    const e0 = P3(1, 0, zOf(0, 0)), e1 = P3(1, 0, zOf(0, 1));
+    arrow(g, e0.X, e0.Y, e1.X, e1.Y, "#d94a3d", 1.8, 7);
+    arrow(g, e1.X, e1.Y, e0.X, e0.Y, "#d94a3d", 1.8, 7);
+  }
+
+  /* 9) 常驻标注 */
+  chipM(g, ["位错线（", { s: "b", i: 1 }, " 与它平行，竖直向上）"], aB.X + 8, aB.Y + 2, "#455a64", 11, "left", false, W, H);
+  chipC(g, "三个深浅＝三层原子面；虚线圈＝位错核心（畸变剧烈，连续介质解失效）", 10, 16,
+    "#1667bd", "11px " + FONT, "left", W, H);
+  chipC(g, "按住拖动可旋转视角 · 滚轮缩放 · 播放 = 「书页剪开—错动—粘合」全过程",
+    10, H - 12, "#6b7a8c", "11px " + FONT, "left", W, H);
+
+  if (showIns) drawHelixTop(g, W - insW / 2 - 6, H * 0.52, Math.min(insW * 0.42, H * 0.34), W, H);
+}
+
+/* --- 螺位错：俯视图（沿位错线往下看） ---
+   投影方向上看，原子位置完全没有被挪动（位移只有 z 分量）⇒ 仍是一排排整齐的方格；
+   但每个原子的「标高」不同，按标高着色就得到一圈圈扫过去的针轮 —— 绕核心一圈正好 +b。 */
+function drawHelixTop(g, ix, iy, ri, W, H) {
+  g.fillStyle = "#fbfcfe"; g.strokeStyle = "#c9d3de"; g.lineWidth = 1;
+  g.beginPath(); g.arc(ix, iy, ri + 5, 0, 6.2832); g.fill(); g.stroke();
+  const n = 5, stp = ri / (n + 0.45), rA = clamp(stp * 0.30, 2.2, 6.5);
+  for (let a = -n; a <= n; a++)
+    for (let b = -n; b <= n; b++) {
+      const dx = a * stp, dy = b * stp, rr = Math.hypot(dx, dy);
+      if (rr > ri) continue;
+      const t = (Math.atan2(dy, dx) + Math.PI) / (2 * Math.PI);
+      atom(g, ix + dx, iy + dy, rA, hMix(t));
+    }
+  /* 径向上的「剪口」线：沿这条线把原子面剪开，上下两页正好差一个 b */
+  g.save(); g.setLineDash([4, 3]); g.strokeStyle = "#d94a3d"; g.lineWidth = 1.6;
+  g.beginPath(); g.moveTo(ix - ri * Math.cos(0), iy); g.lineTo(ix + ri, iy); g.stroke(); g.restore();
+  chipM(g, ["剪口（上下两页相差 ", { s: "b", i: 1 }, "）"], ix, iy - ri * 0.55, "#d94a3d", 10.5, "center", false, W, H);
+  /* ⊙ ：位错线与 b 都垂直纸面（细线小圈，不遮住核心原子） */
+  g.save(); g.globalAlpha = 0.75;
+  g.strokeStyle = "#455a64"; g.lineWidth = 1.4;
+  g.beginPath(); g.arc(ix, iy, 6.5, 0, 6.2832); g.stroke();
+  g.fillStyle = "#455a64"; g.beginPath(); g.arc(ix, iy, 2.4, 0, 6.2832); g.fill();
+  g.restore();
+  chipM(g, ["⊙ 位错线 ⊥ 纸面，", { s: "b", i: 1 }, " 同向"], ix, iy + ri + 20, "#455a64", 10.5, "center", false, W, H);
+  chipC(g, "俯视图：位置整齐，标高却在绕圈", ix, iy - ri - 12, "#1667bd", "11px " + FONT, "center", W, H);
+}
+
+/* --- 晶界 --- */
+function drawGBView(g, W, H) {
+  const A = LAT.A, R = atomR(), xb = LAT.core.x, half = OPT.thS * Math.PI / 360;
+  const angOf = a => (a.g === 0 ? -half : half);
+  if (OPT.ckBond) {
+    g.strokeStyle = "rgba(154,165,177,0.45)"; g.lineWidth = 1; g.beginPath();
+    for (let i = 0; i < A.length; i++)
+      for (let j = i + 1; j < A.length; j++) {
+        if (A[i].g !== A[j].g) continue;
+        const dx = A[i].x - A[j].x, dy = A[i].y - A[j].y;
+        if (dx * dx + dy * dy < 1.82) { g.moveTo(PXX(A[i].x), PYY(A[i].y)); g.lineTo(PXX(A[j].x), PYY(A[j].y)); }
+      }
+    g.stroke();
+  }
+  for (const a of A) {
+    const x = PXX(a.x), y = PYY(a.y);
+    SCR.push({ a: a, x: x, y: y });
+    if (x < -20 || x > W + 20 || y < -20 || y > H + 20) continue;
+    atom(g, x, y, R, a.t === "gb" ? COL.host : (a.g === 0 ? COL.g0 : COL.g1));
+  }
+  /* 悬挂键（指向缺失近邻的方向） */
+  if (OPT.ckDang) {
+    g.strokeStyle = COL.dang; g.lineWidth = 2;
+    for (const a of A) {
+      if (a.nn >= 4) continue;
+      if (Math.abs(a.x - xb) > 3.2) continue;      // 画幅边缘的原子不计（本来就没邻居）
+      const cs = Math.cos(angOf(a)), sn = Math.sin(angOf(a));
+      for (const d of DIRS) {
+        const ux = d[0] * cs - d[1] * sn, uy = d[0] * sn + d[1] * cs;
+        let has = false;
+        for (const b of A) {
+          if (b === a) continue;
+          const vx = b.x - a.x, vy = b.y - a.y, L = Math.hypot(vx, vy);
+          if (L > 1.35 || L < 1e-6) continue;
+          if ((vx * ux + vy * uy) / L > 0.62) { has = true; break; }
+        }
+        if (!has) {
+          g.beginPath();
+          g.moveTo(PXX(a.x), PYY(a.y));
+          g.lineTo(PXX(a.x) + ux * 0.42 * TR.S, PYY(a.y) - uy * 0.42 * TR.S);
+          g.stroke();
+        }
+      }
+    }
+  }
+  /* 晶界面 */
+  line(g, PXX(xb), 8, PXX(xb), H - 8, "#7b3fa0", 1.6, [7, 4]);
+  chipM(g, ["晶界 ", { s: "θ", i: 1 }, { s: " = " + OPT.thS + "°" }], PXX(xb) + 5, 16, "#7b3fa0", 12, "left", false, W, H);
+  /* 小角晶界的位错阵列。
+     旧写法用「D < 6.5」当门槛 ⇒ 等价于 θ > 8.8°，恰好把 Frank 公式最成立的 3°~8° 全滤掉了
+     （小角端一个 ⊥ 都不画），反倒在最不像小角模型的 30° 处画得最密 —— 门控与物理有效性正好反向。
+     现在改成：只要 ⊥ 落得进视野（|y| ≤ 5 a）就画；当 θ 很小、相邻 ⊥ 的间距超出画面时，
+     画中心的那一个 + 上下虚线箭头，并把这个间距是多少标出来（θ 越小 D 越大，这是本题的落点）。 */
+  const D = LAT.D, pxD = PXX(xb);
+  const ys = [];
+  for (let k = -6; k <= 6; k++) { const y = k * D; if (Math.abs(y) <= 5.0) ys.push(y); }
+  for (const y of ys) {
+    const py = PYY(y);
+    g.strokeStyle = COL.extra; g.lineWidth = 2;
+    g.beginPath(); g.moveTo(pxD - 6, py - 7); g.lineTo(pxD + 6, py - 7);
+    g.moveTo(pxD, py - 7); g.lineTo(pxD, py + 6); g.stroke();
+  }
+  if (ys.length <= 1) {              /* 箭头：指出视野外相邻的下一个 ⊥ 在哪个方向（略左移，避开紫色晶界线） */
+    const xa = pxD - 15, yc = PYY(0);
+    line(g, xa, 22, xa, yc - 9, COL.extra, 1, [3, 3]);
+    line(g, xa, yc + 9, xa, H - 22, COL.extra, 1, [3, 3]);
+    arrowHead(g, xa, 20, -Math.PI / 2, 5, COL.extra);
+    arrowHead(g, xa, H - 20, Math.PI / 2, 5, COL.extra);
+  }
+  chipM(g, ys.length > 1
+    ? ["小角晶界 ＝ 一列刃位错，间距 ", { s: "D", i: 1 }, { s: " = " }, { s: "b", i: 1 }, { s: "/" },
+      { s: "θ", i: 1 }, { s: " = " + fmt(D, 2) + " " }, { s: "a", i: 1 }]
+    : ["相邻 ⊥ 相距 ", { s: "D", i: 1 }, { s: " = " }, { s: "b", i: 1 }, { s: "/" }, { s: "θ", i: 1 },
+      { s: " = " + fmt(D, 2) + " " }, { s: "a", i: 1 }, { s: "（箭头方向，已超出视野）" }],
+    10, H - 12, COL.extra, 11, "left", false, W, H);
+  /* ⚠️ chipC 走 measureText + txt，只吃**纯文本**：先前这里塞了
+     "<span class='m'><i>θ</i></span>"，画布不解析 HTML，字面连同标签一起印出来
+     （中英两种语言态都如此，与 i18n 无关）。2026-10-22 改回纯文本 θ。 */
+  chipC(g, "晶粒 1（−θ/2）", 10, 16, COL.g0, "11px " + FONT, "left", W, H);
+  chipC(g, "晶粒 2（+θ/2）", W - 10, 16, COL.g1, "11px " + FONT, "right", W, H);
+}
+
+/* --- 层错 / 孪晶界 --- */
+function drawStackView(g, W, H) {
+  const rows = LAT.rows, R = atomR(), sub = curSub();
+  for (let k = 0; k < rows.length; k++) {
+    const r = rows[k], y = PYY(r.y);
+    const col = COL.lay[r.s];
+    for (let m = -6; m <= 6; m++) {
+      const x = PXX(m + r.off);
+      SCR.push({ a: { t: "lay" + r.s, x: m + r.off, y: r.y, nn: 4 }, x: x, y: y });
+      if (x < -20 || x > W + 20 || y < -20 || y > H + 20) continue;
+      atom(g, x, y, R, k === LAT.hi ? COL.extra : col);
+    }
+    chipC(g, ["A", "B", "C"][r.s], PXX(-6.4), y, col, "bold 12px " + FONT, "right", W, H);
+  }
+  if (LAT.ghost) {
+    const gh = LAT.ghost, y = PYY(gh.y);
+    g.save(); g.setLineDash([4, 3]); g.strokeStyle = COL.vac; g.lineWidth = 1.6;
+    for (let m = -6; m <= 6; m++) { g.beginPath(); g.arc(PXX(m + gh.off), y, R * 0.85, 0, 6.2832); g.stroke(); }
+    g.restore();
+    chipC(g, "缺失的一层 " + ["A", "B", "C"][gh.s] + "（虚线＝本来该有却没有）",
+      PXX(-5.6), y, COL.vac, "11px " + FONT, "left", W, H);
+  }
+  if (LAT.hi >= 0 && rows[LAT.hi] && sub.k !== "twin") {
+    const y = PYY(rows[LAT.hi].y);
+    chipC(g, "多出的一层（插入型）", PXX(6.2), y, COL.extra, "11px " + FONT, "right", W, H);
+  }
+  if (LAT.mir !== null && LAT.mir !== undefined) {
+    const y = PYY(LAT.mir);
+    line(g, PXX(-6.6), y, PXX(6.6), y, "#7b3fa0", 1.8, [7, 4]);
+    chipC(g, "孪晶面（两侧镜像对称，几乎无悬挂键）", PXX(-6.4), y - 12, "#7b3fa0", "11px " + FONT, "left", W, H);
+  }
+  const seq = rows.map(r => ["A", "B", "C"][r.s]).join("");
+  chipC(g, "堆垛顺序（自下而上）：" + seq, 10, H - 12, "#6b7a8c", "11px " + FONT, "left", W, H);
+}
+
+/* --- 扩散 / 迁移路径 --- */
+function drawPath(g, W, H) {
+  const P = pathLC();
+  if (P.length < 2) return;
+  g.strokeStyle = COL.path; g.lineWidth = 1.8; g.beginPath();
+  for (let i = 0; i < P.length; i++) {
+    const x = PXX(P[i][0]), y = PYY(P[i][1]);
+    if (i === 0) g.moveTo(x, y); else g.lineTo(x, y);
+  }
+  g.stroke();
+  const last = P[P.length - 1];
+  g.strokeStyle = COL.step; g.lineWidth = 2;
+  g.beginPath(); g.arc(PXX(last[0]), PYY(last[1]), Math.max(5, atomR() * 1.5), 0, 6.2832); g.stroke();
+  const first = P[0];
+  g.fillStyle = "#0f9b8e"; g.beginPath(); g.arc(PXX(first[0]), PYY(first[1]), 3, 0, 6.2832); g.fill();
+}
+
+/* --- 柏氏回路 --- */
+function drawBurgers(g, W, H) {
+  const B = burgers();
+  if (!B) return;
+  const A = LAT.A, N = 5;
+  let p = nearest(A, LAT.core.x - 3, 3.2), st = p;
+  const pts = [[p.x, p.y]];
+  const walk = (d) => { for (let k = 0; k < N; k++) { p = stepTo(A, p, d); pts.push([p.x, p.y]); } };
+  walk([1, 0]); walk([0, -1]); walk([-1, 0]); walk([0, 1]);
+  g.strokeStyle = "#0f9b8e"; g.lineWidth = 1.8; g.setLineDash([]); g.beginPath();
+  for (let i = 0; i < pts.length; i++) {
+    const x = PXX(pts[i][0]), y = PYY(pts[i][1]);
+    if (i === 0) g.moveTo(x, y); else g.lineTo(x, y);
+  }
+  g.stroke();
+  g.strokeStyle = "#d94a3d"; g.lineWidth = 2.4;
+  g.beginPath(); g.moveTo(PXX(B.ex), PYY(B.ey)); g.lineTo(PXX(B.sx), PYY(B.sy)); g.stroke();
+  chipM(g, ["闭合差 = ", { s: "b", i: 1 }, { s: " = " + fmt(B.b, 2) + " " }, { s: "a", i: 1 }],
+    PXX((B.ex + B.sx) / 2), PYY((B.ey + B.sy) / 2) - 12, "#d94a3d", 11, "center", false, W, H);
+  chipC(g, "柏氏回路：绕位错走一圈回不到原点（完美晶体里必然闭合）",
+    10, 16, "#0f9b8e", "11px " + FONT, "left", W, H);
+}
+
+/* --- 状态角标 + 悬停探针 --- */
+function drawStateBadge(g, W, H) {
+  const sub = curSub();
+  let s = DIMS[OPT.dim].tag + "　" + sub.name + "　T = " + TFIX + " K" +
+    (WALK.n > 0 ? "　已走 " + WALK.n + " 步" : "");
+  if (LAT.kind === "helix")
+    s = DIMS[OPT.dim].tag + "　" + sub.name + "　" +
+      (MORPH.m > 0.985 ? "粘合弛豫后：一整张连续螺旋面"
+        : MORPH.m < 0.015 ? "刚剪开并错动 b：一叠「错了一页」的书页"
+        : "粘合中") + "　T = " + TFIX + " K";
+  chipC(g, s, W - 8, H - 10, "#455a64", "11px " + FONT, "right", W, H);
+}
+function drawProbe(g, W, H) {
+  const hv = HOV.lat;
+  if (!hv) return;
+  let best = null, bd = 1e9;
+  for (const s of SCR) {
+    const d = Math.hypot(s.x - hv.x, s.y - hv.y);
+    if (d < bd) { bd = d; best = s; }
+  }
+  if (!best || bd > Math.max(atomR() + 8, 16)) return;
+  const a = best.a;
+  let nn = a.nn;
+  if (nn === undefined) {
+    nn = 0;
+    for (const s of SCR) if (s.a !== a && Math.hypot(s.a.x - a.x, s.a.y - a.y) < 1.35) nn++;
+  }
+  const tname = { host: "主体原子", vac: "空位（缺一个原子）", self: "自间隙原子", sub: "替位杂质",
+    imp: "间隙杂质", extra: "额外半原子面上的原子", gb: "晶界区原子", helix: "螺旋面上的原子" }[a.t] ||
+    (String(a.t).indexOf("lay") === 0 ? "堆垛层 " + ["A", "B", "C"][+String(a.t).slice(3)] + " 的原子" : "原子");
+  g.strokeStyle = "#1976d2"; g.lineWidth = 2;
+  g.beginPath(); g.arc(best.x, best.y, Math.max(atomR() + 3, 8), 0, 6.2832); g.stroke();
+  const s1 = tname + "　坐标 (" + fmt(a.x, 2) + ", " + fmt(a.y, 2) + ") a　近邻数 " + nn;
+  chipC(g, s1, clamp(best.x + 14, 8, W - 8), clamp(best.y - 18, 14, H - 14), "#1976d2", "11px " + FONT, "left", W, H);
+}
+
+/* ---------------- 11. 图例 ---------------- */
+function buildLegends() {
+  $("legLat").innerHTML = [
+    '<span><span class="swatch dot" style="background:#9aa5b1"></span>主体原子（灰球）</span>',
+    '<span><span class="swatch dot" style="background:#455a64"></span>空位（虚线圈＝缺一个原子）</span>',
+    '<span><span class="swatch dot" style="background:#1976d2"></span>自间隙原子（主体原子挤进间隙）</span>',
+    '<span><span class="swatch dot" style="background:#d94a3d"></span>替位杂质 / 额外半原子面</span>',
+    '<span><span class="swatch dot" style="background:#2e9e5b"></span>间隙杂质</span>',
+    '<span><span class="swatch dot" style="background:#4a90d9"></span>晶粒 1</span>',
+    '<span><span class="swatch dot" style="background:#e08a2e"></span>晶粒 2</span>',
+    '<span><span class="swatch dot" style="background:#d94a3d"></span>悬挂键（缺了近邻的断键）</span>',
+    '<span><span class="swatch sq" style="background:linear-gradient(90deg,#c9d9ec,#6f9fce,#1a6aa8)"></span>三层原子面（各被拧成螺旋，首尾相接成一整张）</span>',
+    '<span><span class="swatch" style="border-color:#d94a3d"></span>绕一圈上升 <span class="m"><i>b</i></span>（同一根竖直原子柱上相邻两层的高差）</span>',
+    '<span><span class="swatch sq" style="background:linear-gradient(90deg,#dce2e9,#1565ba)"></span>俯视图配色＝标高（一圈循环）</span>',
+    '<span><span class="swatch" style="border-color:#0f9b8e"></span>跳跃 / 迁移路径</span>',
+    '<span><span class="swatch dash" style="border-color:#7b3fa0"></span>界面（晶界 / 孪晶面）</span>'
+  ].join("");
+}
+
+/* ---------------- 12. 引导探究 ---------------- */
+const CHAL = [
+  {
+    q: "在「点缺陷」里依次点开<b>空位、自间隙、替位杂质、间隙杂质</b>。它们分别<b>少了</b>什么或<b>多了</b>什么？周围原子的弛豫方向一样吗？",
+    a: () => {
+      const s = curSub();
+      return "四种点缺陷的区别只有一句话：<b>看原子是「少了」还是「多了」，以及多的那个原子坐在哪里</b>。" +
+        "<b>空位</b>是格点上<b>少一个</b>原子（虚线圈），周围原子<b>向内</b>弛豫（蓝箭头）去填补那个坑；" +
+        "<b>自间隙</b>是主体原子<b>多一个</b>，但它挤在<b>格点之间</b>（蓝球），把周围原子<b>向外</b>推开（红箭头）；" +
+        "<b>替位杂质</b>是杂质原子<b>占了格点</b>（红球）—— 原子总数没变，只是换了一个人坐，因为半径不同，周围仍有局域畸变；" +
+        "<b>间隙杂质</b>（绿球）是杂质原子<b>待在间隙里</b>，和自间隙的区别只在于「是不是外来户」。当前选的是<b>" +
+        s.name + "</b>：" + s.feat + "。";
+    }
+  },
+  {
+    q: "切到「刃位错」，打开<b>柏氏回路</b>。额外半原子面在哪一侧？滑移面上方与下方的原子间距各是多少？应力方向是什么？",
+    a: () => {
+      const st = strainStats(), B = burgers();
+      /* 判断由实时数值生成，不再写死 —— 位错滑走后读数若变化，文字会跟着变，不会自相矛盾 */
+      const judge = v => (v + 1e-9 < 1 ? "<b>小于</b> 1 ⇒ <b>受压</b>" : "<b>大于</b> 1 ⇒ <b>受拉</b>");
+      const s0 = st ? ("滑移面<b>上方</b>近邻间距 <b>" + fmt(st.above, 3) + " a</b>（" + judge(st.above) + "），" +
+        "<b>下方</b> <b>" + fmt(st.below, 3) + " a</b>（" + judge(st.below) + "）") : "（切到刃位错即可读数）";
+      return "刃位错的形象就是<b>多插了半张原子面</b>：那一张面在滑移面<b>上方</b>（红球那一列），到 <span class='m'>⊥</span> 处戛然而止 —— " +
+        "<span class='m'>⊥</span> 就是位错线。因为这张面是硬塞进去的，<b>上面被挤、下面被拉</b>：" + s0 +
+        "。把<b>柏氏回路</b>打开可以看到：绕位错沿格点走一圈（5 右 / 5 下 / 5 左 / 5 上）<b>回不到原点</b>，闭合差正好是一个原子间距 —— " +
+        (B ? "当前闭合差 <b>" + fmt(B.b, 3) + " a</b>" : "当前未显示") + "，这就是<b>柏氏矢量 " + M_B + "</b>，也是「位错」的定量定义。" +
+        "注意：位错<b>不是</b>一条线上少了一排原子，而是<b>整个晶体的弹性畸变</b>，越远越弱。";
+    }
+  },
+  {
+    q: "切到「螺位错」，<b>拖动画面转一圈</b>、再打开<b>俯视图</b>对照。同一张原子面是怎么绕位错线<b>一圈一圈盘上去</b>的？红色双箭头标出的 <span class='m'><i>b</i></span> 是怎么量出来的？它为什么<b>不需要</b>额外半原子面？",
+    a: () => {
+      return "先按<b>播放</b>把全过程看一遍，这就是教科书的「书页」比喻：<b>完整晶体 = 一叠平行的原子面</b> → 沿一条半径<b>剪开</b>（俯视图里那条红色虚线），剪口两侧沿竖直方向相对滑移 <span class='m'><i>b</i></span>，成了一叠「<b>错了一页</b>」的书页 → 再<b>粘合、弹性弛豫</b> —— " +
+        "粘好之后：第 <span class='m'><i>n</i></span> 页的末端正好接到第 <span class='m'><i>n</i><span class='op'>+</span>1</span> 页的开头，整叠书页连成图中的<b>一张连续螺旋面</b>，没有任何多余的半原子面，也没有受压区 / 受拉区。" +
+        "主图里标了 ①、② 两点：<b>① 是起点</b>，沿最外圈走一整圈到 <b>②</b>，位置回到了起点的<b>正上方</b>，高度正好抬升 <span class='m'><i>b</i></span>（红色双箭头量出来的就是它）—— " +
+        "所以<b>每绕一圈上升一个原子间距</b>，球的颜色深浅表示标高，转一圈颜色正好由浅变深再回到浅（循环一次 = 上升一个 b）。" +
+        "因为它任何时候都在表面露出一个<b>永不消失的台阶</b>，螺位错是晶体<b>螺旋生长的台阶源</b>，这正是它在半导体外延里格外重要的原因。" +
+        "<b>与刃位错的本质区别</b>有两条：① 没有额外半原子面；② 柏氏矢量 <span class='m'><i>b</i></span> <b>平行</b>于位错线（刃位错是<b>垂直</b>的）。" +
+        "顺带一个反直觉的事实：<b>俯视图里每个原子的位置并未被挪动</b>（位错的位移只有垂直分量），所以从上往下看仍是一排排整齐的格子 —— 乱的只是「标高」。" +
+        "把位错线与 <span class='m'><i>b</i></span> 的夹角记作 <span class='m'><i>α</i></span>：<span class='m'><i>α</i><span class='op'>=</span>90°</span> 就是<b>纯刃型</b>、" +
+        "<span class='m'><i>α</i><span class='op'>=</span>0°</span> 就是<b>纯螺型</b>，本工具只演示这两个极限情形（真实晶体里的位错大多是斜交的<b>混合型</b>）。" +
+        "（实用提示：打开<b>柏氏回路</b>只对刃位错有意义 —— 螺位错的闭合差是<b>垂直纸面</b>的，在这张投影里看不出来。）";
+    }
+  },
+  {
+    q: "切到「晶界」，把取向差 <span class='m'><i>θ</i></span> 从 3° 拖到 30°。界面上的<b>悬挂键</b>数量怎么变？小角晶界里的<b>位错间距 <span class='m'><i>D</i></span></b> 与 <span class='m'><i>θ</i></span> 什么关系？",
+    a: () => {
+      const th = OPT.thS, D = LAT && LAT.D ? LAT.D : 1 / (2 * Math.sin(th * Math.PI / 360));
+      const dg = LAT && LAT.dang !== undefined ? LAT.dang : 0;
+      const rad = th * Math.PI / 180;
+      return         "两个晶粒取向差 <span class='m'><i>θ</i></span>，界面上的原子就<b>对不上号</b>：有些方向找不到近邻 ⇒ 留下<b>断键（悬挂键）</b>，图中用红色短线标出，当前共 <b>" +
+        dg + "</b> 个 —— 注意它们<b>全部</b>长在界面那一两个原子层上，体内每个原子的配位数仍是 4（这正是面缺陷「二维」的含义：破坏只发生在一个面上）。" +
+        "<span class='m'><i>θ</i></span> 越大，两侧晶格越对不上，失配区越宽、断键越密（普通大角晶界几乎是一条连续的悬挂键带）；不过某些特殊角度两侧恰好对得整齐，断键会明显变少 —— 那就是真实存在的<b>重位晶界</b>。" +
+        "小角晶界有个漂亮的结果：<b>它其实就是一列刃位错</b>，间距 " + MM(VI("D") + OPR("=") + FRAC(VI("b"), "2" + RM("sin") + OPR("(") + VI("θ") + SL() + "2" + OPR(")")) + OPR("≈") + FRAC(VI("b"), VI("θ"))) + "。" +
+        "当前 " + MM(VI("θ") + OPR("=") + th + "°" + OPR("=") + fmt(rad, 3) + " rad") + " ⇒ " + MM(VI("D") + OPR("=") + fmt(D, 2) + " a") +
+        "，而 " + MM(FRAC("1", VI("θ")) + OPR("=") + fmt(1 / rad, 2)) +
+        " —— 两者只差一个正弦修正，<span class='m'><i>θ</i></span> 越小越吻合。位错间距越小（<span class='m'><i>θ</i></span> 越大）⇒ 位错核心重叠 ⇒ 就不再是「一列位错」而是真正的界面了。" +
+        "<b>孪晶界</b>是反例：两侧镜像对称、原子一一对应，几乎没有悬挂键，所以它的电学活性远低于普通晶界。";
+    }
+  }
+];
+
+let ANS_EL = [], ANS_SHOWN = false;
+function buildChal() {
+  const grid = $("chalGrid");
+  grid.innerHTML = ""; ANS_EL = [];
+  CHAL.forEach((c, i) => {
+    const el = document.createElement("div");
+    el.className = "chal";
+    el.innerHTML = '<div class="chal-head"><b>' + (i + 1) + ". " + c.q + '</b><span class="chev">▶</span></div>' +
+      '<div class="chal-body"><div class="ans"></div><div class="btn-row"><button>看看答案</button></div></div>';
+    grid.appendChild(el);
+    el.querySelector(".chal-head").onclick = () => el.classList.toggle("open");
+    const ans = el.querySelector(".ans");
+    ANS_EL.push(ans);
+    el.querySelector(".btn-row button").onclick = e => { e.stopPropagation(); ANS_SHOWN = true; ans.classList.toggle("show"); refreshAnswers(); };
+  });
+}
+function refreshAnswers() { if (!ANS_SHOWN) return; ANS_EL.forEach((el, i) => { el.innerHTML = CHAL[i].a(); }); }
+
+/* ---------------- 14. 同步与渲染 ---------------- */
+function markActive() {
+  Array.prototype.forEach.call($("dimBtns").children, b => b.classList.toggle("active", +b.dataset.i === OPT.dim));
+  Array.prototype.forEach.call($("subBtns").children, b => b.classList.toggle("sel", +b.dataset.i === OPT.sub));
+}
+function render() {
+  buildLattice();
+  drawLat();
+  refreshAnswers();
+}
+function buildSubBtns() {
+  const box = $("subBtns"); box.innerHTML = "";
+  SUBS[OPT.dim].forEach((s, i) => {
+    const b = document.createElement("button");
+    b.innerHTML = s.html || s.name; b.dataset.i = i; b.title = stripTags(s.feat);
+    b.onclick = () => { OPT.sub = i; resetWalk(); OPT.playing = isScrew(); if (s.k === "screw") { MORPH.m = 0; MORPH.dir = 1; } syncInputs(); render(); };
+    box.appendChild(b);
+  });
+}
+function syncInputs() {
+  $("thSlider").value = OPT.thS; $("spSlider").value = Math.round(OPT.speed * 100);
+  ["ckDisp", "ckBurg", "ckDang", "ckPath", "ckTop"].forEach(k => { $(k).checked = OPT[k]; });
+  const sub = curSub();
+  $("dimVal").textContent = DIMS[OPT.dim].name + " " + DIMS[OPT.dim].tag;
+  $("subVal").textContent = sub.name;
+  $("subNote").innerHTML = sub.feat + "。";
+  $("lvlBox").innerHTML = lvlBar(sub);
+  const mt = muTau(sub, NTFIX), CM3 = MM(" cm<sup>" + OPR("−") + "3</sup>");
+  $("elecNote").innerHTML = "由上面这套<b>示意参数化</b>算出的读数（" + MM(WSUB("N", "t") + OPR("=") + "10<sup>16</sup>") + CM3 + "）：" +
+    MM(VI("μ") + SL() + WSUB("μ", "0") + OPR("=") + fmt(mt.mu, 3)) + "、" +
+    MM(VI("τ") + SL() + WSUB("τ", "0") + OPR("=") + fmt(mt.tau, 3)) +
+    " （本缺陷 " + MM(WSUB("N", "μ") + OPR("=") + sci(sub.Nmu, 0)) + "、" + MM(WSUB("N", "τ") + OPR("=") + sci(sub.Ntau, 0)) +
+    CM3 + "；两个特征浓度都是<b>示意量级</b>，不是文献值）";
+  $("thVal").textContent = OPT.thS + "°";
+  $("thSub").innerHTML = OPT.dim === 2 && sub.k === "gb"
+    ? "小角晶界 ≈ 一列刃位错，间距 " + MM(VI("D") + OPR("=") + VI("b") + SL() + VI("θ") + OPR("=")) + " <b>" + fmt(1 / (OPT.thS * Math.PI / 180), 2) + "</b> " + MM(VI("a")) + "。"
+    : "仅在「晶界」模式下起作用。";
+  $("spVal").textContent = fmt(OPT.speed, 2) + "×";
+  syncPlayBtns();
+  markActive();
+}
+/* 是否「有东西可播」：螺位错永远可以播形成动画；其余缺陷 Γ 低于冻结阈值时一步不跳 ⇒ 按钮置灰 */
+function canAnimate() { return isScrew() || visRate(curSub()) > 0; }
+function togglePlay() {
+  if (!canAnimate()) return;
+  OPT.playing = !OPT.playing;
+  if (OPT.playing && WALK.done) resetWalk();     /* 已走完再按播放 ⇒ 从头重播 */
+  syncInputs();
+}
+function backToStart() {
+  resetWalk();
+  if (isScrew()) { MORPH.m = 0; MORPH.dir = 1; }  /* 螺位错：回到「一叠错开的书页」初态 */
+  /* 播放状态保持不变：正在播 ⇒ 从头继续播；已暂停 ⇒ 定格在第 0 步 */
+}
+function jumpEnd() {                             /* 螺位错专属：直接跳到「粘合完成」的末态 */
+  if (!isScrew()) return;
+  MORPH.m = 1; MORPH.dir = -1;                   /* 继续播时从这里往回返 */
+  /* 同样保持播放状态：正在播 ⇒ 从末态倒回去；已暂停 ⇒ 定格在完整螺旋面 */
+}
+function animValText() {
+  if (isScrew())
+    return MORPH.m > 0.985 ? "末态：一整张螺旋面"
+      : MORPH.m < 0.015 ? "初态：错开的书页"
+        : (OPT.playing ? "往复播放 " : "定格 ") + fmt(MORPH.m, 2);
+  return WALK.done ? "已走完 " + NMAX + " 步" : "第 " + WALK.n + " 步";
+}
+/* 缺陷能级在禁带中的位置小图：把数据表里的 lvl 用一条色条画出来
+   （lvl 字段若不用，「深能级当复合中心」就永远只是引言里的一句话） */
+const LVL_STY = {
+  shallow: { col: "#2e9e5b", nm: "浅能级" },
+  deep: { col: "#d94a3d", nm: "深能级（复合中心）" },
+  band1: { col: "#7b3fa0", nm: "一维能带" },
+  band2: { col: "#ef8c1a", nm: "界面态带" }
+};
+function lvlBar(sub) {
+  const L = levelOf(sub), S = LVL_STY[L.kind] || LVL_STY.deep;
+  const lo = clamp(L.lo / EG_SI * 100, 0, 100);
+  const wd = clamp(Math.min((L.hi - L.lo) / EG_SI * 100, 100 - lo), 1.6, 100);
+  const at = Math.abs(L.hi - L.lo) < 1e-6
+    ? fmt(L.lo, 3) + " eV（" + (L.kind === "shallow" ? MM(VI("E") + "<sub>c</sub>" + OPR("−") + "0.045") + " 或 " + MM(VI("E") + "<sub>v</sub>" + OPR("+") + "0.045") : "") + "）"
+    : fmt(L.lo, 2) + "–" + fmt(L.hi, 2) + " eV";
+  return "禁带能级位置（<b>示意</b>，以 Si 的 " + MM(VI("E") + "<sub>g</sub>" + OPR("=") + EG_SI + " eV") + " 为标尺）：" +
+    "<div class='bar'><i style='margin-left:" + fmt(lo, 1) + "%;width:" + fmt(wd, 1) + "%;background:" + S.col + "'></i></div>" +
+    "<div class='barlab'><span>" + MM(VI("E") + "<sub>v</sub>") + " 0</span>" +
+    "<b style='color:" + S.col + "'>" + S.nm + " " + at + "</b>" +
+    "<span>" + MM(VI("E") + "<sub>c</sub>") + " " + EG_SI + " eV</span></div>";
+}
+function refreshAnimVal() {                       /* 每帧只在文本真变了才写 DOM */
+  const s = animValText(), el = $("animVal");
+  if (el.textContent !== s) el.textContent = s;
+}
+function syncPlayBtns() {
+  const b = $("btnPlay"), playable = canAnimate(), sub = curSub();
+  b.textContent = OPT.playing ? "⏸ 暂停" : "▶ 播放";
+  b.classList.toggle("sel", OPT.playing && playable);
+  b.classList.toggle("primary", !OPT.playing && playable);
+  b.disabled = !playable;
+  $("btnEnd").style.display = isScrew() ? "" : "none";   /* 「到末态」只对螺位错有意义 */
+  $("animVal").textContent = animValText();
+  /* 真实 Γ 与「画面速度」都摆出来：否则 2.7 步/s 与 1.2 步/s 看起来一样快，
+     而它们的真实跳跃频率差 10 个数量级 —— 这个压缩关系必须写在页面上，不能只写在代码注释里。 */
+  $("animSub").innerHTML = playable
+    ? MM(WSUB("E", "a") + OPR("=") + fmt(sub.Ea, 1) + " eV") + "　" +
+      MM(VI("Γ") + "(" + TFIX + " K)" + OPR("=") + sci(hopRate(sub, TFIX), 1) + M_SUP_S) +
+      "　画面 <b>" + fmt(visRate(sub), 2) + "</b> 步/s。" +
+      "画面速度按 lg " + MM("<i>Γ</i>") + " 压缩，<b>不代表真实的快慢比例</b>。"
+    : "1000 K 下跳跃频率 " + MM(VI("Γ") + OPR("≈") + sci(hopRate(curSub(), TFIX), 1) + M_SUP_S) +
+      " —— 一步不跳，视为<b>冻结</b>（这正是掺杂后必须高温退火 / 推进的原因）。";
+}
+
+/* ---------------- 15. 绑定 ---------------- */
+function init() {
+  buildLegends(); buildChal(); buildSubBtns();
+  const dimBox = $("dimBtns"); dimBox.innerHTML = "";
+  DIMS.forEach((d, i) => {
+    const b = document.createElement("button");
+    b.textContent = d.name + " " + d.tag; b.dataset.i = i;
+    b.onclick = () => { OPT.dim = i; OPT.sub = 0; OPT.playing = isScrew(); resetWalk(); VIEW.ox = 0; VIEW.oy = 0; VIEW.s = 1; ROT.yaw = -0.62; ROT.pitch = 0.52; MORPH.m = 1; MORPH.dir = -1; buildSubBtns(); syncInputs(); render(); };
+    dimBox.appendChild(b);
+  });
+
+  const sl = (id, fn) => $(id).addEventListener("input", e => fn(+e.target.value));
+  sl("thSlider", v => { OPT.thS = v; syncInputs(); render(); });
+  sl("spSlider", v => { OPT.speed = v / 100; syncInputs(); });
+  ["ckDisp", "ckBurg", "ckDang", "ckPath", "ckTop"].forEach(k =>
+    $(k).addEventListener("change", e => { OPT[k] = e.target.checked; render(); }));
+
+  $("btnPlay").onclick = togglePlay;
+  $("btnReset").onclick = () => { backToStart(); syncInputs(); render(); };
+  $("btnEnd").onclick = () => { jumpEnd(); syncInputs(); render(); };
+  $("btnView").onclick = () => {                 /* 只管视图，不动动画状态 */
+    VIEW.ox = 0; VIEW.oy = 0; VIEW.s = 1;
+    ROT.yaw = -0.62; ROT.pitch = 0.52; render();
+  };
+
+  const el = $("lat");
+  el.addEventListener("mousemove", e => {
+    const r = el.getBoundingClientRect();
+    HOV.lat = { x: e.clientX - r.left, y: e.clientY - r.top };
+    if (DRAG) {
+      if (DRAG.hel) {                       /* 螺位错：拖拽＝绕竖直轴 / 俯仰角旋转视角 */
+        ROT.yaw = DRAG.yaw + (e.clientX - DRAG.x) * 0.008;
+        ROT.pitch = clamp(DRAG.pitch - (e.clientY - DRAG.y) * 0.006, 0.05, 1.42);
+      } else {
+        VIEW.ox = DRAG.ox + (e.clientX - DRAG.x); VIEW.oy = DRAG.oy + (e.clientY - DRAG.y);
+      }
+    }
+    drawLat();
+  });
+  el.addEventListener("mouseleave", () => { HOV.lat = null; drawLat(); });
+  el.addEventListener("mousedown", e => {
+    DRAG = { x: e.clientX, y: e.clientY, ox: VIEW.ox, oy: VIEW.oy, yaw: ROT.yaw, pitch: ROT.pitch,
+      hel: LAT && LAT.kind === "helix" };
+  });
+  window.addEventListener("mouseup", () => { DRAG = null; });
+  el.addEventListener("wheel", e => {
+    e.preventDefault();
+    VIEW.s = clamp(VIEW.s * (e.deltaY < 0 ? 1.12 : 1 / 1.12), 0.5, 3.5);
+    drawLat();
+  }, { passive: false });
+  /* 键盘快捷键（画布获得焦点后）：空格 = 播放/暂停，R = 回到起点 */
+  el.addEventListener("keydown", e => {
+    if (e.code === "Space" || e.key === " ") { e.preventDefault(); togglePlay(); }
+    else if (e.key === "r" || e.key === "R") { e.preventDefault(); backToStart(); syncInputs(); render(); }
+    else if (e.key === "e" || e.key === "E") { e.preventDefault(); jumpEnd(); syncInputs(); render(); }
+  });
+  window.addEventListener("resize", () => { fitAll(); render(); });
+  OPT.playing = isScrew();
+  resetWalk(); syncInputs(); fitAll(); render();
+  requestAnimationFrame(loop);
+}
+
+let DRAG = null;
+
+/* ---------------- 16. 动画循环 ---------------- */
+let ACC = 0, lastT = 0;
+function loop(ts) {
+  if (!lastT) lastT = ts;
+  const dt = Math.min(0.06, (ts - lastT) / 1000);
+  lastT = ts;
+  const hel = LAT && LAT.kind === "helix";
+  if (hel) {                            /* 螺位错：播放 = 「书页剪开—错动—粘合」全过程 */
+    if (OPT.playing) {                  /* 播放：0 ↔ 1 往返；暂停：定格在当前状态便于观察 */
+      MORPH.m += MORPH.dir * dt * 0.45;
+      if (MORPH.m <= 0) { MORPH.m = 0; MORPH.dir = 1; }
+      if (MORPH.m >= 1) { MORPH.m = 1; MORPH.dir = -1; }
+      drawLat(); refreshAnimVal();
+    }
+  } else if (OPT.playing && !WALK.done) {
+    ACC += dt * visRate(curSub());
+    let guard = 0;
+    while (ACC >= 1 && guard++ < 8) { ACC -= 1; stepWalk(); }
+    if (guard > 0) { render(); refreshAnimVal(); }
+  }
+  if (!hel && WALK.done && OPT.playing) { OPT.playing = false; syncInputs(); }  /* 走完 ⇒ 按钮自动回到「▶ 播放」 */
+  requestAnimationFrame(loop);
+}
+
+init();
+
+/* i18n 启动必须在 init() 之后：setLang() 会重跑 syncInputs()/render()，
+   放到 init() 之前会在 fitAll() 之前触发绘制，一旦抛异常整个 init() 就跑不到（挑战与画布会空）。 */
+(function () {
+  try {
+    i18nWatch();
+    ORIG_TITLE = ORIG_TITLE || document.title;
+    var btn = document.getElementById("langBtn");
+    if (btn) btn.onclick = function () { setLang(LANG === "en" ? "zh" : "en"); };
+    if (LANG === "en") setLang("en"); else { document.title = ORIG_TITLE; i18nWalk(document.body); }
+  } catch (e) { }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,2223 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<!-- SPDX-License-Identifier: MIT -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PN结界面载流子输运交互教学工具</title>
+<style>
+
+  :root {
+    --bg: #f7f9fb;
+    --panel: #ffffff;
+    --border: #dde4ec;
+    --text: #2c3e50;
+    --text-sub: #6b7a8c;
+    --blue: #1976d2;
+    --blue-light: #e3f0fb;
+    --orange: #ef8c1a;
+    --red: #d94a3d;
+    --teal: #0f9b8e;
+    --green: #2e9e5b;
+    --purple: #7b3fa0;
+    --gray-ref: #9aa5b1;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Microsoft YaHei", "PingFang SC", "Segoe UI", sans-serif;
+    background: var(--bg); color: var(--text); padding: 14px;
+  }
+  header { position: relative; display: flex; align-items: baseline; justify-content: center; gap: 14px; flex-wrap: wrap; text-align: center; margin-bottom: 2px; }
+  .lang-btn { position: absolute; right: 0; top: 0; border: 1px solid var(--border); background: #fff;
+    color: var(--text-sub); padding: 3px 10px; border-radius: 7px; cursor: pointer; font-size: 12px; font-weight: 600; }
+  .lang-btn:hover { border-color: var(--blue); color: var(--blue); }
+  header h1 { font-size: 20px; }
+  header .formula { font-size: 14.5px; color: var(--text-sub); }
+  .sub-note { text-align: center; font-size: 12.5px; color: var(--text-sub); margin-bottom: 12px; line-height: 1.75; }
+  .sub-note b { color: var(--blue); }
+
+  .layout { display: flex; gap: 14px; align-items: flex-start; max-width: 1500px; margin: 0 auto; }
+  .viz { flex: 0 0 64%; min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+  .side { flex: 1; min-width: 310px; display: flex; flex-direction: column; gap: 12px; }
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; }
+  .sec-title { font-size: 13.5px; font-weight: 700; margin: 2px 0 6px; }
+  /* 模块编号徽标：只有教学内容模块才带编号；控制面板等辅助面板不是模块，不加 */
+  .sec-title .mtag {
+    display: inline-block; background: var(--blue); color: #fff;
+    font-size: 11px; font-weight: 700; padding: 1.5px 7px;
+    border-radius: 5px; margin-right: 6px; vertical-align: 1.5px; letter-spacing: .3px;
+  }
+  canvas { display: block; width: 100%; border-radius: 6px; touch-action: none; }
+  canvas:focus { outline: 2px solid rgba(25,118,210,.45); outline-offset: 1px; }
+  .chart-wrap { position: relative; }
+  .hint { font-size: 12px; color: var(--text-sub); margin-top: 6px; line-height: 1.6; }
+  .ctrl { margin-bottom: 10px; }
+  .ctrl:last-child { margin-bottom: 0; }
+  .ctrl-head { display: flex; justify-content: space-between; align-items: baseline; font-size: 13px; font-weight: 600; margin-bottom: 2px; gap: 8px; }
+  .ctrl-head .val { color: var(--blue); font-variant-numeric: tabular-nums; font-weight: 700; white-space: nowrap; }
+  .ctrl input[type=range] { width: 100%; accent-color: var(--blue); }
+  .ctrl .sub { font-size: 11.5px; color: var(--text-sub); margin-top: 1px; line-height: 1.5; }
+  .btn-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+  .btn-row button {
+    border: 1px solid var(--border); background: #fff; color: var(--text);
+    padding: 5px 11px; border-radius: 7px; cursor: pointer; font-size: 12.5px;
+  }
+  .btn-row button:hover { border-color: var(--blue); color: var(--blue); }
+  .btn-row.tight button { padding: 4px 9px; font-size: 12px; }
+  .btn-row button.sel { background: var(--blue); border-color: var(--blue); color: #fff; font-weight: 600; }
+  .btn-row button.primary { background: var(--blue-light); border-color: var(--blue); color: var(--blue); font-weight: 600; }
+  .mode-switch { display: flex; gap: 6px; }
+  .mode-switch button {
+    flex: 1; border: 1px solid var(--border); background: #fff; color: var(--text-sub);
+    padding: 6px 10px; border-radius: 8px; cursor: pointer; font-size: 12.5px; font-weight: 600;
+  }
+  .mode-switch button.active { background: var(--blue); border-color: var(--blue); color: #fff; }
+  .chk-row { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12.5px; color: var(--text-sub); margin-top: 4px; }
+  .chk-row label { display: inline-flex; align-items: center; gap: 5px; cursor: pointer; }
+  .chk-row input[type=checkbox] { accent-color: var(--blue); }
+  .legend { display: flex; gap: 6px 14px; flex-wrap: wrap; align-items: center; font-size: 12px; color: var(--text-sub); margin-top: 6px; }
+  .swatch { display: inline-block; vertical-align: middle; width: 20px; height: 0; border-top: 3px solid currentColor; border-radius: 2px; margin-right: 6px; }
+  .swatch.dash { border-top-style: dashed; }
+  .swatch.dot { width: 11px; height: 11px; border: none; border-radius: 50%; }
+  .swatch.sq { width: 11px; height: 11px; border: none; border-radius: 3px; }
+  /* ---- 图例条目：色块 + 文字 + 线型注 ---- */
+  .legend .lg { display: inline-flex; align-items: center; gap: 5px; }
+  .legend .lg > i { display: inline-block; width: 18px; height: 3px; border-radius: 2px; flex: 0 0 auto; }
+  .legend .lg > em { font-style: normal; color: #adb7c2; font-size: 11px; }
+  .legend .lg.off { opacity: .36; }
+  .legend .lg.cur { font-weight: 700; color: var(--text); }
+  .legend .lg[data-k] { cursor: pointer; }
+  /* ---- LaTeX 风格数学排版（纯 CSS，无外部库） ---- */
+  .m { font-family: "Cambria Math", "STIX Two Math", "Latin Modern Math", "Times New Roman", Times, serif;
+       font-size: 1.05em; font-style: normal; white-space: nowrap; letter-spacing: .01em; }
+  .m i, .m var { font-style: italic; }
+  .m .rm { font-style: normal; }
+  .m sub, .m sup { font-size: .70em; font-style: normal; line-height: 1; }
+  .m sub { vertical-align: -.28em; }
+  .m sup { vertical-align: .50em; }
+.m .m { font-size: 1em; }   /* 嵌套容器（TEXH 下标转换叠加）不再放大字号 */
+  .m sub i, .m sup i { font-style: italic; }
+  .m .op { font-style: normal; padding: 0 .24em; }
+  .m .sl { font-style: normal; padding: 0 .05em; }
+  .m .un { font-style: normal; padding-left: .16em; }
+  .frac { display: inline-block; vertical-align: -0.52em; text-align: center; margin: 0 .16em; font-size: .86em; line-height: 1.18; }
+  .frac > .num { display: block; padding: 0 .34em; border-bottom: 1px solid currentColor; }
+  .frac > .den { display: block; padding: 0 .34em; }
+  /* ---- 读数区 ---- */
+  .kv { display: grid; grid-template-columns: 1fr; gap: 2px 22px; font-size: 12.5px; }
+  .kv .row { display: flex; justify-content: space-between; gap: 8px; border-bottom: 1px dotted #eef2f7; padding: 2px 0; }
+  .kv .k { color: var(--text-sub); white-space: nowrap; }
+  .kv .v { font-variant-numeric: tabular-nums; text-align: right; }
+  .kv .v b { color: var(--blue); }
+  .kv .hd { grid-column: 1 / -1; font-weight: 700; color: var(--text); font-size: 12px; margin: 6px 0 2px; }
+  .kv .hd:first-child { margin-top: 0; }
+  /* ---- 折叠区（读数「更多」/ 控制面「更多参数」）----
+     独立组件，类名一律 .fold：❌ 不许复用 .chal-head / .chev，
+     否则会被挑战区回归脚本按「挑战题」计数，也会污染挑战区视觉基线。 */
+  .fold { margin-top: 7px; border-top: 1px dotted var(--border); padding-top: 5px; }
+  .fold-head { display: flex; align-items: center; gap: 6px; cursor: pointer;
+    font-size: 12px; font-weight: 600; color: var(--text-sub); user-select: none; }
+  .fold-head:hover { color: var(--blue); }
+  .fold-head .chev { font-size: 11px; transition: transform .15s; display: inline-block; }
+  .fold.open .fold-head .chev { transform: rotate(90deg); }
+  .fold-body { display: none; margin-top: 4px; }
+  .fold.open .fold-body { display: block; }
+  .fold-val { font-weight: 400; color: var(--text-sub); font-size: 11px; margin-left: auto; }
+  .unit-note { font-size: 11.5px; color: var(--text-sub); line-height: 1.55; margin-top: 6px; }
+  /* 读数面板里的「超标」数字（注入比越过低注入判据、势垒被钳位） */
+  .kv .v .bad { color: #c0392b; font-weight: 700; }
+  .warn { font-size: 11.5px; line-height: 1.6; margin-top: 6px; padding: 6px 8px;
+          background: #fdecea; border-left: 3px solid #d94a3d; border-radius: 4px; color: #8c3b32; }
+  .warn b { color: #b93a2f; }
+  /* ---- 引导探究 ---- */
+  .chal-wrap { max-width: 1500px; margin: 14px auto 0; }
+  .chal-bar { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+  .chal-bar b { font-size: 14.5px; }
+  .chal-bar span { font-size: 12px; color: var(--text-sub); }
+  .chal-grid { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+  .chal { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 8px 12px; }
+  .chal-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; cursor: pointer; }
+  .chal-head b { font-size: 13.5px; }
+  .chal-head .chev { color: var(--text-sub); font-size: 12px; transition: transform .15s; display: inline-block; }
+  .chal.open .chal-head .chev { transform: rotate(90deg); }
+  .chal.open { border-color: var(--blue); }
+  .chal-body { display: none; margin-top: 6px; font-size: 12.5px; color: var(--text-sub); line-height: 1.75; }
+  .chal.open .chal-body { display: block; }
+  .chal-body .ans { display: none; margin-top: 6px; padding: 7px 10px; background: var(--blue-light); border-radius: 6px; color: var(--text); }
+  .chal-body .ans.show { display: block; }
+  .chal-body .ans b { color: var(--blue); }
+  .chal-body .btn-row { margin-top: 8px; }
+  @media (max-width: 1100px) {
+    .layout { flex-direction: column; }
+    .viz { flex: 1 1 auto; width: 100%; }
+  }
+  /* ---- 课程页脚 ---- */
+  .site-foot { max-width: 1500px; margin: 18px auto 0; padding: 12px 16px 24px;
+    border-top: 1px solid var(--border); color: var(--text-sub);
+    font-size: 12.5px; line-height: 1.8; text-align: center; }
+  .site-foot a { color: var(--blue, #1976d2); text-decoration: none; }
+  .site-foot a:hover { text-decoration: underline; }
+
+  .grp { border-top: 1px dotted #e6ecf3; padding-top: 8px; margin-top: 8px; }
+  .grp:first-child { border-top: 0; padding-top: 0; margin-top: 0; }
+  .sqrt > .rdc, .sqrt .rdc { display: inline-block; position: static; font-size: 1em;
+             border-top: .055em solid currentColor; padding: .06em .12em 0 .10em; margin: 0; line-height: 1; }
+
+  /* 公式排版：分式 / 根式 —— 全站统一为「回旋共振 v06」写法（置于末尾，覆盖本文件早期变体） */
+  .frac { display: inline-block; vertical-align: -0.52em; text-align: center; font-size: .78em; margin: 0 .12em; }
+  .frac > .num, .frac .num { display: block; padding: 0 .22em; border-bottom: .055em solid currentColor; line-height: inherit; }
+  .frac > .den, .frac .den { display: block; padding: 0 .22em; line-height: inherit; }
+  .sqrt { display: inline-block; white-space: nowrap; vertical-align: baseline; margin: 0; font-size: 1em; }
+  .sqrt > .rd, .sqrt .rd { display: inline-block; position: static; font-size: 1em; line-height: inherit; padding: 0 .02em 0 0; margin: 0; }
+  .sqrt > .rdc, .sqrt .rdc { display: inline-block; position: static; font-size: 1em;
+             border-top: .055em solid currentColor; padding: .06em .12em 0 .10em; margin: 0; line-height: 1; }
+  .sqrt .rdc:has(sup) { padding-top: .18em; }
+</style>
+</head>
+<body>
+
+<header>
+  <button id="langBtn" class="lang-btn" data-noi18n title="中文 / English">EN</button>
+  <h1>PN 结界面载流子输运交互教学工具</h1>
+  <div class="formula"><span class="m"><i>V</i><sub>bi</sub><span class="op">=</span>(<i>kT</i><span class="sl">/</span><i>q</i>)ln(<i>N</i><sub>A</sub><i>N</i><sub>D</sub><span class="sl">/</span><i>n</i><sub>i</sub><sup>2</sup>)</span>　·　<span class="m"><i>W</i><span class="op">=</span><span class='sqrt'><span class='rd'>√</span><span class='rdc'>2<i>ε</i><sub>s</sub>(<i>V</i><sub>bi</sub><span class="op">−</span><i>V</i>)(<i>N</i><sub>A</sub><span class="op">+</span><i>N</i><sub>D</sub>)<span class="sl">/</span><i>qN</i><sub>A</sub><i>N</i><sub>D</sub></span></span></span>　·　<span class="m"><i>n</i><sub>p</sub>(<span class="op">−</span><i>x</i><sub>p</sub>)<span class="op">=</span><i>n</i><sub>p0</sub><span class='rm'>e</span><sup><i>qV</i><span class="sl">/</span><i>kT</i></sup></span>　·　<span class="m"><i>I</i><span class="op">=</span><i>I</i><sub>0</sub>(<span class='rm'>e</span><sup><i>qV</i><span class="sl">/</span><i>kT</i></sup><span class="op">−</span>1)</span>　·　<span class="m"><i>I</i><sub>rec</sub><span class="op">∝</span><span class='rm'>e</span><sup><i>qV</i><span class="sl">/</span>2<i>kT</i></sup></span></div>
+</header>
+<div class="sub-note">
+  P 区和 N 区一贴在一起，<b>浓度差</b>就驱动<b>扩散</b>；扩散走掉载流子，留下不能动的电离杂质 ⇒ 形成<b>空间电荷区（耗尽区）</b>和<b>内建电场</b>，电场又驱动反向的<b>漂移</b>。平衡时两者正好抵消，净电流为零。加<b>正偏</b>（P 接正）就把势垒<b>压低</b>，扩散一下压过漂移 ⇒ <b>少子注入</b>、电流指数暴涨；加<b>反偏</b>则把势垒<b>抬高</b>，只剩被抽走的少子 ⇒ 一个几乎不随电压变的<b>反向饱和电流</b> <span class="m"><i>I</i><sub>0</sub></span>。拖动偏压滑块，能带图与少子分布会<b>同时</b>动起来，右侧读数同步给出内建电势、耗尽区宽度与电流。
+</div>
+
+<div class="layout">
+  <div class="viz">
+    <div class="card">
+      <div class="sec-title"><span class="mtag">模块一</span>PN 结能带图：耗尽区、内建电场、扩散与漂移（横轴为分段压缩坐标）</div>
+      <div class="chart-wrap"><canvas id="band" data-h="380" tabindex="0"></canvas></div>
+      <div class="legend" id="legBand"></div>
+      <div class="hint">
+        横轴做了<b>分段压缩</b>：中间 40% 画耗尽区（宽度 <span class="m"><i>W</i></span>，只有零点几微米），两侧各 30% 画 5 个扩散长度（几十微米），虚线处是坐标断点。<b>平衡态</b>：能带弯出 <span class="m"><i>qV</i><sub>bi</sub></span>，<span class="m"><i>E</i><sub>F</sub></span> 是一条水平线。<b>正偏</b>：势垒降到 <span class="m"><i>V</i><sub>bi</sub><span class="op">−</span><i>V</i></span>、耗尽区变窄，<span class="m"><i>E</i><sub>Fn</sub></span> 与 <span class="m"><i>E</i><sub>Fp</sub></span> 在耗尽区<b>分开 <span class="m"><i>qV</i></span></b>（这就是外加电压在能带图上的样子），少子被大量注入。<b>反偏</b>：势垒升高、耗尽区变宽，耗尽区里几乎没有可动载流子，只剩被电场抽走的少子。
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="sec-title"><span class="mtag">模块二</span>少子分布：注入 / 抽取多少，衰减多快（纵轴对数）</div>
+      <div class="chart-wrap"><canvas id="minor" data-h="290" tabindex="0"></canvas></div>
+      <div class="legend" id="legMinor"></div>
+      <div class="hint">
+        横坐标与<b>模块一完全相同</b>（同一套分段压缩的比例、同样的两条耗尽区边界竖虚线），所以可以<b>上下对照</b>着看：左半是 <b>P 区的电子</b> <span class="m"><i>n</i><sub>p</sub>(<i>x</i>)</span>（蓝），右半是 <b>N 区的空穴</b> <span class="m"><i>p</i><sub>n</sub>(<i>x</i>)</span>（红），中间灰色是耗尽区。灰虚线是<b>平衡值</b> <span class="m"><i>n</i><sub>p0</sub></span>、<span class="m"><i>p</i><sub>n0</sub></span>，实线是当前值；耗尽区边界处的过量浓度是 <span class="m">Δ<i>n</i><span class="op">=</span><i>n</i><sub>p0</sub>(<span class='rm'>e</span><sup><i>qV</i><span class="sl">/</span><i>kT</i></sup><span class="op">−</span>1)</span> —— 正偏时向上抬、反偏时被压到<b>几乎为零</b>（少子抽空）。抬起来以后按 <span class="m"><span class='rm'>e</span><sup><span class="op">−</span><i>x</i><span class="sl">/</span><i>L</i></sup></span> 衰减，走过一个 <span class="m"><i>L</i></span> 就掉到 1/<span class='rm'>e</span>（图下方用双向箭头标出了这<b>一个 <span class="m"><i>L</i></span></b> 的实际长度）。<b>鼠标在上下任一张图上移动，两张图会在同一个 <span class="m"><i>x</i></span> 同时出现竖线</b> —— 正对着看：上面准费米能级分开多少，下面少子浓度就抬高多少。少子寿命已固定为 <span class="m"><i>τ</i><span class="op">=</span>1 μs</span>，<span class="m"><i>L</i><span class="op">=</span><span class='sqrt'><span class='rd'>√</span><span class='rdc'><i>Dτ</i></span></span></span> 只随温度变。
+      </div>
+    </div>
+
+  </div>
+
+  <div class="side">
+    <div class="card">
+      <div class="sec-title">控制面板</div>
+
+      <div class="ctrl grp">
+        <div class="ctrl-head"><span>工作点预设</span></div>
+        <div class="btn-row tight" id="preBtns"></div>
+        <div class="sub">半导体固定为 <b>Si</b>：<span class="m"><i>ε</i></span><sub>r</sub> = 11.7，<span class="m"><i>μ</i></span><sub>n</sub>/<span class="m"><i>μ</i></span><sub>p</sub> = 1350/480 cm<sup>2</sup>/V·s，结面积 <span class="m"><i>A</i><span class="op">=</span>10<sup>−4</sup></span> cm<sup>2</sup>（0.01 mm<sup>2</sup>，即 100 μm × 100 μm）。</div>
+      </div>
+
+      <div class="ctrl grp">
+        <div class="ctrl-head"><span>偏压 <span class="m"><i>V</i></span>（正＝正偏）</span><span class="val" id="vVal">0.00 V</span></div>
+        <input type="range" id="vSlider" min="-100" max="90" step="1" value="0">
+        <div class="sub" id="vSub"></div>
+        <div class="ctrl-head" style="margin-top:6px;"><span>温度 <span class="m"><i>T</i></span></span><span class="val" id="tVal">300 K</span></div>
+        <input type="range" id="tSlider" min="150" max="500" step="5" value="300">
+        <div class="sub" id="tSub"></div>
+        <div class="btn-row tight" style="margin-top:6px;">
+          <button id="btnPlay" class="primary">▶ 自动扫描</button>
+          <button id="btnReset">⟲ 重置</button>
+        </div>
+      </div>
+
+      <div class="fold" id="foldCtl">
+        <div class="fold-head"><span class="chev">▶</span><span>更多参数（掺杂与少子寿命）</span><span class="fold-val" id="moreVal"></span></div>
+        <div class="fold-body">
+          <div class="ctrl grp">
+            <div class="ctrl-head"><span>P 区受主 <span class="m"><i>N</i><sub>A</sub></span></span><span class="val" id="naVal">1.0×10<sup>16</sup> cm<sup>−3</sup></span></div>
+            <input type="range" id="naSlider" min="0" max="400" step="1" value="100">
+            <div class="ctrl-head" style="margin-top:6px;"><span>N 区施主 <span class="m"><i>N</i><sub>D</sub></span></span><span class="val" id="ndVal">1.0×10<sup>16</sup> cm<sup>−3</sup></span></div>
+            <input type="range" id="ndSlider" min="0" max="400" step="1" value="100">
+          </div>
+
+          <div class="ctrl grp">
+            <div class="ctrl-head"><span>少子寿命 <span class="m"><i>τ</i><sub>n</sub></span> / <span class="m"><i>τ</i><sub>p</sub></span>（固定）</span><span class="val" id="tnVal">1.0 / 1.0 μs</span></div>
+            <div class="sub">P 区电子寿命 <span class="m"><i>τ</i><sub>n</sub></span> 与 N 区空穴寿命 <span class="m"><i>τ</i><sub>p</sub></span> 都固定为 <b>1.0 μs</b>（硅的典型量级）。扩散长度 <span class="m"><i>L</i><span class="op">=</span><span class='sqrt'><span class='rd'>√</span><span class='rdc'><i>Dτ</i></span></span></span> 仍随温度而变（<span class="m"><i>D</i><span class="op">=</span><i>μkT</i><span class="sl">/</span><i>q</i></span>），数值标在模块二的图上。</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="ctrl grp">
+        <div class="ctrl-head"><span>显示项目</span></div>
+        <div class="chk-row">
+          <label><input type="checkbox" id="ckCar" checked> 载流子与运动</label>
+          <label><input type="checkbox" id="ckField" checked> 内建电场与漂移</label>
+          <label><input type="checkbox" id="ckDep" checked> 耗尽区与宽度标注</label>
+          <label><input type="checkbox" id="ckQF" checked> 准费米能级</label>
+          <label><input type="checkbox" id="ckEq" checked> 平衡态少子参考线</label>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="sec-title">读数面板</div>
+      <div class="kv" id="readout"></div>
+      <div class="warn" id="modelWarn" style="display:none"></div>
+      <div class="fold" id="foldRo">
+        <div class="fold-head"><span class="chev">▶</span><span>更多读数（材料掺杂、少子扩散、电流分解与适用条件）</span></div>
+        <div class="fold-body"><div class="kv" id="readoutMore"></div></div>
+      </div>
+      <div class="unit-note">内建电势 <span class="m"><i>V</i><sub>bi</sub><span class="op">=</span>(<i>kT</i><span class="sl">/</span><i>q</i>)ln(<i>N</i><sub>A</sub><i>N</i><sub>D</sub><span class="sl">/</span><i>n</i><sub>i</sub><sup>2</sup>)</span>；耗尽区宽度用<b>耗尽近似</b> <span class="m"><i>W</i><span class="op">=</span><span class='sqrt'><span class='rd'>√</span><span class='rdc'>2<i>ε</i><sub>s</sub>(<i>V</i><sub>bi</sub><span class="op">−</span><i>V</i>)<span class="sl">/</span><i>q</i><span class="op">·</span>(<i>N</i><sub>A</sub><span class="op">+</span><i>N</i><sub>D</sub>)<span class="sl">/</span><i>N</i><sub>A</sub><i>N</i><sub>D</sub></span></span></span>；电场按抛物线电势的导数计算。反向饱和电流 <span class="m"><i>I</i><sub>0</sub><span class="op">=</span><i>qA</i>(<i>D</i><sub>p</sub><i>p</i><sub>n0</sub><span class="sl">/</span><i>L</i><sub>p</sub><span class="op">+</span><i>D</i><sub>n</sub><i>n</i><sub>p0</sub><span class="sl">/</span><i>L</i><sub>n</sub>)</span>，复合电流 <span class="m"><i>I</i><sub>rec</sub><span class="op">=</span><i>qA</i><span class="op">·</span><i>n</i><sub>i</sub><i>W</i><span class="sl">/</span>(2<i>τ</i><sub>g</sub>)<span class="op">·</span>(<span class='rm'>e</span><sup><i>qV</i><span class="sl">/</span>2<i>kT</i></sup><span class="op">−</span>1)</span>（<span class="m"><i>τ</i><sub>g</sub><span class="op">=</span><span class='sqrt'><span class='rd'>√</span><span class='rdc'><i>τ</i><sub>n</sub><i>τ</i><sub>p</sub></span></span></span>）。结面积取 <span class="m"><i>A</i><span class="op">=</span>10<sup><span class="op">−</span>4</sup> cm<sup>2</sup></span>（= 0.01 mm<sup>2</sup> = 10<sup>−2</sup> mm<sup>2</sup>，即 100 μm × 100 μm）。本工具<b>不含</b>击穿、大注入与串联电阻效应；是否还在<b>低注入</b>、势垒有没有被<b>穿透</b>，由上方读数面板「适用条件（两条判据）」<b>随参数实时判定</b>（滑块量程 −1.0 ~ +0.9 V、自动扫描 −1.0 ~ +0.7 V，高档位并非处处合法）。</div>
+    </div>
+  </div>
+</div>
+
+<div class="chal-wrap">
+  <div class="card">
+    <div class="chal-bar">
+      <b>引导探究（点击展开，先自己试一试再看答案）</b>
+      <span>挑战任务</span>
+    </div>
+    <div class="chal-grid" id="chalGrid"></div>
+  </div>
+</div>
+
+<div class="site-foot">本工具是 EIT-SP（半导体物理交互式教学工具箱）的一部分（武汉大学物理学院《半导体物理》智慧课程），以 MIT 协议开源，可自由使用与二次开发；转载请保留出处。反馈意见 <a href="mailto:doctorwanghao@qq.com">doctorwanghao@qq.com</a></div>
+
+<script>
+/* ==================================================================
+   i18n（C1 单文件双语：物理代码仍然只有一份）
+   LANG 取值优先级：URL ?lang=en / ?lang=zh  >  localStorage('opl_lang')  >  默认中文。
+   不做 location 跳转——保住「单文件拷走也能用」。
+   三个注入点，**业务字符串一个都不改**：
+     ① partsOf()   画布 token：带 i/sub/sup/un 标记的是物理量、下标与单位，跳过
+     ② fillText/measureText 原型挂钩：兜住直接写进画布的中文串
+     ③ DOM 文本节点：静态 HTML 与 JS 写进来的 innerHTML，用 MutationObserver 兜住新增节点
+   T() 先查整句词典，未命中再按「最长优先」做短语替换，因此拼接串也能翻。
+   漏翻会被记进 window.__MISS，可导出核对。 */
+var LANG = (function () {
+  var m = /[?&]lang=([a-zA-Z]+)/.exec(location.search);
+  var q = m ? m[1].toLowerCase() : "";
+  if (q === "en" || q === "zh") return q;
+  var s = "";
+  try { s = localStorage.getItem("opl_lang") || ""; } catch (e) { }
+  return (s === "en" || s === "zh") ? s : "zh";
+})();
+var ORIG_TITLE = document.title;
+var __MISS = [];
+try { window.__MISS = __MISS; } catch (e) { }
+function noteMiss(s) { if (__MISS.indexOf(s) < 0) __MISS.push(s); }
+function TSoft(s) {
+  if (!T._K) T._K = Object.keys(I18N).sort(function (a, b) { return b.length - a.length; });
+  var out = s, i, k, orig = s;
+  /* 两遍：第一遍只吃长度 ≥ 2 的短语，第二遍才让单字 key 上场。
+     否则「下」会先被翻掉，把「留不下净电荷」「1 T 下输出」这类整句切碎。 */
+  for (var pass = 0; pass < 2; pass++) {
+    for (i = 0; i < T._K.length; i++) {
+      k = T._K[i];
+      if (k.length < 2 && (pass === 0 || orig !== k)) continue;
+      if (out.indexOf(k) < 0) continue;
+      /* 中文片段之间没有空格：前一片段已翻成英文时，本片段英文直连进去会粘连
+         （「更深」「或」「更浅」逐段替换成 deeper、or、shallower 会拼出 deeperor），
+         所以替换时看上下文：key 以中文开头、前一字符已是英文 ⇒ 前面补一个空格。 */
+      out = out.replace(new RegExp(k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "g"), function (m, off, str) {
+        var v = I18N[k];
+        var pre = off > 0 ? str.charAt(off - 1) : "";
+        if (/[A-Za-z0-9]/.test(pre) && /^[A-Za-z0-9(]/.test(v) && /[\u3400-\u9FFF]/.test(k.charAt(0))) v = " " + v;
+        return v;
+      });
+    }
+  }
+  return out;
+}
+/* 同一句被 DOM 切成好几个文本节点时，首尾空格会随机落在 data 里；
+   所以除了「整句命中」，再试一次「去空格后命中」并原样补回首尾空白。 */
+function trimMap() {
+  if (T._TM) return T._TM;
+  var m = {};
+  for (var k in I18N) if (Object.prototype.hasOwnProperty.call(I18N, k)) {
+    var t = k.replace(/^\s+|\s+$/g, "");
+    if (t && m[t] === undefined) m[t] = I18N[k];
+  }
+  T._TM = m;
+  return m;
+}
+/* eslint-disable no-use-before-define */
+function T(s) {
+  if (LANG !== "en" || typeof s !== "string" || !s) return s;
+  if (!/[一-鿿]/.test(s)) return s;
+  if (Object.prototype.hasOwnProperty.call(I18N, s)) return I18N[s];
+  var tm = trimMap(), core = s.replace(/^\s+|\s+$/g, "");
+  if (core && tm[core] !== undefined) {
+    var lead = s.slice(0, s.length - s.replace(/^\s+/, "").length);
+    var tail = s.slice(s.replace(/\s+$/, "").length);
+    return lead + tm[core] + tail;
+  }
+  var v = TSoft(s);
+  if (v === s) noteMiss(s);
+  return v;
+}
+var I18N = {
+  /* ---- 词典：中文原文 → 英文。key 禁含运行时数字（换个参数就漏），数字前后要拆开 ---- */
+  "格": "cells",
+  "模块一": "Module 1",
+  "模块二": "Module 2",
+  "控制面板": "Control Panel",
+  "费米能级 ": "Fermi level ",
+  "挑战任务": "Challenges",
+  "？": "?",
+  "，": ", ",
+  "、": ", ",
+  "：": ": ",
+  "；": "; ",
+  "（": " (",
+  "）": ")",
+  "本工具是 EIT-SP（半导体物理交互式教学工具箱）的一部分（武汉大学物理学院《半导体物理》智慧课程），以 MIT 协议开源，可自由使用与二次开发；转载请保留出处。": "This tool is part of EIT-SP, the Educational Interactive Toolkit for Semiconductor Physics (School of Physics and Technology, Wuhan University). Released under the MIT licence: free to use, modify and redistribute, including commercially. Please keep this attribution.",
+  "反馈意见": " Feedback",
+  "材料": "Material",
+  "读数面板": "Readout Panel",
+  "空": "empty",
+  "取": "Take ",
+  "能量 ": "Energy ",
+  "能量": "energy",
+  "看答案": "Show answer",
+  "：当前 ": ": at present ",
+  "从 ": " from ",
+  "），": "), and ",
+  " ⇒ ": " ⇒ ",
+  "几乎": "almost ",
+  "预设": "Preset",
+  "显示": "Display",
+  "温度 ": "Temperature ",
+  "，所以 ": ", so ",
+  " / ": " / ",
+  "杂质": "impurity",
+  " 的": " ",
+  "变窄": "narrows",
+  " 与": " and ",
+  "怎么变？": " of the charge piled up on the walls change?",
+  "宽度": "width",
+  "本工具是 EIT-SP（半导体物理交互式教学工具箱）的一部分（武汉大学物理学院《半导体物理》智慧课程），以 MIT 协议开源，可自由使用与二次开发；转载请保留出处。反馈意见": "This tool is part of EIT-SP, the Educational Interactive Toolkit for Semiconductor Physics (School of Physics and Technology, Wuhan University). Released under the MIT licence: free to use, modify and redistribute, including commercially. Please keep this attribution. Feedback",
+  "本工具是": "This tool is part of",
+  "（半导体物理交互式教学工具箱）的一部分（武汉大学物理学院《半导体物理》智慧课程），以": ", the Educational Interactive Toolkit for Semiconductor Physics (School of Physics and Technology, Wuhan University). Released under the",
+  "协议开源，可自由使用与二次开发；转载请保留出处。反馈意见": "licence: free to use, modify and redistribute, including commercially. Please keep this attribution. Feedback",
+  "协议开源，可自由使用与二次开发；转载请保留出处。": "licence: free to use, modify and redistribute, including commercially. Please keep this attribution.",
+  "无关": "independent",
+  "水平线": "a horizontal line",
+  "参考": "reference",
+  "区边界": "Zone boundary",
+  "，所以": ", so",
+  "固定": "fixed",
+  "方向": "direction",
+  "温度": "temperature",
+  "（取": " (taking",
+  "反向": "opposite direction",
+  "参数": "parameters",
+  "×": " × ",
+  "到": "to",
+  "还是": "or",
+  "施主": "donor",
+  "导带底": "conduction-band minimum",
+  "价带顶": "valence-band maximum",
+  "受主": "acceptor",
+  "少子寿命": "the minority-carrier lifetime",
+  "上方": "above",
+  "下方": "below",
+  "开": "on",
+  "关": "Off",
+  "，势垒": ", barrier",
+  "现在": "Now",
+  "，即 ": ", i.e. ",
+  "，净电流为零。": "and the net current is zero.",
+  "空）": "empty)",
+  "，实线": ", solid line",
+  "，虚线": ", dashed line",
+  "虚线": "Dashed line",
+  "平衡": "equilibrium",
+  "半导体固定为": "The semiconductor is fixed at",
+  "只有": "only",
+  "实线": "Solid line",
+  "扩散电流": "diffusion current",
+  "正好抵消": "exactly cancels",
+  "平衡态": "equilibrium",
+  "费米能": "Fermi energy",
+  "降到": "falls to",
+  "箭头": "arrow",
+  "右侧": "right side",
+  "净电流为零": "the net current is zero",
+  "是": "is",
+  "相反": "opposite to the field",
+  "1.00 倍": "1.00",
+  "比": "than",
+  "随": "varies with",
+  "无关）": " in this simplification)",
+  "状态": "state",
+  "差 ": "a factor of ",
+  "同时": "at the same time",
+  "这就是": "this undulating band edge is the potential field that scatters the carriers — that is",
+  "⟲ 重置": "⟲ Reset",
+  "重置": "Reset",
+  "为什么": "why",
+  "：当前": ": current",
+  "电离": "ionisation",
+  "理想": "ideal",
+  "峰": "peak",
+  "现在是": "Currently it is a",
+  "时": "when",
+  "带底": "band bottom",
+  "带顶": "band top",
+  " 载流子": " Carriers",
+  "浓度": "concentration",
+  "上移": "up",
+  "调到": "to",
+  "面积": "area",
+  "本征浓度": "Intrinsic concentration",
+  "费米能级": "Fermi level",
+  "本征": "Intrinsic",
+  "载流子": "carrier",
+  "）的": ") has the largest",
+  "挑战": "Challenge",
+  "和": " and ",
+  "带底 ": "band bottom ",
+  "带顶 ": "band top ",
+  "电荷": "charge",
+  "上限": "upper limit",
+  "大": "larger",
+  "对数": "the logarithm",
+  "差": "differ by",
+  "，所以是": ", so this is",
+  "竖线": "vertical line",
+  "能": "Energy",
+  "量": " ",
+  "原": "origin",
+  "点": "",
+  "价": "valence",
+  "顶": "top",
+  "导": "conduction",
+  "底": "bottom",
+  "子": "quantum",
+  "几": "almost",
+  "乎": " ",
+  "全": "",
+  "满": "full",
+  "没": "no ",
+  "的": "",
+  "据": " ",
+  "率": "probability",
+  "电流": "current",
+  "）。": "at room temperature).",
+  "漂移": "Drift",
+  "浓度梯度": "Concentration gradient",
+  "扩散": "+ diffusion",
+  "半导体固定为 ": "The semiconductor is fixed to ",
+  "倍": " times",
+  "电流 ": "Current ",
+  "，宽 ": ", width ",
+  "（漂移）": " (drift)",
+  "下": "lower",
+  "P 区": "P region",
+  "N 区": "N region",
+  "扩散 ⇄ 漂移，净电流 = 0": "Diffusion ⇄ drift, net current = 0",
+  "平衡态（净电流 = 0）": "Equilibrium (net current = 0)",
+  "（掉到 1/e）": " (down to 1/e)",
+  "（掉到": " (down to ",
+  "P 区中的电子 ": "Electrons in the P region ",
+  "区中的电子": " electrons in the region",
+  "N 区中的空穴 ": "Holes in the N region ",
+  "区中的空穴": " holes in the region",
+  "耗尽区 W = ": "Depletion region W = ",
+  "位置 x —— 与模块一同一横轴，可上下对照（⟊ 为比例断点）": "Position x — the same horizontal axis as module 1, so the two can be read against each other (⟊ marks a scale break)",
+  "少子浓度 (cm": "Minority concentration (cm",
+  "少子浓度": "Minority concentration",
+  "PN结界面载流子输运交互教学工具": "Carrier Transport at a PN Junction Interface — Interactive Toolkit",
+  "PN 结界面载流子输运交互教学工具": "Carrier Transport at a PN Junction Interface — Interactive Toolkit",
+  "\n  P 区和 N 区一贴在一起，": "\n  As soon as the P and N regions are brought into contact, the ",
+  "就驱动": " drives ",
+  "；扩散走掉载流子，留下不能动的电离杂质 ⇒ 形成": "; diffusion carries carriers away and leaves immobile ionised impurities behind ⇒ a ",
+  "空间电荷区（耗尽区）": "space-charge region (depletion region)",
+  "内建电场": "built-in field",
+  "，电场又驱动反向的": ", and that field in turn drives the opposite ",
+  "。平衡时两者正好抵消，净电流为零。加": ". At equilibrium the two cancel exactly and the net current is zero. Applying a ",
+  "正偏": "forward bias",
+  "（P 接正）就把势垒": " (P side positive) pushes the barrier ",
+  "压低": "down",
+  "，扩散一下压过漂移 ⇒ ": ", so diffusion at once overwhelms drift ⇒ ",
+  "少子注入": "minority-carrier injection",
+  "、电流指数暴涨；加": " and the current rises exponentially; a ",
+  "反偏": "reverse bias",
+  "则把势垒": " instead pushes the barrier ",
+  "抬高": "up",
+  "，只剩被抽走的少子 ⇒ 一个几乎不随电压变的": ", leaving only the minority carriers that are swept away ⇒ an almost voltage-independent ",
+  "反向饱和电流": "reverse saturation current",
+  "。拖动偏压滑块，能带图与少子分布会": ". Dragging the bias slider makes the band diagram and the minority profile ",
+  "动起来，右侧读数同步给出内建电势、耗尽区宽度与电流。\n": " move, while the readout panel tracks the built-in potential, depletion width and current.\n",
+  "PN 结能带图：耗尽区、内建电场、扩散与漂移（横轴为分段压缩坐标）": "PN junction band diagram: depletion region, built-in field, diffusion and drift (piecewise-compressed horizontal axis)",
+  "电子准费米能级 ": "Electron quasi-Fermi level ",
+  "空穴准费米能级 ": "Hole quasi-Fermi level ",
+  "内建电场（漂移）": "Built-in field (drift)",
+  "耗尽区 W": "Depletion region W",
+  "\n        横轴做了": "\n        The horizontal axis is ",
+  "分段压缩": "piecewise-compressed",
+  "：中间 40% 画耗尽区（宽度 ": ": the middle 40 % shows the depletion region (width ",
+  "，只有零点几微米），两侧各 30% 画 5 个扩散长度（几十微米），虚线处是坐标断点。": ", only a few tenths of a micron), while 30 % on each side covers five diffusion lengths (tens of microns); the dashed lines are the coordinate breaks.",
+  "：能带弯出 ": ": the bands bend by ",
+  " 是一条水平线。": " is a horizontal line.",
+  "：势垒降到 ": ": the barrier falls to ",
+  "、耗尽区变窄，": " and the depletion region narrows, while the ",
+  " 在耗尽区": " levels inside the depletion region ",
+  "分开 ": "split apart by ",
+  "（这就是外加电压在能带图上的样子），少子被大量注入。": " (that is what an applied voltage looks like on a band diagram), and minority carriers are injected in huge numbers.",
+  "：势垒升高、耗尽区变宽，耗尽区里几乎没有可动载流子，只剩被电场抽走的少子。\n      ": ": the barrier rises and the depletion region widens; almost no mobile carriers remain inside, only the minority carriers swept away by the field.\n      ",
+  "少子分布：注入 / 抽取多少，衰减多快（纵轴对数）": "Minority profiles: how much is injected or extracted, and how fast it decays (logarithmic vertical axis)",
+  "P 区电子 ": "P-region electrons ",
+  "N 区空穴 ": "N-region holes ",
+  "平衡值 ": "Equilibrium value ",
+  "注入 / 抽取的倍数": "Injection / extraction factor",
+  "\n        横坐标与": "\n        The horizontal axis is ",
+  "模块一完全相同": "exactly the same as in module 1",
+  "（同一套分段压缩的比例、同样的两条耗尽区边界竖虚线），所以可以": " (the same piecewise compression, the same two dashed depletion edges), so you can ",
+  "上下对照": "read them against each other",
+  "着看：左半是 ": " vertically: the left half is the ",
+  "P 区的电子": "electrons of the P region",
+  "（蓝），右半是 ": " (blue) and the right half the ",
+  "N 区的空穴": "holes of the N region",
+  "（红），中间灰色是耗尽区。灰虚线是": " (red), with the depletion region in grey between them. The grey dashed line is the ",
+  "平衡值": "equilibrium value",
+  "，实线是当前值；耗尽区边界处的过量浓度是 ": " and the solid line the present value; the excess concentration at the depletion edge is ",
+  " —— 正偏时向上抬、反偏时被压到": " — pushed up under forward bias and squeezed down to ",
+  "几乎为零": "almost zero",
+  "（少子抽空）。抬起来以后按 ": " under reverse bias (the minority carriers are swept empty). Once raised, it decays as ",
+  " 衰减，走过一个 ": ", and after one ",
+  " 就掉到 1/": " it has fallen to 1/",
+  "（图下方用双向箭头标出了这": " (a double-headed arrow below the plot marks the real length of this ",
+  "一个 ": "one ",
+  " 的实际长度）。": ").",
+  "鼠标在上下任一张图上移动，两张图会在同一个 ": "Move the mouse over either plot and a vertical line appears in both at the same ",
+  " 同时出现竖线": " at once",
+  " —— 正对着看：上面准费米能级分开多少，下面少子浓度就抬高多少。少子寿命已固定为 ": " — read them face to face: by how much the quasi-Fermi levels split above is by how much the minority concentration rises below. The minority lifetime is fixed at ",
+  " 只随温度变。\n      ": " and changes only with temperature.\n      ",
+  "工作点预设": "Operating-point presets",
+  "正偏 0.3 V": "Forward 0.3 V",
+  "正偏 0.6 V": "Forward 0.6 V",
+  "反偏 0.5 V": "Reverse 0.5 V",
+  "反偏 1 V": "Reverse 1 V",
+  "/V·s，结面积 ": "/V·s, junction area ",
+  "P 区受主 ": "P-region acceptors ",
+  "N 区施主 ": "N-region donors ",
+  "P 区电子寿命 ": "P-region electron lifetime ",
+  " 与 N 区空穴寿命 ": " and N-region hole lifetime ",
+  " 都固定为 ": " are both fixed at ",
+  "（硅的典型量级）。扩散长度 ": " (typical magnitudes for silicon). The diffusion length ",
+  " 仍随温度而变（": " still varies with temperature (",
+  "），数值标在模块二的图上。": "), and its value is printed on the module-2 plot.",
+  "偏压 ": "Bias ",
+  "（正＝正偏）": " (positive = forward bias)",
+  "势垒 ": "Barrier ",
+  "）　耗尽区 ": ")　depletion region ",
+  "　平衡：扩散 = 漂移": "　equilibrium: diffusion = drift",
+  "▶ 自动扫描": "▶ Auto sweep",
+  "显示项目": "Display items",
+  " 载流子与运动": " carriers and motion",
+  " 内建电场与漂移": " built-in field and drift",
+  " 耗尽区与宽度标注": " depletion region and width labels",
+  " 准费米能级": " quasi-Fermi levels",
+  " 平衡态少子参考线": " equilibrium minority reference line",
+  "材料与掺杂": "Material and doping",
+  "平衡 / 当前状态": "Equilibrium / present state",
+  "内建电势 ": "Built-in potential ",
+  "偏压 V / 势垒 ": "Bias V / barrier ",
+  "耗尽区宽度 W": "Depletion width W",
+  "峰值电场 ": "Peak field ",
+  "少子与扩散": "Minority carriers and diffusion",
+  "反向饱和电流 ": "Reverse saturation current ",
+  "复合电流 ": "Recombination current ",
+  "└ 总电流 ": "└ Total current ",
+  "理想因子 n（局部）": "Ideality factor n (local)",
+  "主导电流机制": "Dominant current mechanism",
+  "理想因子 n（局部）+ 主导机制": "Ideality factor n (local) + dominant mechanism",
+  "总电流 ": "Total current ",
+  "（扩散 ": "(diffusion ",
+  " + 复合 ": " + recombination ",
+  "）": ")",
+  "　主导：": "　dominant: ",
+  "已钳位": "clamped",
+  "（当前 ": "(at present ",
+  "更多参数（掺杂与少子寿命）": "More parameters (doping and minority-carrier lifetime)",
+  "更多读数（材料掺杂、少子扩散、电流分解与适用条件）": "More readings (material and doping, minority-carrier diffusion, current decomposition and validity conditions)",
+  "电流分解": "Current decomposition",
+  "适用条件（两条判据）": "Applicability (two criteria)",
+  "①边缘注入比 ": "① Edge injection ratio ",
+  "　边缘注入比 ": "　edge injection ratio ",
+  "　低注入判据 ≲ 10 %": "　low-injection criterion ≲ 10 %",
+  "✓ 满足（正偏上限 ": "✓ satisfied (the forward-bias limit is ",
+  "②势垒未穿透 V < ": "② Barrier not punched through, V < ",
+  "✓ 满足（可加到 ": "✓ satisfied (it can be raised to ",
+  "复合电流（n=2） ": "Recombination current (n = 2) ",
+  "；耗尽区宽度用": "; the depletion width uses the ",
+  "耗尽近似": "depletion approximation",
+  "；电场按抛物线电势的导数计算。反向饱和电流 ": "; the field is computed as the derivative of the parabolic potential. The reverse saturation current ",
+  "，复合电流 ": " and the recombination current ",
+  "）。结面积取 ": "). The junction area is taken as ",
+  "不含": "does not include",
+  "击穿、大注入与串联电阻效应；是否还在": "breakdown, high-level injection or series resistance; whether we are still in ",
+  "低注入": "low injection",
+  "、势垒有没有被": " and whether the barrier has been ",
+  "穿透": "punched through",
+  "，由上方读数面板「适用条件（两条判据）」": " is judged by ",
+  "随参数实时判定": "'Applicability (two criteria)' in the readout panel above, in real time",
+  "（滑块量程 −1.0 ~ +0.9 V、自动扫描 −1.0 ~ +0.7 V，高档位并非处处合法）。": " (slider range −1.0 to +0.9 V, auto sweep −1.0 to +0.7 V; the higher settings are not valid everywhere).",
+  "引导探究（点击展开，先自己试一试再看答案）": "Guided inquiry (click to expand — try it yourself before reading the answers)",
+  "1. 把偏压停在 V = 0（平衡态）。耗尽区在哪一段？内建电场指向哪边？扩散和漂移各把载流子往哪推？为什么净电流恰好为零？": "1. Hold the bias at V = 0 (equilibrium). Where does the depletion region lie? Which way does the built-in field point? Which way do diffusion and drift each push the carriers? And why is the net current exactly zero?",
+  "看看答案": "Show the answer",
+  "2. 把偏压调到 +0.5 V（正偏）。势垒和耗尽区怎么变？看模块二，耗尽区边界的少子浓度抬了多少倍？离边界多远就衰减到 1/": "2. Set the bias to +0.5 V (forward). How do the barrier and the depletion region change? In module 2, by what factor is the minority concentration at the depletion edge raised? How far from the edge does it fall to 1/",
+  "3. 把偏压调到 −0.5 V（反偏）。势垒和耗尽区怎么变？少子浓度是升高还是降低？反向电流由什么机制主导，为什么它": "3. Set the bias to −0.5 V (reverse). How do the barrier and the depletion region change? Does the minority concentration rise or fall? Which mechanism dominates the reverse current, and why does it ",
+  "几乎不随电压变": "hardly change with voltage at all",
+  "方向正好相反": "in exactly the opposite direction",
+  "反着": "the other way round",
+  "一个扩散长度 ": "One diffusion length ",
+  "变宽": "is wider",
+  "少子被电场抽走": "the minority carriers are swept away by the field",
+  "不随电压增大": "does not grow with voltage",
+  "供给速率被扩散限制": "the supply rate is limited by diffusion",
+  "温度每升高一点，反向电流就翻倍式地涨": "every small rise in temperature makes the reverse current double",
+  "耗尽区就是能带图中间那段灰色区域，宽 ": "The depletion region is the grey band in the middle of the band diagram, ",
+  "，里面几乎没有可动载流子，只剩不能动的电离杂质：P 侧是 ": " wide, containing almost no mobile carriers, only immobile ionised impurities: on the P side ",
+  "（受主得电子）、N 侧是 ": " (acceptors that have gained an electron) and on the N side ",
+  "（施主失电子）。这些固定电荷造出从 N 指向 P 的电场（图中橙色箭头，峰值 ": " (donors that have lost one). These fixed charges create a field pointing from N to P (orange arrows in the figure, peak ",
+  "被浓度差驱动：电子 N→P、空穴 P→N；": " is driven by the concentration difference: electrons N→P, holes P→N; ",
+  "被电场驱动：电子 P→N、空穴 N→P —— ": " is driven by the field: electrons P→N, holes N→P — ",
+  "。平衡时两者严格相抵（图下方「扩散 ⇄ 漂移」），所以 ": ". At equilibrium the two balance exactly ('diffusion ⇄ drift' below the figure), so the ",
+  "。这就是为什么肖克利方程里必须有一个 ": ". That is why the Shockley equation has to contain a ",
+  " 时指数项 ": " the exponential term at ",
+  "，减掉它才得到零。电场把两侧能带拉开 ": ", and only by subtracting it do we obtain zero. The field pulls the bands of the two sides apart by ",
+  "，恰好等于两侧费米能级接触前的落差 ": ", exactly the difference of the two Fermi levels before contact, ",
+  "正偏把外加电压": "Forward bias puts the applied voltage ",
+  "加在内建电场上 ⇒ 结上的电势差从 ": " on top of the built-in field ⇒ the potential difference across the junction falls from ",
+  "，耗尽区随之": ", and the depletion region accordingly ",
+  "，势垒一低，扩散就压过漂移。边界处的少子浓度按 ": ", so once the barrier is low diffusion overwhelms drift. The minority concentration at the edge rises as ",
+  " 抬升，现在是平衡值的 ": " and is now ",
+  "（过量 ": " of the equilibrium value (an excess of ",
+  "）。注入进去的少子一边扩散一边复合，浓度按 ": "). The injected minority carriers diffuse and recombine at the same time, so the concentration falls as ",
+  " 衰减：走过 ": ": after ",
+  "，再远就被复合掉了（": " they have recombined away (",
+  "，寿命越长少子钻得越深；本工具 ": ", the longer the lifetime the deeper the minority carriers penetrate; in this tool ",
+  " 已固定，所以 ": " is fixed, so ",
+  " 只随温度通过 ": " varies with temperature only through ",
+  " 变）。": " ).",
+  "反偏把势垒": "Reverse bias pushes the barrier ",
+  "，耗尽区": " and the depletion region ",
+  "，这正是变容二极管的工作原理）。势垒一高，多数载流子根本翻不过去，只剩": " — that is exactly how a varactor diode works). With the barrier high the majority carriers cannot get over it at all, leaving only ",
+  "：边界处少子浓度按 ": ": the minority concentration at the edge is pushed down as ",
+  " 被压到（": " to (at ",
+  " 时约为平衡值的 ": " it is about ",
+  "，即": " of the equilibrium value, i.e. ",
+  "），于是形成从边界指向体内的浓度梯度，少子源源不断被抽过结 ⇒ 这就是": "), so a concentration gradient builds up from the edge into the bulk and minority carriers are drawn across the junction continuously ⇒ that is the ",
+  "。它": ". It ",
+  "，因为": ", because ",
+  "了：单位时间能扩散到边界的少子就那么多（取决于 ": ": only so many minority carriers can diffuse to the edge per unit time (set by ",
+  "，与偏压无关），电压再高也只能把这些少子抽走而已。所以 ": ", independent of the bias), so a higher voltage can do no more than sweep those carriers away. Hence ",
+  "。而 ": ". And ",
+  "（这是二极管的热稳定性问题）。": " (this is the thermal-stability problem of diodes).",
+  " μm × 100 μm）。本工具": " μm × 100 μm). This tool ",
+  "（P 侧 ": " (P side ",
+  "、N 侧 ": ", N side ",
+  " nm），里面几乎没有可动载流子，只剩不能动的电离杂质：P 侧是 ": " nm), containing almost no mobile carriers, only immobile ionised impurities: on the P side ",
+  "）—— ": "). ",
+  " V 是热电压 ": " V is ",
+  " mV 的近 ": " mV times nearly ",
+  " 倍，所以是天文数字般的注入。注入进去的少子一边扩散一边复合，浓度按 ": " — hence an astronomical amount of injection. The injected minority carriers diffuse and recombine at the same time, so the concentration decays as ",
+  "注入": "injection",
+  "⏸ 暂停": "⏸ Pause",
+  "耗尽区复合": "Depletion-region recombination",
+  "只剩示意": "schematic only",
+  "　耗尽区内": "　inside the depletion region",
+  "正偏：势垒降低 ": "forward bias: the barrier drops by ",
+  "反偏：势垒升高 ": "reverse bias: the barrier rises by ",
+  " V：势垒已被钳位": " V: the barrier has been clamped",
+  "⚠ 注入比 ": "⚠ Injection ratio ",
+  " %：已越过低注入（上限 ": " %: the low-injection limit has been exceeded (upper limit ",
+  " V）</span>": " V)</span>",
+  "已越过低注入": "the low-injection limit has been exceeded",
+  "⚠ V ≥ V_bi：势垒已被钳在 ": "⚠ V ≥ V_bi: the barrier has been clamped at ",
+  /* EN 态排版层会把 V_bi 转成独立斜体 span，把文本节点切成两半——
+     整句 key 从此匹配不上，必须再给「切分后」的前半段一条 key。 */
+  "：势垒已被钳在 ": ": the barrier has been clamped at ",
+  " V，此后的 W、E 与能带弯曲只是兜底常数的产物": " V; from here on W, E and the band bending are only artefacts of the fallback constants",
+  "　正偏：扩散 > 漂移": "　forward bias: diffusion > drift",
+  "　反偏：漂移 > 扩散": "　reverse bias: drift > diffusion",
+  "V ≥ V_bi − ": "V ≥ V_bi − ",
+  "：势垒已被钳位": ": the barrier has been clamped",
+  "此后的 W、E 与能带弯曲只是兜底常数的产物": "from here on W, E and the band bending are only artefacts of the fallback constants",
+  "少子抽走": "Minority carriers swept away",
+  "抽": "extraction",
+  "Δn/多子 = ": "Δn/majority = ",
+  " %：已非低注入": " %: no longer low injection",
+  " —— 以下图形的模型已失效": " — the model behind the plots below has broken down",
+  "注入到耗尽区边缘的少子已达多子的 ": "The minority carriers injected at the depletion edge have reached ",
+  " %": " % of the majority concentration",
+  "（甚至超过掺杂本身 ": " (and even exceed the doping itself by a factor of ",
+  " 倍）": ")",
+  "，越过": ", which crosses the ",
+  "前提：真实样品要同时解两种载流子并计入电导调制，": " assumption: a real sample must solve both carrier types at once and include conductivity modulation, so ",
+  " 这条边界条件不再成立，": " this boundary condition no longer holds, and ",
+  "本页的电流与分布": "current and profiles on this page are ",
+  "。低注入的正偏上限约 ": ". The forward-bias limit for low injection is about ",
+  "（随掺杂而变）。": " (it varies with the doping).",
+  "偏压已达到 ": "The bias has reached ",
+  " V（当前 V_bi = ": " V (present V_bi = ",
+  " V）：势垒被钳在代码的下限 ": " V): the barrier is clamped at the code lower limit of ",
+  " V，耗尽区宽度、峰值电场与能带弯曲": " V, so the depletion width, peak field and band bending are ",
+  "全是这个人为常数的产物": "all artefacts of that artificial constant",
+  "，真实器件此时早已进入大注入 + 串联电阻区，图上的形状不再有物理意义。": "; a real device would by now be in the high-injection plus series-resistance regime and the shapes drawn here have no physical meaning.",
+  "少子注入：": "Minority injection: ",
+  "少子抽取：": "Minority extraction: ",
+  "扩散 > 漂移": "diffusion > drift",
+  "漂移 > 扩散": "drift > diffusion",
+  "扩散 = 漂移": "diffusion = drift",
+  "抽空": "extraction",
+  "抽空 ×": "extraction ×",
+  "注入 ×": "injection ×",
+  "到 ": "to ",
+  " 倍": " times",
+  "浓度差": "concentration difference",
+  " 等": " etc.",
+};
+
+/* 注入点②：画布直写字符串。老工具直接调 g.fillText()（描边文字走 g.strokeText()），这里在原型上兜住。
+   measureText 必须一起挂钩，否则「量的宽度」和「量的文字」用的不是同一个串。 */
+(function () {
+  if (typeof CanvasRenderingContext2D === "undefined") return;
+  var ft = CanvasRenderingContext2D.prototype.fillText;
+  CanvasRenderingContext2D.prototype.fillText = function (s, x, y) {
+    if (typeof s === "string") arguments[0] = T(s);
+    return ft.apply(this, arguments);
+  };
+  /* 描边文字（白边包字）走 strokeText，同样要过 T()，否则画布标签漏翻 */
+  var stx = CanvasRenderingContext2D.prototype.strokeText;
+  CanvasRenderingContext2D.prototype.strokeText = function (s, x, y) {
+    if (typeof s === "string") arguments[0] = T(s);
+    return stx.apply(this, arguments);
+  };
+  var mt = CanvasRenderingContext2D.prototype.measureText;
+  CanvasRenderingContext2D.prototype.measureText = function (s) {
+    return mt.call(this, typeof s === "string" ? T(s) : s);
+  };
+})();
+
+/* 注入点④：逐字绘制的画布串。drawMath 一类把中文按单字拆成 token 再逐个 fillText，
+   T() 每次只见到一个汉字 ⇒ 整句词条永远命中不了。这里在整串进入分词之前先整体翻译，
+   于是画布标注也走「整句优先」，与 DOM 同一个口径。没有这些函数的工具自动跳过。
+   ⚠️ 签名坑：drawMath / measureMath 的第一个参数是 canvas context（对象），文本在第
+   二位；早期版本照着 arguments[0] 翻，等于把 context 送去 T()，补丁全程空转。
+   这里改为「找到第一个含中文的字符串参数」再翻，既躲开 context，也不会误伤
+   align / weight 之类以英文字符串传的选项。 */
+(function () {
+  ["drawMath", "drawMathHalo", "measureMath"].forEach(function (n) {
+    var f = window[n];
+    if (typeof f !== "function") return;
+    window[n] = function () {
+      for (var i = 0; i < arguments.length; i++) {
+        if (typeof arguments[i] === "string" && /[\u3400-\u9FFF]/.test(arguments[i])) {
+          arguments[i] = T(arguments[i]);
+          break;
+        }
+      }
+      return f.apply(this, arguments);
+    };
+  });
+})();
+
+/* ---- DOM 文本节点 ---- */
+function i18nNode(n) {
+  var el = n.parentElement;
+  if (!el) return;
+  var tag = el.tagName;
+  if (tag === "SCRIPT" || tag === "STYLE") return;
+  if (el.closest && el.closest("[data-noi18n]")) return;
+  var cur = n.nodeValue;
+  if (n.__orig === undefined || (cur !== n.__last && cur !== n.__orig)) n.__orig = cur;
+  var want = LANG === "en" ? T(n.__orig) : n.__orig;
+  if (want !== cur) n.nodeValue = want;
+  n.__last = want;
+}
+/* 属性（title / placeholder / optgroup label …）不是文本节点，MutationObserver 覆盖不到，
+   必须单独过一遍：否则悬停提示、下拉分组名会残留中文。原文缓存在元素 expando 上，
+   切回中文时原样写回。改属性不会触发 childList/characterData 观察器，不会递归。 */
+var I18N_ATTRS = ["title", "placeholder", "aria-label", "alt", "label"];
+function i18nAttrs(root) {
+  var els = [root], i, j;
+  if (root.querySelectorAll) els = els.concat(Array.prototype.slice.call(root.querySelectorAll("*")));
+  for (i = 0; i < els.length; i++) {
+    var el = els[i];
+    if (!el.getAttribute) continue;
+    if (el.closest && el.closest("[data-noi18n]")) continue;
+    for (j = 0; j < I18N_ATTRS.length; j++) {
+      var a = I18N_ATTRS[j];
+      if (!el.hasAttribute(a)) continue;
+      var key = "__a_" + a;
+      if (el[key] === undefined) el[key] = el.getAttribute(a);
+      var want = LANG === "en" ? T(el[key]) : el[key];
+      if (want !== el.getAttribute(a)) el.setAttribute(a, want);
+    }
+  }
+}
+/* 英文补空格（跨节点）：中文片段被行内标签切开时，各自翻成英文后直连会粘连。
+   判定用 DOM 结构而不是渲染矩形——折叠区（挑战答案）矩形为零，矩形法会漏。
+   两文本节点在文档序里紧邻（中间没有任何文本节点，包括空格节点）、
+   前段末尾与后段开头都是字母、双方词条都没自带空格、且不在上下标里 ⇒ 插一个空格。
+   空格节点记录在案，切回中文时移除。只动 i18n 注入层，不改业务文本。 */
+function fixGlue(root) {
+  var all = [];
+  var w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null, false), n;
+  while ((n = w.nextNode())) all.push(n);
+  function subbed(el) {
+    while (el) { var t = el.tagName; if (t === "SUB" || t === "SUP") return true; el = el.parentElement; }
+    return false;
+  }
+  for (var i = 0; i + 1 < all.length; i++) {
+    var a = all[i], b = all[i + 1];
+    if (!a.nodeValue || !b.nodeValue) continue;
+    if (/\s$/.test(a.nodeValue) || /^\s/.test(b.nodeValue)) continue;
+    if (!/[A-Za-z0-9]$/.test(a.nodeValue) || !/^[A-Za-z]/.test(b.nodeValue)) continue;
+    var pa = a.parentElement, pb = b.parentElement;
+    if (!pa || !pb || subbed(pa) || subbed(pb)) continue;
+    var sp = document.createTextNode(" ");
+    sp.__glue = 1;
+    (fixGlue._n = fixGlue._n || []).push(sp);
+    b.parentNode.insertBefore(sp, b);
+  }
+}
+function removeGlue() {
+  if (!fixGlue._n) return;
+  for (var i = 0; i < fixGlue._n.length; i++) { var g = fixGlue._n[i]; if (g.parentNode) g.parentNode.removeChild(g); }
+  fixGlue._n = [];
+}
+/* 全局防抖补空格：挑战答案这类「点击时才重建」的区域，observer 回调里对子树跑
+   fixGlue 的时机不全（答案重写、延迟渲染都会错过）。任何 DOM 变更后 60ms
+   对整页补一次；空格本身不触发新插入，收敛。 */
+var _glueTimer = null;
+function _glueKick() {
+  if (LANG !== "en") return;
+  if (_glueTimer) clearTimeout(_glueTimer);
+  _glueTimer = setTimeout(function () {
+    _glueTimer = null;
+    if (LANG === "en") fixGlue(document.body);
+  }, 60);
+}
+function i18nWalk(root) {
+  var w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null, false), n, c = 0;
+  while ((n = w.nextNode())) { i18nNode(n); c++; }
+  i18nAttrs(root);
+  if (LANG === "en") fixGlue(root === document ? document.body : root);
+  return c;
+}
+var _i18nBusy = false;
+function i18nWatch() {
+  if (typeof MutationObserver === "undefined") return;
+  var mo = new MutationObserver(function (ms) {
+    if (_i18nBusy) return;
+    _i18nBusy = true;
+    try {
+      for (var i = 0; i < ms.length; i++) {
+        var m = ms[i];
+        if (m.type === "childList") {
+          for (var j = 0; j < m.addedNodes.length; j++) {
+            var nd = m.addedNodes[j];
+            if (nd.nodeType === 3) i18nNode(nd);
+            else if (nd.nodeType === 1) i18nWalk(nd);
+          }
+        } else if (m.type === "characterData") i18nNode(m.target);
+      }
+    } finally { _i18nBusy = false; }
+    _glueKick();
+  });
+  mo.observe(document.body, { childList: true, subtree: true, characterData: true });
+}
+function setLang(l) {
+  LANG = l;
+  try { localStorage.setItem("opl_lang", l); } catch (e) { }
+  document.documentElement.lang = l === "en" ? "en" : "zh-CN";
+  var btn = document.getElementById("langBtn");
+  if (btn) btn.textContent = l === "en" ? "中文" : "EN";
+  document.title = l === "en" ? T(ORIG_TITLE) : ORIG_TITLE;
+  if (l !== "en") removeGlue();
+  i18nWalk(document.body);
+  _glueKick();
+  if (typeof syncInputs === "function") syncInputs();
+  if (typeof render === "function") render();
+}
+
+
+
+
+
+/* ---------------- 直接 fillText / strokeText 的自动排版钩子 ----------------
+   有些标注不走 txt() 而是直接 g.fillText()（状态徽标、能带边等），
+   这里在原型层统一处理：含数学记法的字符串先按 LaTeX 规则拆段再绘制，
+   measureText 同步返回拆段总宽，白底框长度自动跟着变。 */
+const NEED_MATH_HM = /[\u2070-\u209C\u00B2\u00B3\u00B9]|_\{?[A-Za-z0-9\u0370-\u03ff]|\^\{?[\d(\-]|\d(\.\d+)?[eE][+\-]\d|\u221A/;
+/* 原生 measureText：mathSegsHM 内部量宽必须走这一条，
+   否则 measureText 被钩子接管后会 self-recursion（RangeError）。 */
+var _mRawHM = null;
+function measureRawHM(g, s) { return (_mRawHM ? _mRawHM : g.measureText).call(g, s).width; }
+function mathSegsHM(g, s) {
+  const f = String(g.font || "");
+  const mm = /(\d+(?:\.\d+)?)px/.exec(f);
+  const size = mm ? parseFloat(mm[1]) : 12;
+  const family = f.replace(/^(?:\s*(?:italic|oblique|bold|[1-9]00)\s*)*\d+(?:\.\d+)?px\s*/, "");
+  const style = /italic|oblique/.test(f) ? "italic " : (/bold|[6-9]00/.test(f) ? "bold " : "");
+  const parts = AUTO(s), laid = [];
+  let w = 0;
+  for (const p of parts) {
+    const small = !!(p.sup || p.sub);
+    const fs = style + (small ? (size * 0.74).toFixed(2) : size.toFixed(2)) + "px " + family;
+    g.font = fs;
+    const tw = measureRawHM(g, p.s);
+    laid.push({ s: p.s, w: tw, fs: fs, dy: small ? (p.sup ? -size * 0.40 : size * 0.22) : 0 });
+    w += tw;
+  }
+  return { laid: laid, w: w, family: family, style: style, size: size };
+}
+(function hookMathHM() {
+  if (window.__MATH_HOOK) return; window.__MATH_HOOK = 1;
+  const P = CanvasRenderingContext2D.prototype;
+  const _fill = P.fillText, _stroke = P.strokeText, _measure = P.measureText;
+  function draw(drawRaw, g, s, x, y, rest) {
+    const info = mathSegsHM(g, s);
+    const al = g.textAlign, bl = g.textBaseline;
+    const cx = al === "right" ? x - info.w : (al === "center" ? x - info.w / 2 : x);
+    g.textAlign = "left";
+    let px = cx;
+    for (const L of info.laid) {
+      g.font = L.fs;
+      drawRaw.call(g, L.s, px, y + L.dy, ...rest);
+      px += L.w;
+    }
+    g.textAlign = al; g.textBaseline = bl;
+    g.font = info.style + info.size.toFixed(2) + "px " + info.family;
+    return info;
+  }
+  P.fillText = function (s, x, y) {
+    if (typeof s !== "string" || !NEED_MATH_HM.test(s)) return _fill.apply(this, arguments);
+    draw(_fill, this, s, x, y, Array.prototype.slice.call(arguments, 3));
+  };
+  P.strokeText = function (s, x, y) {
+    if (typeof s !== "string" || !NEED_MATH_HM.test(s)) return _stroke.apply(this, arguments);
+    draw(_stroke, this, s, x, y, Array.prototype.slice.call(arguments, 3));
+  };
+  if (!_mRawHM) _mRawHM = _measure;
+  P.measureText = function (s) {
+    if (window.__HM_IN || typeof s !== "string" || !NEED_MATH_HM.test(s)) return _measure.call(this, s);
+    window.__HM_IN = 1;
+    const save = this.font;
+    let info;
+    try { info = mathSegsHM(this, s); } finally { window.__HM_IN = 0; }
+    this.font = save;
+    return { width: info.w, get actualBoundingBoxLeft() { return 0; }, get actualBoundingBoxRight() { return info.w; } };
+  };
+})();
+
+/* ---------------- HTML 侧自动 LaTeX 排版 ----------------
+   读数 / 说明 / 按钮名里由 JS 拼出来的 cm⁻³、E_c、2.5e+8，
+   在写进 innerHTML 之前转成真 <sup>/<sub>；标签与属性原样放过（title 不会被塞进尖括号）。
+   与画布侧 AUTO() 对偶，保证网页和画布按同一套规则排版。 */
+const AUTOH_SUP = { "⁰": "0", "¹": "1", "²": "2", "³": "3", "⁴": "4", "⁵": "5", "⁶": "6",
+  "⁷": "7", "⁸": "8", "⁹": "9", "⁺": "+", "⁻": "−", "⁼": "=", "⁽": "(", "⁾": ")", "ⁿ": "n", "ⁱ": "i" };
+const AUTOH_SUB = { "₀": "0", "₁": "1", "₂": "2", "₃": "3", "₄": "4", "₅": "5", "₆": "6",
+  "₇": "7", "₈": "8", "₉": "9", "₊": "+", "₋": "−", "₌": "=", "₍": "(", "₎": ")",
+  "ₐ": "a", "ₑ": "e", "ₒ": "o", "ₓ": "x", "ₔ": "ə", "ₕ": "h", "ₖ": "k", "ₗ": "l",
+  "ₘ": "m", "ₙ": "n", "ₚ": "p", "ₛ": "s", "ₜ": "t", "ᵣ": "r", "ᵤ": "u", "ᵥ": "v" };
+const TEXH_NEED = /[\u2070-\u209C\u00B2\u00B3\u00B9]|_\{?[A-Za-z0-9\u0370-\u03ff]|\^\{?[\d(\-]|\d(\.\d+)?[eE][+\-]\d|\u221A/;
+/* 从 i 处（必须是 '<'）扫出一个"完整元素"的结束下标（含嵌套），失败返回 -1 */
+function TEXH_elemEnd(h, i) {
+  if (h.charAt(i) !== "<") return -1;
+  let depth = 0, j = i, guard = 0;
+  while (j < h.length && guard++ < 4000) {
+    if (h.charAt(j) !== "<") { j++; continue; }
+    const e = TEXH_tagEnd(h, j);
+    if (e < 0) return -1;
+    const isClose = h.charAt(j + 1) === "/";
+    const selfClose = h.charAt(e - 2) === "/";
+    if (isClose) { depth--; j = e; if (depth <= 0) return j; }
+    else if (selfClose) { j = e; if (depth === 0) return j; }
+    else { depth++; j = e; }
+  }
+  return -1;
+}
+/* √ 后面直接跟一个元素：√<i>E</i> → √‾E（前两条规则只吃 √(A) 与 √字母串） */
+function TEXHsqrtElem(s) {
+  let out = "", i = 0, guard = 0;
+  while (guard++ < 400) {
+    const k = s.indexOf("\u221A", i);
+    if (k < 0) break;
+    out += s.slice(i, k);
+    /* 守卫：√ 后面已是闭标签 ⇒ 该 √ 已排版过（对整段 HTML 重复跑 TEXH 会把 </span> 当成被开方式，
+       层层包出空壳根号，视觉上变成 √−3 / √−E），原样输出不再包裹 */
+    if (s.charAt(k + 1) === "<" && s.charAt(k + 2) === "/") { out += "\u221A"; i = k + 1; continue; }
+    let rad = null, end = k + 1;
+    if (s.charAt(k + 1) === "(") {
+      /* √(…) ：被开方式里常有标签，括号本身不在同一个文本片段里，必须整串扫 */
+      let depth = 0, p = k + 1;
+      while (p < s.length) {
+        const c = s.charAt(p);
+        if (c === "(") depth++;
+        else if (c === ")") { depth--; if (depth === 0) { rad = s.slice(k + 2, p); end = p + 1; break; } }
+        p++;
+      }
+    } else {
+      const e = TEXH_elemEnd(s, k + 1);
+      if (e > 0 && e - k < 500) { rad = s.slice(k + 1, e); end = e; }
+    }
+    if (rad !== null && rad.length) {
+      out += "<span class=\"sqrt\"><span class=\"rd\">\u221A</span><span class=\"rdc\">" + rad + "</span></span>";
+      i = end;
+    } else { out += "\u221A"; i = k + 1; }
+  }
+  return out + s.slice(i);
+}
+function TEXHpart(t) {
+  let s = t;
+  /* 根号：√ 或 √(A) → <span class="sqrt">√<span class="rd"><span class="rdc">A</span></span></span>（A 内不含嵌套括号） */
+  s = s.replace(/<span class="(?:op|rm|fn|v|u)">\u221A<\/span>/g, "\u221A");
+  s = s.replace(/\u221A<span class="(?:op|rm)">\(<\/span>([^()]{1,120}?)<span class="(?:op|rm)">\)<\/span>/g, function (m, a) {
+    return "<span class=\"sqrt\"><span class=\"rd\">\u221A</span><span class=\"rdc\">" + a + "</span></span>";
+  });
+  s = s.replace(/\u221A\(([^()]{1,120})\)/g, function (m, a) {
+    return "<span class=\"sqrt\"><span class=\"rd\">\u221A</span><span class=\"rdc\">" + a + "</span></span>";
+  });
+  s = s.replace(/\u221A([A-Za-z0-9\u0370-\u03ff]{1,6})/g, function (m, a) {
+    return "<span class=\"sqrt\"><span class=\"rd\">\u221A</span><span class=\"rdc\">" + a + "</span></span>";
+  });
+  s = s.replace(/(\d(?:\.\d+)?)e([+-])(\d+)/g, function (m, a, sg, e) {
+    return a + "\u00d710<sup>" + (sg === "-" ? "\u2212" : "") + e + "</sup>";
+  });
+  s = s.replace(/([A-Za-z\u0370-\u03ff)\]])\^\{([^{}]{1,12})\}/g, "$1<sup>$2</sup>");
+  s = s.replace(/([A-Za-z\u0370-\u03ff)\]])\^(\d+(?:\.\d+)?)/g, "$1<sup>$2</sup>");
+  s = s.replace(/([A-Za-z\u0370-\u03ff])_\{([A-Za-z0-9\u0370-\u03ff+\-]{1,8})\}/g, "<span class='m'><i>$1</i><sub>$2</sub></span>");
+  s = s.replace(/([A-Za-z\u0370-\u03ff])_([A-Za-z0-9\u0370-\u03ff]{1,6})(?![A-Za-z0-9])/g, "<span class='m'><i>$1</i><sub>$2</sub></span>");
+  if (/[\u2070-\u209C\u00B2\u00B3\u00B9]/.test(s)) {
+    let out = "", i = 0;
+    while (i < s.length) {
+      const ch = s[i];
+      if (AUTOH_SUP[ch] !== undefined || AUTOH_SUB[ch] !== undefined) {
+        const isSup = AUTOH_SUP[ch] !== undefined, tab = isSup ? AUTOH_SUP : AUTOH_SUB;
+        let j = i, buf = "";
+        while (j < s.length && (isSup ? AUTOH_SUP[s[j]] !== undefined : AUTOH_SUB[s[j]] !== undefined)) {
+          buf += tab[s[j]]; j++;
+        }
+        out += "<" + (isSup ? "sup" : "sub") + ">" + buf + "</" + (isSup ? "sup" : "sub") + ">";
+        i = j;
+      } else { out += ch; i++; }
+    }
+    s = out;
+  }
+  return s.indexOf("\u221A") >= 0 ? TEXHsqrtElem(s) : s;
+}
+/* 只有真正的标签才整段跳过：正文里裸写的 '<'（如 "t₂ < 0"）必须当普通字符，
+   否则 indexOf('>') 会一路吞掉后面整段，E₂⁰ 这类记法就漏排了。 */
+function TEXH_tagEnd(h, i) {
+  if (h.charAt(i) !== "<") return -1;
+  const c = h.charAt(i + 1);
+  if (c === "!" || c === "/") { const j = h.indexOf(">", i); return (j >= 0 && j - i < 300) ? j + 1 : -1; }
+  if (!/[A-Za-z]/.test(c)) return -1;
+  let j = i + 1;
+  while (j < h.length && /[A-Za-z0-9]/.test(h.charAt(j))) j++;
+  if (j === i + 1) return -1;
+  if (h.charAt(j) === ">") return j + 1;
+  if (h.charAt(j) !== " " && h.charAt(j) !== "\n" && h.charAt(j) !== "\t") return -1;
+  const g = h.indexOf(">", j), nx = h.indexOf("<", j);
+  if (g < 0 || g - i > 300) return -1;
+  if (nx >= 0 && nx < g) return -1;
+  return g + 1;
+}
+function TEXH(h) {
+  if (typeof h !== "string" || !TEXH_NEED.test(h)) return h;
+  if (h.indexOf("\u221A") >= 0) h = h.replace(/<span class="(?:op|rm|fn|v|u)">\u221A<\/span>/g, "\u221A");
+  if (h.indexOf("<") < 0) return TEXHpart(h);
+  let out = "", i = 0, n = h.length, guard = 0;
+  while (i < n && guard++ < 40000) {
+    const e = TEXH_tagEnd(h, i);
+    if (e > 0) { out += h.slice(i, e); i = e; continue; }
+    let j = i;
+    while (j < n && TEXH_tagEnd(h, j) <= 0) j++;
+    out += TEXHpart(h.slice(i, j)); i = j;
+  }
+  const r = out + h.slice(i);
+  return r.indexOf("\u221A") >= 0 ? TEXHsqrtElem(r) : r;
+}
+(function hookHTML() {
+  if (window.__TEXH_HOOK) return; window.__TEXH_HOOK = 1;
+  const d = Object.getOwnPropertyDescriptor(Element.prototype, "innerHTML");
+  if (!d || !d.set) return;
+  Object.defineProperty(Element.prototype, "innerHTML", {
+    configurable: true, get: d.get,
+    set: function (v) { d.set.call(this, typeof v === "string" ? TEXH(v) : v); }
+  });
+  /* insertAdjacentHTML 也会被用到 */
+  const ia = Element.prototype.insertAdjacentHTML;
+  Element.prototype.insertAdjacentHTML = function (pos, v) {
+    return ia.call(this, pos, typeof v === "string" ? TEXH(v) : v);
+  };
+})();
+
+/* ---------------- 画布自动 LaTeX 排版 ----------------
+   老调用点 txt(g, "cm⁻³") / txt(g, "E_c") / txt(g, "2.5e+8") 一行都不用改，
+   只要在绘制前把字符串解析成分段零件即可。规则与网页侧一致：
+   物理量斜体、描述性下标与单位正体、幂次用真上标（不用 Unicode 伪字符）。 */
+const SUPMAP = { "⁰": "0", "¹": "1", "²": "2", "³": "3", "⁴": "4", "⁵": "5", "⁶": "6",
+  "⁷": "7", "⁸": "8", "⁹": "9", "⁺": "+", "⁻": "−", "⁼": "=", "⁽": "(", "⁾": ")", "ⁿ": "n", "ⁱ": "i" };
+const SUBMAP = { "₀": "0", "₁": "1", "₂": "2", "₃": "3", "₄": "4", "₅": "5", "₆": "6",
+  "₇": "7", "₈": "8", "₉": "9", "₊": "+", "₋": "−", "₌": "=", "₍": "(", "₎": ")",
+  "ₐ": "a", "ₑ": "e", "ₒ": "o", "ₓ": "x", "ₔ": "ə", "ₕ": "h", "ₖ": "k", "ₗ": "l",
+  "ₘ": "m", "ₙ": "n", "ₚ": "p", "ₛ": "s", "ₜ": "t", "ᵣ": "r", "ᵤ": "u", "ᵥ": "v" };
+const MATH_IDCH = /[A-Za-z\u0370-\u03ff]/;
+const NEED_MATH = /[\u2070-\u209C\u00B2\u00B3\u00B9]|_\{?[A-Za-z0-9\u0370-\u03ff]|\^\{?[\d(\-]|\d(\.\d+)?[eE][+\-]\d/;
+function AUTO(s) {
+  const out = [];
+  let buf = "", mode = 0;
+  const emit = (t, kind) => {
+    if (!t) return;
+    if (kind === 1) out.push({ s: t, sup: true });
+    else if (kind === -1) out.push({ s: t, sub: true });
+    else out.push({ s: t });
+  };
+  let i = 0, italicAll = false;
+  while (i < s.length) {
+    const ch = s[i];
+    if (SUPMAP[ch] !== undefined) { if (mode !== 1) { emit(buf, mode); buf = ""; mode = 1; } buf += SUPMAP[ch]; i++; continue; }
+    if (SUBMAP[ch] !== undefined) { if (mode !== -1) { emit(buf, mode); buf = ""; mode = -1; } buf += SUBMAP[ch]; i++; continue; }
+    if (mode) { emit(buf, mode); buf = ""; mode = 0; }
+    const rest = s.slice(i);
+    const sc = /^\d(\.\d+)?[eE][+\-]\d{1,3}/.exec(rest);       /* ASCII 伪科学计数 2.5e+8 */
+    if (sc) {
+      const parts = sc[0].split(/[eE]/);
+      emit(parts[0] + "\u00d710", 0); emit(String(+parts[1]).replace("-", "\u2212"), 1);
+      i += sc[0].length; continue;
+    }
+    if (MATH_IDCH.test(ch) && i + 1 < s.length && (s[i + 1] === "_" || s[i + 1] === "^")) {
+      const sup = s[i + 1] === "^";
+      let j = i + 2, grp = "";
+      if (s[j] === "{") { const e = s.indexOf("}", j); if (e > 0) { grp = s.slice(j + 1, e); j = e + 1; } }
+      else {
+        const RCJK = /[\u2E80-\u9FFF]/, RASC = /[A-Za-z0-9\u0370-\u03ff+\-]/;
+        if (RCJK.test(s[j])) { while (j < s.length && RCJK.test(s[j]) && j - i < 8) j++; }   /* 中文描述性下标：τ_直接、E_声子 */
+        else { while (j < s.length && RASC.test(s[j])) j++; }
+        grp = s.slice(i + 2, j);
+      }
+      if (grp) {
+        emit(ch, 0);
+        if (italicAll || /^[A-Za-z\u0370-\u03ff]$/.test(ch)) out[out.length - 1].i = true;
+        emit(sup ? grp.replace(/-/g, "\u2212") : grp, sup ? 1 : -1);
+        i = j; continue;
+      }
+    }
+    buf += ch; i++;
+  }
+  emit(buf, mode);
+  return out;
+}
+function fontInfo(font, dflt) {
+  const f = String(font || "");
+  const m = /(\d+(?:\.\d+)?)px/.exec(f);
+  return { fp: m ? parseFloat(m[1]) : (dflt || 12), bd: /bold|70\d|600/.test(f), it: /italic|oblique/.test(f) };
+}
+
+/* ---------------- HTML 字符串 → 画布零件（网页与画布共用同一份排版） ----------------
+   mtxt(g, TX(H_NA), x, y, col, fp) —— H_* 常量本来就在喂 innerHTML，
+   再喂给 TX() 就不会出现「网页斜体、画布正体」的两边不一致。
+   <i> 斜体、<sub> 下标、<sup> 上标；<span class="op|un|rm|sqrt|frac"> 只剥标签（保持正体）。 */
+const catA = (...a) => [].concat(...a);
+function TX(h) {
+  const t = String(h == null ? "" : h)
+    .replace(/<span\b[^>]*>/g, "").replace(/<\/span>/g, "")
+    .replace(/<i\b[^>]*>/g, "<i>").replace(/<b\b[^>]*>/g, "").replace(/<\/b>/g, "")
+    .replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&").replace(/&nbsp;/g, " ");
+  const out = [], re = /<i>([\s\S]*?)<\/i>|<sub>([\s\S]*?)<\/sub>|<sup>([\s\S]*?)<\/sup>|([^<]+)/g;
+  let m;
+  while ((m = re.exec(t))) {
+    const raw = s => s == null ? null : s.replace(/<[^>]*>/g, "");
+    if (m[1] != null) out.push({ s: raw(m[1]), i: true });
+    else if (m[2] != null) out.push({ s: raw(m[2]), sub: true });
+    else if (m[3] != null) out.push({ s: raw(m[3]), sup: true });
+    else if (m[4]) out.push({ s: m[4] });
+  }
+  return out;
+}
+function TXof(...a) { return catA(...a.map(TX)); }
+
+
+function PSci(v, n) {
+  if (!isFinite(v) || v === 0) return [{ s: "0" }];
+  const e = Math.floor(Math.log10(Math.abs(v)));
+  const m = (v / Math.pow(10, e)).toFixed(n === undefined ? 1 : n);
+  /* 1 ≦ |v| < 10 时直接写尾数，不再拖一个 ×10⁰（与 sciH 一致） */
+  if (e === 0) return [{ s: m }];
+  /* 指数负号用 U+2212 */
+  return [{ s: m + "×10" },
+          { s: String(e).replace("-", "−"), sup: true }];
+}
+
+/* ---------------- 0. 小工具 ---------------- */
+const $ = id => document.getElementById(id);
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const fmt = (v, n) => (isFinite(v) ? v.toFixed(n === undefined ? 2 : n) : "—");
+const MM = h => '<span class="m">' + h + "</span>";
+
+/* ---------------- 3. 画布与画布内排版 ---------------- */
+const CV = {};
+function fitCanvas(id) {
+  const el = $(id);
+  if (!el || !el.clientWidth) return null;
+  const w = el.clientWidth, h = +el.dataset.h;
+  const dpr = window.devicePixelRatio || 1;
+  el.width = Math.round(w * dpr); el.height = Math.round(h * dpr);
+  el.style.height = h + "px";
+  const g = el.getContext("2d");
+  g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  CV[id] = { g: g, W: w, H: h, el: el };
+  return CV[id];
+}
+function fitAll() { ["chain", "disp", "zoom"].forEach(fitCanvas); }
+
+const FONT = "\"Microsoft YaHei\",\"PingFang SC\",sans-serif";
+const FONTM = "\"Cambria Math\",\"Times New Roman\",Times,serif";
+const SUBR = 0.74, SUBDY = 0.22, SUPDY = 0.40;
+const C_AC = "#1976d2", C_OP = "#d94a3d";
+const C_HEAVY = "#2f4a6b", C_LIGHT = "#7fb2e3";
+const C_ARROW = "#ef8c1a", C_SUB = "#6b7a8c", C_GRID = "#e7edf4", C_REF = "#9aa5b1";
+
+function txt(g, s, x, y, col, font, align, base) {
+  g.fillStyle = col; g.font = font || "12px " + FONT;
+  g.textAlign = align || "left"; g.textBaseline = base || "middle";
+  if (typeof s === "string" && NEED_MATH.test(s)) {
+    const fi = fontInfo(font, 12);
+    mRun(g, AUTO(s), x, y, fi.fp, fi.bd, align || "left", false);
+    return;
+  }
+  g.fillText(s, x, y);
+}
+function txtHalo(g, s, x, y, col, font, align, base) {
+  g.font = font || "12px " + FONT;  g.textAlign = align || "left"; g.textBaseline = base || "middle";
+  g.lineJoin = "round"; g.strokeStyle = "rgba(255,255,255,0.94)"; g.lineWidth = 3.2;
+  if (typeof s === "string" && NEED_MATH.test(s)) {
+    const fi = fontInfo(font, 12), parts = AUTO(s);
+    g.lineJoin = "round";
+    mRun(g, parts, x, y, fi.fp, fi.bd, align || "left", true);
+    g.fillStyle = col;
+    mRun(g, parts, x, y, fi.fp, fi.bd, align || "left", false);
+    return;
+  }
+  g.strokeText(s, x, y); g.fillStyle = col; g.fillText(s, x, y);
+}
+function isCJKch(ch) {
+  const c = ch.codePointAt(0);
+  return (c >= 0x2E80 && c <= 0x9FFF) || (c >= 0xF900 && c <= 0xFAFF) ||
+    (c >= 0xFF00 && c <= 0xFF60) || c === 0x2014 || c === 0x2015 || c === 0x2026;
+}
+function segRuns(s) {
+  const out = []; let cur = "", curC = null;
+  for (const ch of s) {
+    const c = isCJKch(ch);
+    if (curC === null) { cur = ch; curC = c; }
+    else if (c === curC) cur += ch;
+    else { out.push({ s: cur, cjk: curC }); cur = ch; curC = c; }
+  }
+  if (cur) out.push({ s: cur, cjk: curC });
+  return out;
+}
+function pFont(q, fp, bd, cjk) {
+  const sz = fp * ((q.sub || q.sup) ? SUBR : 1);
+  return (bd ? "bold " : "") + (!cjk && q.i ? "italic " : "") + sz.toFixed(2) + "px " + (cjk ? FONT : FONTM);
+}
+/* i18n 注入点①：画布 token。带 i / sub / sup / un 标记的是物理量、下标与单位，一律不动；
+   没有这些标记的 token 才是自然语言，交给 T() —— 所以这里的判断只看标记，不看内容。 */
+const partsOf = p => p.map(q => {
+  const o = (typeof q === "string" ? { s: q } : q);
+  const natural = !(o.i || o.sub || o.sup || o.un);
+  if (LANG === "en" && natural && typeof o.s === "string" && /[\u4E00-\u9FFF]/.test(o.s)) {
+    const t = T(o.s);
+    return t === o.s ? o : Object.assign({}, o, { s: t });
+  }
+  return o;
+});
+function mMeasure(g, parts, fp, bd) {
+  let w = 0;
+  for (const q of partsOf(parts))
+    for (const sg of segRuns(q.s)) { g.font = pFont(q, fp, bd, sg.cjk); w += g.measureText(sg.s).width; }
+  return w;
+}
+function mRun(g, parts, x, y, fp, bd, align, stroke) {
+  const ps = partsOf(parts), w = mMeasure(g, ps, fp, bd);
+  let cx = align === "right" ? x - w : (align === "center" ? x - w / 2 : x);
+  g.textAlign = "left"; g.textBaseline = "middle"; g.lineJoin = "round";
+  for (const q of ps) {
+    const dy = q.sub ? fp * SUBDY : (q.sup ? -fp * SUPDY : 0);
+    for (const sg of segRuns(q.s)) {
+      g.font = pFont(q, fp, bd, sg.cjk);
+      if (stroke) { g.lineWidth = (q.sub || q.sup) ? 2.4 : 3.2; g.strokeText(sg.s, cx, y + dy); }
+      else g.fillText(sg.s, cx, y + dy);
+      cx += g.measureText(sg.s).width;
+    }
+  }
+}
+function mtxt(g, parts, x, y, col, fp, align, bd) {
+  g.fillStyle = col; mRun(g, parts, x, y, fp, bd || false, align, false);
+}
+function mtxtHalo(g, parts, x, y, col, fp, align, bd) {
+  g.strokeStyle = "rgba(255,255,255,0.94)";
+  mRun(g, parts, x, y, fp, bd || false, align, true);
+  mtxt(g, parts, x, y, col, fp, align, bd);
+}
+function line(g, x1, y1, x2, y2, col, lw, dash) {
+  g.save();
+  g.strokeStyle = col; g.lineWidth = lw || 1;
+  if (dash) g.setLineDash(dash);
+  g.beginPath(); g.moveTo(x1, y1); g.lineTo(x2, y2); g.stroke();
+  g.restore();
+}
+function arrowHead(g, x, y, ang, sz, col) {
+  g.save(); g.translate(x, y); g.rotate(ang);
+  g.beginPath(); g.moveTo(0, 0); g.lineTo(-sz, sz * 0.42); g.lineTo(-sz, -sz * 0.42);
+  g.closePath(); g.fillStyle = col; g.fill(); g.restore();
+}
+function arrow(g, x1, y1, x2, y2, col, lw, sz) {
+  const dx = x2 - x1, dy = y2 - y1, L = Math.hypot(dx, dy);
+  if (L < 0.5) return;
+  line(g, x1, y1, x2, y2, col, lw || 1.4);
+  arrowHead(g, x2, y2, Math.atan2(dy, dx), sz || 6, col);
+}
+function chip(g, s, x, y, col, font, align) {
+  g.font = font || "11px " + FONT;
+  const w = g.measureText(s).width, al = align || "left";
+  const bx = al === "right" ? x - w : (al === "center" ? x - w / 2 : x);
+  g.fillStyle = "rgba(255,255,255,0.92)";
+  g.fillRect(bx - 4, y - 8, w + 8, 16);
+  txt(g, s, bx, y, col, font, "left", "middle");
+}
+
+
+/* ============ PN 结载流子输运：物理内核 ============ */
+const QE = 1.602176634e-19, KB = 1.380649e-23, EPS0 = 8.8541878128e-12;
+const AREA = 1e-4;                 /* 结面积 cm² */
+
+/* 半导体固定为 Si（PN 结最标准的教学案例），不再提供材料切换 */
+const MATS = [
+  { name: "Si", eg0: 1.166, al: 4.73e-4, be: 636, nc: 2.8e19, nv: 1.04e19, eps: 11.7, mun: 1350, mup: 480 }
+];
+const PRESETS = [
+  { name: "平衡态", v: 0 }, { name: "正偏 0.3 V", v: 0.3 }, { name: "正偏 0.6 V", v: 0.6 },
+  { name: "反偏 0.5 V", v: -0.5 }, { name: "反偏 1 V", v: -1 }
+];
+
+const OPT = {
+  naS: 100, ndS: 100, T: 300, vS: 0,
+  playing: false, dir: 1,
+  ckCar: true, ckField: true, ckDep: true, ckQF: true, ckEq: true
+};
+const HOV = { band: null, minor: null };
+
+const NAof = s => Math.pow(10, 15 + s / 100);          /* 10¹⁵ ~ 10¹⁹ cm⁻³ */
+const NDof = s => Math.pow(10, 15 + s / 100);
+/* 少子寿命固定（本工具不再提供滑块）：τ_n = τ_p = 1 μs，硅的典型量级。
+   扩散长度 L = √(Dτ) 仍随温度变化（D = μkT/q），但寿命本身不动 */
+const TAU_N = 1e-6, TAU_P = 1e-6;
+const Vof = s => s / 100;
+const mat = () => MATS[0];        /* 材料固定为 Si（OPT.mat 已不再使用） */
+
+function sci(v, n) {
+  if (!isFinite(v) || v === 0) return "0";
+  const e = Math.floor(Math.log10(Math.abs(v)));
+  const m = v / Math.pow(10, e);
+  return m.toFixed(n === undefined ? 2 : n) + "×10" + supNum(e);
+}
+const SUPS = { "-": "⁻", 0: "⁰", 1: "¹", 2: "²", 3: "³", 4: "⁴", 5: "⁵", 6: "⁶", 7: "⁷", 8: "⁸", 9: "⁹" };
+function supNum(e) { return String(e).split("").map(c => SUPS[c] || c).join(""); }
+function fmtLen(v) {                                    /* m → 自动单位 */
+  const a = Math.abs(v);
+  if (a >= 1e-3) return (v * 1e3).toFixed(3) + " mm";
+  if (a >= 1e-6) return (v * 1e6).toFixed(2) + " μm";
+  return (v * 1e9).toFixed(1) + " nm";
+}
+function fmtI(v) {                                      /* A → 自动单位 */
+  const a = Math.abs(v);
+  if (a === 0) return "0";
+  if (a >= 1e-3) return (v * 1e3).toFixed(3) + " mA";
+  if (a >= 1e-6) return (v * 1e6).toFixed(3) + " μA";
+  if (a >= 1e-9) return (v * 1e9).toFixed(3) + " nA";
+  if (a >= 1e-12) return (v * 1e12).toFixed(3) + " pA";
+  return (v * 1e15).toFixed(3) + " fA";
+}
+function fmtE(v) {                                      /* V/m → 自适应 kV/cm 或 V/cm */
+  const a = Math.abs(v);
+  if (a >= 1e5) return (v / 1e5).toFixed(1) + " kV/cm";   /* 1 kV/cm = 10⁵ V/m */
+  if (a >= 100) return (v / 100).toFixed(0) + " V/cm";    /* 1 V/cm = 100 V/m */
+  return v.toFixed(0) + " V/m";
+}
+
+/* ---------- 材料与基本量 ---------- */
+function EgT(T) { const m = mat(); return m.eg0 - m.al * T * T / (T + m.be); }
+function NcT(T) { return mat().nc * Math.pow(T / 300, 1.5); }
+function NvT(T) { return mat().nv * Math.pow(T / 300, 1.5); }
+function niT(T) { return Math.sqrt(NcT(T) * NvT(T)) * Math.exp(-EgT(T) * QE / (2 * KB * T)); }
+function VtT(T) { return KB * T / QE; }
+
+/* ---------- 结的整体解 ---------- */
+function phys() {
+  const T = OPT.T, Vt = VtT(T), m = mat();
+  const NA = NAof(OPT.naS), ND = NDof(OPT.ndS);       /* cm⁻³ */
+  const ni = niT(T);                                   /* cm⁻³ */
+  const Vbi = Vt * Math.log(NA * ND / (ni * ni));
+  const V = Vof(OPT.vS);
+  const VJ_FLOOR = 0.02;                               /* V_j 的人为下限（势垒穿透后的兜底值） */
+  const Vj = Math.max(Vbi - V, VJ_FLOOR);              /* 结上的实际电势差 */
+  const eps = m.eps * EPS0;
+  const NAm = NA * 1e6, NDm = ND * 1e6;                /* m⁻³ */
+  const W = Math.sqrt(2 * eps * Vj * (NAm + NDm) / (QE * NAm * NDm));
+  const xp = W * NDm / (NAm + NDm), xn = W * NAm / (NAm + NDm);
+  const Emax = QE * NAm * xp / eps;                    /* 峰值电场（大小） */
+  /* 少子与输运参数 */
+  const np0 = ni * ni / NA, pn0 = ni * ni / ND;
+  const Dn = m.mun * Vt, Dp = m.mup * Vt;
+  const tn = TAU_N, tp = TAU_P;
+  const Ln = Math.sqrt(Dn * tn), Lp = Math.sqrt(Dp * tp);   /* cm */
+  const Lnm = Ln * 1e-2, Lpm = Lp * 1e-2;                   /* m */
+  const ex = Math.exp(V / Vt);
+  const dnp = np0 * (ex - 1), dpn = pn0 * (ex - 1);
+  /* 电流（A） */
+  const I0 = QE * AREA * (Dp * pn0 / Lp + Dn * np0 / Ln);
+  const tg = Math.sqrt(tn * tp);
+  const nim = ni * 1e6;
+  const Ir0 = QE * (AREA * 1e-4) * nim * W / (2 * tg);
+  const Idif = I0 * (ex - 1);
+  const Irec = Ir0 * (Math.exp(V / (2 * Vt)) - 1);
+  const Itot = Idif + Irec;
+  /* 理想因子：n = 1 / (Vt · d ln|I| / dV)，数值求导 */
+  let neff = null;
+  const Iof = v => {
+    const t = Math.sqrt(2 * eps * Math.max(Vbi - v, 0.02) * (NAm + NDm) / (QE * NAm * NDm));
+    return I0 * (Math.exp(v / Vt) - 1) +
+      (QE * (AREA * 1e-4) * nim * t / (2 * tg)) * (Math.exp(v / (2 * Vt)) - 1);
+  };
+  if (V > 0.03) {
+    const h = 0.004;
+    const s = (Math.log(Math.abs(Iof(V + h)) + 1e-300) - Math.log(Math.abs(Iof(V - h)) + 1e-300)) / (2 * h);
+    if (s > 1e-9) neff = clamp(1 / (Vt * s), 1, 3);
+  }
+  /* ---- 模型成立的两条判据（动态，随掺杂 / 温度 / 偏压实时判）----
+     ① 低注入：注入的少子必须远小于该侧的多子，结定律 n_p(0)=n_p0·e^{qV/kT}
+        才成立；这里用 10% 作判据（Δn ≲ 0.1N），反解出允许的正偏上限。
+     ② 势垒未穿透：V 必须小于 V_bi，否则耗尽近似给出的 V_j = V_bi − V 变负，
+        代码把它钳在下限 0.02 V，此后 W、E、能带弯曲全是这个人为常数的产物。 */
+  const injN = Math.abs(dnp) / NA, injP = Math.abs(dpn) / ND;   /* 两侧边缘注入比 */
+  const vLimOf = N => Vt * Math.log(1 + 0.1 * N * N / (ni * ni));
+  const Vlim = Math.min(vLimOf(NA), vLimOf(ND));                /* 低注入允许的正偏上限 */
+  const clamped = (Vbi - V) < VJ_FLOOR + 1e-12;
+  /* 能带（eV，以 P 区 E_c 为 0 参考，向上为正） */
+  const Eg = EgT(T);
+  return {
+    T: T, Vt: Vt, Eg: Eg, ni: ni, NA: NA, ND: ND, Vbi: Vbi, V: V, Vj: Vj,
+    W: W, xp: xp, xn: xn, Emax: Emax, eps: eps,
+    np0: np0, pn0: pn0, Dn: Dn, Dp: Dp, tn: tn, tp: tp, Ln: Ln, Lp: Lp, Lnm: Lnm, Lpm: Lpm,
+    dnp: dnp, dpn: dpn, I0: I0, Ir0: Ir0, Idif: Idif, Irec: Irec, Itot: Itot, neff: neff,
+    injN: injN, injP: injP, injMax: Math.max(injN, injP),
+    Vlim: Vlim, clamped: clamped, VJ_FLOOR: VJ_FLOOR,
+    mat: m
+  };
+}
+/* 电势 ψ(x)（V）：P 侧中性区为 0，N 侧中性区为 Vj */
+function psiAt(x, d) {
+  if (x <= -d.xp) return 0;
+  if (x >= d.xn) return d.Vj;
+  if (x <= 0) return d.eps === 0 ? 0 : (QE * d.NA * 1e6 / (2 * d.eps)) * Math.pow(x + d.xp, 2);
+  return d.Vj - (QE * d.ND * 1e6 / (2 * d.eps)) * Math.pow(x - d.xn, 2);
+}
+/* 电场 E(x)（V/m，指向 −x 为正值大小） */
+function eField(x, d) {
+  if (x <= -d.xp || x >= d.xn) return 0;
+  if (x <= 0) return (QE * d.NA * 1e6 / d.eps) * (x + d.xp);
+  return (QE * d.ND * 1e6 / d.eps) * (d.xn - x);
+}
+/* 费米能级位置（eV）：以 P 区 E_v 为 0 */
+function EFpos(d) { return d.Vt * Math.log(NvT(d.T) / d.NA); }   /* P 侧 E_F − E_v,P */
+function EvP(d) { return 0; }
+function EcP(d) { return d.Eg; }
+/* 准费米能级（eV，同一坐标） */
+/* ⚠️ 准费米能级必须与少子浓度**同源**，否则「上下对照」是假的（2026-10-22 修）：
+   定义 E_Fn(x) − E_F(P) = kT·ln[n_p(x)/np0]，而 n_p(x) = np0·[e^{V/Vt}·u + (1−u)]（即 npAt）
+   ⇒ E_Fn(x) = EFpos + Vt·ln[e^{V/Vt}·u + (1−u)]，u = e^{(x+xp)/L_n}。
+   旧写法用 V·(1−e^{−…}) 线性插值，两端点碰巧对、中段差到 11 kT。
+   空穴侧同理：E_Fp(x) = EFpos + V − Vt·ln[e^{V/Vt}·u + (1−u)]，u = e^{−(x−xn)/L_p}。 */
+function qfLog(u, d) {                          /* Vt·ln[e^{V/Vt}·u + (1−u)]，u ∈ [0,1] */
+  return d.Vt * Math.log(Math.exp(d.V / d.Vt) * u + (1 - u));
+}
+function EFpAt(x, d) {
+  const base = EFpos(d);                       /* P 接触处的 E_F */
+  if (x <= d.xn) return base;                  /* P 区 + 耗尽区：平 */
+  return base + d.V - qfLog(Math.exp(-(x - d.xn) / d.Lpm), d);   /* N 区：升到 E_F(N) */
+}
+function EFnAt(x, d) {
+  const base = EFpos(d) + d.V;                 /* N 接触处：E_F(N) = E_F(P) + qV */
+  if (x >= -d.xp) return base;                 /* N 区 + 耗尽区：平 */
+  return base - d.V + qfLog(Math.exp((x + d.xp) / d.Lnm), d);    /* P 区：降到 E_F(P) */
+}
+/* 少子分布（cm⁻³）：写成 np0·[e^(V/Vt)·u + (1−u)]，两端都不做抵消运算 */
+function npAt(x, d) {                          /* x ≤ −xp */
+  const u = Math.exp((x + d.xp) / d.Lnm);
+  return d.np0 * (Math.exp(d.V / d.Vt) * u + (1 - u));
+}
+function pnAt(x, d) {                          /* x ≥ xn */
+  const u = Math.exp(-(x - d.xn) / d.Lpm);
+  return d.pn0 * (Math.exp(d.V / d.Vt) * u + (1 - u));
+}
+
+/* ---------- 分段压缩坐标 ---------- */
+function makeMap(d, x0, x1) {
+  const xa = -d.xp - 5 * d.Lnm, xb = -d.xp, xc = d.xn, xd = d.xn + 5 * d.Lpm;
+  const L = x1 - x0;
+  return {
+    xa: xa, xb: xb, xc: xc, xd: xd,
+    X: x => {
+      if (x <= xb) return x0 + clamp((x - xa) / (xb - xa), 0, 1) * L * 0.30;
+      if (x <= xc) return x0 + L * 0.30 + clamp((x - xb) / (xc - xb), 0, 1) * L * 0.40;
+      return x0 + L * 0.70 + clamp((x - xc) / (xd - xc), 0, 1) * L * 0.30;
+    },
+    inv: px => {
+      const f = (px - x0) / L;
+      if (f <= 0.30) return xa + (f / 0.30) * (xb - xa);
+      if (f <= 0.70) return xb + ((f - 0.30) / 0.40) * (xc - xb);
+      return xc + ((f - 0.70) / 0.30) * (xd - xc);
+    }
+  };
+}
+
+function fitAll() { ["band", "minor"].forEach(fitCanvas); }
+
+/* 模块一、模块二用同一套横轴映射，所以悬停要联动：
+   鼠标在哪张图上，两张图就在同一个 x 位置同时画竖线，方便对照准费米能级与少子浓度 */
+function hovX() {
+  const a = HOV.band, b = HOV.minor;
+  return (a !== null && a !== undefined) ? a : b;
+}
+
+/* ============ 模型失效水印（两张图共用）============
+   势垒被钳位、或已越过低注入时，在图顶压一条红框提示：图上此时画的是
+   「耗尽近似的数学外推」，不是真实解。注意放在每个 draw 的最后调用，
+   这样它的白底永远压在最上层（悬停标签也不会把它盖住）。 */
+function stampInvalid(g, d, x0, x1, yTop, W) {
+  const parts = [];
+  if (d.clamped) parts.push("V ≥ V_bi − " + d.VJ_FLOOR.toFixed(2) + " V：势垒已被钳位");
+  if (d.injMax > 0.1) parts.push("Δn/多子 = " + (d.injMax * 100).toFixed(0) + " %：已非低注入");
+  if (!parts.length) return;
+  const s = "⚠ " + parts.join("；") + " —— 以下图形的模型已失效";
+  const font = "bold 11px " + FONT;
+  g.font = font;
+  const tw = g.measureText(s).width;
+  const bx = clamp((x0 + x1) / 2 - tw / 2, 4, Math.max(4, W - tw - 4));
+  const by = yTop;
+  g.fillStyle = "rgba(253,236,234,0.95)";
+  g.fillRect(bx - 6, by - 9, tw + 12, 18);
+  g.strokeStyle = "#d94a3d"; g.lineWidth = 1;
+  g.strokeRect(bx - 6, by - 9, tw + 12, 18);
+  txt(g, s, bx, by, "#b93a2f", font, "left", "middle");
+}
+
+/* ============ 模块一：PN 结能带图 ============ */
+const CB = { p: "#d94a3d", n: "#1976d2", dep: "#8d9bab", ec: "#1565c0", ev: "#2f4a6b",
+  fn: "#1976d2", fp: "#d94a3d", fld: "#ef8c1a", car: "#5d6b7c" };
+
+function chipC2(g, s, x, y, col, font, align, W) {
+  g.font = font || "11px " + FONT;
+  const w = g.measureText(s).width;
+  let bx = align === "right" ? x - w : (align === "center" ? x - w / 2 : x);
+  bx = clamp(bx, 3, Math.max(3, W - w - 3));
+  g.fillStyle = "rgba(255,255,255,0.92)";
+  g.fillRect(bx - 4, y - 8, w + 8, 16);
+  txt(g, s, bx, y, col, font, "left", "middle");
+}
+/* 带白底的「数学」标签：parts 为 [{s,i,sub,sup}...] 数组，fp 为字号(px) */
+function chipM2(g, parts, x, y, col, fp, align, W) {
+  const f = fp || 10;
+  const w = mMeasure(g, parts, f, false);
+  let bx = align === "right" ? x - w : (align === "center" ? x - w / 2 : x);
+  bx = clamp(bx, 3, Math.max(3, W - w - 3));
+  g.fillStyle = "rgba(255,255,255,0.92)";
+  g.fillRect(bx - 4, y - 8, w + 8, 16);
+  mtxt(g, parts, bx, y, col, f, "left", false);
+}
+
+function drawBand() {
+  const c = CV.band; if (!c) return;
+  const g = c.g, W = c.W, H = c.H;
+  g.clearRect(0, 0, W, H);
+  const d = phys();
+  const x0 = 58, x1 = W - 18, ytop = 18, ybot = H - 86;
+  const M = makeMap(d, x0, x1);
+  /* 纵轴范围要同时容纳能带与准费米能级：强正偏时 E_Fn 会升到 E_c 之上，
+     反偏时 E_Fn 会降到 E_v 之下，所以按准费米能级的实际取值动态扩轴 */
+  let qTop = -Infinity, qBot = Infinity;
+  if (OPT.ckQF) {
+    const a = EFpAt(M.xa, d), b = EFnAt(M.xd, d);
+    qTop = Math.max(a, b); qBot = Math.min(a, b);
+  }
+  const emin = Math.min(-d.Vj - 0.22, qBot - 0.12), emax = Math.max(d.Eg + 0.30, qTop + 0.16);
+  const EY = e => ybot - (e - emin) / (emax - emin) * (ybot - ytop);
+  const CLY = y => clamp(y, ytop + 10, ybot - 4);
+  const PX = x => M.X(x);
+
+  /* 三个区域的背景 */
+  const XB = PX(-d.xp), XN = PX(d.xn);
+  g.fillStyle = "rgba(217,74,61,0.07)"; g.fillRect(x0, ytop, XB - x0, ybot - ytop);
+  g.fillStyle = "rgba(25,118,210,0.07)"; g.fillRect(XN, ytop, x1 - XN, ybot - ytop);
+  g.fillStyle = "rgba(141,155,171,0.16)"; g.fillRect(XB, ytop, XN - XB, ybot - ytop);
+  line(g, XB, ytop, XB, ybot, "#b9c3ce", 1, [4, 3]);
+  line(g, XN, ytop, XN, ybot, "#b9c3ce", 1, [4, 3]);
+
+  /* 能带曲线 */
+  const N = 240;
+  const bandPath = f => {
+    g.beginPath();
+    for (let i = 0; i <= N; i++) {
+      const x = M.xa + (M.xd - M.xa) * i / N;
+      const X = PX(x), Y = EY(f(x));
+      i ? g.lineTo(X, Y) : g.moveTo(X, Y);
+    }
+  };
+  const Ec = x => d.Eg - psiAt(x, d);
+  const Ev = x => -psiAt(x, d);
+  bandPath(Ec); g.strokeStyle = CB.ec; g.lineWidth = 2.2; g.stroke();
+  bandPath(Ev); g.strokeStyle = CB.ev; g.lineWidth = 2.2; g.stroke();
+  /* 价带下方填充（示意"满带"） */
+  bandPath(Ev); g.lineTo(x1, ybot); g.lineTo(x0, ybot); g.closePath();
+  g.fillStyle = "rgba(47,74,107,0.07)"; g.fill();
+
+  mtxt(g, [{ s: "E", i: 1 }, { s: "c", sub: 1 }], x0 + 4, EY(d.Eg) - 11, CB.ec, 11.5, "left", true);
+  mtxt(g, [{ s: "E", i: 1 }, { s: "v", sub: 1 }], x0 + 4, EY(0) + 12, CB.ev, 11.5, "left", true);
+
+  /* 费米 / 准费米能级 */
+  if (OPT.ckQF) {
+    const flat = Math.abs(d.V) < 1e-9;
+    const drawQF = (f, col, dash) => {
+      g.save(); g.setLineDash(dash || []);
+      g.beginPath();
+      for (let i = 0; i <= N; i++) {
+        const x = M.xa + (M.xd - M.xa) * i / N;
+        const X = PX(x), Y = EY(f(x));
+        i ? g.lineTo(X, Y) : g.moveTo(X, Y);
+      }
+      g.strokeStyle = col; g.lineWidth = 1.8; g.stroke(); g.restore();
+    };
+    drawQF(x => EFnAt(x, d), CB.fn, [7, 4]);
+    if (!flat) drawQF(x => EFpAt(x, d), CB.fp, [7, 4]);
+    else drawQF(x => EFpAt(x, d), "#6b7a8c", [7, 4]);
+    mtxt(g, [{ s: "E", i: 1 }, { s: "Fn", sub: 1 }], x1 - 2, CLY(EY(EFnAt(M.xd, d)) - 10), CB.fn, 11, "right", false);
+    mtxt(g, [{ s: "E", i: 1 }, { s: "Fp", sub: 1 }], x0 + 2, CLY(EY(EFpAt(M.xa, d)) + 12), flat ? "#6b7a8c" : CB.fp, 11, "left", false);
+    if (!flat && Math.abs(d.V) >= 0.05) {
+      const xa2 = PX(0);
+      const y1 = EY(EFnAt(0, d)), y2 = EY(EFpAt(0, d));
+      arrow(g, xa2, y2, xa2, y1, "#ef8c1a", 1.4, 5);
+      arrow(g, xa2, y1, xa2, y2, "#ef8c1a", 1.4, 5);
+      chipM2(g, [{ s: "qV", i: 1 }, { s: " = " + d.V.toFixed(2) + " eV" }], xa2 + 6, (y1 + y2) / 2, "#ef8c1a", 10, "left", W);
+    }
+  }
+
+  /* 耗尽区宽度与势垒 */
+  if (OPT.ckDep) {
+    const yw = ybot - 12;
+    arrow(g, XB, yw, XN, yw, CB.dep, 1.4, 5.5);
+    arrow(g, XN, yw, XB, yw, CB.dep, 1.4, 5.5);
+    chipM2(g, [{ s: "W", i: 1 }, { s: " = " + fmtLen(d.W) }], (XB + XN) / 2, yw - 11, CB.dep, 10.5, "center", W);
+    const xr = Math.min(XN + 26, x1 - 4);
+    const yA = EY(d.Eg - d.Vj), yB = EY(d.Eg);
+    arrow(g, xr, yA, xr, yB, "#6b7a8c", 1.4, 5);
+    arrow(g, xr, yB, xr, yA, "#6b7a8c", 1.4, 5);
+    chipM2(g, [{ s: "q(V", i: 1 }, { s: "bi", sub: 1 }, { s: "−V) = ", i: 1 }, { s: d.Vj.toFixed(3) + " eV" }],
+      xr + 6, (yA + yB) / 2, "#6b7a8c", 10, "left", W);
+  }
+
+  /* 电场 / 漂移 */
+  if (OPT.ckField) {
+    const yf = ybot - 40;
+    for (let i = 0; i <= 8; i++) {
+      const x = -d.xp + (d.xn + d.xp) * i / 8;
+      const e = eField(x, d) / Math.max(d.Emax, 1e-9);
+      const X = PX(x), L = 6 + e * 20;
+      arrow(g, X + L / 2, yf, X - L / 2, yf, CB.fld, 1.4, 4.5);
+    }
+    txt(g, "E（漂移）", PX(0), yf - 15, CB.fld, "10px " + FONT, "center", "middle");
+    /* E_max 标签横向让开 W 标注：对称档下两者都居中于耗尽区，纵向只差 3 px 会实打实重叠
+       （2026-10-22 修）⇒ 挪到耗尽区右边界外侧，靠左对齐并留出 chip 宽度不越界。 */
+    const xEm = Math.min(PX(d.xn) + 30, x1 - 96);
+    chipM2(g, [{ s: "E", i: 1 }, { s: "max", sub: 1 }, { s: " = " + fmtE(d.Emax) }],
+      xEm, yf + 14, CB.fld, 10, "left", W);
+  }
+
+  /* 载流子带 */
+  const yc = H - 46, yc2 = H - 8;
+  g.fillStyle = "rgba(217,74,61,0.10)"; g.fillRect(x0, yc, XB - x0, yc2 - yc);
+  g.fillStyle = "rgba(141,155,171,0.18)"; g.fillRect(XB, yc, XN - XB, yc2 - yc);
+  g.fillStyle = "rgba(25,118,210,0.10)"; g.fillRect(XN, yc, x1 - XN, yc2 - yc);
+  line(g, x0, yc, x1, yc, "#e0e6ee", 1);
+  txt(g, "P 区", x0 + 8, yc + 12, CB.p, "10.5px " + FONT, "left", "middle");
+  txt(g, "N 区", x1 - 8, yc + 12, CB.n, "10.5px " + FONT, "right", "middle");
+  if (OPT.ckCar) {
+    const dot = (X, Y, col, r, sgn) => {
+      g.beginPath(); g.arc(X, Y, r, 0, 6.2832);
+      g.fillStyle = col; g.fill();
+      g.strokeStyle = "#fff"; g.lineWidth = 1; g.stroke();
+      txt(g, sgn, X, Y, "#fff", "bold 8px " + FONT, "center", "middle");
+    };
+    const yh = yc + 13, ye = yc + 28;
+    /* P 区：多子是空穴 */
+    for (let i = 0; i < 9; i++) dot(x0 + 26 + i * (XB - x0 - 40) / 8, yh, CB.p, 4.6, "+");
+    /* N 区：多子是电子 */
+    for (let i = 0; i < 9; i++) dot(XN + 22 + i * (x1 - XN - 40) / 8, ye, CB.n, 4.6, "−");
+    /* 少子（注入 / 抽取） */
+    const inj = clamp(Math.abs(d.V) / 0.6, 0, 1);
+    const nmin = d.V > 0 ? 2 + Math.round(inj * 5) : (d.V < 0 ? 1 : 2);
+    for (let i = 0; i < nmin; i++) dot(XB - 14 - i * 12, ye, CB.n, 4.2, "−");
+    for (let i = 0; i < nmin; i++) dot(XN + 12 + i * 12, yh, CB.p, 4.2, "+");
+    /* 耗尽区里的电离杂质 */
+    for (let i = 0; i < 3; i++) {
+      const xa2 = -d.xp + (d.xp * (i + 0.5) / 3);
+      txt(g, "⊖", PX(xa2), yc + 20, CB.p, "13px " + FONT, "center", "middle");
+      const xn2 = d.xn - (d.xn * (i + 0.5) / 3);
+      txt(g, "⊕", PX(xn2), yc + 20, CB.n, "13px " + FONT, "center", "middle");
+    }
+    /* 扩散 / 漂移箭头 */
+    const yd1 = yc + 13, yd2 = yc + 30;
+    const strong = d.V > 0.02 ? "扩散 > 漂移" : (d.V < -0.02 ? "漂移 > 扩散" : "扩散 = 漂移");
+    if (Math.abs(d.V) < 1e-9) {
+      arrow(g, XB - 6, yd2, XB - 34, yd2, CB.n, 1.4, 5);
+      arrow(g, XN + 6, yd1, XN + 34, yd1, CB.p, 1.4, 5);
+      arrow(g, XB - 34, yd2, XB - 6, yd2, "rgba(239,140,26,0.85)", 1.2, 4.5);
+      arrow(g, XN + 34, yd1, XN + 6, yd1, "rgba(239,140,26,0.85)", 1.2, 4.5);
+      chipC2(g, "扩散 ⇄ 漂移，净电流 = 0", (x0 + x1) / 2, yc2 - 6, CB.car, "10.5px " + FONT, "center", W);
+    } else if (d.V > 0) {
+      arrow(g, XB - 6, yd2, XB - 36, yd2, CB.n, 1.8, 6);
+      arrow(g, XN + 6, yd1, XN + 36, yd1, CB.p, 1.8, 6);
+      chipC2(g, "少子注入：" + strong, (x0 + x1) / 2, yc2 - 6, CB.n, "10.5px " + FONT, "center", W);
+    } else {
+      arrow(g, XB - 36, yd2, XB - 6, yd2, CB.n, 1.8, 6);
+      arrow(g, XN + 36, yd1, XN + 6, yd1, CB.p, 1.8, 6);
+      chipC2(g, "少子抽取：" + strong, (x0 + x1) / 2, yc2 - 6, CB.p, "10.5px " + FONT, "center", W);
+    }
+  }
+  /* 状态徽标 */
+  const lab = Math.abs(d.V) < 1e-9 ? "平衡态（净电流 = 0）" : (d.V > 0 ? "正偏：势垒降低 " + d.V.toFixed(2) + " V" : "反偏：势垒升高 " + Math.abs(d.V).toFixed(2) + " V");
+  chipC2(g, lab, x0 + 2, ytop + 2, Math.abs(d.V) < 1e-9 ? "#6b7a8c" : (d.V > 0 ? CB.n : CB.p), "bold 11px " + FONT, "left", W);
+  /* 坐标断点 */
+  txt(g, "⟊", XB - 1, ybot + 6, "#b9c3ce", "10px " + FONT, "right", "middle");
+  txt(g, "⟊", XN + 1, ybot + 6, "#b9c3ce", "10px " + FONT, "left", "middle");
+  txt(g, "能量 (eV)", x0 - 46, ytop + 4, C_SUB, "10px " + FONT, "left", "middle");
+
+  /* 悬停（与模块二联动：鼠标在哪张图上都画同一条竖线） */
+  const hx = hovX();
+  const hasWarn = d.clamped || d.injMax > 0.1;      /* 有水印时把悬停标签下移，避免互相压盖 */
+  if (hx !== null && hx !== undefined) {
+    const x = M.inv(hx);
+    const X = PX(x);
+    line(g, X, ytop, X, ybot, "rgba(47,74,107,0.45)", 1, [3, 3]);
+    const s = "x = " + (x * 1e6).toFixed(3) + " μm　ψ = " + psiAt(x, d).toFixed(3) + " V　|E| = " +
+      fmtE(eField(x, d));
+    chipC2(g, s, X, ytop + (hasWarn ? 44 : 20), C_HEAVY, "10px " + FONT, "center", W);
+  }
+  /* 失效水印放最后 ⇒ 白底压在最上层 */
+  stampInvalid(g, d, x0, x1, ytop + 20, W);
+}
+
+/* ============ 模块二 少子分布 ============ */
+const CM = { n: "#1976d2", p: "#d94a3d", eq: "#9aa5b1", tot: "#7b1fa2" };
+
+function chipC3(g, s, x, y, col, font, align, W) {
+  g.font = font || "11px " + FONT;
+  const w = g.measureText(s).width;
+  let bx = align === "right" ? x - w : (align === "center" ? x - w / 2 : x);
+  bx = clamp(bx, 3, Math.max(3, W - w - 3));
+  g.fillStyle = "rgba(255,255,255,0.92)";
+  g.fillRect(bx - 4, y - 8, w + 8, 16);
+  txt(g, s, bx, y, col, font, "left", "middle");
+}
+/* 带白底的「数学」标签（用于 L_n、L_p 这类带下标的变量） */
+function chipM3(g, parts, x, y, col, fp, align, W) {
+  const f = fp || 10;
+  const w = mMeasure(g, parts, f, false);
+  let bx = align === "right" ? x - w : (align === "center" ? x - w / 2 : x);
+  bx = clamp(bx, 3, Math.max(3, W - w - 3));
+  g.fillStyle = "rgba(255,255,255,0.92)";
+  g.fillRect(bx - 4, y - 8, w + 8, 16);
+  mtxt(g, parts, bx, y, col, f, "left", false);
+}
+
+/* ---------- 模块二 ----------
+   横轴改用与模块一（能带图）完全相同的分段映射 makeMap —— 两条竖虚线、两个 ⟊ 断点、
+   P 区 / 耗尽区 / N 区的宽度比例都逐点对齐，于是可以上下对照：
+   上面看准费米能级怎么分开，下面看对应的少子浓度被抬高多少 */
+function drawMinor() {
+  const c = CV.minor; if (!c) return;
+  const g = c.g, W = c.W, H = c.H;
+  g.clearRect(0, 0, W, H);
+  const d = phys();
+  const x0 = 58, x1 = W - 18, ytop = 34, ybot = H - 46;   /* 左右边距与模块一一致 */
+  const M = makeMap(d, x0, x1);
+  const X = x => M.X(x);
+  const XB = X(-d.xp), XN = X(d.xn);
+  const xa = M.xa, xb = -d.xp, xc = d.xn, xd = M.xd;
+  const eN = npAt(xb, d), eP = pnAt(xc, d);          /* 耗尽区两个边界处的少子浓度 */
+
+  /* 纵轴：对数，两条少子分布共用一把尺子（n_p 与 p_n 量级相近，可直接比高低） */
+  const hi = Math.max(eN, eP, d.np0, d.pn0, 1e-30);
+  const lo = hi / 1e12;
+  const l0 = Math.log10(lo), l1 = Math.log10(hi * 6);
+  const LY = v => ybot - (Math.log10(clamp(v, lo, hi * 60)) - l0) / (l1 - l0) * (ybot - ytop);
+
+  /* 三个区域的背景（配色与模块一一致：P 淡红 / 耗尽区灰 / N 淡蓝） */
+  g.fillStyle = "rgba(217,74,61,0.06)"; g.fillRect(x0, ytop, XB - x0, ybot - ytop);
+  g.fillStyle = "rgba(25,118,210,0.06)"; g.fillRect(XN, ytop, x1 - XN, ybot - ytop);
+  g.fillStyle = "rgba(141,155,171,0.16)"; g.fillRect(XB, ytop, XN - XB, ybot - ytop);
+  line(g, XB, ytop, XB, ybot, "#b9c3ce", 1, [4, 3]);
+  line(g, XN, ytop, XN, ybot, "#b9c3ce", 1, [4, 3]);
+
+  /* 纵轴网格与刻度 */
+  for (let e = Math.ceil(l0); e <= Math.floor(l1); e++) {
+    const Y = LY(Math.pow(10, e));
+    line(g, x0, Y, x1, Y, C_GRID, 1);
+    txt(g, "10" + supNum(e), x0 - 5, Y, C_SUB, "9.5px " + FONT, "right", "middle");
+  }
+  line(g, x0, ybot, x1, ybot, "#c3ccd6", 1.2);
+  line(g, x0, ytop, x0, ybot, "#c3ccd6", 1.2);
+
+  /* 平衡参考线 */
+  if (OPT.ckEq) {
+    line(g, x0, LY(d.np0), XB, LY(d.np0), CM.eq, 1.4, [5, 4]);
+    line(g, XN, LY(d.pn0), x1, LY(d.pn0), CM.eq, 1.4, [5, 4]);
+    mtxt(g, [{ s: "n", i: 1 }, { s: "p0", sub: 1 }], XB - 5, LY(d.np0) - 10, CM.eq, 10.5, "right", false);
+    mtxt(g, [{ s: "p", i: 1 }, { s: "n0", sub: 1 }], XN + 5, LY(d.pn0) - 10, CM.eq, 10.5, "left", false);
+  }
+
+  /* 两条少子分布曲线：P 区的电子 n_p(x)、N 区的空穴 p_n(x) */
+  const seg = (a, b, f, col) => {
+    g.beginPath();
+    for (let i = 0; i <= 160; i++) {
+      const x = a + (b - a) * i / 160;
+      i ? g.lineTo(X(x), LY(f(x))) : g.moveTo(X(x), LY(f(x)));
+    }
+    g.strokeStyle = col; g.lineWidth = 2.4; g.stroke();
+  };
+  seg(xa, xb, x => npAt(x, d), CM.n);
+  seg(xc, xd, x => pnAt(x, d), CM.p);
+
+  /* 边界浓度点 + 注入 / 抽空的倍数 */
+  const dotAt = (x, v, col) => {
+    g.beginPath(); g.arc(X(x), LY(v), 4.2, 0, 6.2832);
+    g.fillStyle = col; g.fill(); g.strokeStyle = "#fff"; g.lineWidth = 1.4; g.stroke();
+  };
+  dotAt(xb, eN, CM.n); dotAt(xc, eP, CM.p);
+  const injTag = (px, eq, edge, side) => {
+    if (!(Math.abs(edge / Math.max(eq, 1e-30) - 1) > 0.05)) return;
+    arrow(g, px, LY(eq), px, LY(edge), "#ef8c1a", 1.4, 5);
+    arrow(g, px, LY(edge), px, LY(eq), "#ef8c1a", 1.4, 5);
+    /* 倍数一律用科学计数法零件（画布文本不能用 toExponential —— 会出 ×2.5e+8 这种 ASCII 伪科学计数） */
+    const lbl = catA([{ s: edge > eq ? "注入 ×" : "抽空 ×" }],
+      PSci(edge > eq ? edge / eq : eq / Math.max(edge, 1e-30), 1));
+    chipM3(g, lbl, px + side * 6, (LY(eq) + LY(edge)) / 2, "#ef8c1a", 10,
+      side < 0 ? "right" : "left", W);
+  };
+  injTag(XB - 24, d.np0, eN, -1);
+  injTag(XN + 24, d.pn0, eP, 1);
+
+  /* 扩散长度标尺：直接从耗尽区边界量出 1 个 L（现在是绝对位置，不再是「几个 L」） */
+  const yL = ybot - 11;
+  const xlN = X(xb - d.Lnm), xlP = X(xc + d.Lpm);
+  arrow(g, XB, yL, xlN, yL, CM.n, 1.4, 5); arrow(g, xlN, yL, XB, yL, CM.n, 1.4, 5);
+  arrow(g, XN, yL, xlP, yL, CM.p, 1.4, 5); arrow(g, xlP, yL, XN, yL, CM.p, 1.4, 5);
+  chipM3(g, [{ s: "L", i: 1 }, { s: "n", sub: 1, i: 1 }, { s: " = " + (d.Ln * 1e4).toFixed(1) + " μm（掉到 1/e）" }],
+    (XB + xlN) / 2, yL - 13, CM.n, 10, "center", W);
+  chipM3(g, [{ s: "L", i: 1 }, { s: "p", sub: 1, i: 1 }, { s: " = " + (d.Lp * 1e4).toFixed(1) + " μm（掉到 1/e）" }],
+    (XN + xlP) / 2, yL - 13, CM.p, 10, "center", W);
+
+  /* 区域标题 */
+  mtxt(g, [{ s: "P 区中的电子 " }, { s: "n", i: 1 }, { s: "p", sub: 1 }, { s: "(x)" }],
+    (x0 + XB) / 2, ytop - 14, CM.n, 11.5, "center", true);
+  mtxt(g, [{ s: "N 区中的空穴 " }, { s: "p", i: 1 }, { s: "n", sub: 1 }, { s: "(x)" }],
+    (XN + x1) / 2, ytop - 14, CM.p, 11.5, "center", true);
+  chipC3(g, "耗尽区 W = " + fmtLen(d.W), (XB + XN) / 2, ytop + 12, "#6b7a8c", "10px " + FONT, "center", W);
+
+  /* 轴说明（⟊ 表示横轴在这里换比例，与模块一同一个位置） */
+  txt(g, "⟊", XB - 1, ybot + 8, "#b9c3ce", "10px " + FONT, "right", "middle");
+  txt(g, "⟊", XN + 1, ybot + 8, "#b9c3ce", "10px " + FONT, "left", "middle");
+  txt(g, "位置 x —— 与模块一同一横轴，可上下对照（⟊ 为比例断点）",
+    (x0 + x1) / 2, H - 8, C_SUB, "10px " + FONT, "center", "middle");
+  txt(g, "少子浓度 (cm⁻³)", x0 - 46, ytop + 2, C_SUB, "10px " + FONT, "left", "middle");
+
+  /* 悬停：与模块一联动，同一条竖线上下对齐 */
+  const hx = hovX();
+  if (hx !== null && hx !== undefined) {
+    const x = M.inv(hx), px = X(x);
+    line(g, px, ytop, px, ybot, "rgba(47,74,107,0.45)", 1, [3, 3]);
+    let s;
+    if (x <= xb) s = "x = " + (x * 1e6).toFixed(3) + " μm　n_p = " + sci(npAt(x, d)) + " cm⁻³";
+    else if (x >= xc) s = "x = " + (x * 1e6).toFixed(3) + " μm　p_n = " + sci(pnAt(x, d)) + " cm⁻³";
+    else s = "x = " + (x * 1e6).toFixed(3) + " μm　耗尽区内";
+    chipC3(g, s, px, ytop + ((d.clamped || d.injMax > 0.1) ? 48 : 16), C_HEAVY, "10px " + FONT, "center", W);
+  }
+  stampInvalid(g, d, x0, x1, ytop + 34, W);
+}
+
+/* ============ 图例 / 挑战卡 / 读数 / 绑定 / 动画 ============ */
+const LEGS = {
+  legBand: [
+    ["#1565c0", "导带底 E_c(x)"], ["#2f4a6b", "价带顶 E_v(x)"],
+    ["#1976d2", "电子准费米能级 E_Fn"], ["#d94a3d", "空穴准费米能级 E_Fp"],
+    ["#ef8c1a", "内建电场（漂移）"], ["#8d9bab", "耗尽区 W"]
+  ],
+  legMinor: [
+    ["#1976d2", "P 区电子 n_p(x)"], ["#d94a3d", "N 区空穴 p_n(x)"],
+    ["#9aa5b1", "平衡值 n_p0 / p_n0（虚线）"], ["#ef8c1a", "注入 / 抽取的倍数"]
+  ]
+};
+function buildLegends() {
+  for (const id in LEGS) {
+    const el = $(id); if (!el) continue;
+    el.innerHTML = LEGS[id].map(r =>
+      '<span class="lg"><i style="background:' + r[0] + '"></i>' + r[1] + "</span>").join("");
+  }
+}
+
+const CHAL = [
+  {
+    q: "把偏压停在 V = 0（平衡态）。耗尽区在哪一段？内建电场指向哪边？扩散和漂移各把载流子往哪推？为什么净电流恰好为零？",
+    a: () => {
+      const d = phys();
+      return "耗尽区就是能带图中间那段灰色区域，宽 <b>" + fmtLen(d.W) + "</b>（P 侧 " + fmtLen(d.xp) + "、N 侧 " + fmtLen(d.xn) +
+        "），里面几乎没有可动载流子，只剩不能动的电离杂质：P 侧是 <b>⊖</b>（受主得电子）、N 侧是 <b>⊕</b>（施主失电子）。" +
+        "这些固定电荷造出从 N 指向 P 的电场（图中橙色箭头，峰值 <b>" + fmtE(d.Emax) + "</b>）。" +
+        "<b>扩散</b>被浓度差驱动：电子 N→P、空穴 P→N；<b>漂移</b>被电场驱动：电子 P→N、空穴 N→P —— <b>方向正好相反</b>。" +
+        "平衡时两者严格相抵（图下方「扩散 ⇄ 漂移」），所以 <span class='m'><i>I</i><span class='op'>=</span>0</span>。" +
+        "这就是为什么肖克利方程里必须有一个 <span class='m'><span class='op'>−</span>1</span>：<span class='m'><i>V</i><span class='op'>=</span>0</span> 时指数项 <span class='m'><span class='rm'>e</span><sup>0</sup><span class='op'>=</span>1</span>，" +
+        "减掉它才得到零。电场把两侧能带拉开 <span class='m'><i>qV</i><sub>bi</sub><span class='op'>=</span>" + d.Vbi.toFixed(3) + " eV</span>，" +
+        "恰好等于两侧费米能级接触前的落差 <span class='m'><i>φ</i><sub>n</sub><span class='op'>+</span><i>φ</i><sub>p</sub></span>。";
+    }
+  },
+  {
+    q: "把偏压调到 +0.5 V（正偏）。势垒和耗尽区怎么变？看模块二，耗尽区边界的少子浓度抬了多少倍？离边界多远就衰减到 1/<span class='rm'>e</span>？",
+    a: () => {
+      const d = phys();
+      const ratio = d.np0 > 0 ? (d.np0 + d.dnp) / d.np0 : 1;
+      return "正偏把外加电压<b>反着</b>加在内建电场上 ⇒ 结上的电势差从 <span class='m'><i>V</i><sub>bi</sub><span class='op'>=</span>" + d.Vbi.toFixed(3) +
+        " V</span> 降到 <span class='m'><i>V</i><sub>bi</sub><span class='op'>−</span><i>V</i><span class='op'>=</span>" + d.Vj.toFixed(3) + " V</span>，" +
+        "耗尽区随之<b>变窄</b>（<span class='m'><i>W</i><span class='op'>∝</span>√(<i>V</i><sub>bi</sub><span class='op'>−</span><i>V</i>)</span>，现在 " + fmtLen(d.W) + "），势垒一低，扩散就压过漂移。" +
+        "边界处的少子浓度按 <span class='m'><i>n</i><sub>p</sub>(<span class='op'>−</span><i>x</i><sub>p</sub>)<span class='op'>=</span><i>n</i><sub>p0</sub><span class='rm'>e</span><sup><i>qV</i><span class='sl'>/</span><i>kT</i></sup></span> 抬升，" +
+        "现在是平衡值的 <b>" + (ratio > 99 ? ratio.toExponential(2) : ratio.toFixed(2)) + " 倍</b>（过量 <span class='m'>Δ<i>n</i><span class='op'>=</span>" + sci(d.dnp, 2) + " cm⁻³</span>）—— " +
+        "0.5 V 是热电压 " + (d.Vt * 1000).toFixed(1) + " mV 的近 20 倍，所以是天文数字般的注入。" +
+        "注入进去的少子一边扩散一边复合，浓度按 <span class='m'><span class='rm'>e</span><sup><span class='op'>−</span><i>x</i><span class='sl'>/</span><i>L</i></sup></span> 衰减：" +
+        "走过 <b>一个扩散长度 <span class='m'><i>L</i><sub>n</sub><span class='op'>=</span>" + (d.Ln * 1e4).toFixed(1) + " μm</span></b> 就掉到 1/<span class='rm'>e</span>，" +
+        "再远就被复合掉了（<span class='m'><i>L</i><span class='op'>=</span>√(<i>Dτ</i>)</span>，寿命越长少子钻得越深；本工具 <span class='m'><i>τ</i><span class='op'>=</span>" +
+        sci(d.tn, 1) + " s</span> 已固定，所以 <span class='m'><i>L</i></span> 只随温度通过 <span class='m'><i>D</i></span> 变）。";
+    }
+  },
+  {
+    q: "把偏压调到 −0.5 V（反偏）。势垒和耗尽区怎么变？少子浓度是升高还是降低？反向电流由什么机制主导，为什么它<b>几乎不随电压变</b>？",
+    a: () => {
+      const d = phys();
+      return "反偏把势垒<b>抬高</b>到 <span class='m'><i>V</i><sub>bi</sub><span class='op'>+</span>|<i>V</i>|<span class='op'>=</span>" + d.Vj.toFixed(3) +
+        " V</span>，耗尽区<b>变宽</b>到 " + fmtLen(d.W) + "（<span class='m'><i>W</i><span class='op'>∝</span>√<i>V</i></span>，这正是变容二极管的工作原理）。" +
+        "势垒一高，多数载流子根本翻不过去，只剩<b>少子被电场抽走</b>：边界处少子浓度按 <span class='m'><span class='rm'>e</span><sup><i>qV</i><span class='sl'>/</span><i>kT</i></sup></span> 被压到" +
+        "（<span class='m'><i>V</i><span class='op'>=</span><span class='op'>−</span>0.5</span> 时约为平衡值的 <span class='m'><span class='rm'>e</span><sup><span class='op'>−</span>19</sup></span>，" +
+        "即<b>几乎为零</b>），于是形成从边界指向体内的浓度梯度，少子源源不断被抽过结 ⇒ 这就是<b>反向饱和电流</b>。" +
+        "它<b>不随电压增大</b>，因为<b>供给速率被扩散限制</b>了：单位时间能扩散到边界的少子就那么多（取决于 <span class='m'><i>n</i><sub>p0</sub></span>、<span class='m'><i>L</i><sub>n</sub></span>，" +
+        "与偏压无关），电压再高也只能把这些少子抽走而已。所以 <span class='m'><i>I</i><span class='op'>→</span><span class='op'>−</span><i>I</i><sub>0</sub></span>：" +
+        "当前 <span class='m'><i>I</i><sub>0</sub><span class='op'>=</span>" + fmtI(d.I0) + "</span>，<span class='m'><i>I</i><span class='op'>=</span>" + fmtI(d.Itot) + "</span>。" +
+        "而 <span class='m'><i>I</i><sub>0</sub><span class='op'>∝</span><i>n</i><sub>i</sub><sup>2</sup></span> ⇒ <b>温度每升高一点，反向电流就翻倍式地涨</b>（这是二极管的热稳定性问题）。";
+    }
+  }
+];
+let ANS_EL = [], ANS_SHOWN = false;
+function buildChal() {
+  const grid = $("chalGrid");
+  grid.innerHTML = ""; ANS_EL = [];
+  CHAL.forEach((c, i) => {
+    const el = document.createElement("div");
+    el.className = "chal";
+    el.innerHTML = '<div class="chal-head"><b>' + (i + 1) + ". " + c.q + '</b><span class="chev">▶</span></div>' +
+      '<div class="chal-body"><div class="ans"></div><div class="btn-row"><button>看看答案</button></div></div>';
+    grid.appendChild(el);
+    el.querySelector(".chal-head").onclick = () => el.classList.toggle("open");
+    const ans = el.querySelector(".ans");
+    ANS_EL.push(ans);
+    el.querySelector(".btn-row button").onclick = e => { e.stopPropagation(); ANS_SHOWN = true; ans.classList.toggle("show"); refreshAnswers(); };
+  });
+}
+function refreshAnswers() { if (!ANS_SHOWN) return; ANS_EL.forEach((el, i) => { el.innerHTML = CHAL[i].a(); }); }
+
+function kvRow(k, v) { return '<div class="row"><span class="k">' + k + '</span><span class="v">' + v + "</span></div>"; }
+function hd(s) { return '<div class="hd">' + s + "</div>"; }
+
+function updateReadout() {
+  const d = phys(), m = mat();
+  const h = [], hm = [];
+  const pctTag = r => (r > 0.1 ? "<span class='bad'>" : "") +
+    (r * 100 < 0.01 ? "< 0.01" : (r * 100).toFixed(r < 0.01 ? 3 : 2)) + " %" +
+    (r > 0.1 ? "</span>" : "");
+
+  /* ---- 核心区：势垒 ⇒ 边缘注入 ⇒ 电流 ---- */
+  h.push(kvRow("内建电势 V_bi", "<b>" + fmt(d.Vbi, 4) + "</b> V　（" +
+    MM("<i>kT</i><span class='op'>/</span><i>q</i>·ln(<i>N</i><sub>A</sub><i>N</i><sub>D</sub><span class='op'>/</span>" +
+       "<i>n</i><sub>i</sub><sup>2</sup>)") + "）"));
+  h.push(kvRow("偏压 V / 势垒 V_bi−V", fmt(d.V, 2) + " V / <b>" + fmt(d.Vj, 4) + "</b> V" +
+    (d.clamped ? "　<span class='bad'>已钳位</span>" : "")));
+  h.push(kvRow("耗尽区宽度 W", "<b>" + fmtLen(d.W) + "</b>（x_p " + fmtLen(d.xp) + "，x_n " + fmtLen(d.xn) + "）"));
+  h.push(kvRow("Δn_p(0) / Δp_n(0)", "<b>" + sci(d.dnp, 2) + " / " + sci(d.dpn, 2) + "</b> cm⁻³" +
+    "　＝ " + MM("<i>n</i><sub>p0</sub>(e<sup><i>qV</i><span class='op'>/</span><i>kT</i></sup>−1)") + " 等"));
+  h.push(kvRow("反向饱和电流 " + MM("<i>I</i><sub>0</sub>"), "<b>" + fmtI(d.I0) + "</b>"));
+  h.push(kvRow("总电流 " + MM("<i>I</i>"), "<b>" + fmtI(d.Itot) + "</b>　（扩散 " + fmtI(d.Idif) +
+    " + 复合 " + fmtI(d.Irec) + "）"));
+  h.push(kvRow("理想因子 n（局部）+ 主导机制", d.neff ? "<b>" + d.neff.toFixed(2) + "</b>　主导：<b>" +
+    (Math.abs(d.Irec) > Math.abs(d.Idif) ? "耗尽区复合（n→2）" : "扩散（n→1）") + "</b>" : "—"));
+  $("readout").innerHTML = h.join("");
+
+  /* ---- 折叠区：材料掺杂、少子扩散、电流分解与适用条件 ---- */
+  hm.push(hd("材料与掺杂"));
+  hm.push(kvRow("材料 / E_g", "<b>" + m.name + "</b>（固定）　" + fmt(d.Eg, 3) + " eV"));
+  hm.push(kvRow("本征浓度 n_i", sci(d.ni, 2) + " cm⁻³"));
+  hm.push(kvRow("N_A / N_D", sci(d.NA, 1) + " / " + sci(d.ND, 1) + " cm⁻³"));
+  hm.push(kvRow("温度 " + MM("<i>T</i>") + " / " + MM("<i>kT</i><span class='op'>/</span><i>q</i>"), "<b>" + d.T + "</b> K　" + (d.Vt * 1000).toFixed(2) + " mV"));
+  hm.push(hd("少子与扩散"));
+  hm.push(kvRow("n_p0 / p_n0", sci(d.np0, 2) + " / " + sci(d.pn0, 2) + " cm⁻³"));
+  hm.push(kvRow("L_n / L_p", (d.Ln * 1e4).toFixed(2) + " / " + (d.Lp * 1e4).toFixed(2) + " μm"));
+  hm.push(kvRow("<span class='m'><i>τ</i><sub>n</sub></span> / <span class='m'><i>τ</i><sub>p</sub></span>（固定）", sci(d.tn, 1) + " / " + sci(d.tp, 1) + " s"));
+  hm.push(kvRow("峰值电场 E_max", "<b>" + fmtE(d.Emax) + "</b>"));
+  hm.push(hd("电流分解"));
+  hm.push(kvRow("扩散电流 I_dif（n=1）", fmtI(d.Idif)));
+  hm.push(kvRow("复合电流 I_rec（n=2）", fmtI(d.Irec)));
+  hm.push(hd("适用条件（两条判据）"));
+  hm.push(kvRow("①边缘注入比 " + MM("Δ<i>n</i><sub>p</sub><span class='op'>/</span><i>N</i><sub>A</sub>"), "<b>" + pctTag(d.injN) + "</b>"));
+  hm.push(kvRow("　边缘注入比 " + MM("Δ<i>p</i><sub>n</sub><span class='op'>/</span><i>N</i><sub>D</sub>"), "<b>" + pctTag(d.injP) + "</b>"));
+  hm.push(kvRow("　低注入判据 ≲ 10 %", d.injMax > 0.1
+    ? "<span class='bad'><b>已越过低注入</b></span>"
+    : "✓ 满足（正偏上限 <b>" + fmt(d.Vlim, 3) + "</b> V）"));
+  hm.push(kvRow("②势垒未穿透 V &lt; V_bi", d.clamped
+    ? "<span class='bad'><b>V ≥ V_bi − " + fmt(d.VJ_FLOOR, 2) + " V，已钳位</b></span>"
+    : "✓ 满足（可加到 <b>" + fmt(d.Vbi - d.VJ_FLOOR, 3) + "</b> V）"));
+  $("readoutMore").innerHTML = hm.join("");
+
+  /* 失效告警：两条判据任意一条不成立就显示在折叠区之外（内容随参数实时更新）——
+     折叠区收起时它就是「越界才红字报警」的那条角标。 */
+  const wn = [];
+  if (d.clamped) wn.push("偏压已达到 <b>V ≥ V_bi − " + fmt(d.VJ_FLOOR, 2) + " V</b>（当前 V_bi = " +
+    fmt(d.Vbi, 3) + " V）：势垒被钳在代码的下限 " + fmt(d.VJ_FLOOR, 2) + " V，耗尽区宽度、峰值电场与能带弯曲<b>全是这个人为常数的产物</b>，" +
+    "真实器件此时早已进入大注入 + 串联电阻区，图上的形状不再有物理意义。");
+  if (d.injMax > 0.1) wn.push("注入到耗尽区边缘的少子已达多子的 <b>" + (d.injMax * 100).toFixed(0) + " %" +
+    (d.injMax > 1 ? "（甚至超过掺杂本身 " + sci(d.injMax, 1) + " 倍）" : "") +
+    "</b>，越过<b>低注入</b>前提：真实样品要同时解两种载流子并计入电导调制，" +
+    "<span class='m'><i>n</i><sub>p</sub>(0)<span class='op'>=</span><i>n</i><sub>p0</sub><span class='rm'>e</span><sup><i>qV</i><span class='op'>/</span><i>kT</i></sup></span> 这条边界条件不再成立，" +
+    "本页的电流与分布<b>只剩示意</b>。低注入的正偏上限约 <b>" + fmt(d.Vlim, 3) + " V</b>（随掺杂而变）。");
+  const w = $("modelWarn");
+  if (wn.length) { w.style.display = "block"; w.innerHTML = wn.join("<br>"); }
+  else w.style.display = "none";
+
+  refreshAnswers();
+}
+
+function syncInputs() {
+  const m = mat();
+  $("naSlider").value = OPT.naS; $("naVal").innerHTML = sci(NAof(OPT.naS), 1) + " cm⁻³";
+  $("ndSlider").value = OPT.ndS; $("ndVal").innerHTML = sci(NDof(OPT.ndS), 1) + " cm⁻³";
+  $("tSlider").value = OPT.T; $("tVal").innerHTML = OPT.T + " K";
+  $("tSub").innerHTML = "E_g = " + fmt(EgT(OPT.T), 3) + " eV　n_i = " + sci(niT(OPT.T), 2) + " cm⁻³　kT/q = " +
+    (VtT(OPT.T) * 1000).toFixed(2) + " mV";
+  $("tnVal").innerHTML = sci(TAU_N * 1e6, 2) + " / " + sci(TAU_P * 1e6, 2) + " μs";
+  /* 「更多参数」收起时也要能看到当前取值（隐藏旋钮必须披露）。
+     单位与分隔符一律非中文，避免为拼接值新增 i18n 词条。 */
+  $("moreVal").innerHTML = "N_A = " + sci(NAof(OPT.naS), 1) + "　·　N_D = " + sci(NDof(OPT.ndS), 1) +
+    "　·　τ = " + sci(TAU_N * 1e6, 2) + " μs";
+  $("vSlider").value = OPT.vS; $("vVal").innerHTML = fmt(Vof(OPT.vS), 2) + " V";
+  const d = phys();
+  $("vSub").innerHTML = "势垒 " + fmt(d.Vj, 3) + " V（V_bi = " + fmt(d.Vbi, 3) + " V）　耗尽区 " + fmtLen(d.W) +
+    (Vof(OPT.vS) > 0 ? "　正偏：扩散 > 漂移" : (Vof(OPT.vS) < 0 ? "　反偏：漂移 > 扩散" : "　平衡：扩散 = 漂移")) +
+    (d.clamped ? "<br><span style='color:#c0392b;font-weight:700'>⚠ V ≥ V_bi：势垒已被钳在 " +
+      fmt(d.VJ_FLOOR, 2) + " V，此后的 W、E 与能带弯曲只是兜底常数的产物</span>"
+      : (d.injMax > 0.1 ? "<br><span style='color:#c0392b;font-weight:700'>⚠ 注入比 " +
+        (d.injMax * 100).toFixed(d.injMax > 1 ? 0 : 1) + " %：已越过低注入（上限 " + fmt(d.Vlim, 3) + " V）</span>" : ""));
+  $("btnPlay").textContent = OPT.playing ? "⏸ 暂停" : "▶ 自动扫描";
+}
+
+function render() {
+  fitAll();
+  drawBand(); drawMinor();
+  updateReadout();
+}
+
+function buildBtns() {
+  const box2 = $("preBtns"); box2.innerHTML = "";
+  PRESETS.forEach(p => {
+    const b = document.createElement("button");
+    b.textContent = p.name;
+    b.onclick = () => { OPT.vS = Math.round(p.v * 100); OPT.playing = false; syncInputs(); render(); };
+    box2.appendChild(b);
+  });
+}
+function init() {
+  buildLegends(); buildChal(); buildBtns();
+  const sl = (id, fn) => $(id).addEventListener("input", e => fn(+e.target.value));
+  sl("naSlider", v => { OPT.naS = v; syncInputs(); render(); });
+  sl("ndSlider", v => { OPT.ndS = v; syncInputs(); render(); });
+  sl("tSlider", v => { OPT.T = v; syncInputs(); render(); });
+  sl("vSlider", v => { OPT.vS = v; OPT.playing = false; syncInputs(); render(); });
+  ["ckCar", "ckField", "ckDep", "ckQF", "ckEq"].forEach(k =>
+    $(k).addEventListener("change", e => { OPT[k] = e.target.checked; render(); }));
+  $("btnPlay").onclick = () => { OPT.playing = !OPT.playing; syncInputs(); };
+  $("btnReset").onclick = () => {
+    OPT.playing = false;
+    OPT.naS = 100; OPT.ndS = 100; OPT.T = 300; OPT.vS = 0;
+    syncInputs(); render();
+  };
+  /* 悬停联动：两张图共用同一个 x，鼠标在任一图上移动，另一图同步画竖线 */
+  const hover = (id, key) => {
+    $(id).addEventListener("mousemove", e => {
+      const r = $(id).getBoundingClientRect();
+      HOV[key] = e.clientX - r.left;
+      drawBand(); drawMinor();
+    });
+    $(id).addEventListener("mouseleave", () => { HOV[key] = null; drawBand(); drawMinor(); });
+  };
+  hover("band", "band"); hover("minor", "minor");
+  syncInputs(); render();
+  /* 折叠区（.fold）：事件委托，新增折叠块不用再逐个绑定。
+     与挑战区的 .chal 完全独立，两者互不影响。 */
+  document.addEventListener("click", e => {
+    const h = e.target.closest ? e.target.closest(".fold-head") : null;
+    if (!h) return;
+    const f = h.parentNode;
+    if (f && f.classList && f.classList.contains("fold")) f.classList.toggle("open");
+  });
+  window.addEventListener("resize", () => render());
+  requestAnimationFrame(loop);
+}
+let LAST = 0;
+function loop(ts) {
+  const dt = LAST ? Math.min((ts - LAST) / 1000, 0.05) : 0;
+  LAST = ts;
+  if (OPT.playing) {
+    OPT.vS += OPT.dir * dt * 34;
+    if (OPT.vS >= 70) { OPT.vS = 70; OPT.dir = -1; }
+    if (OPT.vS <= -100) { OPT.vS = -100; OPT.dir = 1; }
+    syncInputs(); render();
+  }
+  requestAnimationFrame(loop);
+}
+init();
+
+/* i18n 启动必须在 init() 之后：setLang() 会重跑 syncInputs()/render()，
+   放到 init() 之前会在 fitAll() 之前触发绘制，一旦抛异常整个 init() 就跑不到（挑战与画布会空）。 */
+(function () {
+  try {
+    i18nWatch();
+    ORIG_TITLE = ORIG_TITLE || document.title;
+    var btn = document.getElementById("langBtn");
+    if (btn) btn.onclick = function () { setLang(LANG === "en" ? "zh" : "en"); };
+    if (LANG === "en") setLang("en"); else { document.title = ORIG_TITLE; i18nWalk(document.body); }
+  } catch (e) { }
+})();
+</script>
+</body>
+</html>

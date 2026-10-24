@@ -1,0 +1,2656 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<!-- SPDX-License-Identifier: MIT -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>sp² 杂化与 π 键形成交互教学工具</title>
+<style>
+  :root {
+    --bg: #f7f9fb;
+    --panel: #ffffff;
+    --border: #dde4ec;
+    --text: #2c3e50;
+    --text-sub: #6b7a8c;
+    --blue: #1976d2;
+    --blue-light: #e3f0fb;
+    --orange: #ef8c1a;
+    --red: #d94a3d;
+    --teal: #0f9b8e;
+    --green: #2e9e5b;
+    --purple: #8e5bd0;
+    --gray-ref: #9aa5b1;
+    --probe: #f5c518;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Microsoft YaHei", "PingFang SC", "Segoe UI", sans-serif;
+    background: var(--bg); color: var(--text); padding: 14px;
+  }
+  header { position: relative;
+    display: flex; align-items: baseline; justify-content: center;
+    gap: 14px; flex-wrap: wrap; text-align: center; margin-bottom: 12px;
+  }
+  .lang-btn { position: absolute; right: 0; top: 0; border: 1px solid var(--border); background: #fff;
+    color: var(--text-sub); padding: 3px 10px; border-radius: 7px; cursor: pointer; font-size: 12px; font-weight: 600; }
+  .lang-btn:hover { border-color: var(--blue); color: var(--blue); }
+  header h1 { font-size: 20px; }
+  .layout { display: flex; gap: 14px; align-items: flex-start; max-width: 1500px; margin: 0 auto; }
+  .viz { flex: 0 0 64%; min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+  .side { flex: 1; min-width: 300px; display: flex; flex-direction: column; gap: 12px; }
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; }
+  canvas { display: block; width: 100%; border-radius: 6px; touch-action: none; }
+  .chart-wrap { position: relative; }
+  .hint { font-size: 12px; color: var(--text-sub); margin-top: 6px; line-height: 1.6; }
+  .sec-title { font-size: 13.5px; font-weight: 700; margin: 2px 0 6px; }
+  /* 模块编号徽标：只有教学内容模块才带编号；控制面板等辅助面板不是模块，不加 */
+  .sec-title .mtag {
+    display: inline-block; background: var(--blue); color: #fff;
+    font-size: 11px; font-weight: 700; padding: 1.5px 7px;
+    border-radius: 5px; margin-right: 6px; vertical-align: 1.5px; letter-spacing: .3px;
+  }
+  .ctrl { margin-bottom: 12px; }
+  .ctrl:last-child { margin-bottom: 0; }
+  .ctrl-head { display: flex; justify-content: space-between; align-items: baseline; font-size: 13.5px; font-weight: 600; margin-bottom: 4px; }
+  .ctrl-head .val { color: var(--blue); font-variant-numeric: tabular-nums; font-weight: 700; }
+  .ctrl input[type=range] { width: 100%; accent-color: var(--blue); }
+  .ctrl .sub { font-size: 12px; color: var(--text-sub); margin-top: 2px; line-height: 1.55; }
+  .btn-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+  .btn-row button {
+    border: 1px solid var(--border); background: #fff; color: var(--text);
+    padding: 5px 11px; border-radius: 7px; cursor: pointer; font-size: 12.5px;
+  }
+  .btn-row button:hover { border-color: var(--blue); color: var(--blue); }
+  .btn-row button.primary { background: var(--blue-light); border-color: var(--blue); color: var(--blue); font-weight: 600; }
+  .btn-row button.sel { background: var(--blue); border-color: var(--blue); color: #fff; font-weight: 600; }
+  .btn-row button:disabled { opacity: .45; cursor: not-allowed; }
+  .btn-row.tight button { padding: 4px 9px; font-size: 12px; }
+  .legend { display: flex; gap: 6px 14px; flex-wrap: wrap; align-items: center; font-size: 12px; color: var(--text-sub); margin-top: 6px; }
+  .legend > span { display: inline-block; }
+  .swatch {
+    display: inline-block; vertical-align: middle; width: 20px; height: 0;
+    border-top: 3px solid currentColor; border-radius: 2px; margin-right: 6px;
+  }
+  .swatch.dash { border-top-style: dashed; }
+  .swatch.dot { width: 11px; height: 11px; border: none; border-radius: 50%; }
+  .swatch.sq { width: 11px; height: 11px; border: none; border-radius: 3px; }
+  .mini { font-size: 11.5px; color: var(--text-sub); line-height: 1.6; }
+  .empty { font-size: 12px; color: var(--text-sub); padding: 6px 2px; }
+  .kv { display: grid; grid-template-columns: auto 1fr; gap: 3px 10px; font-size: 12.5px; align-items: baseline; }
+  .kv .hd { grid-column: 1 / -1; font-weight: 700; color: var(--text); font-size: 12px; margin: 6px 0 2px; }
+  .kv .k { color: var(--text-sub); white-space: nowrap; }
+  .kv .v { color: var(--text); font-variant-numeric: tabular-nums; }
+  .wf {
+    font-size: 12.5px; color: var(--text); line-height: 1.9; padding: 6px 8px;
+    background: #f5f8fb; border: 1px solid var(--border); border-radius: 6px; margin-top: 6px;
+    word-break: break-word;
+  }
+  .wf sub { font-size: .72em; }
+  .wf sup { font-size: .72em; }
+  /* 公式行：沿用 .m 的数学排版，但侧栏窄，允许换行 */
+  .wf .m { white-space: normal; font-size: 13px; line-height: 2.1; }
+  /* 挑战任务卡片 */
+  .chal-wrap { max-width: 1500px; margin: 14px auto 0; }
+  .chal-grid { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+  .chal { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 8px 12px; }
+  .chal-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; cursor: pointer; }
+  .chal-head b { font-size: 13.5px; }
+  .chal-head .chev { color: var(--text-sub); font-size: 12px; transition: transform .15s; }
+  .chal.open .chal-head .chev { transform: rotate(90deg); display: inline-block; }
+  .chal-body { display: none; margin-top: 6px; font-size: 12.5px; color: var(--text-sub); line-height: 1.75; }
+  .chal.open { border-color: var(--blue); }
+  .chal.open .chal-body { display: block; }
+  .chal-body .ans { display: none; margin-top: 6px; padding: 7px 10px; background: var(--blue-light); border-radius: 6px; color: var(--text); }
+  .chal-body .ans.show { display: block; }
+  .chal-body .ans b { color: var(--blue); }
+  .chal .q { color: var(--text); }
+  /* ============ 数学公式排版（纯 CSS，零依赖，离线可用） ============ */
+  .frac {
+    display: inline-block; vertical-align: -0.50em; text-align: center;
+    margin: 0 .18em; font-size: .92em; line-height: 1.25;
+  }
+  .frac > .num { display: block; padding: 0 .32em; border-bottom: 1px solid currentColor; }
+  .frac > .den { display: block; padding: 0 .32em; }
+  header .formula { font-size: 15px; color: var(--text-sub); }
+  header .formula.m { font-size: 14px; }   /* .m 的 1.05em 会把页首公式顶出一行 */
+
+  @media (max-width: 980px) {
+    .layout { flex-direction: column; }
+    .viz { flex: 1 1 auto; width: 100%; }
+  }
+  /* ---- 折叠区（.fold）：读数与控制的「更多」专用 ----
+     独立组件，类名一律 .fold：❌ 不许复用 .chal-head / .chev，
+     否则会被挑战区回归脚本按「挑战题」计数，也会污染挑战区视觉基线。 */
+  .fold { margin-top: 7px; border-top: 1px dotted var(--border); padding-top: 5px; }
+  .fold-head { display: flex; align-items: center; gap: 6px; cursor: pointer;
+    font-size: 12px; font-weight: 600; color: var(--text-sub); user-select: none; flex-wrap: wrap; }
+  .fold-head:hover { color: var(--blue); }
+  .fold-head .chev { font-size: 11px; transition: transform .15s; display: inline-block; }
+  .fold.open .fold-head .chev { transform: rotate(90deg); }
+  .fold-body { display: none; margin-top: 4px; }
+  .fold.open .fold-body { display: block; }
+  .fold-val { font-weight: 400; color: var(--text-sub); font-size: 11px; margin-left: auto; }
+  .fold-sub { font-size: 11.5px; color: var(--text-sub); line-height: 1.55; margin: 2px 0 5px; }
+  .kv .hd:first-child { margin-top: 0; }
+  /* ---- 课程页脚 ---- */
+  .site-foot { max-width: 1500px; margin: 18px auto 0; padding: 12px 16px 24px;
+    border-top: 1px solid var(--border); color: var(--text-sub);
+    font-size: 12.5px; line-height: 1.8; text-align: center; }
+  .site-foot a { color: var(--blue, #1976d2); text-decoration: none; }
+  .site-foot a:hover { text-decoration: underline; }
+
+  .m { font-family: "Cambria Math", "STIX Two Math", "Latin Modern Math", "Times New Roman", Times, serif;
+       font-size: 1.05em; font-style: normal; white-space: nowrap; letter-spacing: .01em; }
+  .m i, .m var { font-style: italic; }
+  .m .rm { font-style: normal; }
+  .m sub, .m sup { font-size: .70em; font-style: normal; line-height: 1; }
+  .m sub { vertical-align: -.28em; }
+  .m sup { vertical-align: .50em; }
+.m .m { font-size: 1em; }   /* 嵌套容器（TEXH 下标转换叠加）不再放大字号 */
+  .m .op { font-style: normal; padding: 0 .24em; }
+  .m .sl { font-style: normal; padding: 0 .05em; }
+  .m .un { font-style: normal; padding-left: .16em; }
+  .op, .rm, .un { font-style: normal; }
+  .frac { display: inline-flex; flex-direction: column; vertical-align: -.45em; text-align: center; margin: 0 .18em; }
+  .frac .num { border-bottom: 1px solid currentColor; padding: 0 .22em; line-height: 1.16; }
+  .frac .den { padding: 0 .22em; line-height: 1.16; }
+  .sqrt { display: inline-flex; align-items: stretch; }
+  .sqrt .rd { position: relative; padding-left: .30em; padding-top: .10em; }
+  .sqrt .rdc { border-top: 1px solid currentColor; }
+  .sqrt > .rdc, .sqrt .rdc { display: inline-block; position: static; font-size: 1em;
+             border-top: .055em solid currentColor; padding: .06em .12em 0 .10em; margin: 0; line-height: 1; }
+
+  /* 公式排版：分式 / 根式 —— 全站统一为「回旋共振 v06」写法（置于末尾，覆盖本文件早期变体） */
+  .frac { display: inline-block; vertical-align: -0.52em; text-align: center; font-size: .78em; margin: 0 .12em; }
+  .frac > .num, .frac .num { display: block; padding: 0 .22em; border-bottom: .055em solid currentColor; line-height: inherit; }
+  .frac > .den, .frac .den { display: block; padding: 0 .22em; line-height: inherit; }
+  .sqrt { display: inline-block; white-space: nowrap; vertical-align: baseline; margin: 0; font-size: 1em; }
+  .sqrt > .rd, .sqrt .rd { display: inline-block; position: static; font-size: 1em; line-height: inherit; padding: 0 .02em 0 0; margin: 0; }
+  .sqrt > .rdc, .sqrt .rdc { display: inline-block; position: static; font-size: 1em;
+             border-top: .055em solid currentColor; padding: .06em .12em 0 .10em; margin: 0; line-height: 1; }
+  .sqrt .rdc:has(sup) { padding-top: .18em; }
+</style>
+<body>
+
+<header>
+  <button id="langBtn" class="lang-btn" data-noi18n title="中文 / English">EN</button>
+  <h1>sp<sup>2</sup> 杂化与 π 键形成交互教学工具<span style="font-size:14px;font-weight:600;color:var(--text-sub);margin-left:10px;">石墨烯　平面三角形 · 非局域 π 电子</span></h1>
+  <div class="formula m">2<i>s</i><span class="op"><sup>2</sup></span>2<i>p</i><span class="op"><sup>2</sup></span> <span class="op">→</span> <span class="op">(</span><i>sp</i><sup>2</sup><span class="op">)</span><sup>3</sup> <span class="op">+</span> 2<i>p</i><sub><i>z</i></sub>　·　键角 <i>θ</i> <span class="op">=</span> <i>arccos</i><span class="op">(</span><span class="op">−</span><span class="frac"><span class="num">1</span><span class="den">2</span></span><span class="op">)</span> <span class="op">=</span> 120<span class="op">°</span></div>
+</header>
+
+<div class="layout">
+  <!-- ============ 左侧：三维轨道视图 + 能级图 + 对比 ============ -->
+  <div class="viz">
+    <div class="card">
+      <div class="sec-title"><span class="mtag">模块一</span>三维轨道与成键视图（电子云形状示意）</div>
+      <div class="chart-wrap"><canvas id="orb" data-h="440" tabindex="0"></canvas></div>
+      <div class="legend" id="legend"></div>
+      <div class="hint">拖动旋转 · 滚轮缩放 · 右键拖动平移 · 悬停轨道看读数 · 方向键旋转 · +/− 缩放　<b style="color:#6b7a8c">（除球形轨道外，各轨道沿自身轴向外错开陈列，细点线的交点即原子核位置）</b></div>
+      <div class="mini" style="margin-top:6px;">电子云为示意：轮廓<b>半径按 |<span class="m"><i>ψ</i></span>|<sup>2</sup>（概率密度）画</b>，故每个 sp<sup>2</sup> 的背面小瓣轴向长度只有大瓣的 [(1−<span class="m"><i>λ</i></span>)/(1+<span class="m"><i>λ</i></span>)]<sup>2</sup> ≈ <b>3%</b>（<span class="m"><i>λ</i></span> = <span class="m"><i>a</i>/<i>b</i></span> = 0.707）。图中把小瓣夸大到大瓣的约 40% 并画成矮胖形状，以便看清「一个大瓣 + 一个反号小瓣」的结构。</div>
+    </div>
+
+    <div class="card">
+      <div class="sec-title"><span class="mtag">模块二</span>轨道能级与成键能级图（能量零点 = 真空能级，<span class="m"><i>E</i><span class="op">&lt;</span>0</span> 为束缚态）</div>
+      <div class="chart-wrap"><canvas id="en" data-h="330" tabindex="0"></canvas></div>
+      <div class="hint">左起四栏：<b>①</b> 基态碳原子的 2s / 2p；<b>②</b> 杂化后 3 个 sp<sup>2</sup> 与未杂化的 <span class='m'>2p<sub><i>z</i></sub></span>；<b>③</b> 两个 sp<sup>2</sup> 头碰头形成的 σ / σ*（每原子 1.5 个键）；<b>④</b> <span class='m'>2p<sub><i>z</i></sub></span> 肩并肩形成的 π 与 π* 能带（紧束缚口径，在狄拉克点相接）。</div>
+    </div>
+
+    <div class="card">
+      <div class="sec-title"><span class="mtag">模块三</span>sp<sup>2</sup> 与 sp<sup>3</sup> 对比（与模块一同步旋转）</div>
+      <div class="chart-wrap"><canvas id="cmp" data-h="270" tabindex="0"></canvas></div>
+      <div class="hint">左：4 个 sp<sup>3</sup> 指向正四面体顶点（三维）；右：3 个 sp<sup>2</sup> 躺在一个平面内（二维），外加一根垂直的 <span class='m'>2p<sub><i>z</i></sub></span>。两种杂化共用同一个激发步骤，差别只在「有几个 p 轨道被选进来」。</div>
+    </div>
+  </div>
+
+  <!-- ============ 右侧：控制面板与读数 ============ -->
+  <div class="side">
+    <div class="card">
+      <div class="sec-title">控制面板</div>
+
+      <div class="ctrl">
+        <div class="ctrl-head"><span>视图模式</span></div>
+        <div class="btn-row tight" id="modeBtns" style="margin-top:0;"></div>
+      </div>
+
+      <div class="ctrl">
+        <div class="ctrl-head"><span>显示项目</span></div>
+        <div class="btn-row tight" id="ckBtns" style="margin-top:0;"></div>
+      </div>
+
+      <div class="ctrl">
+        <div class="ctrl-head"><span>电子云不透明度</span><span class="val" id="aVal">0.85</span></div>
+        <input type="range" id="aSlider" min="40" max="95" value="85">
+      </div>
+
+      <div class="btn-row tight"><button id="btnReset">重置视角</button></div>
+    </div>
+
+    <div class="card">
+      <div class="sec-title">读数面板</div>
+      <div class="kv" id="readout"></div>
+      <div class="fold" id="foldRo">
+        <div class="fold-head"><span class="chev">▶</span><span>更多读数（能级、π 能带、晶格与对照）</span></div>
+        <div class="fold-body"><div class="kv" id="readoutMore"></div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="sec-title">sp<sup>2</sup> 杂化轨道（LCAO 线性组合）</div>
+      <div class="wf" id="wfBox"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 底部：引导探究 ============ -->
+<div class="chal-wrap">
+  <div class="card">
+    <div style="display:flex; justify-content:space-between; align-items:baseline; gap:10px;">
+      <b style="font-size:14.5px;">引导探究（点击展开，先自己试一试再看答案）</b>
+      <span style="font-size:12px; color:var(--text-sub);">挑战任务</span>
+    </div>
+    <div class="chal-grid" id="chalGrid"></div>
+  </div>
+</div>
+
+<script>
+/* ==================================================================
+   i18n（C1 单文件双语：物理代码仍然只有一份）
+   LANG 取值优先级：URL ?lang=en / ?lang=zh  >  localStorage('opl_lang')  >  默认中文。
+   不做 location 跳转——保住「单文件拷走也能用」。
+   三个注入点，**业务字符串一个都不改**：
+     ① partsOf()   画布 token：带 i/sub/sup/un 标记的是物理量、下标与单位，跳过
+     ② fillText/measureText 原型挂钩：兜住直接写进画布的中文串
+     ③ DOM 文本节点：静态 HTML 与 JS 写进来的 innerHTML，用 MutationObserver 兜住新增节点
+   T() 先查整句词典，未命中再按「最长优先」做短语替换，因此拼接串也能翻。
+   漏翻会被记进 window.__MISS，可导出核对。 */
+var LANG = (function () {
+  var m = /[?&]lang=([a-zA-Z]+)/.exec(location.search);
+  var q = m ? m[1].toLowerCase() : "";
+  if (q === "en" || q === "zh") return q;
+  var s = "";
+  try { s = localStorage.getItem("opl_lang") || ""; } catch (e) { }
+  return (s === "en" || s === "zh") ? s : "zh";
+})();
+var ORIG_TITLE = document.title;
+var __MISS = [];
+try { window.__MISS = __MISS; } catch (e) { }
+function noteMiss(s) { if (__MISS.indexOf(s) < 0) __MISS.push(s); }
+function TSoft(s) {
+  if (!T._K) T._K = Object.keys(I18N).sort(function (a, b) { return b.length - a.length; });
+  var out = s, i, k, orig = s;
+  /* 两遍：第一遍只吃长度 ≥ 2 的短语；第二遍的单字 key 只在「传进来的串
+     恰好就是这一个字」时才上场——画布逐字排版会拿单字去 measureText，那一
+     路必须翻。反过来，绝不让单字 key 去切更长的句子：否则「导」「子」「原」
+     会把「半导体」「电子数」「泡利原理」切成半 conduction 体、电 quantum 数、
+     泡利 origin 理这类中英混排。同一条理由也适用于「下」：整句不该被切碎。 */
+  for (var pass = 0; pass < 2; pass++) {
+    for (i = 0; i < T._K.length; i++) {
+      k = T._K[i];
+      if (k.length < 2 && (pass === 0 || orig !== k)) continue;
+      if (out.indexOf(k) >= 0) out = out.split(k).join(I18N[k]);
+    }
+  }
+  return out;
+}
+/* 同一句被 DOM 切成好几个文本节点时，首尾空格会随机落在 data 里；
+   所以除了「整句命中」，再试一次「去空格后命中」并原样补回首尾空白。 */
+function trimMap() {
+  if (T._TM) return T._TM;
+  var m = {};
+  for (var k in I18N) if (Object.prototype.hasOwnProperty.call(I18N, k)) {
+    var t = k.replace(/^\s+|\s+$/g, "");
+    if (t && m[t] === undefined) m[t] = I18N[k];
+  }
+  T._TM = m;
+  return m;
+}
+/* eslint-disable no-use-before-define */
+function T(s) {
+  if (LANG !== "en" || typeof s !== "string" || !s) return s;
+  if (!/[一-鿿]/.test(s)) return s;
+  if (Object.prototype.hasOwnProperty.call(I18N, s)) return I18N[s];
+  var tm = trimMap(), core = s.replace(/^\s+|\s+$/g, "");
+  if (core && tm[core] !== undefined) {
+    var lead = s.slice(0, s.length - s.replace(/^\s+/, "").length);
+    var tail = s.slice(s.replace(/\s+$/, "").length);
+    return lead + tm[core] + tail;
+  }
+  var v = TSoft(s);
+  /* 译完还剩汉字也算漏翻：只翻掉一半的「半吊子译文」曾经让 __MISS 恒为 0。 */
+  if (v === s || /[\u3400-\u9FFF]/.test(v)) noteMiss(s);
+  return v;
+}
+var I18N = {
+  /* ---- 词典：中文原文 → 英文。key 禁含运行时数字（换个参数就漏），数字前后要拆开 ---- */
+  "模块一": "Module 1",
+  "控制面板": "Control Panel",
+  "挑战任务": "Challenges",
+  "为什么 ": "Why is ",
+  "？": "?",
+  "，": ", ",
+  "、": ", ",
+  "：": ": ",
+  "；": "; ",
+  "（": " (",
+  "）": ")",
+  "本工具是 EIT-SP（半导体物理交互式教学工具箱）的一部分（武汉大学物理学院《半导体物理》智慧课程），以 MIT 协议开源，可自由使用与二次开发；转载请保留出处。": "This tool is part of EIT-SP, the Educational Interactive Toolkit for Semiconductor Physics (School of Physics and Technology, Wuhan University). Released under the MIT licence: free to use, modify and redistribute, including commercially. Please keep this attribution.",
+  "反馈意见": " Feedback",
+  "读数面板": "Readout Panel",
+  "空": "empty",
+  "能量": "energy",
+  "看答案": "Show answer",
+  "），": "), and ",
+  "）；": "); ",
+  "，所以 ": ", so ",
+  " / ": " / ",
+  " 的": " ",
+  " 与": " and ",
+  "本工具是 EIT-SP（半导体物理交互式教学工具箱）的一部分（武汉大学物理学院《半导体物理》智慧课程），以 MIT 协议开源，可自由使用与二次开发；转载请保留出处。反馈意见": "This tool is part of EIT-SP, the Educational Interactive Toolkit for Semiconductor Physics (School of Physics and Technology, Wuhan University). Released under the MIT licence: free to use, modify and redistribute, including commercially. Please keep this attribution. Feedback",
+  "本工具是": "This tool is part of",
+  "（半导体物理交互式教学工具箱）的一部分（武汉大学物理学院《半导体物理》智慧课程），以": ", the Educational Interactive Toolkit for Semiconductor Physics (School of Physics and Technology, Wuhan University). Released under the",
+  "协议开源，可自由使用与二次开发；转载请保留出处。反馈意见": "licence: free to use, modify and redistribute, including commercially. Please keep this attribution. Feedback",
+  "协议开源，可自由使用与二次开发；转载请保留出处。": "licence: free to use, modify and redistribute, including commercially. Please keep this attribution.",
+  "，所以": ", so",
+  "方向": "direction",
+  "×": " × ",
+  "到": "to",
+  "全部": "all",
+  "开": "on",
+  "关": "Off",
+  "只有": "only",
+  "是": "is",
+  "比": "than",
+  "差 ": "a factor of ",
+  "同时": "at the same time",
+  "线性": "linearly",
+  "为什么": "why",
+  "时": "when",
+  "载流子": "carrier",
+  "挑战": "Challenge",
+  "和": " and ",
+  "，而": ", while",
+  "大": "larger",
+  "差": "differ by",
+  "能": "Energy",
+  "量": " ",
+  "原": "origin",
+  "点": "",
+  "导": "conduction",
+  "子": "quantum",
+  "几": "almost",
+  "全": "",
+  "没": "no ",
+  "的": "",
+  "）。": "at room temperature).",
+  "下": "lower",
+  "正": "positive",
+  "负": "negative",
+  "，而是": ", but are",
+  "模块二": "Module 2",
+  "显示": "Display",
+  "下方": "below",
+  "状态": "state",
+  "重置": "Reset",
+  "一个 ": "one ",
+  "到 ": "to ",
+  " 轴": " axis",
+  "%）": "%)",
+  "个": "bound states",
+  "示意": "schematic",
+  "有 ": " ",
+  "直接": "direct",
+  "其中": "of which",
+  "沿 ": "along ",
+  "速度": "a velocity",
+  "（与": " (with",
+  "切到": "Switch to",
+  "结构": "structure",
+  "决定": "set by",
+  "关键在于": "The key point is",
+  "）就": ") ",
+  "就是": "is exactly",
+  "一": "one",
+  "不": "not",
+  "上": "upper",
+  "高": "high",
+  "？为什么 ": "? Why can the electrons still turn the tables when ",
+  "半导体": "Semiconductor",
+  "类型": "type",
+  "格": "cells",
+  "了 ": " ",
+  "参数": "parameters",
+  "相对": "relative",
+  "还是": "or",
+  " eV）": " eV in all)",
+  "恒": "always",
+  "平移": "Shift",
+  "能带 ": "Band ",
+  "率": "probability",
+  " 结": " junction",
+  "三角形": "triangle",
+  "常数": "constant",
+  "参考": "reference",
+  "上方": "above",
+  "价": "valence",
+  "顶": "top",
+  "，因为": ", because ",
+  "视角": "View",
+  "重置视角": "Reset view",
+  "模块三": "Module 3",
+  "面内（": "Inside the surface (",
+  "　·　键角 ": "　·　bond angle ",
+  "拖动旋转 · 滚轮缩放 · 右键拖动平移 · 悬停轨道看读数 · 方向键旋转 · +/− 缩放　": "Drag to rotate · wheel to zoom · right-drag to pan · hover an orbital for its readouts · arrow keys to rotate · +/− to zoom　",
+  "电子云为示意：轮廓": "The electron cloud is schematic: the contour ",
+  "半径按 |": " radius is drawn from |",
+  "（概率密度）画": " (the probability density)",
+  "，故每个 sp": ", so every sp",
+  " 的背面小瓣轴向长度只有大瓣的 [(1−": " has a back lobe only [(1−",
+  "三维视图": "3-D view",
+  " 杂化轨道（LCAO 线性组合）": " hybrid orbitals (LCAO linear combinations)",
+  "晶格常数 ": "Lattice constant ",
+  "键长 ": "Bond length ",
+  "键角": "Bond angle",
+  "s–p 能级差 ": "s–p level separation ",
+  "单电子轨道能差，": " a single-particle orbital energy difference, ",
+  "光谱激发能": "spectroscopic excitation energy",
+  "单电子轨道能差": "single-particle orbital energy difference",
+  "激发/杂化代价": "Promotion/hybridisation cost",
+  "成键收益": "Bonding gain",
+  "净能量变化": "Net energy change",
+  "= −内聚能（记账恒等，不是独立验证）": "= −cohesive energy (a bookkeeping identity, not an independent check)",
+  " eV/原子　": " eV/atom　",
+  " eV/原子": " eV/atom",
+  "归一化 ": "Normalised ",
+  " 轨道 1": " orbital 1",
+  " 轨道 2": " orbital 2",
+  " 轨道 3": " orbital 3",
+  "① 基态原子": "① free atom",
+  "（沿 ": " (along the ",
+  "夸大到大瓣的约 40%": "exaggerated it to about 40% of the big lobe",
+  "个 sp": " sp",
+  "基态 ": "Ground state ",
+  "s（球对称）": "s (spherically symmetric)",
+  " 轨道 ": " orbital ",
+  "s 成分 ": "s character ",
+  "个电子": " electrons",
+  " 个 ": " ",
+  "长 ": "length ",
+  " 和 ": " and ",
+  "左：": "Left: ",
+  "右：": "Right: ",
+  "带隙": "Band gap",
+  "保持": "keeps",
+  " 会": " would ",
+  "电子（": "Electrons (",
+  "光": "light",
+  " —— 这正是 ": " — which is why ",
+  "。本工具": ". This tool ",
+  "第": "Pass",
+  "一对": "one pair of",
+  "方": "squares",
+  "一个": "one",
+  "金刚石": "diamond",
+  "原子": "atom",
+  "垂直": "perpendicular",
+  "原子 ": "atom ",
+  "横向": "transverse",
+  " 方向": " direction",
+  "反号": "flips sign",
+  "极端": "Extreme",
+  "晶格常数": "Lattice constant",
+  "个原子": " atoms",
+  "相位": "phase",
+  "模式": "Mode",
+  "小于": "less than",
+  "，是": ", which is",
+  "本身": "itself",
+  "跃迁": "Transition",
+  " 对 ": " against ",
+  "概": "",
+  "晶格": "Lattice",
+  "标注": "Labels",
+  "点线": "Dotted",
+  "平": "flat",
+  "束缚态": "bound state",
+  "斜": "slanted",
+  "它是": "It is",
+  "处。": ".",
+  "向外": "outwards",
+  "相邻": "adjacent",
+  "，电子": ", electron",
+  "。本工具用": ". This tool uses",
+  "右": "right",
+  "里？": "?",
+  "局域": "localised",
+  "因为": "Because an",
+  "夹角 ": "Angle ",
+  " 缩放": " scaling",
+  "本工具用": "This tool uses a ",
+  "，它": ", which ",
+  "型": "-type",
+  "当前": "Present",
+  "每": "Per",
+  "在": "in the ",
+  " 都": " it is ",
+  "简并": "degenerate",
+  "常数 ": "Constant ",
+  "」是": "\" is",
+  "钉住": "pinned down",
+  " 轴）": " axis)",
+  "交点": "crossing point",
+  "口径": "Convention",
+  "电子云：": "Electron cloud: ",
+  "轨道": "Orbital",
+  "半径": "radius",
+  "剩余": "remaining",
+  "因为 ": "Because ",
+  "（金刚石）": " (diamond)",
+  "（沿": " (along",
+  "背面": "Back",
+  "sp² 杂化与 π 键形成交互教学工具": "sp² Hybridization and Pi-Bond Formation — Interactive Tool",
+  " 杂化与 π 键形成交互教学工具": " Hybridization and Pi-Bond Formation — Interactive Tool",
+  "石墨烯　平面三角形 · 非局域 π 电子": "Graphene　planar triangle · delocalised π electrons",
+  "引导探究（点击展开，先自己试一试再看答案）": "Guided inquiry (click to expand; try it yourself before reading the answer)",
+  "三维轨道与成键视图（电子云形状示意）": "3D orbitals and bonding view (electron-cloud shapes are schematic)",
+  "（除球形轨道外，各轨道沿自身轴向外错开陈列，细点线的交点即原子核位置）": "(apart from the spherical orbital, each orbital is displayed offset outward along its own axis; the crossing of the thin dotted lines is the nucleus)",
+  " = 0.707）。图中把小瓣夸大到大瓣的约 40% 并画成矮胖形状，以便看清「一个大瓣 + 一个反号小瓣」的结构。": " = 0.707) of the large lobe. In the figure the small lobe is exaggerated to about 40% of the large lobe and drawn squat, so that the structure 'one large lobe + one small lobe of opposite sign' can be seen.",
+  "2s（球对称）": "2s (spherically symmetric)",
+  "（未杂化，垂直于平面）": " (unhybridised, perpendicular to the plane)",
+  " 杂化轨道（3 个等价，共面 120°）": " hybrid orbitals (3 equivalent, coplanar 120°)",
+  " 杂化轨道（仅模块三出现）": " hybrid orbitals (only in Module 3)",
+  "辅助线 / 相位反号的小瓣（示意，已夸大）": "Guide lines / the sign-reversed small lobe (schematic, exaggerated)",
+  " 杂化后": " after hybridization",
+  "3 个等价 ": "3 equivalent ",
+  "个等价": "equivalent",
+  "（共面 120°）+ 1 个垂直 2": " (coplanar 120°) + 1 perpendicular 2",
+  "（共面": " (coplanar",
+  "个垂直": " perpendicular",
+  "轨道能级与成键能级图（能量零点 = 真空能级，": "Orbital and bonding energy-level diagram (energy zero = vacuum level, ",
+  " 为束缚态）": " means a bound state)",
+  "左起四栏：": "Four columns from the left: ",
+  " 基态碳原子的 2s / 2p；": " the 2s / 2p of a ground-state carbon atom; ",
+  " 杂化后 3 个 sp": " after hybridization 3 sp",
+  " 与未杂化的 2p": " and the unhybridised 2p",
+  " 两个 sp": " two sp",
+  " 头碰头形成的 σ / σ*（每原子 1.5 个键）；": " overlapping head-on to give σ / σ* (1.5 bonds per atom); ",
+  " 肩并肩形成的 π 与 π* 能带（紧束缚口径，在狄拉克点相接）。": " overlapping side-by-side to give the π and π* bands (tight-binding picture, meeting at the Dirac point).",
+  "能量（零点 = 真空能级）": "Energy (zero = vacuum level)",
+  "（三重简并）": " (threefold degenerate)",
+  " 成键": " bonding",
+  "成键": "bonding",
+  "* 反键": "* antibonding",
+  "反键": "antibonding",
+  " 带": " band",
+  "带": "band",
+  "* 带": "* band",
+  "零带隙": "zero gap",
+  "基态原子": "Ground-state atom",
+  "② sp² 杂化": "② sp² hybridization",
+  "杂化": "hybridization",
+  "③ σ 成键": "③ σ bonding",
+  "每原子 1.5 个键": "1.5 bonds per atom",
+  "④ π 能带 / 狄拉克点": "④ π band / Dirac point",
+  "能带": "energy band",
+  "狄拉克点": "Dirac point",
+  "紧束缚": "tight binding",
+  " 与 sp": " and sp",
+  " 对比（与模块一同步旋转）": " compared (rotates in sync with Module 1)",
+  "左：4 个 sp": "Left: 4 sp",
+  " 指向正四面体顶点（三维）；右：3 个 sp": " point at the vertices of a regular tetrahedron (3D); right: 3 sp",
+  " 躺在一个平面内（二维），外加一根垂直的 2p": " lie in one plane (2D), plus one perpendicular 2p",
+  "。两种杂化共用同一个激发步骤，差别只在「有几个 p 轨道被选进来」。": ". Both hybridizations share the same promotion step; the only difference is how many p orbitals are selected.",
+  " 杂化（金刚石）": " hybridization (diamond)",
+  " 杂化（石墨烯）": " hybridization (graphene)",
+  "杂化轨道数": "Number of hybrid orbitals",
+  "未杂化 p 轨道": "Unhybridised p orbital",
+  "1（垂直于平面）": "1 (perpendicular to the plane)",
+  "视图模式": "View mode",
+  "① 基态": "① Ground state",
+  "③ 晶格与 π 云": "③ Lattice and π cloud",
+  "开：键角标注　·　xy 平面　·　π 电子云": "on: bond-angle labels　·　xy plane　·　π electron cloud",
+  /* t 已固定为常量 T_TB，读数面板把它连同「本工具固定取值」一起披露 */
+  "显示项目": "Display items",
+  " eV，本工具固定取值）": " eV, fixed for this tool)",
+  "键角标注": "Bond-angle labels",
+  "xy 平面": "xy plane",
+  "π 电子云": "π electron cloud",
+  "电子云不透明度": "Electron-cloud opacity",
+  "更多读数（能级、π 能带、晶格与对照）": "More readouts (levels, π band, lattice and comparison)",
+  "当前状态": "Current state",
+  " 杂化完成": " hybridization complete",
+  "杂化类型": "Hybridization type",
+  "（s 成分 1/3，p 成分 2/3）": " (s character 1/3, p character 2/3)",
+  "参与杂化的轨道": "Orbitals entering hybridization",
+  "杂化轨道数 / 键角": "Number of hybrids / bond angle",
+  "个　·　": "　·　",
+  "个　": "　",
+  "= arccos(−1/2) = 120°（完全杂化时）": "= arccos(−1/2) = 120° (at full hybridization)",
+  "未杂化轨道": "Unhybridised orbital",
+  "　·　垂直于杂化平面　·　1 个": "　·　perpendicular to the hybridization plane　·　1",
+  "未成对电子": "Unpaired electrons",
+  "基态 2 → 杂化后 4": "ground state 2 → 4 after hybridization",
+  "π 电子（每原子）": "π electrons (per atom)",
+  "1 个　·　在整个平面非局域": "1　·　delocalised over the whole plane",
+  "轨道能级（真空能级为零）": "Orbital energies (vacuum level = zero)",
+  "2s 轨道能": "2s orbital energy",
+  "2p 轨道能": "2p orbital energy",
+  "单电子轨道能差，不是光谱激发能": "single-particle orbital energy difference, not a spectroscopic excitation energy",
+  " 轨道能": " orbital energy",
+  "未参与杂化，保持原子值": "does not hybridise; keeps the atomic value",
+  "激发与成键（每原子）": "Promotion and bonding (per atom)",
+  "S°；与 sp": "S°; the same number as in the sp",
+  " 工具同一个数": " tool",
+  "σ 单键键能 ": "σ single-bond energy ",
+  "由内聚能恒等式反推，非独立测量": "back-derived from the cohesion identity, not measured independently",
+  "σ 骨架贡献": "σ-framework contribution",
+  "每原子 3 个键、每键两人分摊 → 1.5 个": "3 bonds per atom, each shared by two atoms → 1.5",
+  "π 非局域贡献": "π delocalisation contribution",
+  "= t·⟨|f(k)|⟩，布里渊区数值积分": "= t·⟨|f(k)|⟩, numerical integration over the Brillouin zone",
+  "π 能带（最近邻紧束缚，t = ": "π band (nearest-neighbour tight binding, t = ",
+  "（数值积分）": " (numerical integration)",
+  "π 带带宽 ": "π bandwidth ",
+  "费米速度 ": "Fermi velocity ",
+  "π 与 π* 在狄拉克点相接": "π and π* meet at the Dirac point",
+  "石墨烯几何": "Graphene geometry",
+  "C–C 键长 ": "C–C bond length ",
+  "σ 键数（每原子）": "σ bonds (per atom)",
+  "3（每键两人分摊 → 1.5）": "3 (each bond shared by two atoms → 1.5)",
+  "与金刚石（sp": "compared with diamond (sp",
+  "）对照": ")",
+  "C–C 键长": "C–C bond length",
+  "1.420 Å（石墨烯）　vs　1.545 Å（金刚石）": "1.420 Å (graphene)　vs　1.545 Å (diamond)",
+  "单键键能": "Single-bond energy",
+  "内聚能": "Cohesive energy",
+  "7.43 eV/原子　vs　7.37 eV/原子": "7.43 eV/atom　vs　7.37 eV/atom",
+  "说明": "Note",
+  "石墨烯的键更短、s 成分更高（1/3 对 1/4），σ 键更强；两者的内聚能差不到 0.1 eV/原子，所以「石墨比金刚石稳定」是能量上非常接近的微弱差别": "The graphene bond is shorter and has a higher s character (1/3 vs 1/4), so the σ bond is stronger; the two cohesive energies differ by less than 0.1 eV per atom, so 'graphite is more stable than diamond' is only a marginal difference in energy",
+  "瓣轴 ∝ (1.00, 0.00, 0)": "lobe axis ∝ (1.00, 0.00, 0)",
+  "瓣轴 ∝ (-0.50, 0.87, 0)": "lobe axis ∝ (-0.50, 0.87, 0)",
+  "瓣轴 ∝ (-0.50, -0.87, 0)": "lobe axis ∝ (-0.50, -0.87, 0)",
+  "（s 成分 33%）、": " (s character 33%), ",
+  " 0.816（p 成分 67%）；三个轨道正交且等价，任意两个瓣轴夹角 120°。第四个价电子留在未杂化的 2": " 0.816 (p character 67%); the three orbitals are mutually orthogonal and equivalent, and the angle between any two lobe axes is 120°. The fourth valence electron stays on the unhybridised 2",
+  " 上。": ".",
+  "1. 切到「② sp": "1. Switch to '② sp",
+  " 杂化」，旋转三维视图：3 个 sp": " hybridization' and rotate the 3D view: are the 3 sp",
+  " 轨道在": " orbitals in",
+  "同一个平面": "the same plane",
+  "内吗？它们之间的夹角是多少？剩下的 2p": "? What is the angle between them? Where does the remaining 2p",
+  " 指向哪里？": " point?",
+  "内：三个瓣轴分别是 (1, 0, 0)、(−½, ": ": the three lobe axes are (1, 0, 0), (−½, ",
+  "/2, 0)，z 分量全为 0，所以它们严格共面 —— 这正是 sp": "/2, 0), and their z components are all 0, so they are strictly coplanar — exactly the most visible difference from sp",
+  " 最直观的区别（sp": " (in sp",
+  " 的四个瓣轴 z 分量都不为 0）。夹角是 ": " the four lobe axes all have non-zero z components). The angle is ",
+  "：任意两个瓣轴的点积都是 −½，故夹角 = arccos(−½) = 120°。图上量得的当前值是 ": ": the dot product of any two lobe axes is −½, hence the angle = arccos(−½) = 120°. The value measured on the figure right now is ",
+  "（未完全杂化时会小于 120°）。剩下的 2p": " (smaller than 120° when hybridization is incomplete). The remaining 2p",
+  "垂直于这个平面": "is perpendicular to this plane",
+  "（沿 z 轴），它": " (along z), and it",
+  "不参与": "does not take part in",
+  "杂化，保持哑铃形 —— 因为它与参与杂化的 2p": " hybridization; it keeps its dumbbell shape — because it is orthogonal to the 2p",
+  " 正交，不会被混进来。共面性不是巧合：三个单位向量之和为零时，两两夹角必然是 arccos(−½) = 120°，这是「三个等价方向」在二维平面里的唯一解。能级上也能看出来：三个 sp": " that do hybridise, so it cannot be mixed in. The coplanarity is no coincidence: when three unit vectors sum to zero, the pairwise angle is necessarily arccos(−½) = 120°, the unique solution for 'three equivalent directions' in a plane. The energy levels show it too: the three sp",
+  " 在 -13.84 eV，2p": " sit at -13.84 eV, while 2p",
+  " 仍留在 -11.07 eV。": " stays at -11.07 eV.",
+  "看看答案": "Show the answer",
+  "2. 切到「③ 晶格与 π 云」：每个碳原子与几个相邻碳原子形成 σ 键？这些 σ 键在同一个平面内吗？构成了什么形状的网格？": "2. Switch to '③ Lattice and π cloud': how many neighbouring carbon atoms does each carbon bond to with a σ bond? Do these σ bonds lie in one plane? What shape of network do they form?",
+  "每个碳原子与 ": "Each carbon atom forms a σ bond with ",
+  "3 个": "3",
+  "相邻碳原子成 σ 键 —— 碳有 4 个价电子，其中 3 个在 sp": " neighbouring carbon atoms — carbon has 4 valence electrons, 3 of them in the sp",
+  " 轨道里，正好对应 3 个 σ 键；第 4 个电子在 2p": " orbitals, which matches exactly 3 σ bonds; the 4th electron sits on 2p",
+  " 上，走的是 π 通道。σ 键是一个不剩地": " and takes the π route. The σ bonds lie, without exception, ",
+  "躺在同一个平面内": "in one and the same plane",
+  "的：石墨烯所有原子严格共面，整个晶体就是一个原子厚的平面。网格形状是": ": all the atoms of graphene are strictly coplanar, and the whole crystal is a single atom-thick plane. The network is a ",
+  "六角蜂窝（honeycomb）": "hexagonal honeycomb",
+  "：不是一整片三角形网格，而是由正六边形拼成的蜂窝，每个顶点坐一个碳原子，每个六边形有 6 个碳原子但每个原子被 3 个六边形共用。键长 1.420 Å，晶格常数 a = ": ": not one continuous triangular mesh but a honeycomb of regular hexagons, one carbon atom at each vertex; each hexagon has 6 carbon atoms but each atom is shared by 3 hexagons. Bond length 1.420 Å, lattice constant a = ",
+  " × 键长 = 2.46 Å，键角 120° —— 键角和 sp": " × bond length = 2.46 Å, bond angle 120° — the bond angle is exactly the sp",
+  " 的轨道夹角完全一致，因为 σ 键就是 sp": " orbital angle, because a σ bond is simply the 'head-on' overlap direction of the sp",
+  " 轨道「头碰头」重叠的方向。σ 键是三个方向里最强的一类共价键，石墨烯的力学强度（杨氏模量约 1 TPa）就是它给的。": " orbital. The σ bond is the strongest kind of covalent bond among the three directions, and it is what gives graphene its mechanical strength (Young's modulus about 1 TPa).",
+  "3. 观察 2p": "3. Look at the 2p",
+  " 轨道和 π 电子云：π 电子云在平面的": " orbital and the π electron cloud: is the π cloud ",
+  "？为什么 π 电子能非局域到整个平面，而 σ 电子不能？": " the plane? Why can π electrons delocalise over the whole plane while σ electrons cannot?",
+  "上、下都有，而且对称": "Both, symmetrically",
+  " 是哑铃形，一个瓣在平面上方、一个在下方，所以 π 电子云是「平面上下各一片」的两层结构，平面上本身反而是节面（电子概率为零）。图上用橙色画上层、紫色画下层。为什么能非局域：每个碳的 2p": ": 2p is dumbbell shaped, one lobe above the plane and one below, so the π cloud is a two-layer structure, 'one sheet above and one below the plane'; the plane itself is a nodal surface (zero electron probability). In the figure the upper sheet is orange and the lower sheet is purple. Why delocalisation is possible: the 2p",
+  "平行": "parallel",
+  "且垂直于平面，相邻两个 2p": " to every other and perpendicular to the plane, so two neighbouring 2p",
+  " 之间是「肩并肩」重叠，而且这种重叠可以向四面八方一直传递下去 —— 于是 π 电子不再属于某一对碳原子，而是属于": " orbitals overlap 'side-by-side', and this overlap can be passed on in every direction — the π electron then belongs not to one particular pair of carbon atoms but to ",
+  "整个二维晶格": "the whole two-dimensional lattice",
+  "。本工具用最近邻紧束缚把它算出来：跃迁积分 t = ": ". This tool works it out with nearest-neighbour tight binding: the hopping integral is t = ",
+  " eV，布里渊区数值积分给出 ⟨|f(k)|⟩ = ": " eV, and numerical integration over the Brillouin zone gives ⟨|f(k)|⟩ = ",
+  "，π 带平均能量因此比孤立 2p": ", so the average π-band energy lies below the isolated 2p",
+  " 低了 ": " by ",
+  " —— 这就是非局域带来的成键收益。σ 电子不能这样做：σ 键是「头碰头」的定域键，方向沿着两个原子核的连线，换一个方向就得换一对轨道，它是局域在两个原子之间的，不能像 π 那样在平面里横向铺开。这个分工的后果是：σ 骨架给强度，π 电子给导电性。": " — that is the bonding gain brought by delocalisation. σ electrons cannot do this: a σ bond is a localised 'head-on' bond directed along the line joining the two nuclei, so changing direction means changing the pair of orbitals; it stays localised between two atoms and cannot spread sideways in the plane the way π does. The consequence of this division of labour: the σ framework gives strength, the π electrons give conduction.",
+  /* ★ 第 4 题是「sp² 与 sp³ 对比」的预留彩蛋位：英文标题挂 The Missing Bond（中文按约定不出现该词） */
+  "4 个": "4",
+  "杂化轨道，四个轨道都用掉了，": " hybrid orbitals; all four orbitals are used up, ",
+  "没有": "no",
+  "剩余 p 轨道，几何是": " p orbital is left over, and the geometry is a ",
+  "三维正四面体": "three-dimensional regular tetrahedron",
+  "，代表是金刚石。sp": ", represented by diamond. sp",
+  "杂化轨道，": " hybrid orbitals, ",
+  "留下 1 个": "leaving 1",
+  "未杂化的 2p": " unhybridised 2p",
+  "，几何是": ", and the geometry is a ",
+  "二维平面三角形": "two-dimensional planar triangle",
+  "，代表是石墨烯。为什么留下一个：杂化只能拿 2s 和「被选中的 p 轨道」来组合。sp": ", represented by graphene. Why one is left: hybridization can only combine 2s with the 'selected' p orbitals. sp",
+  " 只选了 2p": " selects only 2p",
+  " 和 2p": " and 2p",
+  " 两个 —— 两个 p 加一个 s，正好凑成 3 个等价轨道，它们自然落在一个平面内（因为 p": " — two p's plus one s make exactly 3 equivalent orbitals, which naturally fall in one plane (because p",
+  " 都在这个平面里）；第三个 p 轨道 2p": " both lie in that plane); the third p orbital 2p",
+  " 与前两个正交，": " is orthogonal to the first two, ",
+  "数学上无法被混进这三个轨道里": "so mathematically it cannot be mixed into those three orbitals",
+  "，只能原样保留。sp": " and must be kept as it is. sp",
+  " 则把三个 p 全选上，1 + 3 = 4 个轨道，没有剩余的。所以「剩不剩 p 轨道」不是额外的假设，而是「选几个 p 参与杂化」这个选择的直接后果 —— 而剩下来的那个 p 轨道，恰恰就是 π 键和石墨烯全部电学性质的来源。": " selects all three p's: 1 + 3 = 4 orbitals, with nothing left over. So 'whether a p orbital is left' is not an extra assumption but the direct consequence of how many p's are chosen to hybridise — and that leftover p orbital is exactly the origin of the π bond and of all the electrical properties of graphene.",
+  "5. 结合 σ 骨架和 π 电子云：石墨烯为什么": "5. Combining the σ framework and the π cloud: why is graphene ",
+  "既极硬": "both extremely stiff",
+  "（力学）又": " (mechanically) and ",
+  "极导电": "extremely conducting",
+  "（电学）？σ 键和 π 键各贡献了什么？": " (electrically)? What do the σ bond and the π bond each contribute?",
+  "石墨烯的两个极端性质来自两套": "The two extreme properties of graphene come from two sets of ",
+  "互不干扰": "mutually non-interfering",
+  "的成键：": " bonds: ",
+  "σ 骨架 → 硬度。": "σ framework → stiffness. ",
+  "每原子 3 个 σ 键，是 sp": "3 σ bonds per atom, formed by sp",
+  " 轨道「头碰头」重叠形成的强定域共价键。本工具由内聚能恒等式反推出单键键能 ": " orbitals overlapping head-on into a strongly localised covalent bond. This tool back-derives, from the cohesion identity, a single-bond energy of ",
+  " eV，比金刚石的 sp": " eV, larger than the sp",
+  " 单键（3.59 eV）更大 ——因为石墨烯键更短（1.420 Å 对 1.545 Å）、s 成分更高（1/3 对 1/4）。（提醒：这个 ": " single bond of diamond (3.59 eV) — because the graphene bond is shorter (1.420 Å vs 1.545 Å) and has a higher s character (1/3 vs 1/4). (Caveat: this ",
+  " eV 是记账反推值，不是独立测量，只作量级参考。）": " eV is a bookkeeping back-derivation, not an independent measurement; treat it as an order-of-magnitude estimate only.)",
+  "π 电子 → 导电。": "π electrons → conduction. ",
+  "每原子 1 个 π 电子在整个平面非局域，形成 π 与 π* 两条能带，它们在狄拉克点": "One π electron per atom is delocalised over the whole plane, forming the π and π* bands, which at the Dirac point ",
+  "相接、带隙为零": "touch, giving zero gap",
+  "；紧束缚给出的费米速度是 ": "; tight binding gives a Fermi velocity of ",
+  " × 10": " × 10",
+  " m/s，电子表现得像无质量的相对论粒子，迁移率极高。关键在于两者": " m/s, so the electrons behave like massless relativistic particles with extremely high mobility. The key point is that the two ",
+  "在空间上分开": "are separated in space",
+  "：σ 骨架锁在平面内、负责把原子钉住；π 电子云悬在平面上下、可以在整个平面自由移动。所以「把结构撑住」和「让电子跑起来」这两件事由两套不同的轨道分别承担 —— 这就是石墨烯能同时拥有极高力学强度和极高载流子迁移率的原因。": ": the σ framework is locked into the plane and pins the atoms in place, while the π cloud hangs above and below the plane and can move freely across it. So 'holding the structure up' and 'letting the electrons run' are carried by two different sets of orbitals — which is why graphene can have both exceptional mechanical strength and exceptional carrier mobility.",
+  "本工具是 EIT-SP（半导体物理交互式教学工具箱）的一部分（武汉大学物理学院《半导体物理》智慧课程），以 MIT 协议开源，可自由使用与二次开发；转载请保留出处。反馈意见 ": "This tool is part of EIT-SP (Educational Interactive Toolkit for Semiconductor Physics), built for the smart course on Semiconductor Physics at the School of Physics and Technology, Wuhan University. It is open source under the MIT licence and free to use and build upon; if you redistribute it, please keep the attribution. Feedback: ",
+  "① 基态碳原子": "① Ground-state carbon atom",
+  "基态碳原子": "Ground-state carbon atom",
+  "② sp² 杂化后": "② After sp² hybridization",
+  "③ σ 骨架与 π 电子云": "③ σ framework and π electron cloud",
+  "sp² 杂化完成": "sp² hybridization complete",
+  " 过渡态": " transitional state",
+  "未杂化": "Unhybridised",
+  "石墨烯晶格（σ 骨架 + π 电子云）": "Graphene lattice (σ framework + π electron cloud)",
+  "σ 骨架": "σ framework",
+  "石墨烯蜂窝晶格（10 个碳原子）": "Graphene honeycomb lattice (10 carbon atoms)",
+  "石墨烯蜂窝": "Graphene honeycomb",
+  "个碳原子": " carbon atoms",
+  "个碳": " carbon",
+  "π 电子云（平面上下对称，非局域）": "π electron cloud (symmetric above and below the plane, delocalised)",
+  "（球）+ 3 个 2": " (sphere) + 3 2",
+  "（球）+ 3 2": " (sphere) + 3 2",
+  "（哑铃）": " (dumbbell)",
+  "（球）": " (sphere)",
+  "全部关闭": "All off",
+  " 与未杂化的 ": " and the unhybridised ",
+  " 躺在一个平面内（二维），外加一根垂直的 ": " lie in one plane (2D), plus one perpendicular ",
+  "内吗？它们之间的夹角是多少？剩下的 ": "? What is the angle between them? Where does the remaining ",
+  "（未完全杂化时会小于 120°）。剩下的 ": " (smaller than 120° when hybridization is incomplete). The remaining ",
+  "杂化，保持哑铃形 —— 因为它与参与杂化的 ": " hybridization; it keeps its dumbbell shape — because it is orthogonal to the ",
+  " 在 -13.84 eV，": " sit at -13.84 eV, while ",
+  " 轨道里，正好对应 3 个 σ 键；第 4 个电子在 ": " orbitals, which matches exactly 3 σ bonds; the 4th electron sits on ",
+  "3. 观察 ": "3. Look at the ",
+  " 是哑铃形，一个瓣在平面上方、一个在下方，所以 π 电子云是「平面上下各一片」的两层结构，平面上本身反而是节面（电子概率为零）。图上用橙色画上层、紫色画下层。为什么能非局域：每个碳的 ": " is dumbbell shaped, one lobe above the plane and one below, so the π cloud is a two-layer structure, 'one sheet above and one below the plane'; the plane itself is a nodal surface (zero electron probability). In the figure the upper sheet is orange and the lower sheet is purple. Why delocalisation is possible: the 2p of every carbon",
+  "且垂直于平面，相邻两个 ": " and perpendicular to the plane, so two neighbouring ",
+  "未杂化的 ": " unhybridised ",
+  " 只选了 ": " selects only ",
+  " 两个 —— 两个 p 加一个 s，正好凑成 3 个等价轨道，它们自然落在一个平面内（因为 ": " — two p's plus one s make exactly 3 equivalent orbitals, which naturally fall in one plane (because ",
+  " 都在这个平面里）；第三个 p 轨道 ": " both lie in that plane); the third p orbital ",
+  "，π 带平均能量因此比孤立 ": ", so the average π-band energy lies below the isolated ",
+  "开：": "on: ",
+  "能量 E (eV，真空为零)": "Energy E (eV, vacuum = 0)",
+  "三重简并（洪特规则）": "triply degenerate (Hund's rule)",
+  "σ 满 2e（键级 1）": "σ full 2e (bond order 1)",
+  "4. 缺失的那根键：金刚石里每个碳原子有 4 根 σ 键，石墨烯里只有 3 根 —— 第 4 根键去哪了？对照模块三的对比表，先说清两边的键角与杂化轨道数，再回答：为什么 sp": "4. The Missing Bond: every carbon atom has 4 σ bonds in diamond but only 3 in graphene — where did the 4th bond go? Read the Module 3 comparison table first: set out the bond angles and the number of hybrid orbitals on both sides, then answer why sp",
+  " 偏偏会留下一个未杂化的 p 轨道？": " in particular leaves one p orbital unhybridised?",
+  "先把两组数字摆出来。": "Start by setting out the two sets of numbers. ",
+  "杂化轨道，四个方向全部用成 σ 键，": " hybrid orbitals, with all four directions used as σ bonds, ",
+  "剩余 p 轨道 —— 4 根键、每根被两个原子分摊，平均每原子 ": " p orbital left over — 4 bonds, each shared between two atoms, so on average ",
+  "2 根 σ 键": "2 σ bonds",
+  "；石墨烯这边：键角 ": "; for graphene the bond angle is ",
+  " —— 3 根 σ 键、同样两人分摊，平均每原子只有 ": " — only 3 σ bonds, again shared two ways, giving on average just ",
+  "1.5 根 σ 键": "1.5 σ bonds",
+  "那第 4 根键去哪了？它压根没长成 σ 键。": "So where did the 4th bond go? It never became a σ bond in the first place. ",
+  "杂化只能把 2s 与「被选中的 p 轨道」组合：sp": "Hybridisation can only combine 2s with the p orbitals that are \"selected\" for it: sp",
+  " 选了 ": " selects ",
+  "（两个 p 加一个 s，正好 3 个等价轨道，自然摊在同一个平面里），与这两者正交的 ": " (two p's plus one s give exactly 3 equivalent orbitals, laid out naturally in a single plane), while the one orthogonal to both of them, ",
+  "数学上混不进这三个轨道": "cannot mathematically mix into those three orbitals",
+  "，第 4 个价电子连同它一起被留在 σ 骨架之外，只能悬在平面的上下两侧、非局域地参加 π 成键。一句话：": ", the 4th valence electron is left outside the σ framework along with it, hanging above and below the plane and taking part in delocalised π bonding. In one line: ",
+  "每个碳少了一个 σ 成键方向，换来一条 π 通道": "each carbon gives up one σ bonding direction and gains one π channel",
+  " —— 缺席的那根键没有消失，它只是换了形式。sp": " — the missing bond has not vanished, it has simply changed form. sp",
+  " 则把三个 p 全选上（1 + 3 = 4），四个方向全投向正四面体的四个顶点，所以金刚石这边": " by contrast takes all three p's (1 + 3 = 4) and aims all four directions at the vertices of a regular tetrahedron, so on the diamond side there is ",
+  "这种「缺席的键」。想再核一步可以看能量：石墨烯的内聚能是 ": "such \"missing bond\". For one more check, look at the energetics: graphene's cohesive energy is ",
+  " eV/原子，金刚石 ": " eV per atom against ",
+  " eV/原子，两者": " eV per atom for diamond; the two are ",
+  "相当": "comparable",
+  " —— 少的那个 σ 方向由更短、s 成分更高（1/3 对 1/4）的 σ 键补了回来：": " — the missing σ direction is paid back by σ bonds that are shorter and higher in s character (1/3 against 1/4): ",
+  "单键键能 ": "the single-bond energy is ",
+  " eV 对金刚石的 ": " eV against ",
+  " eV。（提醒：石墨烯这个单键键能是": " eV for diamond. (Caveat: for graphene this single-bond energy is ",
+  "由内聚能恒等式反推": "back-derived from the cohesion identity",
+  "的记账值，不是独立测量，只作量级参考。）": " — a bookkeeping value rather than an independent measurement, so read it only as an order of magnitude.)",
+};
+
+(function () {
+  if (typeof CanvasRenderingContext2D === "undefined") return;
+  var ft = CanvasRenderingContext2D.prototype.fillText;
+  CanvasRenderingContext2D.prototype.fillText = function (s, x, y) {
+    if (typeof s === "string") arguments[0] = T(s);
+    return ft.apply(this, arguments);
+  };
+  /* 描边文字（白边包字）走 strokeText，同样要过 T()，否则画布标签漏翻 */
+  var stx = CanvasRenderingContext2D.prototype.strokeText;
+  CanvasRenderingContext2D.prototype.strokeText = function (s, x, y) {
+    if (typeof s === "string") arguments[0] = T(s);
+    return stx.apply(this, arguments);
+  };
+  var mt = CanvasRenderingContext2D.prototype.measureText;
+  CanvasRenderingContext2D.prototype.measureText = function (s) {
+    return mt.call(this, typeof s === "string" ? T(s) : s);
+  };
+})();
+
+/* 注入点④：逐字绘制的画布串。drawMath 一类把中文按单字拆成 token 再逐个 fillText，
+   T() 每次只见到一个汉字 ⇒ 整句词条永远命中不了。这里在整串进入分词之前先整体翻译，
+   于是画布标注也走「整句优先」，与 DOM 同一个口径。没有这些函数的工具自动跳过。
+   ⚠️ 签名坑：drawMath / measureMath 的第一个参数是 canvas context（对象），文本在第
+   二位；早期版本照着 arguments[0] 翻，等于把 context 送去 T()，补丁全程空转。
+   这里改为「找到第一个含中文的字符串参数」再翻，既躲开 context，也不会误伤
+   align / weight 之类以英文字符串传的选项。 */
+(function () {
+  ["drawMath", "drawMathHalo", "measureMath"].forEach(function (n) {
+    var f = window[n];
+    if (typeof f !== "function") return;
+    window[n] = function () {
+      for (var i = 0; i < arguments.length; i++) {
+        if (typeof arguments[i] === "string" && /[\u3400-\u9FFF]/.test(arguments[i])) {
+          arguments[i] = T(arguments[i]);
+          break;
+        }
+      }
+      return f.apply(this, arguments);
+    };
+  });
+})();
+
+
+/* ---- DOM 文本节点 ---- */
+function i18nNode(n) {
+  var el = n.parentElement;
+  if (!el) return;
+  var tag = el.tagName;
+  if (tag === "SCRIPT" || tag === "STYLE") return;
+  if (el.closest && el.closest("[data-noi18n]")) return;
+  var cur = n.nodeValue;
+  if (n.__orig === undefined || (cur !== n.__last && cur !== n.__orig)) n.__orig = cur;
+  var want = LANG === "en" ? T(n.__orig) : n.__orig;
+  if (want !== cur) n.nodeValue = want;
+  n.__last = want;
+}
+/* 属性（title / placeholder / optgroup label …）不是文本节点，MutationObserver 覆盖不到，
+   必须单独过一遍：否则悬停提示、下拉分组名会残留中文。原文缓存在元素 expando 上，
+   切回中文时原样写回。改属性不会触发 childList/characterData 观察器，不会递归。 */
+var I18N_ATTRS = ["title", "placeholder", "aria-label", "alt", "label"];
+function i18nAttrs(root) {
+  var els = [root], i, j;
+  if (root.querySelectorAll) els = els.concat(Array.prototype.slice.call(root.querySelectorAll("*")));
+  for (i = 0; i < els.length; i++) {
+    var el = els[i];
+    if (!el.getAttribute) continue;
+    if (el.closest && el.closest("[data-noi18n]")) continue;
+    for (j = 0; j < I18N_ATTRS.length; j++) {
+      var a = I18N_ATTRS[j];
+      if (!el.hasAttribute(a)) continue;
+      var key = "__a_" + a;
+      if (el[key] === undefined) el[key] = el.getAttribute(a);
+      var want = LANG === "en" ? T(el[key]) : el[key];
+      if (want !== el.getAttribute(a)) el.setAttribute(a, want);
+    }
+  }
+}
+function i18nWalk(root) {
+  var w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null, false), n, c = 0;
+  while ((n = w.nextNode())) { i18nNode(n); c++; }
+  i18nAttrs(root);
+  return c;
+}
+var _i18nBusy = false;
+function i18nWatch() {
+  if (typeof MutationObserver === "undefined") return;
+  var mo = new MutationObserver(function (ms) {
+    if (_i18nBusy) return;
+    _i18nBusy = true;
+    try {
+      for (var i = 0; i < ms.length; i++) {
+        var m = ms[i];
+        if (m.type === "childList") {
+          for (var j = 0; j < m.addedNodes.length; j++) {
+            var nd = m.addedNodes[j];
+            if (nd.nodeType === 3) i18nNode(nd);
+            else if (nd.nodeType === 1) i18nWalk(nd);
+          }
+        } else if (m.type === "characterData") i18nNode(m.target);
+      }
+    } finally { _i18nBusy = false; }
+  });
+  mo.observe(document.body, { childList: true, subtree: true, characterData: true });
+}
+function setLang(l) {
+  LANG = l;
+  try { localStorage.setItem("opl_lang", l); } catch (e) { }
+  document.documentElement.lang = l === "en" ? "en" : "zh-CN";
+  var btn = document.getElementById("langBtn");
+  if (btn) btn.textContent = l === "en" ? "中文" : "EN";
+  document.title = l === "en" ? T(ORIG_TITLE) : ORIG_TITLE;
+  i18nWalk(document.body);
+  if (typeof syncInputs === "function") syncInputs();
+  if (typeof render === "function") render();
+}
+"use strict";
+
+
+/* ---------------- HTML 侧自动 LaTeX 排版 ----------------
+   读数 / 说明 / 按钮名里由 JS 拼出来的 cm⁻³、E_c、2.5e+8，
+   在写进 innerHTML 之前转成真 <sup>/<sub>；标签与属性原样放过（title 不会被塞进尖括号）。
+   与画布侧 AUTO() 对偶，保证网页和画布按同一套规则排版。 */
+const AUTOH_SUP = { "⁰": "0", "¹": "1", "²": "2", "³": "3", "⁴": "4", "⁵": "5", "⁶": "6",
+  "⁷": "7", "⁸": "8", "⁹": "9", "⁺": "+", "⁻": "−", "⁼": "=", "⁽": "(", "⁾": ")", "ⁿ": "n", "ⁱ": "i" };
+const AUTOH_SUB = { "₀": "0", "₁": "1", "₂": "2", "₃": "3", "₄": "4", "₅": "5", "₆": "6",
+  "₇": "7", "₈": "8", "₉": "9", "₊": "+", "₋": "−", "₌": "=", "₍": "(", "₎": ")",
+  "ₐ": "a", "ₑ": "e", "ₒ": "o", "ₓ": "x", "ₔ": "ə", "ₕ": "h", "ₖ": "k", "ₗ": "l",
+  "ₘ": "m", "ₙ": "n", "ₚ": "p", "ₛ": "s", "ₜ": "t", "ᵣ": "r", "ᵤ": "u", "ᵥ": "v" };
+const TEXH_NEED = /[\u2070-\u209C\u00B2\u00B3\u00B9]|_\{?[A-Za-z0-9\u0370-\u03ff]|\^\{?[\d(\-]|\d(\.\d+)?[eE][+\-]\d|\u221A/;
+/* 从 i 处（必须是 '<'）扫出一个"完整元素"的结束下标（含嵌套），失败返回 -1 */
+function TEXH_elemEnd(h, i) {
+  if (h.charAt(i) !== "<") return -1;
+  let depth = 0, j = i, guard = 0;
+  while (j < h.length && guard++ < 4000) {
+    if (h.charAt(j) !== "<") { j++; continue; }
+    const e = TEXH_tagEnd(h, j);
+    if (e < 0) return -1;
+    const isClose = h.charAt(j + 1) === "/";
+    const selfClose = h.charAt(e - 2) === "/";
+    if (isClose) { depth--; j = e; if (depth <= 0) return j; }
+    else if (selfClose) { j = e; if (depth === 0) return j; }
+    else { depth++; j = e; }
+  }
+  return -1;
+}
+/* √ 后面直接跟一个元素：√<i>E</i> → √‾E（前两条规则只吃 √(A) 与 √字母串） */
+function TEXHsqrtElem(s) {
+  let out = "", i = 0, guard = 0;
+  while (guard++ < 400) {
+    const k = s.indexOf("\u221A", i);
+    if (k < 0) break;
+    out += s.slice(i, k);
+    /* 守卫：√ 后面已是闭标签 ⇒ 该 √ 已排版过（对整段 HTML 重复跑 TEXH 会把 </span> 当成被开方式，
+       层层包出空壳根号，视觉上变成 √−3 / √−E），原样输出不再包裹 */
+    if (s.charAt(k + 1) === "<" && s.charAt(k + 2) === "/") { out += "\u221A"; i = k + 1; continue; }
+    let rad = null, end = k + 1;
+    if (s.charAt(k + 1) === "(") {
+      /* √(…) ：被开方式里常有标签，括号本身不在同一个文本片段里，必须整串扫 */
+      let depth = 0, p = k + 1;
+      while (p < s.length) {
+        const c = s.charAt(p);
+        if (c === "(") depth++;
+        else if (c === ")") { depth--; if (depth === 0) { rad = s.slice(k + 2, p); end = p + 1; break; } }
+        p++;
+      }
+    } else {
+      const e = TEXH_elemEnd(s, k + 1);
+      if (e > 0 && e - k < 500) { rad = s.slice(k + 1, e); end = e; }
+    }
+    if (rad !== null && rad.length) {
+      out += "<span class=\"sqrt\"><span class=\"rd\">\u221A</span><span class=\"rdc\">" + rad + "</span></span>";
+      i = end;
+    } else { out += "\u221A"; i = k + 1; }
+  }
+  return out + s.slice(i);
+}
+function TEXHpart(t) {
+  let s = t;
+  /* 根号：√ 或 √(A) → <span class="sqrt">√<span class="rd"><span class="rdc">A</span></span></span>（A 内不含嵌套括号） */
+  s = s.replace(/<span class="(?:op|rm|fn|v|u)">\u221A<\/span>/g, "\u221A");
+  s = s.replace(/\u221A<span class="(?:op|rm)">\(<\/span>([^()]{1,120}?)<span class="(?:op|rm)">\)<\/span>/g, function (m, a) {
+    return "<span class=\"sqrt\"><span class=\"rd\">\u221A</span><span class=\"rdc\">" + a + "</span></span>";
+  });
+  s = s.replace(/\u221A\(([^()]{1,120})\)/g, function (m, a) {
+    return "<span class=\"sqrt\"><span class=\"rd\">\u221A</span><span class=\"rdc\">" + a + "</span></span>";
+  });
+  s = s.replace(/\u221A([A-Za-z0-9\u0370-\u03ff]{1,6})/g, function (m, a) {
+    return "<span class=\"sqrt\"><span class=\"rd\">\u221A</span><span class=\"rdc\">" + a + "</span></span>";
+  });
+  s = s.replace(/(\d(?:\.\d+)?)e([+-])(\d+)/g, function (m, a, sg, e) {
+    return a + "\u00d710<sup>" + (sg === "-" ? "\u2212" : "") + e + "</sup>";
+  });
+  s = s.replace(/([A-Za-z\u0370-\u03ff)\]])\^\{([^{}]{1,12})\}/g, "$1<sup>$2</sup>");
+  s = s.replace(/([A-Za-z\u0370-\u03ff)\]])\^(\d+(?:\.\d+)?)/g, "$1<sup>$2</sup>");
+  s = s.replace(/([A-Za-z\u0370-\u03ff])_\{([A-Za-z0-9\u0370-\u03ff+\-]{1,8})\}/g, "<span class='m'><i>$1</i><sub>$2</sub></span>");
+  s = s.replace(/([A-Za-z\u0370-\u03ff])_([A-Za-z0-9\u0370-\u03ff]{1,6})(?![A-Za-z0-9])/g, "<span class='m'><i>$1</i><sub>$2</sub></span>");
+  if (/[\u2070-\u209C\u00B2\u00B3\u00B9]/.test(s)) {
+    let out = "", i = 0;
+    while (i < s.length) {
+      const ch = s[i];
+      if (AUTOH_SUP[ch] !== undefined || AUTOH_SUB[ch] !== undefined) {
+        const isSup = AUTOH_SUP[ch] !== undefined, tab = isSup ? AUTOH_SUP : AUTOH_SUB;
+        let j = i, buf = "";
+        while (j < s.length && (isSup ? AUTOH_SUP[s[j]] !== undefined : AUTOH_SUB[s[j]] !== undefined)) {
+          buf += tab[s[j]]; j++;
+        }
+        out += "<" + (isSup ? "sup" : "sub") + ">" + buf + "</" + (isSup ? "sup" : "sub") + ">";
+        i = j;
+      } else { out += ch; i++; }
+    }
+    s = out;
+  }
+  return s.indexOf("\u221A") >= 0 ? TEXHsqrtElem(s) : s;
+}
+/* 只有真正的标签才整段跳过：正文里裸写的 '<'（如 "t₂ < 0"）必须当普通字符，
+   否则 indexOf('>') 会一路吞掉后面整段，E₂⁰ 这类记法就漏排了。 */
+function TEXH_tagEnd(h, i) {
+  if (h.charAt(i) !== "<") return -1;
+  const c = h.charAt(i + 1);
+  if (c === "!" || c === "/") { const j = h.indexOf(">", i); return (j >= 0 && j - i < 300) ? j + 1 : -1; }
+  if (!/[A-Za-z]/.test(c)) return -1;
+  let j = i + 1;
+  while (j < h.length && /[A-Za-z0-9]/.test(h.charAt(j))) j++;
+  if (j === i + 1) return -1;
+  if (h.charAt(j) === ">") return j + 1;
+  if (h.charAt(j) !== " " && h.charAt(j) !== "\n" && h.charAt(j) !== "\t") return -1;
+  const g = h.indexOf(">", j), nx = h.indexOf("<", j);
+  if (g < 0 || g - i > 300) return -1;
+  if (nx >= 0 && nx < g) return -1;
+  return g + 1;
+}
+function TEXH(h) {
+  if (typeof h !== "string" || !TEXH_NEED.test(h)) return h;
+  if (h.indexOf("\u221A") >= 0) h = h.replace(/<span class="(?:op|rm|fn|v|u)">\u221A<\/span>/g, "\u221A");
+  if (h.indexOf("<") < 0) return TEXHpart(h);
+  let out = "", i = 0, n = h.length, guard = 0;
+  while (i < n && guard++ < 40000) {
+    const e = TEXH_tagEnd(h, i);
+    if (e > 0) { out += h.slice(i, e); i = e; continue; }
+    let j = i;
+    while (j < n && TEXH_tagEnd(h, j) <= 0) j++;
+    out += TEXHpart(h.slice(i, j)); i = j;
+  }
+  const r = out + h.slice(i);
+  return r.indexOf("\u221A") >= 0 ? TEXHsqrtElem(r) : r;
+}
+(function hookHTML() {
+  if (window.__TEXH_HOOK) return; window.__TEXH_HOOK = 1;
+  const d = Object.getOwnPropertyDescriptor(Element.prototype, "innerHTML");
+  if (!d || !d.set) return;
+  Object.defineProperty(Element.prototype, "innerHTML", {
+    configurable: true, get: d.get,
+    set: function (v) { d.set.call(this, typeof v === "string" ? TEXH(v) : v); }
+  });
+  /* insertAdjacentHTML 也会被用到 */
+  const ia = Element.prototype.insertAdjacentHTML;
+  Element.prototype.insertAdjacentHTML = function (pos, v) {
+    return ia.call(this, pos, typeof v === "string" ? TEXH(v) : v);
+  };
+})();
+
+/* ---------------- 画布自动 LaTeX 排版（原型挂钩版） ----------------
+   这些老工具直接调用 g.fillText()，这里统一在绘制前把
+     cm⁻³ / ω₀      → 真上/下标（单位与描述符保持正体）
+     E_c / v_th / k → 主符号斜体 + 正体下标
+     X^{−3}          → 真上标
+     2.5e+8          → 2.5×10⁸
+   拆成分段绘制；measureText 同步返回分段宽度，白底标签框长度自动跟着变。 */
+const AUTO_SUP = { "⁰": "0", "¹": "1", "²": "2", "³": "3", "⁴": "4", "⁵": "5", "⁶": "6",
+  "⁷": "7", "⁸": "8", "⁹": "9", "⁺": "+", "⁻": "−", "⁼": "=", "⁽": "(", "⁾": ")", "ⁿ": "n", "ⁱ": "i" };
+const AUTO_SUB = { "₀": "0", "₁": "1", "₂": "2", "₃": "3", "₄": "4", "₅": "5", "₆": "6",
+  "₇": "7", "₈": "8", "₉": "9", "₊": "+", "₋": "−", "₌": "=", "₍": "(", "₎": ")",
+  "ₐ": "a", "ₑ": "e", "ₒ": "o", "ₓ": "x", "ₔ": "ə", "ₕ": "h", "ₖ": "k", "ₗ": "l",
+  "ₘ": "m", "ₙ": "n", "ₚ": "p", "ₛ": "s", "ₜ": "t", "ᵣ": "r", "ᵤ": "u", "ᵥ": "v" };
+const NEED_MATH = /[\u2070-\u209C\u00B2\u00B3\u00B9]|_\{?[A-Za-z0-9\u0370-\u03ff]|\^\{?[\d(\-]|\d(\.\d+)?[eE][+\-]\d/;
+function AUTO(s) {
+  const out = []; let buf = "", mode = 0;
+  const emit = (t, kind) => {
+    if (!t) return;
+    if (kind === 1) out.push({ s: t, sup: true });
+    else if (kind === -1) out.push({ s: t, sub: true });
+    else out.push({ s: t });
+  };
+  let i = 0;
+  while (i < s.length) {
+    const ch = s[i];
+    if (AUTO_SUP[ch] !== undefined) { if (mode !== 1) { emit(buf, mode); buf = ""; mode = 1; } buf += AUTO_SUP[ch]; i++; continue; }
+    if (AUTO_SUB[ch] !== undefined) { if (mode !== -1) { emit(buf, mode); buf = ""; mode = -1; } buf += AUTO_SUB[ch]; i++; continue; }
+    if (mode) { emit(buf, mode); buf = ""; mode = 0; }
+    const rest = s.slice(i);
+    const sc = /^\d(\.\d+)?[eE][+\-]\d{1,3}/.exec(rest);
+    if (sc) {
+      const pp = sc[0].split(/[eE]/);
+      emit(pp[0] + "\u00d710", 0); emit(String(+pp[1]).replace("-", "\u2212"), 1);
+      i += sc[0].length; continue;
+    }
+    if (/[A-Za-z\u0370-\u03ff]/.test(ch) && i + 1 < s.length && (s[i + 1] === "_" || s[i + 1] === "^")) {
+      const sup = s[i + 1] === "^";
+      let j = i + 2, grp = "";
+      if (s[j] === "{") { const e = s.indexOf("}", j); if (e > 0) { grp = s.slice(j + 1, e); j = e + 1; } }
+      else {
+        const RCJK = /[\u2E80-\u9FFF]/, RASC = /[A-Za-z0-9\u0370-\u03ff+\-]/;
+        if (RCJK.test(s[j])) { while (j < s.length && RCJK.test(s[j]) && j - i < 8) j++; }   /* 中文描述性下标：τ_直接、E_声子 */
+        else { while (j < s.length && RASC.test(s[j])) j++; }
+        grp = s.slice(i + 2, j);
+      }
+      if (grp) {
+        /* 先把累积的前缀 flush 出去。漏了这行，含「前缀 + X_y」的串（ΔE_sp、
+           E=(E_s+3E_p)/4 之类）会把前缀甩到段尾，渲染成「E_spΔ」。 */
+        emit(buf, 0); buf = "";
+        emit(ch, 0); out[out.length - 1].i = true;
+        emit(sup ? grp.replace(/-/g, "\u2212") : grp, sup ? 1 : -1);
+        i = j; continue;
+      }
+    }
+    buf += ch; i++;
+  }
+  emit(buf, mode);
+  return out;
+}
+function mathSegs(g, s) {
+  const f = String(g.font || "");
+  const size = (function () { const m = /(\d+(?:\.\d+)?)px/.exec(f); return m ? parseFloat(m[1]) : 12; })();
+  const family = f.replace(/^(?:\s*(?:italic|oblique|bold|[1-9]00)\s*)*\d+(?:\.\d+)?px\s*/, "");
+  const style = /italic|oblique/.test(f) ? "italic " : (/bold|[6-9]00/.test(f) ? "bold " : "");
+  const parts = AUTO(s), laid = [];
+  let w = 0;
+  for (const p of parts) {
+    const small = !!(p.sup || p.sub);
+    const fs = style + (small ? (size * 0.74).toFixed(2) : size.toFixed(2)) + "px " + family;
+    g.font = fs;
+    const tw = g.measureText(p.s).width;
+    laid.push({ s: p.s, w: tw, fs: fs, dy: small ? (p.sup ? -size * 0.40 : size * 0.22) : 0 });
+    w += tw;
+  }
+  return { laid, w, family, style, size };
+}
+(function hookMath() {
+  if (window.__MATH_HOOK) return; window.__MATH_HOOK = 1;
+  const P = CanvasRenderingContext2D.prototype;
+  const _fill = P.fillText, _stroke = P.strokeText, _measure = P.measureText;
+  function draw(drawRaw, g, s, x, y, rest) {
+    const info = mathSegs(g, s);
+    const al = g.textAlign, bl = g.textBaseline;
+    const cx = al === "right" ? x - info.w : (al === "center" ? x - info.w / 2 : x);
+    g.textAlign = "left"; g.textBaseline = bl || "middle";
+    let px = cx;
+    for (const L of info.laid) {
+      g.font = L.fs;
+      drawRaw.call(g, L.s, px, y + L.dy, ...rest);
+      px += L.w;
+    }
+    g.textAlign = al; g.textBaseline = bl;
+    g.font = info.style + info.size.toFixed(2) + "px " + info.family;
+    return info;
+  }
+  P.fillText = function (s, x, y) {
+    if (typeof s !== "string" || !NEED_MATH.test(s)) return _fill.apply(this, arguments);
+    draw(_fill, this, s, x, y, Array.prototype.slice.call(arguments, 3));
+  };
+  P.strokeText = function (s, x, y) {
+    if (typeof s !== "string" || !NEED_MATH.test(s)) return _stroke.apply(this, arguments);
+    draw(_stroke, this, s, x, y, Array.prototype.slice.call(arguments, 3));
+  };
+  P.measureText = function (s) {
+    if (typeof s !== "string" || !NEED_MATH.test(s)) return _measure.call(this, s);
+    const save = this.font;
+    const info = mathSegs(this, s);
+    this.font = save;
+    return { width: info.w, get actualBoundingBoxLeft() { return 0; }, get actualBoundingBoxRight() { return info.w; } };
+  };
+})();
+
+const FONT = '"Segoe UI","Microsoft YaHei",sans-serif';
+
+const FONTM = '"Cambria Math","STIX Two Math","Times New Roman",Times,serif';
+
+
+/* ---------------- 画布 LaTeX 排版层（零依赖；物理量斜体、下标/单位正体、幂次真上标） ---------------- */
+const SUBR = 0.74, SUBDY = 0.22, SUPDY = 0.40;
+function isCJKch(ch) {
+  const c = ch.codePointAt(0);
+  return (c >= 0x2E80 && c <= 0x9FFF) || (c >= 0xF900 && c <= 0xFAFF) ||
+    (c >= 0xFF00 && c <= 0xFF60) || c === 0x2014 || c === 0x2015 || c === 0x2026;
+}
+function segRuns(s) {
+  const out = []; let cur = "", curC = null;
+  for (const ch of s) {
+    const c = isCJKch(ch);
+    if (curC === null) { cur = ch; curC = c; }
+    else if (c === curC) cur += ch;
+    else { out.push({ s: cur, cjk: curC }); cur = ch; curC = c; }
+  }
+  if (cur) out.push({ s: cur, cjk: curC });
+  return out;
+}
+function pFont(q, fp, bd, cjk) {
+  const sz = fp * ((q.sub || q.sup) ? SUBR : 1);
+  return (bd ? "bold " : "") + (!cjk && q.i ? "italic " : "") + sz.toFixed(2) + "px " + (cjk ? FONT : FONTM);
+}
+/* i18n 注入点①：画布 token。带 i / sub / sup / un 标记的是物理量、下标与单位，一律不动；
+   没有这些标记的 token 才是自然语言，交给 T() —— 所以这里的判断只看标记，不看内容。 */
+const partsOf = p => p.map(q => {
+  const o = (typeof q === "string" ? { s: q } : q);
+  const natural = !(o.i || o.sub || o.sup || o.un);
+  if (LANG === "en" && natural && typeof o.s === "string" && /[\u4E00-\u9FFF]/.test(o.s)) {
+    const t = T(o.s);
+    return t === o.s ? o : Object.assign({}, o, { s: t });
+  }
+  return o;
+});
+function mMeasure(g, parts, fp, bd) {
+  let w = 0;
+  for (const q of partsOf(parts))
+    for (const sg of segRuns(q.s)) { g.font = pFont(q, fp, bd, sg.cjk); w += g.measureText(sg.s).width; }
+  return w;
+}
+function mRun(g, parts, x, y, fp, bd, align, stroke) {
+  const ps = partsOf(parts), w = mMeasure(g, ps, fp, bd);
+  let cx = align === "right" ? x - w : (align === "center" ? x - w / 2 : x);
+  g.textAlign = "left"; g.textBaseline = "middle"; g.lineJoin = "round";
+  for (const q of ps) {
+    const dy = q.sub ? fp * SUBDY : (q.sup ? -fp * SUPDY : 0);
+    for (const sg of segRuns(q.s)) {
+      g.font = pFont(q, fp, bd, sg.cjk);
+      if (stroke) { g.lineWidth = (q.sub || q.sup) ? 2.4 : 3.2; g.strokeText(sg.s, cx, y + dy); }
+      else g.fillText(sg.s, cx, y + dy);
+      cx += g.measureText(sg.s).width;
+    }
+  }
+}
+function mtxt(g, parts, x, y, col, fp, align, bd) {
+  g.fillStyle = col; mRun(g, parts, x, y, fp, bd || false, align, false);
+}
+function mtxtHalo(g, parts, x, y, col, fp, align, bd) {
+  g.strokeStyle = "rgba(255,255,255,0.94)";
+  mRun(g, parts, x, y, fp, bd || false, align, true);
+  mtxt(g, parts, x, y, col, fp, align, bd);
+}
+
+
+/* ---------------- HTML 字符串 → 画布零件（网页与画布共用同一份排版） ----------------
+   mtxt(g, TX(H_NA), x, y, col, fp) —— H_* 常量本来就在喂 innerHTML，
+   再喂给 TX() 就不会出现「网页斜体、画布正体」的两边不一致。
+   <i> 斜体、<sub> 下标、<sup> 上标；<span class="op|un|rm|sqrt|frac"> 只剥标签（保持正体）。 */
+const catA = (...a) => [].concat(...a);
+function TX(h) {
+  const t = String(h == null ? "" : h)
+    .replace(/<span\b[^>]*>/g, "").replace(/<\/span>/g, "")
+    .replace(/<i\b[^>]*>/g, "<i>").replace(/<b\b[^>]*>/g, "").replace(/<\/b>/g, "")
+    .replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&").replace(/&nbsp;/g, " ");
+  const out = [], re = /<i>([\s\S]*?)<\/i>|<sub>([\s\S]*?)<\/sub>|<sup>([\s\S]*?)<\/sup>|([^<]+)/g;
+  let m;
+  while ((m = re.exec(t))) {
+    const raw = s => s == null ? null : s.replace(/<[^>]*>/g, "");
+    if (m[1] != null) out.push({ s: raw(m[1]), i: true });
+    else if (m[2] != null) out.push({ s: raw(m[2]), sub: true });
+    else if (m[3] != null) out.push({ s: raw(m[3]), sup: true });
+    else if (m[4]) out.push({ s: m[4] });
+  }
+  return out;
+}
+function TXof(...a) { return catA(...a.map(TX)); }
+
+
+function PSci(v, n) {
+  if (!isFinite(v) || v === 0) return [{ s: "0" }];
+  const e = Math.floor(Math.log10(Math.abs(v)));
+  const m = (v / Math.pow(10, e)).toFixed(n === undefined ? 1 : n);
+  /* 1 ≦ |v| < 10 时直接写尾数，不再拖一个 ×10⁰（与 sciH 一致） */
+  if (e === 0) return [{ s: m }];
+  /* 指数负号用 U+2212 */
+  return [{ s: m + "×10" },
+          { s: String(e).replace("-", "−"), sup: true }];
+}
+
+/* ==================================================================
+   sp² 杂化与 π 键形成交互教学工具（石墨烯）
+   —— 零依赖单文件：三维渲染为自研 Canvas 2D 透视投影 + 画家算法
+   —— 轨道形状（电子云示意）由杂化波函数 ψ = a·ψ₂s + b·(n̂·ψ₂p) 给出：
+      大瓣 r(θ) = R·[(λ + cosθ)/(1 + λ)]²，λ = a/b 为 s/p 振幅比
+      λ = 0 → 纯 p 哑铃；λ = 1/√2 → sp² 大瓣加小瓣；λ → ∞ → 纯 s 球
+      小瓣真实轴向长度仅是大瓣的 [(1−λ)/(1+λ)]² ≈ 2.9%（半径 ∝ |ψ|² 的概率密度口径）；
+      振幅口径（半径 ∝ |ψ|）下是 (1−λ)/(1+λ) ≈ 17.2%，教材常用后者 —— 两者不矛盾
+      教学上把小瓣夸大到大瓣的 40%
+   —— 能量：轨道能取 Hartree–Fock 自由原子值（与 sp³ 工具同源）；激发能取 NIST ASD；
+      内聚能取石墨原子化焓；π 带用最近邻紧束缚在布里渊区上数值积分
+   ================================================================== */
+
+/* ---------------- 通用工具 ---------------- */
+const $ = (id) => document.getElementById(id);
+const clamp = (v, a, b) => v < a ? a : (v > b ? b : v);
+const RAD = Math.PI / 180;
+const dot3 = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+const sub3 = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
+const add3 = (a, b) => [a[0] + b[0], a[1] + b[1], a[2] + b[2]];
+const mul3 = (a, s) => [a[0] * s, a[1] * s, a[2] * s];
+const len3 = (a) => Math.sqrt(dot3(a, a));
+const cross3 = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+const norm3 = (a) => { const L = len3(a) || 1; return [a[0] / L, a[1] / L, a[2] / L]; };
+const fmt = (v, n) => (Math.abs(v) < 5e-3 ? 0 : v).toFixed(n === undefined ? 2 : n);
+/* 角度写成“度 + 分”：109.47° → 109°28′（正四面体键角的标准写法） */
+function angDM(deg) {
+  const neg = deg < 0, a = Math.abs(deg);
+  const d = Math.floor(a), mi = Math.round((a - d) * 60);
+  const dd = mi === 60 ? d + 1 : d, mm = mi === 60 ? 0 : mi;
+  return (neg ? "−" : "") + dd + "°" + (mm < 10 ? "0" + mm : mm) + "′";
+}
+const TET_ANG = Math.acos(-1 / 3) / (Math.PI / 180);   /* 109.4712° = 109°28′ */
+
+function slerp(p, q, t) {
+  const d = clamp(dot3(p, q), -1, 1);
+  const om = Math.acos(d);
+  if (om < 1e-6) return norm3(q);
+  const s = Math.sin(om);
+  const w1 = Math.sin((1 - t) * om) / s, w2 = Math.sin(t * om) / s;
+  return norm3([p[0] * w1 + q[0] * w2, p[1] * w1 + q[1] * w2, p[2] * w1 + q[2] * w2]);
+}
+function hex2rgb(h) {
+  return [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)];
+}
+/* 同时接受 "#rrggbb" 与 "rgb(r,g,b)"——混色结果会再次作为输入传入（小瓣、标签颜色），
+   只认 hex 会算出 NaN，canvas 赋值 fillStyle 失败后静默沿用上一个颜色。 */
+function parseCol(c) {
+  if (c.charAt(0) === "#") return hex2rgb(c);
+  const m = c.match(/[\d.]+/g);
+  return [+m[0], +m[1], +m[2]];
+}
+function mixHex(a, b, t) {
+  const A = parseCol(a), B = parseCol(b);
+  return "rgb(" + Math.round(A[0] + (B[0] - A[0]) * t) + "," +
+                  Math.round(A[1] + (B[1] - A[1]) * t) + "," +
+                  Math.round(A[2] + (B[2] - A[2]) * t) + ")";
+}
+const LIGHT = norm3([-0.40, 0.55, -0.75]);
+function shade(hex, n) {
+  let d = dot3(n, LIGHT);
+  if (d < 0) d = 0;
+  /* 半透明填充叠在浅色背景上会把对比冲掉：暗部直接压到深色，高光才显出蛋形轮廓 */
+  return mixHex(mixHex(hex, "#141b24", 0.62), "#ffffff", 0.38 * d);
+}
+
+/* ---------------- 数据：碳原子与石墨烯 ----------------
+   Es / Ep  : 自由原子 Hartree–Fock 轨道能（eV，真空能级为零）—— 与 sp³ 工具同源
+   Epro     : 原子光谱实测激发能 2s²2p² (³P) → 2s2p³ (⁵S°)，NIST ASD；
+              sp² 与 sp³ 共用同一个数：激发只发生在原子层面，与之后怎么杂化无关
+   Ecoh     : 石墨烯（石墨）内聚能 eV/原子，取自原子化焓 716.7 kJ/mol
+   dCC      : 石墨烯 C–C 键长 Å（= a/√3）；aG 为晶格常数
+   ================================================================== */
+const CARBON = {
+  lab: "C", full: "碳", n: 2, Z: 6,
+  cfg: "1s² 2s² 2p²", core: "1s²", val: "2s² 2p²",
+  Es: -19.38, Ep: -11.07,
+  Epro: 4.182,
+  Ecoh: 7.43,
+  aG: 2.46, dCC: 1.42,
+  dDia: 1.545, EcohDia: 7.37, DbondDia: 3.59
+};
+/* 每原子的 σ 键数：3 个近邻、每键被两个原子分摊 → 1.5 */
+const SIGMA_PER_ATOM = 1.5;
+/* π 最近邻跃迁积分（已不再是旋钮）：文献常用 2.7~3.0 eV，这里取常用中值并固定。
+   它同时决定 π 带带宽 3t 与狄拉克锥斜率（费米速度）——这两个量都在读数面板里给出。 */
+const T_TB = 2.70;
+
+/* π 带在整个布里渊区上的数值积分：⟨|f(k)|⟩，f(k) = Σ exp(i k·δ_j)
+   格点对称取样，N = 48 已经收敛到 1.5746（再加密不再变） */
+let _FAVG = null;
+function piBandAvg() {
+  if (_FAVG !== null) return _FAVG;
+  const d = 1;                                   /* 以键长为长度单位，⟨|f|⟩ 是无量纲的量 */
+  const u1 = [1.5 * d, Math.sqrt(3) / 2 * d], u2 = [1.5 * d, -Math.sqrt(3) / 2 * d];
+  const det = u1[0] * u2[1] - u1[1] * u2[0];
+  const b1 = [2 * Math.PI * u2[1] / det, -2 * Math.PI * u2[0] / det];
+  const b2 = [-2 * Math.PI * u1[1] / det, 2 * Math.PI * u1[0] / det];
+  const del = [[d, 0], [-d / 2, Math.sqrt(3) / 2 * d], [-d / 2, -Math.sqrt(3) / 2 * d]];
+  const N = 48;
+  let s = 0;
+  for (let i = 0; i < N; i++) {
+    for (let j = 0; j < N; j++) {
+      const s1 = (i + 0.5) / N, s2 = (j + 0.5) / N;
+      const kx = s1 * b1[0] + s2 * b2[0], ky = s1 * b1[1] + s2 * b2[1];
+      let re = 0, im = 0;
+      for (let m = 0; m < 3; m++) {
+        const a = kx * del[m][0] + ky * del[m][1];
+        re += Math.cos(a); im += Math.sin(a);
+      }
+      s += Math.sqrt(re * re + im * im);
+    }
+  }
+  _FAVG = s / (N * N);
+  return _FAVG;
+}
+
+function derived() {
+  const C = CARBON, t = T_TB;
+  const dEsp = C.Ep - C.Es;                       /* s–p 能级差 */
+  const Esp2 = (C.Es + 2 * C.Ep) / 3;             /* 杂化轨道能 = ⅓·E_2s + ⅔·E_2p */
+  const dEhyb = Esp2 - C.Es;                      /* 单电子轨道能级抬升 */
+  const fAvg = piBandAvg();
+  /* π 带平均能量（每原子，相对 2p_z 原子能级）：E_π = −t·⟨|f(k)|⟩ */
+  const Epi = -t * fAvg;
+  /* σ 单键键能：由内聚能恒等式反推 —— 这是记账反推值，不是独立测量（见读数面板） */
+  const Dsig = (C.Ecoh + C.Epro + Epi) / SIGMA_PER_ATOM;
+  const Vsig = Dsig / 2;                          /* 双能级图像里成键态的下移量 */
+  const bw = 3 * t;                               /* π 带（及 π* 带）带宽 = 3t */
+  const hvF = 1.5 * t * C.dCC;                    /* ħ·v_F = 3td/2，单位 eV·Å */
+  const vF = hvF * 1e-10 / 6.582119569e-16;        /* ← m/s */
+  return {
+    dEsp: dEsp, Esp2: Esp2, dEhyb: dEhyb, fAvg: fAvg,
+    Epi: Epi, Dsig: Dsig, Vsig: Vsig, bw: bw, hvF: hvF, vF: vF,
+    Esig: Esp2 - Vsig, EsigStar: Esp2 + Vsig,
+    net: -C.Ecoh
+  };
+}
+
+/* ==================================================================
+   2. 杂化轨道模型
+   四个轨道槽：槽 0 由 2s 演变，槽 1/2 由 2p_x / 2p_y 演变，槽 3 是始终不参与杂化的 2p_z
+   混合角 φ：a = cos φ（s 振幅），b = sin φ（p 振幅）
+     槽 0~2 : φ 由 0°/90°/90° → 54.7356°（cos = 1/√3，即 sp² 的 s 振幅）
+     槽 3   : φ 恒为 90°（纯 p，2p_z 垂直于杂化平面）
+   瓣轴 n：由 p 轴（或球，无方向）球面插值到平面三角形的三个顶点方向
+   ================================================================== */
+const TRI = [[1, 0, 0], [-0.5, Math.sqrt(3) / 2, 0], [-0.5, -Math.sqrt(3) / 2, 0]].map(norm3);
+const TETRA = [[1, 1, 1], [1, -1, -1], [-1, 1, -1], [-1, -1, 1]].map(norm3);
+const SRC_DIR = [TRI[0], [1, 0, 0], [0, 1, 0], [0, 0, 1]];
+const PHI_A = Math.acos(1 / Math.sqrt(3));        /* 54.7356° → cos φ = 1/√3 */
+const PHI0 = [0, Math.PI / 2, Math.PI / 2, Math.PI / 2];
+const PHI1 = [PHI_A, PHI_A, PHI_A, Math.PI / 2];
+const DIR1 = [TRI[0], TRI[1], TRI[2], [0, 0, 1]];
+const COL0 = ["#1976d2", "#d94a3d", "#2e9e5b", "#ef8c1a"];
+const COL_HYB = "#8e5bd0";
+const COL_SP3 = "#0f9b8e";
+const R0 = 1.05;
+/* 各轨道沿自身瓣轴向外错开陈列：四个轨道若都以原子核为原点会叠成一团，
+   球 / 哑铃 / 大瓣+小瓣 的形状完全看不出来。2s 球球对称、本就以核为中心，保持不动。 */
+const EXPLODE = 1.75;
+
+function orbState(j, t) {
+  const phi = PHI0[j] + (PHI1[j] - PHI0[j]) * t;
+  const a = Math.cos(phi), b = Math.sin(phi);
+  const n = j === 3 ? [0, 0, 1] : norm3(slerp(SRC_DIR[j], DIR1[j], t));
+  const alphaS = a * a;
+  const R = R0 * (1 - 0.35 * alphaS);             /* s 成分越多轨道越紧凑 */
+  return { j: j, a: a, b: b, n: n, sChar: alphaS, R: R, phi: phi };
+}
+function orbOffset(st, j, t) {
+  return (j === 0 && t < 0.02) ? [0, 0, 0] : mul3(st.n, EXPLODE);
+}
+function orbEnergy(C, st) { return st.a * st.a * C.Es + st.b * st.b * C.Ep; }
+function occupancy(j, t) { return j === 0 ? 2 - t : (j === 3 ? t : 1); }
+function orbColor(j, t) { return j === 3 ? COL0[3] : mixHex(COL0[j], COL_HYB, t); }
+
+/* 画布标签一律给 HTML 串，交给 TX() 排版 —— 与网页共用同一套规则，
+   不会出现「网页斜体、画布正体」的两边不一致 */
+function orbLabelH(j, t) {
+  if (t < 0.02) return j === 0 ? "2<i>s</i>" : "2<i>p</i><sub>" + ["x", "y", "z"][j - 1] + "</sub>";
+  if (j === 3) return "2<i>p</i><sub><i>z</i></sub>";
+  if (t > 0.98) return "<i>sp</i><sup>2</sup> 轨道 " + (j + 1);
+  return "杂化轨道 " + (j + 1);
+}
+function unpairedCount(t) {
+  let c = 0;
+  for (let j = 0; j < 4; j++) {
+    const o = occupancy(j, t);
+    if (o >= 0.5 && o < 1.5) c += 1;
+  }
+  return c;
+}
+
+/* 轨道网格（电子云为示意，不是严格的等密度面）：
+   大瓣 r(θ) = R·[(λ+cosθ)/(1+λ)]²；小瓣真实轴向长度只有大瓣的 [(1−λ)/(1+λ)]²，
+   sp² 的 λ = 1/√2 → 概率密度口径约 2.9%，振幅口径约 17.2%；
+   屏幕上几乎看不见，因此夸大到大瓣的 40% 并画成矮胖形。 */
+const NU = 18, NV = 16;
+const NU2 = 14, NV2 = 12;
+const LAM2 = 1 / Math.SQRT2;                     /* sp² 的 s/p 振幅比 a/b */
+const BACK_LEN = 0.40;
+const BACK_POW = 0.50;
+const BACK_GAIN = BACK_LEN / Math.pow((1 - LAM2) / (1 + LAM2), BACK_POW);
+function backShape(lam) {
+  const x = clamp(lam / LAM2, 0, 1);             /* 0 = 纯 p（不夸大）→ 1 = sp²（完全夸大） */
+  return { pow: 2 + (BACK_POW - 2) * x, gain: 1 + (BACK_GAIN - 1) * x };
+}
+function lobeRanges(lam) {
+  if (lam >= 1e5) return [[0, Math.PI, 1]];
+  const tn = Math.acos(-lam);
+  return [[0, tn, 1], [tn, Math.PI, -1]];
+}
+function basisOf(n) {
+  let u = Math.abs(n[2]) < 0.9 ? [0, 0, 1] : [1, 0, 0];
+  u = norm3(cross3(u, n));
+  return [u, cross3(n, u), n];
+}
+/* 把一个瓣的面片与轮廓线推进 quads / wires（供调用方统一按深度排序） */
+function pushLobe(v, quads, wires, n, R, lam, off, col, alpha, nu, nv) {
+  const B = basisOf(n);
+  const bs = backShape(lam);
+  const rrBig = (th) => { const u = (lam + Math.cos(th)) / (1 + lam); return R * u * u; };
+  const rrSmall = (th) => R * bs.gain * Math.pow(Math.abs(lam + Math.cos(th)) / (1 + lam), bs.pow);
+  const wcol = mixHex(col, "#0d1d2b", 0.30);
+  for (const seg of lobeRanges(lam)) {
+    const th0 = seg[0], th1 = seg[1], ph = seg[2];
+    const pts = new Array(nu * nv), scr = new Array(nu * nv);
+    for (let i = 0; i < nu; i++) {
+      const th = th0 + (th1 - th0) * i / (nu - 1);
+      const r = (ph > 0 ? rrBig(th) : rrSmall(th)), ct = Math.cos(th), stt = Math.sin(th);
+      for (let k = 0; k < nv; k++) {
+        const ph2 = 2 * Math.PI * k / nv, cp = Math.cos(ph2), sp2 = Math.sin(ph2);
+        const p3 = [
+          r * stt * (cp * B[0][0] + sp2 * B[1][0]) + r * ct * n[0],
+          r * stt * (cp * B[0][1] + sp2 * B[1][1]) + r * ct * n[1],
+          r * stt * (cp * B[0][2] + sp2 * B[1][2]) + r * ct * n[2]
+        ];
+        const r3 = rot(v, add3(p3, off));
+        pts[i * nv + k] = r3;
+        scr[i * nv + k] = projR(v, r3);
+      }
+    }
+    const back = ph < 0;
+    const baseCol = back ? mixHex(col, "#ffffff", 0.42) : col;
+    const aFill = back ? alpha * 0.72 : alpha;
+    for (let i = 0; i < nu - 1; i++) {
+      for (let k = 0; k < nv; k++) {
+        const i00 = i * nv + k, i10 = (i + 1) * nv + k;
+        const i01 = i * nv + (k + 1) % nv, i11 = (i + 1) * nv + (k + 1) % nv;
+        const A = pts[i00], Bp = pts[i10], Cp = pts[i11];
+        let nn = norm3(cross3(sub3(Bp, A), sub3(pts[i01], A)));
+        const backface = nn[2] > 0;
+        if (backface) nn = [-nn[0], -nn[1], -nn[2]];
+        const z = (A[2] + Bp[2] + Cp[2] + pts[i01][2]) / 4;
+        quads.push({ z: z, s: [scr[i00], scr[i10], scr[i11], scr[i01]],
+          c: shade(baseCol, nn), a: aFill * (backface ? 0.25 : 1) });
+      }
+    }
+    for (let k = 0; k < nv; k += 4) {
+      const line = [];
+      for (let i = 0; i < nu; i++) line.push(scr[i * nv + k]);
+      wires.push({ s: line, c: wcol, dash: back, close: false });
+    }
+  }
+}
+function flushQuads(g, quads, wires) {
+  quads.sort((p, q) => q.z - p.z);                /* 远 → 近 */
+  for (const q of quads) {
+    g.fillStyle = q.c;
+    g.globalAlpha = q.a;
+    g.beginPath();
+    g.moveTo(q.s[0].x, q.s[0].y);
+    g.lineTo(q.s[1].x, q.s[1].y);
+    g.lineTo(q.s[2].x, q.s[2].y);
+    g.lineTo(q.s[3].x, q.s[3].y);
+    g.closePath();
+    g.fill();
+  }
+  g.globalAlpha = 1;
+  g.save();
+  g.lineWidth = 0.8;
+  g.globalAlpha = 0.22;
+  for (const w of wires) {
+    g.strokeStyle = w.c;
+    if (w.dash) g.setLineDash([3, 3]); else g.setLineDash([]);
+    g.beginPath();
+    for (let i = 0; i < w.s.length; i++) {
+      const P = w.s[i];
+      if (i === 0) g.moveTo(P.x, P.y); else g.lineTo(P.x, P.y);
+    }
+    if (w.close) g.closePath();
+    g.stroke();
+  }
+  g.restore();
+}
+
+/* ==================================================================
+   3. 三维视图（模块一）
+   ================================================================== */
+const V3 = {
+  /* 默认视角：让平面三角形的三条边与 p_z 的竖直线都投影得足够长 */
+  yaw: 8 * RAD, pitch: -50 * RAD, zoom: 1, panX: 0, panY: 0,
+  W: 600, H: 440, dpr: 1, base: 90, g: null, canvas: null,
+  cx: 300, divs: [], hover: -1, drag: null
+};
+const OPT = {
+  mode: "hybrid",
+  ang: true, plane: true, piCloud: true,
+  alpha: 0.85
+};
+const MODES = [
+  { key: "ground", tag: "① 基态碳原子" },
+  { key: "hybrid", tag: "② sp² 杂化后" },
+  { key: "lattice", tag: "③ σ 骨架与 π 电子云" }
+];
+let HOVER = -1;
+
+function rot(v, p) {
+  const cy = Math.cos(v.yaw), sy = Math.sin(v.yaw);
+  const x1 = p[0] * cy + p[2] * sy, z1 = -p[0] * sy + p[2] * cy;
+  const cp = Math.cos(v.pitch), sp = Math.sin(v.pitch);
+  const y2 = p[1] * cp - z1 * sp, z2 = p[1] * sp + z1 * cp;
+  return [x1, y2, z2];
+}
+function proj(v, p) {
+  const r = rot(v, p);
+  const focal = 7.5;
+  const s = focal / (focal + r[2]) * v.zoom * v.base;
+  return { x: v.cx + v.panX + r[0] * s, y: v.H / 2 + v.panY - r[1] * s, z: r[2], s: s };
+}
+function projR(v, r) {
+  const focal = 7.5;
+  const s = focal / (focal + r[2]) * v.zoom * v.base;
+  return { x: v.cx + v.panX + r[0] * s, y: v.H / 2 + v.panY - r[1] * s, z: r[2], s: s };
+}
+/* 混合系数已不再是旋钮：基态模式取 0，其余两种模式都是完全杂化（取 1）。
+   （原先这里读过 OPT.t —— 那个滑块已连同它的中间态文案一起删掉。） */
+function curT() {
+  return OPT.mode === "ground" ? 0 : 1;
+}
+
+/* ---- 石墨烯蜂窝晶格（长度单位 = 键长 d） ---- */
+const LAT_R = 1.8;                                /* 截断半径：中心 + 3 近邻 + 6 次近邻 = 10 个原子 */
+const LATSCALE = 1.42;                            /* 键长 → 场景单位 */
+const PI_H = 0.95;                                /* π 电子云团中心离平面的高度（场景单位） */
+const LAT = (function () {
+  const u1 = [1.5, Math.sqrt(3) / 2], u2 = [1.5, -Math.sqrt(3) / 2];
+  const off = [1, 0];
+  const atoms = [];
+  for (let m = -3; m <= 3; m++) {
+    for (let n = -3; n <= 3; n++) {
+      const bx = m * u1[0] + n * u2[0], by = m * u1[1] + n * u2[1];
+      for (let s = 0; s < 2; s++) {
+        const x = bx + s * off[0], y = by + s * off[1];
+        if (Math.sqrt(x * x + y * y) <= LAT_R + 1e-9) atoms.push([x, y, 0, s]);
+      }
+    }
+  }
+  const bonds = [];
+  for (let i = 0; i < atoms.length; i++) {
+    for (let k = i + 1; k < atoms.length; k++) {
+      const dd = Math.hypot(atoms[i][0] - atoms[k][0], atoms[i][1] - atoms[k][1]);
+      if (Math.abs(dd - 1) < 0.08) bonds.push([i, k]);
+    }
+  }
+  return { atoms: atoms, bonds: bonds };
+})();
+
+function drawPlane(v, g, r) {
+  const N = 48, pts = [];
+  for (let i = 0; i < N; i++) {
+    const a = 2 * Math.PI * i / N;
+    pts.push(proj(v, [r * Math.cos(a), r * Math.sin(a), 0]));
+  }
+  g.save();
+  g.fillStyle = "rgba(25,118,210,0.07)";
+  g.strokeStyle = "rgba(25,118,210,0.32)";
+  g.lineWidth = 1;
+  g.setLineDash([5, 4]);
+  g.beginPath();
+  for (let i = 0; i < N; i++) {
+    const P = pts[i];
+    if (i === 0) g.moveTo(P.x, P.y); else g.lineTo(P.x, P.y);
+  }
+  g.closePath();
+  g.fill(); g.stroke();
+  g.restore();
+}
+
+function drawOrb() {
+  const v = V3, g = v.g;
+  if (!g) return;
+  g.setTransform(v.dpr, 0, 0, v.dpr, 0, 0);
+  g.clearRect(0, 0, v.W, v.H);
+  g.fillStyle = "#fbfcfe";
+  g.fillRect(0, 0, v.W, v.H);
+  v.cx = v.W / 2;
+  v.base = 0.285 * Math.min(v.W, v.H) / 2.0;
+  const t = curT();
+  if (OPT.mode === "lattice") drawLattice(v, g);
+  else drawOrbitals(v, g, t);
+  /* 面板标题 */
+  const md = MODES.find(m => m.key === OPT.mode) || MODES[1];
+  g.font = "700 13px 'Segoe UI','Microsoft YaHei',sans-serif";
+  g.textAlign = "left"; g.textBaseline = "top";
+  g.fillStyle = OPT.mode === "lattice" ? "#2c3e50" : (t < 0.02 ? "#2c3e50" : "#7a4bbd");
+  g.fillText(md.tag, 10, 8);
+  mtxt(g, TX(orbSub(t)), 10 + g.measureText(md.tag).width + 12, 15, "#6b7a8c", 12, "left", false);
+  g.setTransform(1, 0, 0, 1, 0, 0);
+}
+function orbSub(t) {
+  if (OPT.mode === "lattice") return "石墨烯蜂窝晶格（10 个碳原子）";
+  if (t < 0.02) return "2<i>s</i>（球）+ 3 个 2<i>p</i>（哑铃）";
+  return "3 个等价 <i>sp</i><sup>2</sup>（共面 120°）+ 1 个垂直 2<i>p</i><sub><i>z</i></sub>";
+}
+
+/* 模式 ①②：单个碳原子的四套轨道 */
+function drawOrbitals(v, g, t) {
+  if (OPT.plane && t > 0.02) drawPlane(v, g, 2.85);
+  const quads = [], wires = [];
+  for (let j = 0; j < 4; j++) {
+    const st = orbState(j, t);
+    const off = orbOffset(st, j, t);
+    const lam = st.b < 1e-9 ? 1e6 : st.a / st.b;
+    pushLobe(v, quads, wires, st.n, st.R, lam, off, orbColor(j, t), OPT.alpha, NU, NV);
+  }
+  flushQuads(g, quads, wires);
+
+  /* 细点线：每个轨道都从同一个原子核出发（错开陈列只是为了看清形状） */
+  g.save();
+  g.strokeStyle = "rgba(90,104,120,0.45)";
+  g.lineWidth = 1;
+  g.setLineDash([2, 3]);
+  const O = proj(v, [0, 0, 0]);
+  for (let j = 0; j < 4; j++) {
+    const st = orbState(j, t), off = orbOffset(st, j, t);
+    if (len3(off) < 1e-6) continue;
+    const P = proj(v, off);
+    g.beginPath(); g.moveTo(O.x, O.y); g.lineTo(P.x, P.y); g.stroke();
+  }
+  /* 平面三角形辅助线（杂化后） */
+  if (t > 0.02) {
+    g.strokeStyle = "rgba(90,104,120,0.55)";
+    g.lineWidth = 1.1;
+    g.setLineDash([5, 4]);
+    const tips = [];
+    for (let j = 0; j < 3; j++) {
+      const st = orbState(j, t);
+      tips.push(proj(v, add3(orbOffset(st, j, t), mul3(st.n, st.R * 1.18))));
+    }
+    for (let i = 0; i < 3; i++) {
+      const k = (i + 1) % 3;
+      g.beginPath(); g.moveTo(tips[i].x, tips[i].y); g.lineTo(tips[k].x, tips[k].y); g.stroke();
+    }
+  }
+  g.restore();
+
+  /* 直角标记：2p_z 与杂化平面垂直（只在完全杂化时画，过渡态下这个关系还没建立） */
+  if (t > 0.98) {
+    const q = 0.30;
+    const A1 = proj(v, mul3(TRI[0], q));
+    const A2 = proj(v, add3(mul3(TRI[0], q), [0, 0, q]));
+    const A3 = proj(v, [0, 0, q]);
+    g.save();
+    g.strokeStyle = "rgba(44,62,80,0.72)";
+    g.lineWidth = 1.5;
+    g.beginPath();
+    g.moveTo(A1.x, A1.y); g.lineTo(A2.x, A2.y); g.lineTo(A3.x, A3.y);
+    g.stroke();
+    g.restore();
+  }
+
+  if (OPT.ang) {
+    const s1 = orbState(1, t), s2 = orbState(2, t);
+    const raw = Math.acos(clamp(dot3(s1.n, s2.n), -1, 1)) / RAD;
+    drawAngle(v, g, s1.n, s2.n, Math.round(raw * 100) / 100, t);
+  }
+  for (let j = 0; j < 4; j++) {
+    const st = orbState(j, t);
+    const P = proj(v, add3(orbOffset(st, j, t), mul3(st.n, st.R * 1.62)));
+    labelM(g, orbLabelH(j, t), P.x, P.y, mixHex(orbColor(j, t), "#33404d", 0.35), 12);
+  }
+  /* 悬停气泡 */
+  if (HOVER >= 0) {
+    const st = orbState(HOVER, t);
+    const P = proj(v, add3(orbOffset(st, HOVER, t), mul3(st.n, st.R * 1.0)));
+    tip(g, v.W, v.H, P.x + 12, P.y - 10, [
+      TX(orbLabelH(HOVER, t)).concat([{ s: "　s 成分 " + Math.round(st.sChar * 100) + "%" }]),
+      "轨道能 " + fmt(orbEnergy(CARBON, st), 2) + " eV",
+      "占据 " + fmt(occupancy(HOVER, t), 2) + " 个电子"
+    ]);
+  }
+}
+
+/* 2D 凸包（单调链），返回顶点的原索引。
+   π 云轮廓必须按凸包顺序闭合：按原子数组顺序连线会自交，轮廓就"不规则"。 */
+function hull2(pts) {
+  const P = pts.map((p, i) => ({ x: p.x, y: p.y, i })).sort((a, b) => (a.x - b.x) || (a.y - b.y));
+  const cr = (o, a, b) => (a.x - o.x) * (b.y - o.y) - (a.y - o.y) * (b.x - o.x);
+  const lo = [], up = [];
+  for (const p of P) { while (lo.length >= 2 && cr(lo[lo.length - 2], lo[lo.length - 1], p) <= 0) lo.pop(); lo.push(p); }
+  for (let k = P.length - 1; k >= 0; k--) {
+    const p = P[k];
+    while (up.length >= 2 && cr(up[up.length - 2], up[up.length - 1], p) <= 0) up.pop(); up.push(p);
+  }
+  lo.pop(); up.pop();
+  return lo.concat(up).map(p => p.i);
+}
+
+/* 模式 ③：石墨烯蜂窝晶格 + σ 骨架 + π 电子云 */
+function drawLattice(v, g) {
+  const S = LATSCALE;
+  if (OPT.plane) drawPlane(v, g, 3.05);
+  const scr = [], zs = [];
+  for (let i = 0; i < LAT.atoms.length; i++) {
+    const p = [LAT.atoms[i][0] * S, LAT.atoms[i][1] * S, 0];
+    scr.push(proj(v, p));
+    zs.push(rot(v, p)[2]);
+  }
+  /* σ 键（平面内的粗线） */
+  g.save();
+  g.strokeStyle = "rgba(108,122,138,0.9)";
+  g.lineWidth = Math.max(2.5, 0.12 * v.zoom * v.base);
+  for (const b of LAT.bonds) {
+    const A = scr[b[0]], B = scr[b[1]];
+    g.beginPath(); g.moveTo(A.x, A.y); g.lineTo(B.x, B.y); g.stroke();
+  }
+  g.restore();
+
+  /* π 电子云：两片包住整个晶格的淡云（示意非局域），外加逐原子的一对瓣。
+     统一规则：① 云轮廓走凸包顺序（按原子数组顺序连线会自交）；
+               ② 每对瓣的长轴沿屏幕上的 z 方向（原先角度恒为 0，换视角两瓣就歪开）；
+               ③ 轮廓覆盖全部原子，与瓣的覆盖范围一致，不再只包最外圈。 */
+  if (OPT.piCloud) {
+    const rB = 0.52 * v.zoom * v.base;
+    const hullId = hull2(scr);
+    /* 轮廓沿径向外扩一个瓣半径：瓣中心正好落在凸包顶点上，不外扩就会探出云外 */
+    let cx0 = 0, cy0 = 0;
+    for (const p of scr) { cx0 += p.x; cy0 += p.y; }
+    cx0 /= scr.length; cy0 /= scr.length;
+    const out = (P) => {
+      const dx = P.x - cx0, dy = P.y - cy0, L = Math.hypot(dx, dy) || 1;
+      return { x: P.x + dx / L * rB * 0.95, y: P.y + dy / L * rB * 0.95 };
+    };
+    for (const sgn of [1, -1]) {
+      const pts = hullId.map(i => out(proj(v, [LAT.atoms[i][0] * S, LAT.atoms[i][1] * S, sgn * PI_H])));
+      g.save();
+      g.fillStyle = sgn > 0 ? "rgba(239,140,26,0.10)" : "rgba(142,91,208,0.10)";
+      g.strokeStyle = sgn > 0 ? "rgba(239,140,26,0.35)" : "rgba(142,91,208,0.35)";
+      g.lineWidth = 1;
+      g.setLineDash([4, 3]);
+      g.beginPath();
+      for (let i = 0; i < pts.length; i++) {
+        if (i === 0) g.moveTo(pts[i].x, pts[i].y); else g.lineTo(pts[i].x, pts[i].y);
+      }
+      g.closePath(); g.fill(); g.stroke();
+      g.restore();
+    }
+    /* 屏幕上 z 轴的方向：同一根法线上下两点的投影之差。
+       视线几乎沿 z 轴时这个差趋于零，方向没有意义，退回竖直。 */
+    const zTop = proj(v, [0, 0, PI_H]), zBot = proj(v, [0, 0, -PI_H]);
+    const zdx = zTop.x - zBot.x, zdy = zTop.y - zBot.y;
+    const zAng = Math.hypot(zdx, zdy) > 2 ? Math.atan2(zdy, zdx) : -Math.PI / 2;
+    const piOrder = LAT.atoms.map((a, i) => i).sort((p, q) => zs[q] - zs[p]);
+    for (const i of piOrder) {
+      const ax = LAT.atoms[i][0] * S, ay = LAT.atoms[i][1] * S;
+      for (const sgn of [1, -1]) {
+        const P = proj(v, [ax, ay, sgn * PI_H]);
+        g.save();
+        g.fillStyle = sgn > 0 ? "rgba(239,140,26,0.34)" : "rgba(142,91,208,0.34)";
+        g.strokeStyle = sgn > 0 ? "rgba(214,110,10,0.55)" : "rgba(112,66,180,0.55)";
+        g.lineWidth = 1;
+        g.beginPath();
+        /* 长半轴（1.05）沿 z 方向：ellipse 的 rotation 转的是 x 轴，所以减 90° */
+        g.ellipse(P.x, P.y, rB * 0.78, rB * 1.05, zAng - Math.PI / 2, 0, 2 * Math.PI);
+        g.fill(); g.stroke();
+        g.restore();
+      }
+    }
+  }
+
+  /* 碳原子（按深度排序；中心原子染蓝以突出「每个碳都与 3 个近邻成键」） */
+  const cIdx = LAT.atoms.findIndex(a => Math.abs(a[0]) < 1e-9 && Math.abs(a[1]) < 1e-9);
+  const rA = Math.max(5, 0.20 * v.zoom * v.base);
+  const order = LAT.atoms.map((a, i) => i).sort((p, q) => zs[q] - zs[p]);
+  for (const i of order) {
+    const P = scr[i];
+    const gr = g.createRadialGradient(P.x - rA * 0.35, P.y - rA * 0.4, rA * 0.15, P.x, P.y, rA);
+    gr.addColorStop(0, "#b6c0cb");
+    gr.addColorStop(1, i === cIdx ? "#2f6fb5" : "#5f6d7d");
+    g.fillStyle = gr;
+    g.beginPath(); g.arc(P.x, P.y, rA, 0, 2 * Math.PI); g.fill();
+  }
+  /* 标注：只保留 π 云的说明。原先这里还给 σ 骨架配了一行文字标签，但它的位置、
+     根数与取向图上已经画得清清楚楚（每原子 3 根、全部躺在平面内），
+     再写一遍属于「图上读得到的信息」，删掉。 */
+  if (OPT.piCloud) {
+    const top = proj(v, [0, 0, PI_H + 0.45]);
+    label(g, "π 电子云（平面上下对称，非局域）", top.x - 12, top.y - 8, "#8a5a12", true);
+  }
+}
+
+function drawAngle(v, g, n1, n2, angDeg, t) {
+  const r = 0.95;
+  const pts = [];
+  const N = 16;
+  for (let i = 0; i <= N; i++) pts.push(proj(v, mul3(norm3(slerp(n1, n2, i / N)), r)));
+  const Pb = proj(v, mul3(norm3(add3(n1, n2)), r * 1.52));
+  g.save();
+  const O = proj(v, [0, 0, 0]);
+  g.strokeStyle = "rgba(44,62,80,0.40)";
+  g.lineWidth = 1;
+  g.setLineDash([4, 3]);
+  for (const n of [n1, n2]) {
+    const P = proj(v, mul3(n, EXPLODE * 0.92));
+    g.beginPath(); g.moveTo(O.x, O.y); g.lineTo(P.x, P.y); g.stroke();
+  }
+  g.setLineDash([]);
+  g.strokeStyle = "rgba(44,62,80,0.85)";
+  g.lineWidth = 3.2;
+  g.beginPath();
+  g.moveTo(pts[0].x, pts[0].y);
+  for (let i = 1; i <= N; i++) g.lineTo(pts[i].x, pts[i].y);
+  g.stroke();
+  g.strokeStyle = "rgba(255,255,255,0.85)"; g.lineWidth = 1.2;
+  g.stroke();
+  const near = (x, y) => Math.abs(x - y) < 0.15;
+  const txt = near(angDeg, 120) ? "120°" : (near(angDeg, 90) ? "90°" : fmt(angDeg, 2) + "°");
+  label(g, txt, Pb.x, Pb.y, "#1b2a38", false);
+  void t;
+  g.restore();
+}
+function label(g, txt, x, y, col, small) {
+  g.font = (small ? "600 12px" : "700 13px") + " 'Segoe UI','Microsoft YaHei',sans-serif";
+  g.textAlign = "left"; g.textBaseline = "middle";
+  g.lineWidth = 3.4; g.strokeStyle = "rgba(255,255,255,0.92)";
+  g.strokeText(txt, x, y);
+  g.fillStyle = col; g.fillText(txt, x, y);
+}
+/* 带上下标的画布标签：HTML 串 → TX() → 描白边后填色 */
+function labelM(g, html, x, y, col, fp) {
+  mtxtHalo(g, TX(html), x, y, col, fp || 12, "left", false);
+}
+/* 气泡：每一条可以是普通字符串，也可以是 TX() 出来的 parts（带上下标） */
+function tip(g, W, H, x, y, lines) {
+  g.font = "12px 'Segoe UI','Microsoft YaHei',sans-serif";
+  const wOf = (L) => Array.isArray(L) ? mMeasure(g, L, 12, false) : g.measureText(L).width;
+  let w = 0;
+  for (const s of lines) w = Math.max(w, wOf(s));
+  const bw = w + 16, bh = lines.length * 17 + 10;
+  let bx = x, by = y;
+  if (bx + bw > W - 6) bx = W - 6 - bw;
+  if (by + bh > H - 6) by = H - 6 - bh;
+  if (bx < 4) bx = 4;
+  if (by < 4) by = 4;
+  g.fillStyle = "rgba(255,255,255,0.96)";
+  g.strokeStyle = "#c9d4e0"; g.lineWidth = 1;
+  g.beginPath();
+  if (g.roundRect) g.roundRect(bx, by, bw, bh, 6); else g.rect(bx, by, bw, bh);
+  g.fill(); g.stroke();
+  g.textAlign = "left"; g.textBaseline = "middle";
+  for (let i = 0; i < lines.length; i++) {
+    const L = lines[i];
+    if (Array.isArray(L)) mtxt(g, L, bx + 8, by + 13 + i * 17, "#2c3e50", 12, "left", false);
+    else { g.fillStyle = "#2c3e50"; g.fillText(L, bx + 8, by + 13 + i * 17); }
+  }
+}
+
+/* ==================================================================
+   4. 模块二：轨道能级与成键能级图
+   ================================================================== */
+/* 竖直双箭头（与 sp³ 工具逐字节同款）：用来标两条能级之间的间距 */
+function arrowV(g, x, y0, y1, col) {
+  g.save();
+  g.strokeStyle = col; g.fillStyle = col; g.lineWidth = 1.1;
+  g.beginPath(); g.moveTo(x, y0); g.lineTo(x, y1); g.stroke();
+  g.beginPath(); g.moveTo(x - 3, y0 + 4); g.lineTo(x + 3, y0 + 4); g.lineTo(x, y0 - 2); g.closePath(); g.fill();
+  g.beginPath(); g.moveTo(x - 3, y1 - 4); g.lineTo(x + 3, y1 - 4); g.lineTo(x, y1 + 2); g.closePath(); g.fill();
+  g.restore();
+}
+/* 画布上的能量数值：负号一律用排版负号 U+2212，且不重复写单位（单位归轴标题）。
+   sp² 与 sp³ 两个工具共用这一个写法，避免同一张图里出现两种负号形状。 */
+function evNum(E, n) {
+  const neg = Math.abs(E) >= 5e-3 && E < 0;
+  return (neg ? "−" : "") + fmt(Math.abs(E), n === undefined ? 2 : n);
+}
+const EC = { W: 600, H: 330, dpr: 1, g: null, canvas: null };
+function drawEn() {
+  const g = EC.g;
+  if (!g) return;
+  const W = EC.W, H = EC.H, d = derived(), C = CARBON;
+  g.setTransform(EC.dpr, 0, 0, EC.dpr, 0, 0);
+  g.clearRect(0, 0, W, H);
+  g.fillStyle = "#fbfcfe";
+  g.fillRect(0, 0, W, H);
+
+  /* T 由 30 抬到 46：让位给顶部两行栏标题（与 sp³ 同款，原方案把标题搁在底部）。
+     B 由 34 收到 22：底部那两行标题已搬到顶部，不必再留两行的空位。 */
+  const L = 74, R = 14, T = 46, B = 22;
+  const Emin = -21.6, Emax = -1.0;
+  const yOf = (E) => T + (Emax - E) / (Emax - Emin) * (H - T - B);
+  const nCol = 4;
+  const pw = (W - L - R) / nCol;
+  const xs = [];
+  for (let i = 0; i < nCol; i++) xs.push(L + pw * (i + 0.5));
+
+  /* 能量刻度：与 sp³ 同一口径 —— 左侧画一根竖直轴线，刻度不带单位（单位交给轴标题） */
+  g.font = "11px 'Segoe UI','Microsoft YaHei',sans-serif";
+  g.strokeStyle = "#d6dee7"; g.lineWidth = 1;
+  g.beginPath(); g.moveTo(L - 8, T - 6); g.lineTo(L - 8, H - B + 4); g.stroke();
+  g.textAlign = "right"; g.textBaseline = "middle";
+  for (let E = -21; E <= -2; E += 3) {
+    const y = yOf(E);
+    g.strokeStyle = "#eef2f7"; g.lineWidth = 1;
+    g.beginPath(); g.moveTo(L - 8, y); g.lineTo(W - R, y); g.stroke();
+    g.fillStyle = "#9aa5b1";
+    g.fillText(evNum(E, 1), L - 12, y);
+  }
+  g.save();
+  g.translate(15, (T + H - B) / 2);
+  g.rotate(-Math.PI / 2);
+  g.textAlign = "center"; g.fillStyle = "#6b7a8c";
+  g.font = "600 11.5px 'Segoe UI','Microsoft YaHei',sans-serif";
+  g.fillText("能量 E (eV，真空为零)", 0, 0);
+  g.restore();
+
+  const lw = Math.min(62, pw * 0.55);
+  const drawLevel = (x, E, col, lab, occ) => {
+    const y = yOf(E);
+    g.strokeStyle = col; g.lineWidth = 3.2;
+    g.beginPath(); g.moveTo(x - lw / 2, y); g.lineTo(x + lw / 2, y); g.stroke();
+    /* 名称落在左端外侧、eV 值落在右端外侧 —— 与 sp³ 工具同一口径：
+       两条能级挨得近时名称与数值各占一侧，互不挤压，也不再用「名称下换行」这种第二行。 */
+    mtxt(g, TX(lab), x - lw / 2 - 6, y, col, 12, "right", true);
+    g.font = "11px 'Segoe UI','Microsoft YaHei',sans-serif";
+    g.textAlign = "left"; g.textBaseline = "middle";
+    g.fillStyle = "#6b7a8c";
+    g.fillText(evNum(E, 2), x + lw / 2 + 5, y);
+    drawOcc(g, x, y - 9, occ);
+    return y;
+  };
+
+  /* ---- ① 基态 ---- */
+  const y2s = drawLevel(xs[0], C.Es, COL0[0], "2<i>s</i>", 2);
+  /* 「三重简并」从名称里摘出来放到线下小字 —— 名称一长，左端外侧那点地方就要顶到纵轴了 */
+  const y2p = drawLevel(xs[0], C.Ep, COL0[1], "2<i>p</i>", 2);
+  g.font = "600 10px 'Segoe UI','Microsoft YaHei',sans-serif";
+  g.fillStyle = "#6b7a8c";
+  g.textAlign = "center"; g.textBaseline = "top";
+  g.fillText("三重简并（洪特规则）", xs[0], y2p + 13);
+  /* ΔE_sp 双箭头从左侧挪到右侧：左边那点位置已经让给能级名称了。
+     箭头要再往右越过 eV 值（"−19.38" 这类串比 sp³ 的 ASCII 负号宽，
+     贴线画竖线会正好压住首位数字），标签跟随箭头。 */
+  arrowV(g, xs[0] + lw / 2 + 52, y2s, y2p, "#8b97a6");
+  g.font = "600 11px 'Segoe UI','Microsoft YaHei',sans-serif";
+  g.fillStyle = "#6b7a8c";
+  g.textAlign = "left"; g.textBaseline = "middle";
+  g.fillText("ΔE_sp " + fmt(d.dEsp, 2), xs[0] + lw / 2 + 57, (y2s + y2p) / 2);
+
+  /* ---- ② sp² 杂化 ---- */
+  const ysp2 = drawLevel(xs[1], d.Esp2, COL_HYB, "3 × <i>sp</i><sup>2</sup>", 3);
+  const ypz = drawLevel(xs[1], C.Ep, COL0[3], "2<i>p</i><sub><i>z</i></sub>", 1);
+  /* 这里原先画过一根 2s → sp² 的红色箭头，标的是每原子的光谱促进能；
+     但箭头两端落在单电子轨道能级上，跨度是轨道能抬升，两个数口径不同 ——
+     图与数对不上，删掉。促进能的落点在读数面板的能量收支链里。 */
+  void ysp2; void ypz;
+
+  /* ---- ③ σ 成键 ---- */
+  /* σ 成键色改 COL_SP3（= #0f9b8e），与 sp³ 工具的 σ 键同一支色 */
+  const ysig = drawLevel(xs[2], d.Esig, COL_SP3, "<i>σ</i>", 2);
+  const ysigS = drawLevel(xs[2], d.EsigStar, "#9aa5b1", "<i>σ</i>*", 0);
+  /* σ* 空着，标上「空」以免被误读成已占据（与 sp³ 同款） */
+  g.font = "600 10.5px 'Segoe UI','Microsoft YaHei',sans-serif";
+  g.fillStyle = "#a8b2bd";
+  g.textAlign = "center"; g.textBaseline = "middle";
+  g.fillText("空", xs[2], ysigS - 8);
+  g.save();
+  g.strokeStyle = "#c3ccd6"; g.lineWidth = 1; g.setLineDash([3, 3]);
+  g.beginPath(); g.moveTo(xs[1] + lw / 2 + 2, ysp2); g.lineTo(xs[2] - lw / 2 - 2, ysig); g.stroke();
+  g.beginPath(); g.moveTo(xs[1] + lw / 2 + 2, ysp2); g.lineTo(xs[2] - lw / 2 - 2, ysigS); g.stroke();
+  g.restore();
+  g.font = "10.5px 'Segoe UI','Microsoft YaHei',sans-serif";
+  g.textAlign = "center"; g.textBaseline = "middle";
+  /* σ–σ* 间距用 sp³ 同款「2V」箭头口径（2V = D_σ，读数面板「σ 单键键能」就是它）。
+     箭头两端各缩进 12 px：端点若落在能级线上，正好压住右外侧 eV 值的首位数字
+     （sp³ 基线里 −11.58 被压成 1.58 就是这个原因，两工具一并修掉）。
+     标签放箭头左侧：右侧紧贴 ④ 栏分隔线，放不下。 */
+  arrowV(g, xs[2] + lw / 2 + 14, ysig - 12, ysigS + 12, "#8b97a6");
+  g.font = "600 11px 'Segoe UI','Microsoft YaHei',sans-serif";
+  g.fillStyle = "#6b7a8c";
+  g.textAlign = "right"; g.textBaseline = "middle";
+  g.fillText("2V " + fmt(2 * d.Vsig, 2), xs[2] + lw / 2 + 9, (ysig + ysigS) / 2);
+  /* σ 成键轨道被 2 个电子填满 ⇒ 单个 σ 键的键级 = 1（sp³ 工具也是这一行小字） */
+  g.font = "600 10.5px 'Segoe UI','Microsoft YaHei',sans-serif";
+  g.fillStyle = COL_SP3;
+  g.textBaseline = "top";
+  g.fillText("σ 满 2e（键级 1）", xs[2], ysig + 13);
+
+  /* ---- ④ π 能带（狄拉克锥） ---- */
+  const yD = yOf(C.Ep);
+  const half = Math.min(pw * 0.34, 40);
+  const coneH = (d.bw) / (Emax - Emin) * (H - T - B);
+  g.save();
+  /* π 带：向下张开；π* 带：向上张开；在狄拉克点相接 */
+  for (const sgn of [1, -1]) {
+    /* sgn = +1 → 下方的 π 带（占据）；sgn = −1 → 上方的 π* 带（空） */
+    const occ = sgn > 0;
+    g.beginPath();
+    g.moveTo(xs[3], yD);
+    g.lineTo(xs[3] - half, yD + sgn * coneH);
+    g.lineTo(xs[3] + half, yD + sgn * coneH);
+    g.closePath();
+    g.fillStyle = occ ? "rgba(142,91,208,0.30)" : "rgba(239,140,26,0.22)";
+    g.fill();
+    g.strokeStyle = occ ? "#8e5bd0" : "#ef8c1a";
+    g.lineWidth = 1.6;
+    if (!occ) g.setLineDash([4, 3]);
+    g.stroke();
+    g.setLineDash([]);
+  }
+  g.beginPath(); g.arc(xs[3], yD, 4.2, 0, 2 * Math.PI);
+  g.fillStyle = "#d94a3d"; g.fill();
+  g.strokeStyle = "#fff"; g.lineWidth = 1.4; g.stroke();
+  g.restore();
+  mtxt(g, TX("<i>π</i> 带"), xs[3] - half - 12, yD + coneH * 0.55, "#8e5bd0", 11, "right", true);
+  mtxt(g, TX("<i>π</i>* 带"), xs[3] - half - 12, yD - coneH * 0.55, "#ef8c1a", 11, "right", true);
+  g.font = "600 10.5px 'Segoe UI','Microsoft YaHei',sans-serif";
+  g.fillStyle = "#d94a3d";
+  g.textAlign = "left"; g.textBaseline = "middle";
+  g.fillText("零带隙", xs[3] + half + 6, yD - 9);
+
+  /* 栏标题：由底部挪到顶部两行（主标题 + 副标题），与 sp³ 工具同一版式。
+     ② 栏副标题放杂化轨道能的构成式 —— 原先那行「3 × sp² + 2p_z」与图上两条
+     能级的名称一字不差（纯重复），换成公式才有信息增量；② 栏比 sp³ 多一条
+     2p_z 线，线下没有空位，公式搁在线旁会跟引导虚线与 eV 值挤在一团。 */
+  const names = [
+    ["① 基态原子", "2<i>s</i><sup>2</sup> 2<i>p</i><sup>2</sup>"],
+    ["② sp² 杂化", "E = (E_2s + 2E_2p)/3"],
+    ["③ σ 成键", "每原子 1.5 个键"],
+    ["④ π 能带 / 狄拉克点"]
+  ];
+  for (let i = 0; i < nCol; i++) {
+    mtxt(g, TX(names[i][0]), xs[i], T - 28, "#2c3e50", 12.5, "center", true);
+    if (names[i].length > 1) mtxt(g, TX(names[i][1]), xs[i], T - 12, "#6b7a8c", 11, "center", false);
+  }
+  g.setTransform(1, 0, 0, 1, 0, 0);
+}
+/* 能级图上的电子：与 sp³ 工具完全同一套画法（黄色渐变小球），
+   两个工具里的电子必须是同一种东西。 */
+function drawOcc(g, x, y, n) {
+  if (n <= 0) return;
+  g.save();
+  const r = 3.0, gap = 7.5;
+  const x0 = x - (n - 1) * gap / 2;
+  for (let i = 0; i < n; i++) {
+    const cx = x0 + i * gap;
+    const gr = g.createRadialGradient(cx - r * 0.35, y - r * 0.4, r * 0.1, cx, y, r);
+    gr.addColorStop(0, "#ffe89a"); gr.addColorStop(1, "#e0a800");
+    g.fillStyle = gr;
+    g.beginPath(); g.arc(cx, y, r, 0, 2 * Math.PI); g.fill();
+    g.strokeStyle = "rgba(120,90,0,0.55)"; g.lineWidth = 0.8; g.stroke();
+  }
+  g.restore();
+}
+/* ==================================================================
+   5. 模块三：sp² 与 sp³ 对比（同步旋转）
+   ================================================================== */
+const CC = { W: 600, H: 270, dpr: 1, g: null, canvas: null };
+function drawCmp() {
+  const g = CC.g;
+  if (!g) return;
+  const W = CC.W, H = CC.H;
+  g.setTransform(CC.dpr, 0, 0, CC.dpr, 0, 0);
+  g.clearRect(0, 0, W, H);
+  g.fillStyle = "#fbfcfe";
+  g.fillRect(0, 0, W, H);
+  /* 上半幅画三维、下半幅放三行对比；把 v.H 设成「2 × 图心纵坐标」即可让 proj 用这个中心 */
+  const cy = 96;
+  const v = { yaw: V3.yaw, pitch: V3.pitch, zoom: 1, panX: 0, panY: 0,
+    W: W, H: 2 * cy, base: 0.33 * Math.min(W / 2, 2 * cy) / 2.0, cx: W / 4 };
+  const OFF = 1.36;
+  const panels = [
+    { cx: W / 4, items: TETRA.map(n => ({ n: n, col: COL_SP3, R: 0.92 })), tet: true },
+    { cx: 3 * W / 4, items: TRI.map(n => ({ n: n, col: COL_HYB, R: 0.92 }))
+      .concat([{ n: [0, 0, 1], col: COL0[3], R: 0.72, pureP: true }]), tet: false }
+  ];
+  for (const p of panels) {
+    v.cx = p.cx;
+    const quads = [], wires = [];
+    for (const it of p.items) {
+      const off = mul3(it.n, OFF);
+      const lam = it.pureP ? 0 : (it.col === COL_SP3 ? 1 / Math.sqrt(3) : LAM2);
+      pushLobe(v, quads, wires, it.n, it.R, lam, off, it.col, 0.76, NU2, NV2);
+    }
+    flushQuads(g, quads, wires);
+    /* 辅助线：sp³ 画四面体六条棱，sp² 画平面三角形三条边 */
+    g.save();
+    g.strokeStyle = "rgba(90,104,120,0.5)";
+    g.lineWidth = 1.1;
+    g.setLineDash([5, 4]);
+    const tips = p.items.map(it => proj(v, add3(mul3(it.n, OFF), mul3(it.n, it.R * 1.2))));
+    const nT = p.tet ? 4 : 3;
+    for (let i = 0; i < nT; i++) {
+      for (let k = i + 1; k < nT; k++) {
+        g.beginPath(); g.moveTo(tips[i].x, tips[i].y); g.lineTo(tips[k].x, tips[k].y); g.stroke();
+      }
+    }
+    g.restore();
+  }
+  /* 标题 */
+  g.font = "700 12.5px 'Segoe UI','Microsoft YaHei',sans-serif";
+  g.textAlign = "center"; g.textBaseline = "top";
+  g.fillStyle = COL_SP3;
+  g.fillText("sp³ 杂化（金刚石）", W / 4, 8);
+  g.fillStyle = COL_HYB;
+  g.fillText("sp² 杂化（石墨烯）", 3 * W / 4, 8);
+  /* 三行对比（左标签 + 两侧取值，逐行对齐便于扫读） */
+  const rows = [
+    ["键角", "109°28′", "120°"],
+    ["杂化轨道数", "4", "3"],
+    ["未杂化 p 轨道", "0", "1（垂直于平面）"]
+  ];
+  const y0 = H - 3 * 21 - 6;
+  g.font = "11.5px 'Segoe UI','Microsoft YaHei',sans-serif";
+  for (let i = 0; i < rows.length; i++) {
+    const y = y0 + i * 21 + 10;
+    g.textBaseline = "middle";
+    g.textAlign = "left"; g.fillStyle = "#6b7a8c";
+    g.fillText(rows[i][0], 14, y);
+    g.textAlign = "center"; g.fillStyle = "#48586a";
+    g.fillText(rows[i][1], W / 4, y);
+    g.fillText(rows[i][2], 3 * W / 4, y);
+  }
+  g.save();
+  g.strokeStyle = "#dde4ec"; g.lineWidth = 1;
+  g.beginPath(); g.moveTo(W / 2, 6); g.lineTo(W / 2, H - 6); g.stroke();
+  g.restore();
+  g.setTransform(1, 0, 0, 1, 0, 0);
+}
+
+/* ==================================================================
+   6. 面板
+   ================================================================== */
+function buildModeBtns() {
+  const box = $("modeBtns");
+  box.innerHTML = "";
+  const names = { ground: "① 基态", hybrid: "② sp² 杂化", lattice: "③ 晶格与 π 云" };
+  for (const m of MODES) {
+    const b = document.createElement("button");
+    b.textContent = names[m.key];
+    b.className = OPT.mode === m.key ? "sel" : "";
+    b.onclick = () => {
+      OPT.mode = m.key;
+      buildModeBtns(); syncInputs(); requestDraw();
+    };
+    box.appendChild(b);
+  }
+}
+function buildCkBtns() {
+  const box = $("ckBtns");
+  box.innerHTML = "";
+  const items = [
+    ["ang", "键角标注"], ["plane", "xy 平面"], ["piCloud", "π 电子云"]
+  ];
+  for (const it of items) {
+    const b = document.createElement("button");
+    b.textContent = it[1];
+    b.className = OPT[it[0]] ? "sel" : "";
+    b.onclick = () => { OPT[it[0]] = !OPT[it[0]]; buildCkBtns(); requestDraw(); };
+    box.appendChild(b);
+  }
+}
+function buildLegend() {
+  const items = [
+    [COL0[0], "dot", "2s（球对称）"],
+    [COL0[1], "dot", "<span class='m'>2p<sub><i>x</i></sub></span>"],
+    [COL0[2], "dot", "<span class='m'>2p<sub><i>y</i></sub></span>"],
+    [COL0[3], "dot", "<span class='m'>2p<sub><i>z</i></sub></span>（未杂化，垂直于平面）"],
+    [COL_HYB, "dot", "sp² 杂化轨道（3 个等价，共面 120°）"],
+    [COL_SP3, "dot", "sp³ 杂化轨道（仅模块三出现）"],
+    ["#8b97a6", "dash", "辅助线 / 相位反号的小瓣（示意，已夸大）"]
+  ];
+  $("legend").innerHTML = items.map(it =>
+    '<span><i class="swatch ' + it[1] + '" style="color:' + it[0] + '"></i>' + it[2] + '</span>'
+  ).join("");
+}
+function kv(rows) {
+  return rows.map(r => r[0] === "#"
+    ? '<div class="hd">' + r[1] + '</div>'
+    : '<div class="k">' + r[0] + '</div><div class="v">' + r[1] + '</div>').join("");
+}
+const M = (s) => '<span class="m">' + s + '</span>';
+
+function updatePanels() {
+  const C = CARBON, d = derived(), t = curT();
+  const modeName = OPT.mode === "ground" ? "基态碳原子"
+    : (OPT.mode === "lattice" ? "石墨烯晶格（σ 骨架 + π 电子云）"
+      : "sp² 杂化完成");
+  $("readout").innerHTML = kv([
+    ["#", "当前状态"],
+    ["模式", modeName],
+    ["杂化类型", t > 0.98 ? "sp<sup>2</sup>（s 成分 1/3，p 成分 2/3）" : (t < 0.02 ? "未杂化" : "sp<sup>2</sup> 过渡态")],
+    ["参与杂化的轨道", "2s + <span class='m'>2p<sub><i>x</i></sub></span> + <span class='m'>2p<sub><i>y</i></sub></span>"],
+    ["杂化轨道数 / 键角", "3 个　·　" + fmt(angleNow(), 2) + "°　<i style=\"color:#8b97a6;font-style:normal\">= arccos(−1/2) = 120°（完全杂化时）</i>"],
+    ["未杂化轨道", "<span class='m'>2p<sub><i>z</i></sub></span>　·　垂直于杂化平面　·　1 个"],
+    ["未成对电子", unpairedCount(t) + " 个　<i style=\"color:#8b97a6;font-style:normal\">基态 2 → 杂化后 4</i>"],
+    ["π 电子（每原子）", "1 个　·　在整个平面非局域"]
+  ]);
+  $("readoutMore").innerHTML = kv([
+    ["#", "轨道能级（真空能级为零）"],
+    ["2s 轨道能", fmt(C.Es, 2) + " eV"],
+    ["2p 轨道能", fmt(C.Ep, 2) + " eV"],
+    ["s–p 能级差 " + M("Δ<i>E</i><sub>sp</sub>"), fmt(d.dEsp, 2) + " eV　<i style=\"color:#8b97a6;font-style:normal\">单电子轨道能差，不是光谱激发能</i>"],
+    ["sp² 轨道能", fmt(d.Esp2, 2) + " eV　<i style=\"color:#8b97a6;font-style:normal\">= (E<sub>2s</sub> + 2E<sub>2p</sub>)/3</i>"],
+    ["<span class='m'>2p<sub><i>z</i></sub></span> 轨道能", fmt(C.Ep, 2) + " eV　<i style=\"color:#8b97a6;font-style:normal\">未参与杂化，保持原子值</i>"],
+    ["#", "激发与成键（每原子）"],
+    ["激发/杂化代价", "+" + fmt(C.Epro, 2) + " eV　<i style=\"color:#8b97a6;font-style:normal\">NIST：2s²2p² ³P → 2s2p³ ⁵S°；与 sp³ 工具同一个数</i>"],
+    ["σ 单键键能 " + M("<i>D</i><sub>σ</sub>"), fmt(d.Dsig, 2) + " eV　<i style=\"color:#8b97a6;font-style:normal\">由内聚能恒等式反推，非独立测量</i>"],
+    ["σ 骨架贡献", fmt(SIGMA_PER_ATOM * d.Dsig, 2) + " eV　<i style=\"color:#8b97a6;font-style:normal\">每原子 3 个键、每键两人分摊 → 1.5 个</i>"],
+    ["π 非局域贡献", fmt(-d.Epi, 2) + " eV　<i style=\"color:#8b97a6;font-style:normal\">= t·⟨|f(k)|⟩，布里渊区数值积分</i>"],
+    ["净能量变化", "<b style=\"color:#1976d2\">−" + fmt(C.Ecoh, 2) + " eV</b>　<i style=\"color:#8b97a6;font-style:normal\">= −内聚能（记账恒等，不是独立验证）</i>"],
+    ["#", "π 能带（最近邻紧束缚，t = " + fmt(T_TB, 2) + " eV，本工具固定取值）"],
+    [M("⟨|<i>f</i>(<i>k</i>)|⟩") + "（数值积分）", fmt(d.fAvg, 4)],
+    ["π 带带宽 " + M("3<i>t</i>"), fmt(d.bw, 2) + " eV"],
+    [M("ħ<i>v</i><sub>F</sub> = 3<i>t</i><i>d</i>/2"), fmt(d.hvF, 2) + " eV·Å"],
+    ["费米速度 " + M("<i>v</i><sub>F</sub>"), fmt(d.vF / 1e6, 3) + " × 10<sup>6</sup> m/s"],
+    ["带隙", "0 eV　<i style=\"color:#8b97a6;font-style:normal\">π 与 π* 在狄拉克点相接</i>"],
+    ["#", "石墨烯几何"],
+    ["晶格常数 " + M("<i>a</i>"), C.aG.toFixed(2) + " Å"],
+    ["C–C 键长 " + M("<i>d</i>"), C.dCC.toFixed(3) + " Å　<i style=\"color:#8b97a6;font-style:normal\">= a/√3</i>"],
+    ["键角", "120°"],
+    ["σ 键数（每原子）", "3（每键两人分摊 → 1.5）"],
+    ["#", "与金刚石（sp³）对照"],
+    ["C–C 键长", C.dCC.toFixed(3) + " Å（石墨烯）　vs　" + C.dDia.toFixed(3) + " Å（金刚石）"],
+    ["单键键能", fmt(d.Dsig, 2) + " eV　vs　" + C.DbondDia.toFixed(2) + " eV"],
+    ["内聚能", fmt(C.Ecoh, 2) + " eV/原子　vs　" + C.EcohDia.toFixed(2) + " eV/原子"],
+    ["说明", "<i style=\"color:#8b97a6;font-style:normal\">石墨烯的键更短、s 成分更高（1/3 对 1/4），σ 键更强；两者的内聚能差不到 0.1 eV/原子，所以「石墨比金刚石稳定」是能量上非常接近的微弱差别</i>"]
+  ]);
+  $("wfBox").innerHTML = wfHTML();
+  buildLegend();
+}
+function angleNow() {
+  const t = curT();
+  const s1 = orbState(1, t), s2 = orbState(2, t);
+  return Math.acos(clamp(dot3(s1.n, s2.n), -1, 1)) / RAD;
+}
+/* 三个 sp² 杂化轨道的线性组合：与平面三角形三个顶点方向一一对应 */
+function wfHTML() {
+  const frac = (a, b) => '<span class="frac"><span class="num">' + a + '</span><span class="den">' + b + '</span></span>';
+  const S = "ψ<sub>2s</sub>";
+  const P = ["x", "y"].map(a => "ψ<sub>2p<sub>" + a + "</sub></sub>");
+  /* 三个轨道的 p 部分方向（单位向量）：(1,0)、(−½, √3/2)、(−½, −√3/2) */
+  const rows = [
+    [1, 0],
+    [-0.5, Math.sqrt(3) / 2],
+    [-0.5, -Math.sqrt(3) / 2]
+  ];
+  let html = "";
+  for (let i = 0; i < 3; i++) {
+    const sgnX = rows[i][0] > 0 ? 1 : -1, sgnY = rows[i][1] > 0 ? 1 : (rows[i][1] < 0 ? -1 : 0);
+    let expr = '<div class="m">ψ<sub>sp²(' + (i + 1) + ')</sub><span class="op">=</span>' +
+      frac(1, "√3") + S +
+      (sgnX > 0 ? ' <span class="op">+</span> ' : ' <span class="op">−</span> ') + frac(1, "√6") + P[0];
+    if (sgnY !== 0) {
+      expr += (sgnY > 0 ? ' <span class="op">+</span> ' : ' <span class="op">−</span> ') + frac(1, "√2") + P[1];
+    }
+    expr += '　<span style="color:#8b97a6">瓣轴 ∝ (' + fmt(rows[i][0], 2) + ', ' + fmt(rows[i][1], 2) + ', 0)</span></div>';
+    html += expr;
+  }
+  html += '<div class="m" style="color:#6b7a8c;margin-top:8px;font-size:12px">' +
+    '归一化 <i>a</i><sup>2</sup> <span class="op">+</span> <i>b</i><sup>2</sup> <span class="op">=</span> 1：' +
+    '<i>a</i> <span class="op">=</span> ' + frac(1, "√3") +
+    '（s 成分 33%）、<i>b</i> <span class="op">=</span> ' + frac("√2", "√3") +
+    ' <span class="op">=</span> 0.816（p 成分 67%）；三个轨道正交且等价，' +
+    '任意两个瓣轴夹角 120°。第四个价电子留在未杂化的 2<i>p</i><sub><i>z</i></sub> 上。</div>';
+  return html;
+}
+
+/* ==================================================================
+   7. 挑战任务（A 族：题干进标题行，点「看看答案」才显示）
+   ================================================================== */
+const CHAL = [
+  {
+    q: "切到「② sp² 杂化」，旋转三维视图：3 个 sp² 轨道在<b>同一个平面</b>内吗？它们之间的夹角是多少？剩下的 <span class='m'>2p<sub><i>z</i></sub></span> 指向哪里？",
+    a: () => {
+      const d = derived();
+      return "在<b>同一个平面</b>内：三个瓣轴分别是 (1, 0, 0)、(−½, √3/2, 0)、(−½, −√3/2, 0)，" +
+        "z 分量全为 0，所以它们严格共面 —— 这正是 sp² 与 sp³ 最直观的区别（sp³ 的四个瓣轴 z 分量都不为 0）。" +
+        "夹角是 <b>120°</b>：任意两个瓣轴的点积都是 −½，故夹角 = arccos(−½) = 120°。图上量得的当前值是 <b>" +
+        fmt(angleNow(), 2) + "°</b>（未完全杂化时会小于 120°）。" +
+        "剩下的 <span class='m'>2p<sub><i>z</i></sub></span> <b>垂直于这个平面</b>（沿 z 轴），它<b>不参与</b>杂化，保持哑铃形 —— " +
+        "因为它与参与杂化的 <span class='m'>2p<sub><i>x</i></sub></span>、<span class='m'>2p<sub><i>y</i></sub></span> 正交，不会被混进来。" +
+        "共面性不是巧合：三个单位向量之和为零时，两两夹角必然是 arccos(−½) = 120°，这是「三个等价方向」在二维平面里的唯一解。" +
+        "能级上也能看出来：三个 sp² 在 " + fmt(d.Esp2, 2) + " eV，<span class='m'>2p<sub><i>z</i></sub></span> 仍留在 " + fmt(CARBON.Ep, 2) + " eV。";
+    }
+  },
+  {
+    q: "切到「③ 晶格与 π 云」：每个碳原子与几个相邻碳原子形成 σ 键？这些 σ 键在同一个平面内吗？构成了什么形状的网格？",
+    a: () => "每个碳原子与 <b>3 个</b>相邻碳原子成 σ 键 —— 碳有 4 个价电子，其中 3 个在 sp² 轨道里，正好对应 3 个 σ 键；" +
+      "第 4 个电子在 <span class='m'>2p<sub><i>z</i></sub></span> 上，走的是 π 通道。σ 键是一个不剩地<b>躺在同一个平面内</b>的：" +
+      "石墨烯所有原子严格共面，整个晶体就是一个原子厚的平面。" +
+      "网格形状是<b>六角蜂窝（honeycomb）</b>：不是一整片三角形网格，而是由正六边形拼成的蜂窝，每个顶点坐一个碳原子，" +
+      "每个六边形有 6 个碳原子但每个原子被 3 个六边形共用。" +
+      "键长 " + CARBON.dCC.toFixed(3) + " Å，晶格常数 a = √3 × 键长 = " + CARBON.aG.toFixed(2) + " Å，键角 120° —— " +
+      "键角和 sp² 的轨道夹角完全一致，因为 σ 键就是 sp² 轨道「头碰头」重叠的方向。" +
+      "σ 键是三个方向里最强的一类共价键，石墨烯的力学强度（杨氏模量约 1 TPa）就是它给的。"
+  },
+  {
+    q: "观察 <span class='m'>2p<sub><i>z</i></sub></span> 轨道和 π 电子云：π 电子云在平面的<b>上方</b>还是<b>下方</b>？为什么 π 电子能非局域到整个平面，而 σ 电子不能？",
+    a: () => {
+      const d = derived();
+      return "<b>上、下都有，而且对称</b>：<span class='m'>2p<sub><i>z</i></sub></span> 是哑铃形，一个瓣在平面上方、一个在下方，" +
+        "所以 π 电子云是「平面上下各一片」的两层结构，平面上本身反而是节面（电子概率为零）。图上用橙色画上层、紫色画下层。" +
+        "为什么能非局域：每个碳的 <span class='m'>2p<sub><i>z</i></sub></span> 都<b>平行</b>且垂直于平面，相邻两个 <span class='m'>2p<sub><i>z</i></sub></span> 之间是「肩并肩」重叠，" +
+        "而且这种重叠可以向四面八方一直传递下去 —— 于是 π 电子不再属于某一对碳原子，而是属于<b>整个二维晶格</b>。" +
+        "本工具用最近邻紧束缚把它算出来：跃迁积分 t = " + fmt(T_TB, 2) + " eV，布里渊区数值积分给出 ⟨|f(k)|⟩ = " +
+        fmt(d.fAvg, 4) + "，π 带平均能量因此比孤立 <span class='m'>2p<sub><i>z</i></sub></span> 低了 <b>" + fmt(-d.Epi, 2) + " eV/原子</b> —— 这就是非局域带来的成键收益。" +
+        "σ 电子不能这样做：σ 键是「头碰头」的定域键，方向沿着两个原子核的连线，换一个方向就得换一对轨道，" +
+        "它是局域在两个原子之间的，不能像 π 那样在平面里横向铺开。这个分工的后果是：σ 骨架给强度，π 电子给导电性。"
+    }
+  },
+  {
+    q: "缺失的那根键：金刚石里每个碳原子有 4 根 σ 键，石墨烯里只有 3 根 —— 第 4 根键去哪了？对照模块三的对比表，先说清两边的键角与杂化轨道数，再回答：为什么 sp² 偏偏会留下一个未杂化的 p 轨道？",
+    a: () => {
+      const d = derived();
+      return "<b>先把两组数字摆出来。</b>" +
+        "sp³（金刚石）：键角 <b>" + angDM(TET_ANG) + "</b>（= arccos(−1/3) = " + fmt(TET_ANG, 2) + "°），<b>4 个</b>杂化轨道，" +
+        "四个方向全部用成 σ 键，<b>没有</b>剩余 p 轨道 —— 4 根键、每根被两个原子分摊，平均每原子 <b>2 根 σ 键</b>；" +
+        "石墨烯这边：键角 <b>120°</b>（= arccos(−1/2)），<b>3 个</b>杂化轨道，<b>留下 1 个</b>未杂化的 " +
+        "<span class='m'>2p<sub><i>z</i></sub></span> —— 3 根 σ 键、同样两人分摊，平均每原子只有 <b>1.5 根 σ 键</b>。" +
+        "<b>那第 4 根键去哪了？它压根没长成 σ 键。</b>杂化只能把 2s 与「被选中的 p 轨道」组合：sp² 选了 " +
+        "<span class='m'>2p<sub><i>x</i></sub></span> 与 <span class='m'>2p<sub><i>y</i></sub></span>（两个 p 加一个 s，正好 3 个等价轨道，" +
+        "自然摊在同一个平面里），与这两者正交的 <span class='m'>2p<sub><i>z</i></sub></span> <b>数学上混不进这三个轨道</b>，" +
+        "第 4 个价电子连同它一起被留在 σ 骨架之外，只能悬在平面的上下两侧、非局域地参加 π 成键。" +
+        "一句话：<b>每个碳少了一个 σ 成键方向，换来一条 π 通道</b> —— 缺席的那根键没有消失，它只是换了形式。" +
+        "sp³ 则把三个 p 全选上（1 + 3 = 4），四个方向全投向正四面体的四个顶点，所以金刚石这边<b>没有</b>这种「缺席的键」。" +
+        "想再核一步可以看能量：石墨烯的内聚能是 " + fmt(CARBON.Ecoh, 2) + " eV/原子，金刚石 " +
+        CARBON.EcohDia.toFixed(2) + " eV/原子，两者<b>相当</b> —— 少的那个 σ 方向由更短、s 成分更高（1/3 对 1/4）的 σ 键补了回来：" +
+        "单键键能 " + fmt(d.Dsig, 2) + " eV 对金刚石的 " + CARBON.DbondDia.toFixed(2) + " eV。" +
+        "（提醒：石墨烯这个单键键能是<b>由内聚能恒等式反推</b>的记账值，不是独立测量，只作量级参考。）";
+    }
+  },
+  {
+    q: "结合 σ 骨架和 π 电子云：石墨烯为什么<b>既极硬</b>（力学）又<b>极导电</b>（电学）？σ 键和 π 键各贡献了什么？",
+    a: () => {
+      const d = derived();
+      return "石墨烯的两个极端性质来自两套<b>互不干扰</b>的成键：" +
+        "<b>σ 骨架 → 硬度。</b>每原子 3 个 σ 键，是 sp² 轨道「头碰头」重叠形成的强定域共价键。本工具由内聚能恒等式反推出单键键能 " +
+        fmt(d.Dsig, 2) + " eV，比金刚石的 sp³–sp³ 单键（" + CARBON.DbondDia.toFixed(2) + " eV）更大 ——" +
+        "因为石墨烯键更短（" + CARBON.dCC.toFixed(3) + " Å 对 " + CARBON.dDia.toFixed(3) + " Å）、s 成分更高（1/3 对 1/4）。" +
+        "（提醒：这个 " + fmt(d.Dsig, 2) + " eV 是记账反推值，不是独立测量，只作量级参考。）" +
+        "<b>π 电子 → 导电。</b>每原子 1 个 π 电子在整个平面非局域，形成 π 与 π* 两条能带，" +
+        "它们在狄拉克点<b>相接、带隙为零</b>；紧束缚给出的费米速度是 " + fmt(d.vF / 1e6, 2) + " × 10<sup>6</sup> m/s，" +
+        "电子表现得像无质量的相对论粒子，迁移率极高。" +
+        "关键在于两者<b>在空间上分开</b>：σ 骨架锁在平面内、负责把原子钉住；π 电子云悬在平面上下、可以在整个平面自由移动。" +
+        "所以「把结构撑住」和「让电子跑起来」这两件事由两套不同的轨道分别承担 —— 这就是石墨烯能同时拥有极高力学强度和极高载流子迁移率的原因。"
+    }
+  }
+];
+let ANS_EL = [];
+function buildChal() {
+  const grid = $("chalGrid");
+  grid.innerHTML = ""; ANS_EL = [];
+  CHAL.forEach((c, i) => {
+    const d = document.createElement("div");
+    d.className = "chal";
+    d.innerHTML = '<div class="chal-head"><b>' + (i + 1) + ". " + c.q + '</b><span class="chev">▶</span></div>' +
+      '<div class="chal-body"><div class="ans"></div><div class="btn-row"><button>看看答案</button></div></div>';
+    grid.appendChild(d);
+    d.querySelector(".chal-head").onclick = () => d.classList.toggle("open");
+    const ans = d.querySelector(".ans");
+    ANS_EL.push(ans);
+    d.querySelector(".btn-row button").onclick = e => {
+      e.stopPropagation();
+      if (!ans.innerHTML) ans.innerHTML = CHAL[i].a();
+      ans.classList.toggle("show");
+    };
+  });
+}
+function refreshAnswers() { ANS_EL.forEach((el, i) => { el.innerHTML = CHAL[i].a(); }); }
+
+/* ==================================================================
+   8. 画布尺寸、交互、主循环
+   ================================================================== */
+function fitCanvas(v, id) {
+  const c = $(id);
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  const w = c.clientWidth || 600, h = +c.dataset.h;
+  c.style.height = h + "px";
+  c.width = Math.round(w * dpr); c.height = Math.round(h * dpr);
+  v.W = w; v.H = h; v.dpr = dpr; v.g = c.getContext("2d"); v.canvas = c;
+  v.cx = w / 2; v.divs = [];
+}
+function fitAll() {
+  fitCanvas(V3, "orb");
+  fitCanvas(EC, "en");
+  fitCanvas(CC, "cmp");
+  render();
+}
+let _raf = null;
+function requestDraw() {
+  if (_raf) return;
+  _raf = (typeof requestAnimationFrame === "function")
+    ? requestAnimationFrame(() => { _raf = null; render(); })
+    : (render(), null);
+}
+function render() {
+  drawOrb();
+  drawEn();
+  drawCmp();
+  updatePanels();
+}
+
+/* 悬停拾取：返回最靠近鼠标的轨道槽号，或 -1 */
+function pickOrb(mx, my) {
+  if (OPT.mode === "lattice") return -1;
+  const t = curT();
+  let best = -1, bd = 26;
+  for (let j = 0; j < 4; j++) {
+    const st = orbState(j, t);
+    const off = orbOffset(st, j, t);
+    for (const f of [1.0, 0.6]) {
+      const P = proj(V3, add3(off, mul3(st.n, st.R * f)));
+      const d2 = Math.hypot(P.x - mx, P.y - my);
+      if (d2 < bd) { bd = d2; best = j; }
+    }
+  }
+  return best;
+}
+function attachOrb() {
+  const c = V3.canvas;
+  c.addEventListener("mousedown", e => {
+    c.focus();
+    V3.drag = { x: e.clientX, y: e.clientY, btn: e.button };
+    if (e.button === 2) e.preventDefault();
+  });
+  window.addEventListener("mouseup", () => { V3.drag = null; });
+  window.addEventListener("mousemove", e => {
+    if (!V3.drag) return;
+    const dx = e.clientX - V3.drag.x, dy = e.clientY - V3.drag.y;
+    V3.drag.x = e.clientX; V3.drag.y = e.clientY;
+    if (V3.drag.btn === 2) { V3.panX += dx; V3.panY += dy; }
+    else {
+      V3.yaw += dx * 0.006;
+      V3.pitch = clamp(V3.pitch + dy * 0.006, -80 * RAD, 80 * RAD);
+    }
+    requestDraw();
+  });
+  c.addEventListener("mousemove", e => {
+    if (V3.drag) return;
+    const r = c.getBoundingClientRect();
+    const h = pickOrb(e.clientX - r.left, e.clientY - r.top);
+    if (h !== HOVER) { HOVER = h; requestDraw(); }
+  });
+  c.addEventListener("mouseleave", () => { if (HOVER !== -1) { HOVER = -1; requestDraw(); } });
+  c.addEventListener("wheel", e => {
+    e.preventDefault();
+    V3.zoom = clamp(V3.zoom * (e.deltaY > 0 ? 0.92 : 1.087), 0.5, 3.0);
+    requestDraw();
+  }, { passive: false });
+  c.addEventListener("contextmenu", e => e.preventDefault());
+  c.addEventListener("keydown", e => {
+    const s = e.shiftKey ? 3 : 1;
+    if (e.key === "ArrowLeft") V3.yaw -= 5 * RAD * s;
+    else if (e.key === "ArrowRight") V3.yaw += 5 * RAD * s;
+    else if (e.key === "ArrowUp") V3.pitch = clamp(V3.pitch + 4 * RAD * s, -80 * RAD, 80 * RAD);
+    else if (e.key === "ArrowDown") V3.pitch = clamp(V3.pitch - 4 * RAD * s, -80 * RAD, 80 * RAD);
+    else if (e.key === "+" || e.key === "=") V3.zoom = clamp(V3.zoom * 1.12, 0.5, 3.0);
+    else if (e.key === "-" || e.key === "_") V3.zoom = clamp(V3.zoom / 1.12, 0.5, 3.0);
+    else return;
+    e.preventDefault();
+    requestDraw();
+  });
+}
+
+/* 控件绑定：元素缺失时静默跳过，绝不让初始化中断 */
+function bindSlider(sid, vid, set, show) {
+  const s = document.getElementById(sid), v = vid && document.getElementById(vid);
+  if (!s) return;
+  s.oninput = () => {
+    set((+s.value) / 100);
+    if (v) v.textContent = show ? show((+s.value) / 100) : (+s.value / 100).toFixed(2);
+    requestDraw();
+  };
+}
+function bindButton(id, fn) {
+  const b = document.getElementById(id);
+  if (!b) return;
+  b.onclick = () => { fn(); requestDraw(); };
+}
+/* 语言切换后要把滑块旁的数值与副文案重算（否则英文态会残留旧读数） */
+function syncInputs() {
+  const as = $("aSlider");
+  if (as) $("aVal").textContent = OPT.alpha.toFixed(2);
+}
+
+function init() {
+  /* 绘制必须放在最后、且保证一定执行：早期版本曾因某个控件缺失导致 init 中途抛错，
+     首帧就没画出来，要等用户点一下画布才出现。这里用 try/finally 兜住。 */
+  try {
+    buildModeBtns();
+    buildCkBtns();
+    buildLegend();
+    buildChal();
+
+    fitCanvas(V3, "orb");
+    fitCanvas(EC, "en");
+    fitCanvas(CC, "cmp");
+
+    attachOrb();
+
+    bindSlider("aSlider", "aVal", v => { OPT.alpha = v; });
+    bindButton("btnReset", () => {
+      V3.yaw = 8 * RAD; V3.pitch = -50 * RAD; V3.zoom = 1; V3.panX = 0; V3.panY = 0;
+    });
+    document.addEventListener("click", e => {
+      const h = e.target.closest ? e.target.closest(".fold-head") : null;
+      if (h) h.parentNode.classList.toggle("open");
+    });
+    window.addEventListener("resize", () => fitAll());
+    syncInputs();
+  } catch (err) {
+    if (typeof console !== "undefined") console.error("[初始化]", err);
+  }
+  render();
+  refreshAnswers();
+}
+
+if (typeof document !== "undefined" && document.getElementById) {
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
+  else init();
+}
+
+/* i18n 启动必须在 init() 之后：setLang() 会重跑 syncInputs()/render()，
+   放到 init() 之前会在 fitAll() 之前触发绘制，一旦抛异常整个 init() 就跑不到（挑战与画布会空）。 */
+(function () {
+  try {
+    i18nWatch();
+    ORIG_TITLE = ORIG_TITLE || document.title;
+    var btn = document.getElementById("langBtn");
+    if (btn) btn.onclick = function () { setLang(LANG === "en" ? "zh" : "en"); };
+    if (LANG === "en") setLang("en"); else { document.title = ORIG_TITLE; i18nWalk(document.body); }
+  } catch (e) { }
+})();
+</script>
+<div class="site-foot">本工具是 EIT-SP（半导体物理交互式教学工具箱）的一部分（武汉大学物理学院《半导体物理》智慧课程），以 MIT 协议开源，可自由使用与二次开发；转载请保留出处。反馈意见 <a href="mailto:doctorwanghao@qq.com">doctorwanghao@qq.com</a></div>
+</body>
+</html>

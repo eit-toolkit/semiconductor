@@ -1,0 +1,2456 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<!-- SPDX-License-Identifier: MIT -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>载流子产生与复合交互教学工具</title>
+<style>
+
+  :root {
+    --bg: #f7f9fb;
+    --panel: #ffffff;
+    --border: #dde4ec;
+    --text: #2c3e50;
+    --text-sub: #6b7a8c;
+    --blue: #1976d2;
+    --blue-light: #e3f0fb;
+    --orange: #ef8c1a;
+    --red: #d94a3d;
+    --teal: #0f9b8e;
+    --green: #2e9e5b;
+    --purple: #7b3fa0;
+    --gray-ref: #9aa5b1;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Microsoft YaHei", "PingFang SC", "Segoe UI", sans-serif;
+    background: var(--bg); color: var(--text); padding: 14px;
+  }
+  header { position: relative; display: flex; align-items: baseline; justify-content: center; gap: 14px; flex-wrap: wrap; text-align: center; margin-bottom: 2px; }
+  .lang-btn { position: absolute; right: 0; top: 0; border: 1px solid var(--border); background: #fff;
+    color: var(--text-sub); padding: 3px 10px; border-radius: 7px; cursor: pointer; font-size: 12px; font-weight: 600; }
+  .lang-btn:hover { border-color: var(--blue); color: var(--blue); }
+  header h1 { font-size: 20px; }
+  header .formula { font-size: 14.5px; color: var(--text-sub); }
+  .sub-note { text-align: center; font-size: 12.5px; color: var(--text-sub); margin-bottom: 12px; line-height: 1.75; }
+  .sub-note b { color: var(--blue); }
+
+  .layout { display: flex; gap: 14px; align-items: flex-start; max-width: 1500px; margin: 0 auto; }
+  .viz { flex: 0 0 64%; min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+  .side { flex: 1; min-width: 310px; display: flex; flex-direction: column; gap: 12px; }
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; }
+  .sec-title { font-size: 13.5px; font-weight: 700; margin: 2px 0 6px; }
+  /* 模块编号徽标：只有教学内容模块才带编号；控制面板等辅助面板不是模块，不加 */
+  .sec-title .mtag {
+    display: inline-block; background: var(--blue); color: #fff;
+    font-size: 11px; font-weight: 700; padding: 1.5px 7px;
+    border-radius: 5px; margin-right: 6px; vertical-align: 1.5px; letter-spacing: .3px;
+  }
+  canvas { display: block; width: 100%; border-radius: 6px; touch-action: none; }
+  canvas:focus { outline: 2px solid rgba(25,118,210,.45); outline-offset: 1px; }
+  .chart-wrap { position: relative; }
+  .hint { font-size: 12px; color: var(--text-sub); margin-top: 6px; line-height: 1.6; }
+  .ctrl { margin-bottom: 10px; }
+  .ctrl:last-child { margin-bottom: 0; }
+  .ctrl-head { display: flex; justify-content: space-between; align-items: baseline; font-size: 13px; font-weight: 600; margin-bottom: 2px; gap: 8px; }
+  .ctrl-head .val { color: var(--blue); font-variant-numeric: tabular-nums; font-weight: 700; white-space: nowrap; }
+  .ctrl input[type=range] { width: 100%; accent-color: var(--blue); }
+  .ctrl .sub { font-size: 11.5px; color: var(--text-sub); margin-top: 1px; line-height: 1.5; }
+  .btn-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+  .btn-row button {
+    border: 1px solid var(--border); background: #fff; color: var(--text);
+    padding: 5px 11px; border-radius: 7px; cursor: pointer; font-size: 12.5px;
+  }
+  .btn-row button:hover { border-color: var(--blue); color: var(--blue); }
+  .btn-row.tight button { padding: 4px 9px; font-size: 12px; }
+  .btn-row button.sel { background: var(--blue); border-color: var(--blue); color: #fff; font-weight: 600; }
+  .btn-row button.primary { background: var(--blue-light); border-color: var(--blue); color: var(--blue); font-weight: 600; }
+  .mode-switch { display: flex; gap: 6px; }
+  .mode-switch button {
+    flex: 1; border: 1px solid var(--border); background: #fff; color: var(--text-sub);
+    padding: 6px 10px; border-radius: 8px; cursor: pointer; font-size: 12.5px; font-weight: 600;
+  }
+  .mode-switch button.active { background: var(--blue); border-color: var(--blue); color: #fff; }
+  .chk-row { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12.5px; color: var(--text-sub); margin-top: 4px; }
+  .chk-row label { display: inline-flex; align-items: center; gap: 5px; cursor: pointer; }
+  .chk-row input[type=checkbox] { accent-color: var(--blue); }
+  .legend { display: flex; gap: 6px 14px; flex-wrap: wrap; align-items: center; font-size: 12px; color: var(--text-sub); margin-top: 6px; }
+  .swatch { display: inline-block; vertical-align: middle; width: 20px; height: 0; border-top: 3px solid currentColor; border-radius: 2px; margin-right: 6px; }
+  .swatch.dash { border-top-style: dashed; }
+  .swatch.dot { width: 11px; height: 11px; border: none; border-radius: 50%; }
+  .swatch.sq { width: 11px; height: 11px; border: none; border-radius: 3px; }
+  /* ---- LaTeX 风格数学排版（纯 CSS，无外部库） ---- */
+  .m { font-family: "Cambria Math", "STIX Two Math", "Latin Modern Math", "Times New Roman", Times, serif;
+       font-size: 1.05em; font-style: normal; white-space: nowrap; letter-spacing: .01em; }
+  .m i, .m var { font-style: italic; }
+  .m .rm { font-style: normal; }
+  .m sub, .m sup { font-size: .70em; font-style: normal; line-height: 1; }
+  .m sub { vertical-align: -.28em; }
+  .m sup { vertical-align: .50em; }
+.m .m { font-size: 1em; }   /* 嵌套容器（TEXH 下标转换叠加）不再放大字号 */
+  .m sub i, .m sup i { font-style: italic; }
+  .m .op { font-style: normal; padding: 0 .24em; }
+  .m .sl { font-style: normal; padding: 0 .05em; }
+  .m .un { font-style: normal; padding-left: .16em; }
+  .frac { display: inline-block; vertical-align: -0.52em; text-align: center; margin: 0 .16em; font-size: .86em; line-height: 1.18; }
+  .frac > .num { display: block; padding: 0 .34em; border-bottom: 1px solid currentColor; }
+  .frac > .den { display: block; padding: 0 .34em; }
+  /* ---- 读数区 ---- */
+  .kv { display: grid; grid-template-columns: 1fr; gap: 2px 22px; font-size: 12.5px; }
+  .kv .row { display: flex; justify-content: space-between; gap: 8px; border-bottom: 1px dotted #eef2f7; padding: 2px 0; }
+  .kv .k { color: var(--text-sub); white-space: nowrap; }
+  .kv .v { font-variant-numeric: tabular-nums; text-align: right; }
+  .kv .v b { color: var(--blue); }
+  .kv .hd { grid-column: 1 / -1; font-weight: 700; color: var(--text); font-size: 12px; margin: 6px 0 2px; }
+  .kv .hd:first-child { margin-top: 0; }
+  /* 折叠组件（.fold）：独立类名，不复用 .chal-head/.chev，避免污染挑战区回归计数 */
+  .fold { margin-top: 7px; border-top: 1px dotted var(--border); padding-top: 5px; }
+  .fold-head { display: flex; align-items: center; gap: 6px; cursor: pointer;
+    font-size: 12px; font-weight: 600; color: var(--text-sub); user-select: none; }
+  .fold-head:hover { color: var(--blue); }
+  .fold-head .chev { font-size: 11px; transition: transform .15s; display: inline-block; }
+  .fold.open .fold-head .chev { transform: rotate(90deg); }
+  .fold-body { display: none; margin-top: 4px; }
+  .fold.open .fold-body { display: block; }
+  .unit-note { font-size: 11.5px; color: var(--text-sub); line-height: 1.55; margin-top: 6px; }
+  /* ---- 引导探究 ---- */
+  .chal-wrap { max-width: 1500px; margin: 14px auto 0; }
+  .chal-bar { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+  .chal-bar b { font-size: 14.5px; }
+  .chal-bar span { font-size: 12px; color: var(--text-sub); }
+  .chal-grid { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+  .chal { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 8px 12px; }
+  .chal-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; cursor: pointer; }
+  .chal-head b { font-size: 13.5px; }
+  .chal-head .chev { color: var(--text-sub); font-size: 12px; transition: transform .15s; display: inline-block; }
+  .chal.open .chal-head .chev { transform: rotate(90deg); }
+  .chal.open { border-color: var(--blue); }
+  .chal-body { display: none; margin-top: 6px; font-size: 12.5px; color: var(--text-sub); line-height: 1.75; }
+  .chal.open .chal-body { display: block; }
+  .chal-body .ans { display: none; margin-top: 6px; padding: 7px 10px; background: var(--blue-light); border-radius: 6px; color: var(--text); }
+  .chal-body .ans.show { display: block; }
+  .chal-body .ans b { color: var(--blue); }
+  .chal-body .btn-row { margin-top: 8px; }
+  @media (max-width: 1100px) {
+    .layout { flex-direction: column; }
+    .viz { flex: 1 1 auto; width: 100%; }
+  }
+  /* ---- 课程页脚 ---- */
+  .site-foot { max-width: 1500px; margin: 18px auto 0; padding: 12px 16px 24px;
+    border-top: 1px solid var(--border); color: var(--text-sub);
+    font-size: 12.5px; line-height: 1.8; text-align: center; }
+  .site-foot a { color: var(--blue, #1976d2); text-decoration: none; }
+  .site-foot a:hover { text-decoration: underline; }
+
+  .cmp-note { font-size: 11.5px; color: var(--text-sub); margin-top: 4px; line-height: 1.55; }
+  .sqrt > .rdc, .sqrt .rdc { display: inline-block; position: static; font-size: 1em;
+             border-top: .055em solid currentColor; padding: .06em .12em 0 .10em; margin: 0; line-height: 1; }
+
+  /* 公式排版：分式 / 根式 —— 全站统一为「回旋共振 v06」写法（置于末尾，覆盖本文件早期变体） */
+  .frac { display: inline-block; vertical-align: -0.52em; text-align: center; font-size: .78em; margin: 0 .12em; }
+  .frac > .num, .frac .num { display: block; padding: 0 .22em; border-bottom: .055em solid currentColor; line-height: inherit; }
+  .frac > .den, .frac .den { display: block; padding: 0 .22em; line-height: inherit; }
+  .sqrt { display: inline-block; white-space: nowrap; vertical-align: baseline; margin: 0; font-size: 1em; }
+  .sqrt > .rd, .sqrt .rd { display: inline-block; position: static; font-size: 1em; line-height: inherit; padding: 0 .02em 0 0; margin: 0; }
+  .sqrt > .rdc, .sqrt .rdc { display: inline-block; position: static; font-size: 1em;
+             border-top: .055em solid currentColor; padding: .06em .12em 0 .10em; margin: 0; line-height: 1; }
+  .sqrt .rdc:has(sup) { padding-top: .18em; }
+</style>
+</head>
+<body>
+
+<header>
+  <button id="langBtn" class="lang-btn" data-noi18n title="中文 / English">EN</button>
+  <h1>载流子产生与复合交互教学工具</h1>
+  <div class="formula"><span class="m"><i>R</i><sub>直接</sub><span class="op">=</span><i>B</i>(<i>np</i><span class="op">−</span><i>n</i><sub>i</sub><sup>2</sup>)</span>　·　<span class="m"><i>R</i><sub>SRH</sub><span class="op">=</span><span class="frac"><span class="num"><i>np</i><span class="op">−</span><i>n</i><sub>i</sub><sup>2</sup></span><span class="den"><i>τ</i><sub>p</sub>(<i>n</i><span class="op">+</span><i>n</i><sub>1</sub>)<span class="op">+</span><i>τ</i><sub>n</sub>(<i>p</i><span class="op">+</span><i>p</i><sub>1</sub>)</span></span></span>　·　<span class="m"><i>R</i><sub>俄歇</sub><span class="op">=</span>(<i>C</i><sub>n</sub><i>n</i><span class="op">+</span><i>C</i><sub>p</sub><i>p</i>)(<i>np</i><span class="op">−</span><i>n</i><sub>i</sub><sup>2</sup>)</span></div>
+</header>
+<div class="sub-note">
+  复合就是“导带电子掉下来填掉价带空穴”，三种机制的区别只在于<b>掉下来的能量给了谁</b>：直接复合<b>发射一个光子</b>（图中画成<b>波浪形箭头</b>，能量 <span class="m"><i>h</i><i>ν</i><span class="op">≈</span><i>E</i><sub>g</sub></span>，指向能带的箭头则表示<b>吸收光子、产生一对载流子</b>）；间接复合<b>分两步走</b>，先被禁带中的<b>陷阱能级</b>俘获、再落入价带，能量都变成<b>声子</b>；俄歇复合是<b>三个载流子</b>的事，复合能量被<b>转交给第三个载流子</b>，后者再靠声子把能量慢慢交给晶格。三者的复合率对浓度的依赖完全不同 —— <span class="m"><i>R</i><span class="op">∝</span><i>np</i></span>、<span class="m"><i>R</i><span class="op">∝</span>(<i>np</i><span class="op">−</span><i>n</i><sub>i</sub><sup>2</sup>)</span> 的复杂分式、<span class="m"><i>R</i><span class="op">∝</span><i>n</i><sup>2</sup><i>p</i></span> —— 于是不同注入水平下，主导者各不相同。
+</div>
+
+<div class="layout">
+  <div class="viz">
+    <div class="card">
+      <div class="sec-title"><span class="mtag">模块一</span>能带图上的微观过程：直接 · 陷阱两步 · 俄歇三粒子</div>
+      <div class="chart-wrap"><canvas id="band" data-h="330" tabindex="0"></canvas></div>
+      <div class="legend" id="legBand"></div>
+    </div>
+
+    <div class="card">
+      <div class="sec-title"><span class="mtag">模块二</span>三种复合率随注入水平的变化（双对数）</div>
+      <div class="chart-wrap"><canvas id="rate" data-h="268" tabindex="0"></canvas></div>
+      <div class="legend" id="legRate"></div>
+      <div class="hint">横轴是<b>注入水平</b> <span class="m">Δ<i>n</i></span>（对数），纵轴是<b>复合率</b>（对数）。三条线的<b>斜率完全不同</b>：<b>SRH（间接）</b>整条都是斜率 ≈ 1 的直线 —— 低注入 <span class="m"><i>R</i><span class="op">≈</span>Δ<i>n</i><span class="sl">/</span><i>τ</i></span>、高注入降到 <span class="m"><i>R</i><span class="op">≈</span>Δ<i>n</i><span class="sl">/</span>2<i>τ</i></span>，即<b>寿命始终是常数</b>（双对数上“斜率 1”＝匀速上升，<b>不是水平</b>）；<b>直接（辐射）</b>低注入斜率 1（<span class="m"><span class="op">∝</span>Δ<i>n</i><span class="op">·</span>(<i>n</i><sub>0</sub><span class="op">+</span><i>p</i><sub>0</sub>)</span>）、高注入斜率 2（<span class="m"><span class="op">∝</span>Δ<i>n</i><sup>2</sup></span>）；<b>俄歇</b>低注入也是斜率 1、高注入斜率 3（<span class="m"><span class="op">∝</span>Δ<i>n</i><sup>3</sup></span>）最陡。<b>曲线最高的那条就是主导机制</b> —— 竖虚线是你当前的工作点。</div>
+    </div>
+
+    <div class="card">
+      <div class="sec-title"><span class="mtag">模块三</span>产生与复合的平衡：净复合率与寿命</div>
+      <div class="chart-wrap"><canvas id="bal" data-h="224" tabindex="0"></canvas></div>
+      <div class="legend" id="legBal"></div>
+      <div class="hint">左：三种复合率与<b>产生率</b>的对比（对数条）。复合率总和 <span class="m"><i>R</i></span> 与光产生率 <span class="m"><i>G</i><sub>opt</sub></span> 相等时，<b>净复合率</b> <span class="m"><i>R</i><sub>net</sub><span class="op">=</span><i>R</i><span class="op">−</span><i>G</i><sub>opt</sub><span class="op">=</span>0</span>，系统进入<b>稳态</b>。右：各机制给出的<b>分寿命</b>，总寿命按 <span class="m">1<span class="op">/</span><i>τ</i><span class="op">=</span>Σ1<span class="op">/</span><i>τ</i><sub>i</sub></span> 合成 —— 谁最快谁说了算。</div>
+    </div>
+  </div>
+
+  <div class="side">
+    <div class="card">
+      <div class="sec-title">控制面板</div>
+
+      <div class="ctrl">
+        <div class="ctrl-head"><span>复合机制</span><span class="val" id="modeVal">三种对比</span></div>
+        <div class="btn-row tight" id="modeBtns"></div>
+      </div>
+
+      <div class="ctrl">
+        <div class="ctrl-head"><span>掺杂情境</span><span class="val" id="dopVal">n 型 10<sup>16</sup></span></div>
+        <div class="btn-row tight" id="dopBtns"></div>
+      </div>
+
+      <div class="ctrl">
+        <div class="ctrl-head"><span>注入水平 <span class="m">Δ<i>n</i><span class="op">=</span>Δ<i>p</i></span></span><span class="val" id="injVal">10<sup>15</sup> cm<sup>−3</sup></span></div>
+        <input type="range" id="injSlider" min="0" max="100" step="1" value="30">
+        <div class="sub">从<b>低注入</b>（<span class="m">Δ<i>n</i><span class="op">≪</span><i>n</i><sub>0</sub></span>）到<b>高注入</b>（<span class="m">Δ<i>n</i><span class="op">≫</span><i>n</i><sub>0</sub></span>），三种机制的主次会彻底翻转。</div>
+      </div>
+
+      <div class="ctrl">
+        <div class="ctrl-head"><span>固定参数（本工具已锁定）</span></div>
+        <!-- 内容由 renderFixNote() 按 FIX / Bnow() / Cnow() 现取，不在 HTML 里写死数字 -->
+        <div class="sub" id="fixNote"></div>
+      </div>
+
+      <div class="ctrl">
+        <div class="ctrl-head"><span>动画</span><span class="val" id="spVal">1.00×</span></div>
+        <input type="range" id="spSlider" min="20" max="300" step="10" value="100">
+        <div class="btn-row tight">
+          <button id="btnPlay" class="sel">⏸ 暂停</button>
+          <button id="btnReset">清空事件</button>
+        </div>
+      </div>
+
+      <div class="ctrl">
+        <div class="ctrl-head"><span>显示项目</span></div>
+        <div class="chk-row">
+          <label><input type="checkbox" id="ckPhoton" checked> 光子</label>
+          <label><input type="checkbox" id="ckPhonon" checked> 声子</label>
+          <label><input type="checkbox" id="ckTrap" checked> 陷阱能级</label>
+          <label><input type="checkbox" id="ckThird" checked> 第三载流子</label>
+          <label><input type="checkbox" id="ckRate" checked> 事件速率条</label>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="sec-title">读数面板</div>
+      <div class="kv" id="readout"></div>
+      <div class="fold" id="foldRo">
+        <div class="fold-head"><span class="chev">▶</span><span>更多读数（材料与平衡态、固定参数、产生与分寿命）</span></div>
+        <div class="fold-body">
+          <div class="kv" id="readoutMore"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="chal-wrap">
+  <div class="card">
+    <div class="chal-bar">
+      <b>引导探究（点击展开，先自己试一试再看答案）</b>
+      <span>挑战任务</span>
+    </div>
+    <div class="chal-grid" id="chalGrid"></div>
+  </div>
+</div>
+
+<div class="site-foot">本工具是 EIT-SP（半导体物理交互式教学工具箱）的一部分（武汉大学物理学院《半导体物理》智慧课程），以 MIT 协议开源，可自由使用与二次开发；转载请保留出处。反馈意见 <a href="mailto:doctorwanghao@qq.com">doctorwanghao@qq.com</a></div>
+
+<script>
+/* ==================================================================
+   i18n（C1 单文件双语：物理代码仍然只有一份）
+   LANG 取值优先级：URL ?lang=en / ?lang=zh  >  localStorage('opl_lang')  >  默认中文。
+   不做 location 跳转——保住「单文件拷走也能用」。
+   三个注入点，**业务字符串一个都不改**：
+     ① partsOf()   画布 token：带 i/sub/sup/un 标记的是物理量、下标与单位，跳过
+     ② fillText/measureText 原型挂钩：兜住直接写进画布的中文串
+     ③ DOM 文本节点：静态 HTML 与 JS 写进来的 innerHTML，用 MutationObserver 兜住新增节点
+   T() 先查整句词典，未命中再按「最长优先」做短语替换，因此拼接串也能翻。
+   漏翻会被记进 window.__MISS，可导出核对。 */
+var LANG = (function () {
+  var m = /[?&]lang=([a-zA-Z]+)/.exec(location.search);
+  var q = m ? m[1].toLowerCase() : "";
+  if (q === "en" || q === "zh") return q;
+  var s = "";
+  try { s = localStorage.getItem("opl_lang") || ""; } catch (e) { }
+  return (s === "en" || s === "zh") ? s : "zh";
+})();
+var ORIG_TITLE = document.title;
+var __MISS = [];
+try { window.__MISS = __MISS; } catch (e) { }
+function noteMiss(s) { if (__MISS.indexOf(s) < 0) __MISS.push(s); }
+function TSoft(s) {
+  if (!T._K) T._K = Object.keys(I18N).sort(function (a, b) { return b.length - a.length; });
+  var out = s, i, k, orig = s;
+  /* 两遍：第一遍只吃长度 ≥ 2 的短语，第二遍才让单字 key 上场。
+     否则「下」会先被翻掉，把「留不下净电荷」「1 T 下输出」这类整句切碎。 */
+  for (var pass = 0; pass < 2; pass++) {
+    for (i = 0; i < T._K.length; i++) {
+      k = T._K[i];
+      if (k.length < 2 && (pass === 0 || orig !== k)) continue;
+      if (out.indexOf(k) < 0) continue;
+      /* 中文片段之间没有空格：前一片段已翻成英文时，本片段英文直连进去会粘连
+         （「更深」「或」「更浅」逐段替换成 deeper、or、shallower 会拼出 deeperor），
+         所以替换时看上下文：key 以中文开头、前一字符已是英文 ⇒ 前面补一个空格。 */
+      out = out.replace(new RegExp(k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "g"), function (m, off, str) {
+        var v = I18N[k];
+        var pre = off > 0 ? str.charAt(off - 1) : "";
+        if (/[A-Za-z0-9]/.test(pre) && /^[A-Za-z0-9(]/.test(v) && /[\u3400-\u9FFF]/.test(k.charAt(0))) v = " " + v;
+        return v;
+      });
+    }
+  }
+  return out;
+}
+/* 同一句被 DOM 切成好几个文本节点时，首尾空格会随机落在 data 里；
+   所以除了「整句命中」，再试一次「去空格后命中」并原样补回首尾空白。 */
+function trimMap() {
+  if (T._TM) return T._TM;
+  var m = {};
+  for (var k in I18N) if (Object.prototype.hasOwnProperty.call(I18N, k)) {
+    var t = k.replace(/^\s+|\s+$/g, "");
+    if (t && m[t] === undefined) m[t] = I18N[k];
+  }
+  T._TM = m;
+  return m;
+}
+/* eslint-disable no-use-before-define */
+function T(s) {
+  if (LANG !== "en" || typeof s !== "string" || !s) return s;
+  if (!/[一-鿿]/.test(s)) return s;
+  if (Object.prototype.hasOwnProperty.call(I18N, s)) return I18N[s];
+  var tm = trimMap(), core = s.replace(/^\s+|\s+$/g, "");
+  if (core && tm[core] !== undefined) {
+    var lead = s.slice(0, s.length - s.replace(/^\s+/, "").length);
+    var tail = s.slice(s.replace(/\s+$/, "").length);
+    return lead + tm[core] + tail;
+  }
+  var v = TSoft(s);
+  if (v === s) noteMiss(s);
+  return v;
+}
+var I18N = {
+  /* ---- 词典：中文原文 → 英文。key 禁含运行时数字（换个参数就漏），数字前后要拆开 ---- */
+  "格": "cells",
+  "模块一": "Module 1",
+  "模块二": "Module 2",
+  "控制面板": "Control Panel",
+  "模块三": "Module 3",
+  "挑战任务": "Challenges",
+  "？": "?",
+  "，": ", ",
+  "、": ", ",
+  "：": ": ",
+  "；": "; ",
+  "（": " (",
+  "）": ")",
+  "本工具是 EIT-SP（半导体物理交互式教学工具箱）的一部分（武汉大学物理学院《半导体物理》智慧课程），以 MIT 协议开源，可自由使用与二次开发；转载请保留出处。": "This tool is part of EIT-SP, the Educational Interactive Toolkit for Semiconductor Physics (School of Physics and Technology, Wuhan University). Released under the MIT licence: free to use, modify and redistribute, including commercially. Please keep this attribution.",
+  "反馈意见": " Feedback",
+  "材料": "Material",
+  "读数面板": "Readout Panel",
+  "带隙 ": "Band gap ",
+  "%）": "%)",
+  "空": "empty",
+  "取": "Take ",
+  "同 ": "Same ",
+  "能量 ": "Energy ",
+  "能量": "energy",
+  "看答案": "Show answer",
+  "：当前 ": ": at present ",
+  "条）": " are drawn)",
+  "从 ": " from ",
+  "），": "), and ",
+  "）；": "); ",
+  "动画": "Animation",
+  "示意": "schematic",
+  "）：": "): ",
+  " ⇒ ": " ⇒ ",
+  "⏸ 暂停": "⏸ Pause",
+  "几乎": "almost ",
+  " 的 ": " ",
+  "显示": "Display",
+  "温度 ": "Temperature ",
+  " / ": " / ",
+  "杂质": "impurity",
+  "声子": "phonon",
+  "禁带": "Forbidden gap",
+  "直接": "direct",
+  "吸收": "Absorption",
+  " 的": " ",
+  " 与": " and ",
+  "宽度": "width",
+  "本工具是 EIT-SP（半导体物理交互式教学工具箱）的一部分（武汉大学物理学院《半导体物理》智慧课程），以 MIT 协议开源，可自由使用与二次开发；转载请保留出处。反馈意见": "This tool is part of EIT-SP, the Educational Interactive Toolkit for Semiconductor Physics (School of Physics and Technology, Wuhan University). Released under the MIT licence: free to use, modify and redistribute, including commercially. Please keep this attribution. Feedback",
+  "本工具是": "This tool is part of",
+  "（半导体物理交互式教学工具箱）的一部分（武汉大学物理学院《半导体物理》智慧课程），以": ", the Educational Interactive Toolkit for Semiconductor Physics (School of Physics and Technology, Wuhan University). Released under the",
+  "协议开源，可自由使用与二次开发；转载请保留出处。反馈意见": "licence: free to use, modify and redistribute, including commercially. Please keep this attribution. Feedback",
+  "协议开源，可自由使用与二次开发；转载请保留出处。": "licence: free to use, modify and redistribute, including commercially. Please keep this attribution.",
+  "拉到": "to",
+  "只是": "are just",
+  "暂停": "Pause",
+  "。当前": ". Current",
+  "固定": "fixed",
+  "曲线": "curve",
+  "温度": "temperature",
+  "注意": "note",
+  "参数": "parameters",
+  "频率": "frequency",
+  "模式": "mode",
+  "！": "!",
+  "到": "to",
+  "（当前 ": " (currently ",
+  " eV）": " eV in all)",
+  " 导带底": " conduction-band minimum",
+  "导带底": "conduction-band minimum",
+  " 价带顶": " valence-band maximum",
+  "价带顶": "valence-band maximum",
+  "向外": "outwards",
+  " 或 ": " or ",
+  "开": "on",
+  "中心": "centre",
+  "直接带隙 ": "a direct gap of ",
+  "匀速": "uniform drift",
+  "恒": "always",
+  "变成": "becomes that of",
+  "虚线": "Dashed line",
+  "平衡": "equilibrium",
+  "由于": "because",
+  "—— 整条曲线": "— the whole curve",
+  "整条曲线": "the whole curve",
+  "平衡态": "equilibrium",
+  "（当前": " (currently",
+  "倍）": " times)",
+  "降到": "falls to",
+  "左：": "Left: ",
+  "右：": "Right: ",
+  "箭头": "arrow",
+  "是": "is",
+  " —— 所以在": " — so on the",
+  "比": "than",
+  "随": "varies with",
+  "状态": "state",
+  " 是 ": " is an eigenfunction of ",
+  "差 ": "a factor of ",
+  "同时": "at the same time",
+  "切到": "Switch to",
+  "（或": "(or",
+  "这就是": "this undulating band edge is the potential field that scatters the carriers — that is",
+  "为什么": "why",
+  "：当前": ": current",
+  "决定": "set by",
+  "相等": "equal",
+  "时": "when",
+  " 倍）": " times)",
+  "带底": "band bottom",
+  "带顶": "band top",
+  "带隙": "Band gap",
+  "浓度": "concentration",
+  "电子浓度": "Electron concentration",
+  "空穴浓度": "Hole concentration",
+  "本征浓度": "Intrinsic concentration",
+  "本征": "Intrinsic",
+  "材料对比": "Material comparison",
+  "载流子": "carrier",
+  "）的": ") has the largest",
+  "禁带宽度": "Band gap",
+  "挑战": "Challenge",
+  "和": " and ",
+  "或": "or",
+  " eV（": " eV (",
+  "，把": " and push the ",
+  "谁主导": "Who dominates",
+  "直线": "straight",
+  "看模块二的": "look at the",
+  "，而": ", while",
+  "上升": "rises",
+  "不同 ": "Different ",
+  "等比": "geometrically",
+  "大": "larger",
+  "对数": "the logarithm",
+  "（直接）": " (direct)",
+  "（间接）": " (indirect)",
+  "间接": "indirect",
+  "差": "differ by",
+  "辐射复合": "radiative recombination",
+  "发光": "emission",
+  "发射": "emission",
+  "能": "Energy",
+  "量": " ",
+  "原": "origin",
+  "点": "",
+  "价": "valence",
+  "顶": "top",
+  "导": "conduction",
+  "底": "bottom",
+  "禁": "forbidden",
+  "子": "quantum",
+  "几": "almost",
+  "乎": " ",
+  "全": "",
+  "没": "no ",
+  "的": "",
+  "占": "Occupation",
+  "概": "",
+  "率": "probability",
+  " 会": " would ",
+  "电流": "current",
+  "）。": "at room temperature).",
+  "情境": "Scenario",
+  "电子（": "Electrons (",
+  "空穴（": "Holes (",
+  "倍": " times",
+  "电子浓度 ": "Electron concentration ",
+  "空穴浓度 ": "Hole concentration ",
+  "电子和空穴": "Electrons and holes",
+  "下": "lower",
+  "3. 切到": "3. Switch to ",
+  "（陷阱） ": " (trap) ",
+  "（陷阱）": " (trap)",
+  "间接复合（SRH，陷阱）": "Indirect recombination (SRH, via traps)",
+  "① 电子先被陷阱能级 ": "① The electron is first captured by the trap level ",
+  " 俘获（发 1 个声子）": " (emitting one phonon)",
+  "① 导带电子直接落入价带空穴": "① A conduction-band electron falls straight into a valence-band hole",
+  "② 多余能量交给": "② The excess energy goes to ",
+  "③ 速率 ": "③ Rate ",
+  "② 在陷阱上停留片刻": "② It stays on the trap for a while",
+  "③ 再落入价带与空穴复合（又发 1 个声子）": "③ Then it falls into the valence band and recombines (one more phonon emitted)",
+  "① 电子与空穴复合，释放 ": "① The electron and hole recombine, releasing ",
+  "② 能量": "② The energy is not emitted as light; it goes to a third carrier",
+  "，交给第三个载流子（也是电子或空穴）": " (again an electron or a hole)",
+  "③ 被顶到高能态，再逐步发": "③ The third carrier is kicked to a high-energy state and then emits ",
+  "回落": " step by step to fall back",
+  "本机制复合率": "Recombination rate of this mechanism",
+  "三种机制的事件频率（按真实复合率分配）": "Event frequencies of the three mechanisms (apportioned by the true recombination rates)",
+  "俄歇": "Auger",
+  "当前主导：": "Dominant at present: ",
+  "（两排粒子数 = 浓度的对数示意，非等比）": " (the two rows of particles are a logarithmic sketch of the concentrations, not to scale)",
+  "（两排粒子数": " (two rows of particles",
+  "浓度的对数示意，非等比）": "logarithmic sketch of the concentrations, not to scale)",
+  "注入水平 Δ": "Injection level Δ",
+  "注入水平": "Injection level",
+  "底部色条 = 该注入水平下的主导机制": "Bottom colour bar = the dominant mechanism at this injection level",
+  "俄歇 (": "Auger (",
+  "复合率 vs 产生率（对数，cm": "Recombination vs generation rate (log, cm",
+  "复合率": "recombination rate",
+  "产生率（对数，": "generation rate (log, ",
+  "直接复合 ": "Direct recombination ",
+  "直接复合": "direct recombination",
+  "俄歇 ": "Auger ",
+  "光产生 ": "Optical generation ",
+  "光产生": "optical generation",
+  "净复合 ": "Net recombination ",
+  "净复合": "net recombination",
+  "净复合 > 0：载流子在减少": "Net recombination > 0: carriers are being lost",
+  "各机制寿命 ": "Lifetime per mechanism ",
+  "各机制寿命": "Lifetime per mechanism",
+  " 俄歇": " of Auger",
+  "最快的机制（寿命最短）主导总寿命": "The fastest mechanism (shortest lifetime) dominates the total lifetime",
+  "载流子产生与复合交互教学工具": "Carrier Generation and Recombination — Interactive Toolkit",
+  "\n  复合就是“导带电子掉下来填掉价带空穴”，三种机制的区别只在于": "\n  Recombination simply means 'a conduction-band electron drops down and fills a valence-band hole'; the three mechanisms differ only in ",
+  "掉下来的能量给了谁": "who receives the energy released by the drop",
+  "：直接复合": ": direct recombination ",
+  "发射一个光子": "emits a photon",
+  "（图中画成": " (drawn as a ",
+  "波浪形箭头": "wavy arrow",
+  "，指向能带的箭头则表示": ", whereas an arrow pointing into the band means ",
+  "吸收光子、产生一对载流子": "a photon is absorbed and a carrier pair is created",
+  "）；间接复合": "); indirect recombination ",
+  "分两步走": "proceeds in two steps",
+  "，先被禁带中的": ", first being captured by a ",
+  "陷阱能级": "trap level",
+  "俘获、再落入价带，能量都变成": " inside the gap and then falling into the valence band, with the energy turning into ",
+  "；俄歇复合是": "; Auger recombination is a matter of ",
+  "三个载流子": "three carriers",
+  "的事，复合能量被": " — the recombination energy is ",
+  "转交给第三个载流子": "handed over to a third carrier",
+  "，后者再靠声子把能量慢慢交给晶格。三者的复合率对浓度的依赖完全不同 —— ": ", which then passes it on to the lattice phonon by phonon. The three rates depend on the carrier concentration in completely different ways — ",
+  " 的复杂分式、": " for SRH is a complicated fraction, ",
+  " —— 于是不同注入水平下，主导者各不相同。\n": " — so a different mechanism takes the lead at each injection level.\n",
+  "能带图上的微观过程：直接 · 陷阱两步 · 俄歇三粒子": "Microscopic processes on the band diagram: direct · two-step trap · three-particle Auger",
+  "电子（导带）": "Electron (conduction band)",
+  "空穴（价带）": "Hole (valence band)",
+  "光子 ": "Photon ",
+  "波浪箭头": "wavy arrow",
+  "波浪箭头指向能带＝": "A wavy arrow pointing into the band = ",
+  "吸光产生": "photon absorption creating",
+  "电子—空穴对": "an electron-hole pair",
+  "声子（发热）": "Phonon (heat)",
+  "第三个载流子（俄歇）：": "Third carrier (Auger): ",
+  "就是电子或空穴": "is just an electron or a hole",
+  "，绿圈＝接收能量的那个": ", and the green ring marks the one receiving the energy",
+  "陷阱能级 ": "Trap level ",
+  "三种复合率随注入水平的变化（双对数）": "The three recombination rates vs injection level (log-log)",
+  "间接 SRH（陷阱饱和）": "Indirect SRH (trap saturation)",
+  "横轴是": "The horizontal axis is ",
+  "（对数）。三条线的": " (log scale). The three lines have ",
+  "斜率完全不同": "completely different slopes",
+  "整条都是斜率 ≈ 1 的直线 —— 低注入 ": "It is a straight line of slope ≈ 1 throughout — at low injection ",
+  "、高注入降到 ": " and at high injection it falls to ",
+  "，即": ", i.e. ",
+  "寿命始终是常数": "the lifetime stays constant throughout",
+  "（双对数上“斜率 1”＝匀速上升，": " (on a log-log plot 'slope 1' means steady growth, ",
+  "不是水平": "not a horizontal line",
+  "直接（辐射）": "Direct (radiative)",
+  "低注入斜率 1（": "slope 1 at low injection (",
+  "）、高注入斜率 2（": ") and slope 2 at high injection (",
+  "低注入也是斜率 1、高注入斜率 3（": "Its slope is also 1 at low injection and 3 at high injection (",
+  "）最陡。": ") — the steepest of the three.",
+  "曲线最高的那条就是主导机制": "Whichever curve lies highest is the dominant mechanism",
+  " —— 竖虚线是你当前的工作点。": " — the dashed vertical line is your present operating point.",
+  "产生与复合的平衡：净复合率与寿命": "Balance of generation and recombination: net rate and lifetime",
+  "产生 ": "Generation ",
+  "左：三种复合率与": "Left: the three recombination rates against the ",
+  "产生率": "generation rate",
+  "的对比（对数条）。复合率总和 ": " (logarithmic bars). Once the total recombination rate ",
+  " 与光产生率 ": " equals the optical generation rate ",
+  "净复合率": "net recombination rate",
+  "，系统进入": ", the system reaches ",
+  "稳态": "steady state",
+  "。右：各机制给出的": ". Right: the ",
+  "分寿命": "partial lifetimes",
+  "，总寿命按 ": " contributed by each mechanism; the total lifetime combines them as ",
+  " 合成 —— 谁最快谁说了算。": " — the fastest one has the last word.",
+  "复合机制": "Recombination mechanism",
+  "三种对比": "Compare all three",
+  "间接（陷阱）": "Indirect (trap)",
+  "俄歇复合": "Auger recombination",
+  "掺杂情境": "Doping scenario",
+  "n 型 ": "n-type ",
+  "p 型 ": "p-type ",
+  "重掺 n ": "heavily doped n ",
+  "注入水平 ": "Injection level ",
+  "从": "from",
+  "低注入": "low injection",
+  "高注入": "high injection",
+  "），三种机制的主次会彻底翻转。": "), the ranking of the three mechanisms turns completely upside down.",
+  "固定参数（本工具已锁定）": "Fixed parameters (locked in this tool)",
+  "（室温，": " (room temperature, ",
+  "）· 陷阱能级 ": ") · trap level ",
+  " eV（禁带中央）· SRH 寿命 ": " eV (mid-gap) · SRH lifetime ",
+  " s · 直接复合系数 ": " s · direct recombination coefficient ",
+  "/s · 俄歇系数 ": "/s · Auger coefficient ",
+  "/s · 光产生率 ": "/s · optical generation rate ",
+  "。以上均取": ". All of the above are taken as ",
+  "硅的典型量级": "the typical magnitudes for silicon",
+  "并固定不动。": " and are held fixed.",
+  "清空事件": "Clear events",
+  "显示项目": "Display items",
+  " 光子": " photons",
+  " 陷阱能级": " trap levels",
+  " 第三载流子": " third carriers",
+  " 事件速率条": " event-rate bar",
+  "材料与平衡态": "Material and equilibrium",
+  " eV（固定，不做材料对比）": " eV (fixed, no material comparison)",
+  "当前载流子浓度": "Present carrier concentrations",
+  "注入 ": "Injection ",
+  "（复合驱动力）": " (driving force of recombination)",
+  "三种复合率（净）": "Three recombination rates (net)",
+  "合计 ": "Total ",
+  "主导机制": "Dominant mechanism",
+  "注入与浓度": "Injection and concentrations",
+  "电子 / 空穴浓度": "Electron / hole concentration",
+  "材料与平衡态（固定）": "Material and equilibrium (fixed)",
+  "产生与寿命（其余）": "Generation and lifetimes (rest)",
+  "更多读数（材料与平衡态、固定参数、产生与分寿命）": "More readings (material and equilibrium, fixed parameters, generation and partial lifetimes)",
+  "固定参数（硅典型量级，本工具锁定）": "Fixed parameters (typical Si magnitudes, locked in this tool)",
+  "0.000 eV（禁带中央）": "0.000 eV (mid-gap)",
+  "SRH 寿命 ": "SRH lifetime ",
+  "直接复合系数 ": "Direct recombination coefficient ",
+  "俄歇系数 ": "Auger coefficient ",
+  "与文献对照：": "Comparison with the literature: ",
+  "硅室温辐射（直接）复合系数 ": "The radiative (direct) recombination coefficient of Si at room temperature is ",
+  "/s（本工具取值；Altermatt 等由 van Roosbroeck–Shockley 细致平衡对吸收谱积分得到）。直接带隙 GaAs 的 ": "/s (the value used here; Altermatt et al. derived it by applying van Roosbroeck–Shockley detailed balance to the absorption spectrum). For direct-gap GaAs it is ",
+  "/s，比硅大 ": "/s, larger than for silicon by ",
+  " 个数量级 —— 这就是硅几乎不发光的定量原因。俄歇文献值 ": " orders of magnitude — the quantitative reason why silicon hardly emits light. The Auger coefficient in the literature is ",
+  "/s，本工具简化为单一 ": "/s; this tool simplifies it to a single ",
+  "/s（量级相同、数值偏高 3~5 倍）。": "/s (the same order of magnitude, though 3–5 times larger numerically).",
+  "注意量纲": "Mind the dimensions",
+  "/s，两者相差十几个数量级，不可互换。": "/s — the two differ by more than ten orders of magnitude and must not be interchanged.",
+  "产生与寿命": "Generation and lifetime",
+  "光产生率 ": "Optical generation rate ",
+  "净复合率 ": "Net recombination rate ",
+  " 直接 / 间接 / 俄歇": " direct / indirect / Auger",
+  "总寿命 ": "Total lifetime ",
+  "引导探究（点击展开，先自己试一试再看答案）": "Guided inquiry (click to expand — try it yourself before reading the answers)",
+  "1. 切到「直接复合」模式。画面里那个": "1. Switch to 'Direct recombination'. In the picture, the ",
+  "画成波浪形的光子箭头": "photon arrow drawn as a wavy line",
+  "表示什么？它的能量有多少？既然曲线定律都是 ": " — what does it stand for? How much energy does it carry? Since all curves obey the law ",
+  "，为什么硅几乎不发光？": ", why does silicon hardly emit light?",
+  "看看答案": "Show the answer",
+  "2. 切到「间接（陷阱）」。本工具把陷阱能级固定在": "2. Switch to 'Indirect (trap)'. This tool pins the trap level at ",
+  "禁带中央": "mid-gap",
+  "）。为什么这是最“毒”的复合中心？如果把它移向带边，SRH 分母里的 ": "). Why is this the most 'poisonous' recombination centre? If it is moved towards a band edge, what happens to the ",
+  " 会发生什么？": " terms in the SRH denominator?",
+  "3. 切到「俄歇复合」。复合释放的能量去了哪里？第三个载流子发生了什么？把注入水平拉到 ": "3. Switch to 'Auger recombination'. Where does the recombination energy go? What happens to the third carrier? Push the injection level to ",
+  " 以上，俄歇复合率如何变化？": " and above — how does the Auger rate change?",
+  "4. 切回「三种对比」，把注入水平从 ": "4. Switch back to 'Compare all three' and drag the injection level from ",
+  " 一路拉到 ": " all the way up to ",
+  "，看模块二的三条曲线：低注入谁主导？高注入谁主导？中间的“冠军交接”发生在哪？": ", watching the three curves in module 2: who dominates at low injection, and who at high injection? Where does the 'hand-over of the crown' happen?",
+  "5. 光产生率已固定为 ": "5. The optical generation rate is fixed at ",
+  "。拖动": ". Drag the ",
+  "，找到 ": " slider to find the operating point where ",
+  " 恰好等于总复合率的工作点（模块三里净复合率≈0）—— 此时系统处于什么状态？稳态的过剩载流子浓度是多少？": " exactly equals the total recombination rate (net recombination ≈ 0 in module 3) — what state is the system in there? What is the steady-state excess carrier concentration?",
+  "箭头从能带里射出去＝发射了一个光子": "An arrow shooting out of the bands = one photon has been emitted",
+  "硅是间接带隙半导体，辐射复合要声子“帮忙”，效率极低": "Silicon is an indirect-gap semiconductor, so radiative recombination needs a phonon to 'help' and is extremely inefficient",
+  "最大": "at its largest",
+  "偏带边的陷阱不容易同时高效俘获电子和空穴": "A trap lying near a band edge cannot capture electrons and holes efficiently at the same time",
+  "没有变成光": "does not turn into light",
+  "就是普通的电子或空穴": "is just an ordinary electron or hole",
+  "电子": "electron",
+  "三个载流子同时到场": "three carriers have to be present at once",
+  "效率骤降": "the droop in efficiency",
+  "SRH（间接）主导": "SRH (indirect) dominates",
+  "斜率恒为 1": "its slope is always 1",
+  "直接（辐射）复合": "direct (radiative) recombination",
+  "从头到尾都没当过老大": "never takes the lead from beginning to end",
+  "波浪形箭头就是光子：": "The wavy arrow is the photon: ",
+  "（反之，箭头从外面指进来＝吸收光子）。它的能量就是": " (conversely, an arrow pointing in from outside = photon absorption). Its energy is exactly ",
+  " —— 价带电子一次性跨过整个禁带，多余能量全交给这一个光子。发光强弱由辐射复合系数 ": " — a valence-band electron crosses the entire gap in one step and hands all its excess energy to this single photon. How brightly it emits is set by the radiative coefficient ",
+  "）：本工具把 ": "): this tool pins ",
+  " 固定在硅的典型值 ": " at the typical silicon value ",
+  "。作为对照，直接带隙的砷化镓 ": ". For comparison, direct-gap GaAs has ",
+  "，比硅大 ": ", larger than silicon by ",
+  " 个数量级 —— ": " orders of magnitude — ",
+  "，主导者是": ", and the dominant mechanism is ",
+  "（注意单位：辐射系数 ": " (mind the units: the radiative coefficient is in ",
+  "/s，而俄歇系数 ": "/s, whereas the Auger coefficient is in ",
+  "/s，别把 ": "/s — do not take the value of ",
+  " 那个数安到 ": " and put it on ",
+  " 头上）。": " instead).",
+  "陷阱位于": "A trap located at ",
+  "，本工具固定为 0.00 eV）时复合率": ", pinned at 0.00 eV in this tool) gives a recombination rate that is ",
+  "。SRH 公式的分母是 ": ". The denominator of the SRH expression is ",
+  "：陷阱越靠边，": ": the closer the trap is to an edge, the larger one of the ",
+  " 中有一个变得极大（指数依赖！），分母被撑大 ⇒ 复合率反而变小。物理上说，": " terms becomes (exponentially!), so the denominator swells ⇒ the rate goes down instead. Physically, ",
+  " —— 靠近导带的陷阱抓电子快、抓空穴慢；禁带中央的陷阱对两者都“来者不拒”，于是成了最有效的复合中心。这就是半导体工艺里深能级杂质（Au、Pt、Fe）必须严格清除的原因。": " — a trap near the conduction band catches electrons quickly and holes slowly, while a mid-gap trap 'takes anyone who comes' and thus becomes the most efficient recombination centre. That is why deep-level impurities (Au, Pt, Fe) must be strictly eliminated in semiconductor processing.",
+  "，而是直接交给附近的第三个载流子 —— 注意它": ", but is handed directly to a third carrier nearby — note that it ",
+  "，并不是第三种粒子，绿色只是“接收能量者”的高亮圈。当前掺杂下走的是 ": ", it is not a third kind of particle; the green ring merely highlights the one receiving the energy. With the present doping the active channel is ",
+  " 通道：另一个导带": " : another conduction-band ",
+  "拿到能量，被顶到导带更高处；这个高能载流子随后一步步发": " receives the energy and is pushed higher into the conduction band; this hot carrier then emits ",
+  "把能量交给晶格（发热）。因为要有": " one after another, handing the energy to the lattice (heat). Because it takes ",
+  "），注入越高涨得越猛：当前 ": "), the higher the injection the fiercer the rise: at present ",
+  "。这就是 LED 在高电流下": ". This is the main reason why LEDs suffer ",
+  "（droop）和硅器件高注入下寿命变短的主因。": " (droop) at high current and why the carrier lifetime of silicon devices shortens at high injection.",
+  "低注入时 ": "At low injection ",
+  "：它的 ": ": its ",
+  " 大致 ": " is roughly ",
+  "（寿命近乎常数，高注入只是从 ": " (the lifetime is nearly constant; going to high injection merely takes it from ",
+  "）。注入升高后是 ": "). Once injection rises it is ",
+  " 以最陡的斜率（高注入 ": " that overtakes with the steepest slope (at high injection ",
+  "）反超：本参数下的交接点在 ": "): with the present parameters the hand-over point lies near ",
+  " 附近。至于": ". As for ",
+  "（高注入 ": " (whose high-injection value is ",
+  "）：在当前硅参数下它": "): with the present silicon parameters it ",
+  "，最接近时也还差 ": ", and even at its closest it still falls short by ",
+  " 个数量级 —— 这正是间接带隙硅几乎不发光在图上的样子。当前 ": " orders of magnitude — which is exactly how indirect-gap silicon's near-total lack of emission looks on this plot. At present ",
+  " 时主导者是 ": " the dominant mechanism is ",
+  "。看模块二底部的彩色条，颜色的分界点就是“冠军交接”的位置 —— 而且交接点会随": ". The colour bar at the bottom of module 2 shows the 'hand-over of the crown' at each colour boundary — and the hand-over point moves when ",
+  "的改变而移动（温度、陷阱位置、": " changes (temperature, trap position and ",
+  " 本工具已固定）。": " are however fixed in this tool).",
+  "当 ": "When ",
+  " 等于总复合率": " equals the total recombination rate",
+  " ⇒ 净复合率 ": " ⇒ the net recombination rate ",
+  " > 0，复合偏强）时，系统进入": " > 0, i.e. recombination wins) the system enters ",
+  "：光照每产生一对，复合就消耗一对，浓度不再变化。稳态条件是 ": ": for every pair created by the light, recombination consumes one, so the concentration stops changing. The steady-state condition is ",
+  "（注入水平滑块约 28–29）附近你会看到": " (slider position about 28–29) you will see ",
+  "归零。这正是": " fall to zero. That is exactly the ",
+  "光稳态": "photostationary state",
+  "（太阳能电池、光电导器件的工作点）；由于 ": " (the operating point of solar cells and photoconductive devices); since ",
+  " 本工具固定为 1 μs，": " is fixed at 1 μs in this tool, ",
+  "光照越强，稳态载流子就积累得越多": "the stronger the illumination, the more carriers accumulate at steady state",
+  "，光响应也越强。": ", and the stronger the photoresponse.",
+  "（对数），纵轴是": " (log), and the vertical axis is ",
+  "直接复合（带间）": "Direct recombination (band-to-band)",
+  "俄歇复合（三粒子）": "Auger recombination (three particles)",
+  "≈ 稳态（产生 = 复合）": "≈ Steady state (generation = recombination)",
+  "净产生 > 0：载流子在积累": "Net generation > 0: carriers are accumulating",
+  "▶ 播放": "▶ Play",
+  "三粒子": "three particles",
+  "一": "one",
+  "光": "light",
+  "不": "not",
+  "个数量级": " orders of magnitude",
+  "）到": ") to ",
+  "，概率 ": ", the probability ",
+  "相等时，": "are equal, ",
+  "（占 ": "(",
+  "（又发 1 个声子）": " (emitting 1 more phonon)",
+  "一个光子": "a photon",
+  "，注意 ": ", but note that ",
+  " 本身随 ": " itself varies with ",
+  " 变（": " (so ",
+  " 是个隐式方程），所以这个点得解方程才准：": " is an implicit equation and the working point has to be solved for: ",
+  "本档的解为 ": "for this setting the solution is ",
+  "（注入水平滑块约 ": " (injection slider about ",
+  "），拖到那里就能看到": "), and dragging it there makes ",
+  "，<b>它落在滑块量程": ", <b>it falls ",
+  "它落在滑块量程": "it falls ",
+  "之下": "below",
+  "之上": "above",
+  " —— 本档即便把注入拉到": " — even at the ",
+  "最低，复合也始终强于产生": "lowest injection, recombination stays stronger than generation",
+  "最高，产生也始终强于复合": "highest injection, generation stays stronger than recombination",
+  "，滑块上只会看到": ", so on the slider you only ever see ",
+  "全程 < 0": "below zero all the way",
+  "全程 > 0": "above zero all the way",
+  "。这正是": ". This is exactly ",
+};
+
+/* 注入点②：画布直写字符串。老工具直接调 g.fillText()（描边文字走 g.strokeText()），这里在原型上兜住。
+   measureText 必须一起挂钩，否则「量的宽度」和「量的文字」用的不是同一个串。 */
+(function () {
+  if (typeof CanvasRenderingContext2D === "undefined") return;
+  var ft = CanvasRenderingContext2D.prototype.fillText;
+  CanvasRenderingContext2D.prototype.fillText = function (s, x, y) {
+    if (typeof s === "string") arguments[0] = T(s);
+    return ft.apply(this, arguments);
+  };
+  /* 描边文字（白边包字）走 strokeText，同样要过 T()，否则画布标签漏翻 */
+  var stx = CanvasRenderingContext2D.prototype.strokeText;
+  CanvasRenderingContext2D.prototype.strokeText = function (s, x, y) {
+    if (typeof s === "string") arguments[0] = T(s);
+    return stx.apply(this, arguments);
+  };
+  var mt = CanvasRenderingContext2D.prototype.measureText;
+  CanvasRenderingContext2D.prototype.measureText = function (s) {
+    return mt.call(this, typeof s === "string" ? T(s) : s);
+  };
+})();
+
+/* 注入点④：逐字绘制的画布串。drawMath 一类把中文按单字拆成 token 再逐个 fillText，
+   T() 每次只见到一个汉字 ⇒ 整句词条永远命中不了。这里在整串进入分词之前先整体翻译，
+   于是画布标注也走「整句优先」，与 DOM 同一个口径。没有这些函数的工具自动跳过。
+   ⚠️ 签名坑：drawMath / measureMath 的第一个参数是 canvas context（对象），文本在第
+   二位；早期版本照着 arguments[0] 翻，等于把 context 送去 T()，补丁全程空转。
+   这里改为「找到第一个含中文的字符串参数」再翻，既躲开 context，也不会误伤
+   align / weight 之类以英文字符串传的选项。 */
+(function () {
+  ["drawMath", "drawMathHalo", "measureMath"].forEach(function (n) {
+    var f = window[n];
+    if (typeof f !== "function") return;
+    window[n] = function () {
+      for (var i = 0; i < arguments.length; i++) {
+        if (typeof arguments[i] === "string" && /[\u3400-\u9FFF]/.test(arguments[i])) {
+          arguments[i] = T(arguments[i]);
+          break;
+        }
+      }
+      return f.apply(this, arguments);
+    };
+  });
+})();
+
+/* ---- DOM 文本节点 ---- */
+function i18nNode(n) {
+  var el = n.parentElement;
+  if (!el) return;
+  var tag = el.tagName;
+  if (tag === "SCRIPT" || tag === "STYLE") return;
+  if (el.closest && el.closest("[data-noi18n]")) return;
+  var cur = n.nodeValue;
+  if (n.__orig === undefined || (cur !== n.__last && cur !== n.__orig)) n.__orig = cur;
+  var want = LANG === "en" ? T(n.__orig) : n.__orig;
+  if (want !== cur) n.nodeValue = want;
+  n.__last = want;
+}
+/* 属性（title / placeholder / optgroup label …）不是文本节点，MutationObserver 覆盖不到，
+   必须单独过一遍：否则悬停提示、下拉分组名会残留中文。原文缓存在元素 expando 上，
+   切回中文时原样写回。改属性不会触发 childList/characterData 观察器，不会递归。 */
+var I18N_ATTRS = ["title", "placeholder", "aria-label", "alt", "label"];
+function i18nAttrs(root) {
+  var els = [root], i, j;
+  if (root.querySelectorAll) els = els.concat(Array.prototype.slice.call(root.querySelectorAll("*")));
+  for (i = 0; i < els.length; i++) {
+    var el = els[i];
+    if (!el.getAttribute) continue;
+    if (el.closest && el.closest("[data-noi18n]")) continue;
+    for (j = 0; j < I18N_ATTRS.length; j++) {
+      var a = I18N_ATTRS[j];
+      if (!el.hasAttribute(a)) continue;
+      var key = "__a_" + a;
+      if (el[key] === undefined) el[key] = el.getAttribute(a);
+      var want = LANG === "en" ? T(el[key]) : el[key];
+      if (want !== el.getAttribute(a)) el.setAttribute(a, want);
+    }
+  }
+}
+/* 英文补空格（跨节点）：中文片段被行内标签切开时，各自翻成英文后直连会粘连。
+   判定用 DOM 结构而不是渲染矩形——折叠区（挑战答案）矩形为零，矩形法会漏。
+   两文本节点在文档序里紧邻（中间没有任何文本节点，包括空格节点）、
+   前段末尾与后段开头都是字母、双方词条都没自带空格、且不在上下标里 ⇒ 插一个空格。
+   空格节点记录在案，切回中文时移除。只动 i18n 注入层，不改业务文本。 */
+function fixGlue(root) {
+  var all = [];
+  var w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null, false), n;
+  while ((n = w.nextNode())) all.push(n);
+  function subbed(el) {
+    while (el) { var t = el.tagName; if (t === "SUB" || t === "SUP") return true; el = el.parentElement; }
+    return false;
+  }
+  for (var i = 0; i + 1 < all.length; i++) {
+    var a = all[i], b = all[i + 1];
+    if (!a.nodeValue || !b.nodeValue) continue;
+    if (/\s$/.test(a.nodeValue) || /^\s/.test(b.nodeValue)) continue;
+    if (!/[A-Za-z0-9]$/.test(a.nodeValue) || !/^[A-Za-z]/.test(b.nodeValue)) continue;
+    var pa = a.parentElement, pb = b.parentElement;
+    if (!pa || !pb || subbed(pa) || subbed(pb)) continue;
+    var sp = document.createTextNode(" ");
+    sp.__glue = 1;
+    (fixGlue._n = fixGlue._n || []).push(sp);
+    b.parentNode.insertBefore(sp, b);
+  }
+}
+function removeGlue() {
+  if (!fixGlue._n) return;
+  for (var i = 0; i < fixGlue._n.length; i++) { var g = fixGlue._n[i]; if (g.parentNode) g.parentNode.removeChild(g); }
+  fixGlue._n = [];
+}
+/* 全局防抖补空格：挑战答案这类「点击时才重建」的区域，observer 回调里对子树跑
+   fixGlue 的时机不全（答案重写、延迟渲染都会错过）。任何 DOM 变更后 60ms
+   对整页补一次；空格本身不触发新插入，收敛。 */
+var _glueTimer = null;
+function _glueKick() {
+  if (LANG !== "en") return;
+  if (_glueTimer) clearTimeout(_glueTimer);
+  _glueTimer = setTimeout(function () {
+    _glueTimer = null;
+    if (LANG === "en") fixGlue(document.body);
+  }, 60);
+}
+function i18nWalk(root) {
+  var w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null, false), n, c = 0;
+  while ((n = w.nextNode())) { i18nNode(n); c++; }
+  i18nAttrs(root);
+  if (LANG === "en") fixGlue(root === document ? document.body : root);
+  return c;
+}
+var _i18nBusy = false;
+function i18nWatch() {
+  if (typeof MutationObserver === "undefined") return;
+  var mo = new MutationObserver(function (ms) {
+    if (_i18nBusy) return;
+    _i18nBusy = true;
+    try {
+      for (var i = 0; i < ms.length; i++) {
+        var m = ms[i];
+        if (m.type === "childList") {
+          for (var j = 0; j < m.addedNodes.length; j++) {
+            var nd = m.addedNodes[j];
+            if (nd.nodeType === 3) i18nNode(nd);
+            else if (nd.nodeType === 1) i18nWalk(nd);
+          }
+        } else if (m.type === "characterData") i18nNode(m.target);
+      }
+    } finally { _i18nBusy = false; }
+    _glueKick();
+  });
+  mo.observe(document.body, { childList: true, subtree: true, characterData: true });
+}
+function setLang(l) {
+  LANG = l;
+  try { localStorage.setItem("opl_lang", l); } catch (e) { }
+  document.documentElement.lang = l === "en" ? "en" : "zh-CN";
+  var btn = document.getElementById("langBtn");
+  if (btn) btn.textContent = l === "en" ? "中文" : "EN";
+  document.title = l === "en" ? T(ORIG_TITLE) : ORIG_TITLE;
+  if (l !== "en") removeGlue();
+  i18nWalk(document.body);
+  _glueKick();
+  if (typeof syncInputs === "function") syncInputs();
+  if (typeof render === "function") render();
+}
+
+
+
+
+
+/* ---------------- 直接 fillText / strokeText 的自动排版钩子 ----------------
+   有些标注不走 txt() 而是直接 g.fillText()（状态徽标、能带边等），
+   这里在原型层统一处理：含数学记法的字符串先按 LaTeX 规则拆段再绘制，
+   measureText 同步返回拆段总宽，白底框长度自动跟着变。 */
+const NEED_MATH_HM = /[\u2070-\u209C\u00B2\u00B3\u00B9]|_\{?[A-Za-z0-9\u0370-\u03ff]|\^\{?[\d(\-]|\d(\.\d+)?[eE][+\-]\d|\u221A/;
+/* 原生 measureText：mathSegsHM 内部量宽必须走这一条，
+   否则 measureText 被钩子接管后会 self-recursion（RangeError）。 */
+var _mRawHM = null;
+function measureRawHM(g, s) { return (_mRawHM ? _mRawHM : g.measureText).call(g, s).width; }
+function mathSegsHM(g, s) {
+  const f = String(g.font || "");
+  const mm = /(\d+(?:\.\d+)?)px/.exec(f);
+  const size = mm ? parseFloat(mm[1]) : 12;
+  const family = f.replace(/^(?:\s*(?:italic|oblique|bold|[1-9]00)\s*)*\d+(?:\.\d+)?px\s*/, "");
+  const style = /italic|oblique/.test(f) ? "italic " : (/bold|[6-9]00/.test(f) ? "bold " : "");
+  const parts = AUTO(s), laid = [];
+  let w = 0;
+  for (const p of parts) {
+    const small = !!(p.sup || p.sub);
+    const fs = style + (small ? (size * 0.74).toFixed(2) : size.toFixed(2)) + "px " + family;
+    g.font = fs;
+    const tw = measureRawHM(g, p.s);
+    laid.push({ s: p.s, w: tw, fs: fs, dy: small ? (p.sup ? -size * 0.40 : size * 0.22) : 0 });
+    w += tw;
+  }
+  return { laid: laid, w: w, family: family, style: style, size: size };
+}
+(function hookMathHM() {
+  if (window.__MATH_HOOK) return; window.__MATH_HOOK = 1;
+  const P = CanvasRenderingContext2D.prototype;
+  const _fill = P.fillText, _stroke = P.strokeText, _measure = P.measureText;
+  function draw(drawRaw, g, s, x, y, rest) {
+    const info = mathSegsHM(g, s);
+    const al = g.textAlign, bl = g.textBaseline;
+    const cx = al === "right" ? x - info.w : (al === "center" ? x - info.w / 2 : x);
+    g.textAlign = "left";
+    let px = cx;
+    for (const L of info.laid) {
+      g.font = L.fs;
+      drawRaw.call(g, L.s, px, y + L.dy, ...rest);
+      px += L.w;
+    }
+    g.textAlign = al; g.textBaseline = bl;
+    g.font = info.style + info.size.toFixed(2) + "px " + info.family;
+    return info;
+  }
+  P.fillText = function (s, x, y) {
+    if (typeof s !== "string" || !NEED_MATH_HM.test(s)) return _fill.apply(this, arguments);
+    draw(_fill, this, s, x, y, Array.prototype.slice.call(arguments, 3));
+  };
+  P.strokeText = function (s, x, y) {
+    if (typeof s !== "string" || !NEED_MATH_HM.test(s)) return _stroke.apply(this, arguments);
+    draw(_stroke, this, s, x, y, Array.prototype.slice.call(arguments, 3));
+  };
+  if (!_mRawHM) _mRawHM = _measure;
+  P.measureText = function (s) {
+    if (window.__HM_IN || typeof s !== "string" || !NEED_MATH_HM.test(s)) return _measure.call(this, s);
+    window.__HM_IN = 1;
+    const save = this.font;
+    let info;
+    try { info = mathSegsHM(this, s); } finally { window.__HM_IN = 0; }
+    this.font = save;
+    return { width: info.w, get actualBoundingBoxLeft() { return 0; }, get actualBoundingBoxRight() { return info.w; } };
+  };
+})();
+
+/* ---------------- HTML 侧自动 LaTeX 排版 ----------------
+   读数 / 说明 / 按钮名里由 JS 拼出来的 cm⁻³、E_c、2.5e+8，
+   在写进 innerHTML 之前转成真 <sup>/<sub>；标签与属性原样放过（title 不会被塞进尖括号）。
+   与画布侧 AUTO() 对偶，保证网页和画布按同一套规则排版。 */
+const AUTOH_SUP = { "⁰": "0", "¹": "1", "²": "2", "³": "3", "⁴": "4", "⁵": "5", "⁶": "6",
+  "⁷": "7", "⁸": "8", "⁹": "9", "⁺": "+", "⁻": "−", "⁼": "=", "⁽": "(", "⁾": ")", "ⁿ": "n", "ⁱ": "i" };
+const AUTOH_SUB = { "₀": "0", "₁": "1", "₂": "2", "₃": "3", "₄": "4", "₅": "5", "₆": "6",
+  "₇": "7", "₈": "8", "₉": "9", "₊": "+", "₋": "−", "₌": "=", "₍": "(", "₎": ")",
+  "ₐ": "a", "ₑ": "e", "ₒ": "o", "ₓ": "x", "ₔ": "ə", "ₕ": "h", "ₖ": "k", "ₗ": "l",
+  "ₘ": "m", "ₙ": "n", "ₚ": "p", "ₛ": "s", "ₜ": "t", "ᵣ": "r", "ᵤ": "u", "ᵥ": "v" };
+const TEXH_NEED = /[\u2070-\u209C\u00B2\u00B3\u00B9]|_\{?[A-Za-z0-9\u0370-\u03ff]|\^\{?[\d(\-]|\d(\.\d+)?[eE][+\-]\d|\u221A/;
+/* 从 i 处（必须是 '<'）扫出一个"完整元素"的结束下标（含嵌套），失败返回 -1 */
+function TEXH_elemEnd(h, i) {
+  if (h.charAt(i) !== "<") return -1;
+  let depth = 0, j = i, guard = 0;
+  while (j < h.length && guard++ < 4000) {
+    if (h.charAt(j) !== "<") { j++; continue; }
+    const e = TEXH_tagEnd(h, j);
+    if (e < 0) return -1;
+    const isClose = h.charAt(j + 1) === "/";
+    const selfClose = h.charAt(e - 2) === "/";
+    if (isClose) { depth--; j = e; if (depth <= 0) return j; }
+    else if (selfClose) { j = e; if (depth === 0) return j; }
+    else { depth++; j = e; }
+  }
+  return -1;
+}
+/* √ 后面直接跟一个元素：√<i>E</i> → √‾E（前两条规则只吃 √(A) 与 √字母串） */
+function TEXHsqrtElem(s) {
+  let out = "", i = 0, guard = 0;
+  while (guard++ < 400) {
+    const k = s.indexOf("\u221A", i);
+    if (k < 0) break;
+    out += s.slice(i, k);
+    /* 守卫：√ 后面已是闭标签 ⇒ 该 √ 已排版过（对整段 HTML 重复跑 TEXH 会把 </span> 当成被开方式，
+       层层包出空壳根号，视觉上变成 √−3 / √−E），原样输出不再包裹 */
+    if (s.charAt(k + 1) === "<" && s.charAt(k + 2) === "/") { out += "\u221A"; i = k + 1; continue; }
+    let rad = null, end = k + 1;
+    if (s.charAt(k + 1) === "(") {
+      /* √(…) ：被开方式里常有标签，括号本身不在同一个文本片段里，必须整串扫 */
+      let depth = 0, p = k + 1;
+      while (p < s.length) {
+        const c = s.charAt(p);
+        if (c === "(") depth++;
+        else if (c === ")") { depth--; if (depth === 0) { rad = s.slice(k + 2, p); end = p + 1; break; } }
+        p++;
+      }
+    } else {
+      const e = TEXH_elemEnd(s, k + 1);
+      if (e > 0 && e - k < 500) { rad = s.slice(k + 1, e); end = e; }
+    }
+    if (rad !== null && rad.length) {
+      out += "<span class=\"sqrt\"><span class=\"rd\">\u221A</span><span class=\"rdc\">" + rad + "</span></span>";
+      i = end;
+    } else { out += "\u221A"; i = k + 1; }
+  }
+  return out + s.slice(i);
+}
+function TEXHpart(t) {
+  let s = t;
+  /* 根号：√ 或 √(A) → <span class="sqrt">√<span class="rd"><span class="rdc">A</span></span></span>（A 内不含嵌套括号） */
+  s = s.replace(/<span class="(?:op|rm|fn|v|u)">\u221A<\/span>/g, "\u221A");
+  s = s.replace(/\u221A<span class="(?:op|rm)">\(<\/span>([^()]{1,120}?)<span class="(?:op|rm)">\)<\/span>/g, function (m, a) {
+    return "<span class=\"sqrt\"><span class=\"rd\">\u221A</span><span class=\"rdc\">" + a + "</span></span>";
+  });
+  s = s.replace(/\u221A\(([^()]{1,120})\)/g, function (m, a) {
+    return "<span class=\"sqrt\"><span class=\"rd\">\u221A</span><span class=\"rdc\">" + a + "</span></span>";
+  });
+  s = s.replace(/\u221A([A-Za-z0-9\u0370-\u03ff]{1,6})/g, function (m, a) {
+    return "<span class=\"sqrt\"><span class=\"rd\">\u221A</span><span class=\"rdc\">" + a + "</span></span>";
+  });
+  s = s.replace(/(\d(?:\.\d+)?)e([+-])(\d+)/g, function (m, a, sg, e) {
+    return a + "\u00d710<sup>" + (sg === "-" ? "\u2212" : "") + e + "</sup>";
+  });
+  s = s.replace(/([A-Za-z\u0370-\u03ff)\]])\^\{([^{}]{1,12})\}/g, "$1<sup>$2</sup>");
+  s = s.replace(/([A-Za-z\u0370-\u03ff)\]])\^(\d+(?:\.\d+)?)/g, "$1<sup>$2</sup>");
+  s = s.replace(/([A-Za-z\u0370-\u03ff])_\{([A-Za-z0-9\u0370-\u03ff+\-]{1,8})\}/g, "<span class='m'><i>$1</i><sub>$2</sub></span>");
+  s = s.replace(/([A-Za-z\u0370-\u03ff])_([A-Za-z0-9\u0370-\u03ff]{1,6})(?![A-Za-z0-9])/g, "<span class='m'><i>$1</i><sub>$2</sub></span>");
+  if (/[\u2070-\u209C\u00B2\u00B3\u00B9]/.test(s)) {
+    let out = "", i = 0;
+    while (i < s.length) {
+      const ch = s[i];
+      if (AUTOH_SUP[ch] !== undefined || AUTOH_SUB[ch] !== undefined) {
+        const isSup = AUTOH_SUP[ch] !== undefined, tab = isSup ? AUTOH_SUP : AUTOH_SUB;
+        let j = i, buf = "";
+        while (j < s.length && (isSup ? AUTOH_SUP[s[j]] !== undefined : AUTOH_SUB[s[j]] !== undefined)) {
+          buf += tab[s[j]]; j++;
+        }
+        out += "<" + (isSup ? "sup" : "sub") + ">" + buf + "</" + (isSup ? "sup" : "sub") + ">";
+        i = j;
+      } else { out += ch; i++; }
+    }
+    s = out;
+  }
+  return s.indexOf("\u221A") >= 0 ? TEXHsqrtElem(s) : s;
+}
+/* 只有真正的标签才整段跳过：正文里裸写的 '<'（如 "t₂ < 0"）必须当普通字符，
+   否则 indexOf('>') 会一路吞掉后面整段，E₂⁰ 这类记法就漏排了。 */
+function TEXH_tagEnd(h, i) {
+  if (h.charAt(i) !== "<") return -1;
+  const c = h.charAt(i + 1);
+  if (c === "!" || c === "/") { const j = h.indexOf(">", i); return (j >= 0 && j - i < 300) ? j + 1 : -1; }
+  if (!/[A-Za-z]/.test(c)) return -1;
+  let j = i + 1;
+  while (j < h.length && /[A-Za-z0-9]/.test(h.charAt(j))) j++;
+  if (j === i + 1) return -1;
+  if (h.charAt(j) === ">") return j + 1;
+  if (h.charAt(j) !== " " && h.charAt(j) !== "\n" && h.charAt(j) !== "\t") return -1;
+  const g = h.indexOf(">", j), nx = h.indexOf("<", j);
+  if (g < 0 || g - i > 300) return -1;
+  if (nx >= 0 && nx < g) return -1;
+  return g + 1;
+}
+function TEXH(h) {
+  if (typeof h !== "string" || !TEXH_NEED.test(h)) return h;
+  if (h.indexOf("\u221A") >= 0) h = h.replace(/<span class="(?:op|rm|fn|v|u)">\u221A<\/span>/g, "\u221A");
+  if (h.indexOf("<") < 0) return TEXHpart(h);
+  let out = "", i = 0, n = h.length, guard = 0;
+  while (i < n && guard++ < 40000) {
+    const e = TEXH_tagEnd(h, i);
+    if (e > 0) { out += h.slice(i, e); i = e; continue; }
+    let j = i;
+    while (j < n && TEXH_tagEnd(h, j) <= 0) j++;
+    out += TEXHpart(h.slice(i, j)); i = j;
+  }
+  const r = out + h.slice(i);
+  return r.indexOf("\u221A") >= 0 ? TEXHsqrtElem(r) : r;
+}
+(function hookHTML() {
+  if (window.__TEXH_HOOK) return; window.__TEXH_HOOK = 1;
+  const d = Object.getOwnPropertyDescriptor(Element.prototype, "innerHTML");
+  if (!d || !d.set) return;
+  Object.defineProperty(Element.prototype, "innerHTML", {
+    configurable: true, get: d.get,
+    set: function (v) { d.set.call(this, typeof v === "string" ? TEXH(v) : v); }
+  });
+  /* insertAdjacentHTML 也会被用到 */
+  const ia = Element.prototype.insertAdjacentHTML;
+  Element.prototype.insertAdjacentHTML = function (pos, v) {
+    return ia.call(this, pos, typeof v === "string" ? TEXH(v) : v);
+  };
+})();
+
+/* ---------------- 画布自动 LaTeX 排版 ----------------
+   老调用点 txt(g, "cm⁻³") / txt(g, "E_c") / txt(g, "2.5e+8") 一行都不用改，
+   只要在绘制前把字符串解析成分段零件即可。规则与网页侧一致：
+   物理量斜体、描述性下标与单位正体、幂次用真上标（不用 Unicode 伪字符）。 */
+const SUPMAP = { "⁰": "0", "¹": "1", "²": "2", "³": "3", "⁴": "4", "⁵": "5", "⁶": "6",
+  "⁷": "7", "⁸": "8", "⁹": "9", "⁺": "+", "⁻": "−", "⁼": "=", "⁽": "(", "⁾": ")", "ⁿ": "n", "ⁱ": "i" };
+const SUBMAP = { "₀": "0", "₁": "1", "₂": "2", "₃": "3", "₄": "4", "₅": "5", "₆": "6",
+  "₇": "7", "₈": "8", "₉": "9", "₊": "+", "₋": "−", "₌": "=", "₍": "(", "₎": ")",
+  "ₐ": "a", "ₑ": "e", "ₒ": "o", "ₓ": "x", "ₔ": "ə", "ₕ": "h", "ₖ": "k", "ₗ": "l",
+  "ₘ": "m", "ₙ": "n", "ₚ": "p", "ₛ": "s", "ₜ": "t", "ᵣ": "r", "ᵤ": "u", "ᵥ": "v" };
+const MATH_IDCH = /[A-Za-z\u0370-\u03ff]/;
+const NEED_MATH = /[\u2070-\u209C\u00B2\u00B3\u00B9]|_\{?[A-Za-z0-9\u0370-\u03ff]|\^\{?[\d(\-]|\d(\.\d+)?[eE][+\-]\d/;
+function AUTO(s) {
+  const out = [];
+  let buf = "", mode = 0;
+  const emit = (t, kind) => {
+    if (!t) return;
+    if (kind === 1) out.push({ s: t, sup: true });
+    else if (kind === -1) out.push({ s: t, sub: true });
+    else out.push({ s: t });
+  };
+  let i = 0, italicAll = false;
+  while (i < s.length) {
+    const ch = s[i];
+    if (SUPMAP[ch] !== undefined) { if (mode !== 1) { emit(buf, mode); buf = ""; mode = 1; } buf += SUPMAP[ch]; i++; continue; }
+    if (SUBMAP[ch] !== undefined) { if (mode !== -1) { emit(buf, mode); buf = ""; mode = -1; } buf += SUBMAP[ch]; i++; continue; }
+    if (mode) { emit(buf, mode); buf = ""; mode = 0; }
+    const rest = s.slice(i);
+    const sc = /^\d(\.\d+)?[eE][+\-]\d{1,3}/.exec(rest);       /* ASCII 伪科学计数 2.5e+8 */
+    if (sc) {
+      const parts = sc[0].split(/[eE]/);
+      emit(parts[0] + "\u00d710", 0); emit(String(+parts[1]).replace("-", "\u2212"), 1);
+      i += sc[0].length; continue;
+    }
+    if (MATH_IDCH.test(ch) && i + 1 < s.length && (s[i + 1] === "_" || s[i + 1] === "^")) {
+      const sup = s[i + 1] === "^";
+      let j = i + 2, grp = "";
+      if (s[j] === "{") { const e = s.indexOf("}", j); if (e > 0) { grp = s.slice(j + 1, e); j = e + 1; } }
+      else {
+        const RCJK = /[\u2E80-\u9FFF]/, RASC = /[A-Za-z0-9\u0370-\u03ff+\-]/;
+        if (RCJK.test(s[j])) { while (j < s.length && RCJK.test(s[j]) && j - i < 8) j++; }   /* 中文描述性下标：τ_直接、E_声子 */
+        else { while (j < s.length && RASC.test(s[j])) j++; }
+        grp = s.slice(i + 2, j);
+      }
+      if (grp) {
+        emit(ch, 0);
+        if (italicAll || /^[A-Za-z\u0370-\u03ff]$/.test(ch)) out[out.length - 1].i = true;
+        emit(sup ? grp.replace(/-/g, "\u2212") : grp, sup ? 1 : -1);
+        i = j; continue;
+      }
+    }
+    buf += ch; i++;
+  }
+  emit(buf, mode);
+  return out;
+}
+function fontInfo(font, dflt) {
+  const f = String(font || "");
+  const m = /(\d+(?:\.\d+)?)px/.exec(f);
+  return { fp: m ? parseFloat(m[1]) : (dflt || 12), bd: /bold|70\d|600/.test(f), it: /italic|oblique/.test(f) };
+}
+
+/* ---------------- HTML 字符串 → 画布零件（网页与画布共用同一份排版） ----------------
+   mtxt(g, TX(H_NA), x, y, col, fp) —— H_* 常量本来就在喂 innerHTML，
+   再喂给 TX() 就不会出现「网页斜体、画布正体」的两边不一致。
+   <i> 斜体、<sub> 下标、<sup> 上标；<span class="op|un|rm|sqrt|frac"> 只剥标签（保持正体）。 */
+const catA = (...a) => [].concat(...a);
+function TX(h) {
+  const t = String(h == null ? "" : h)
+    .replace(/<span\b[^>]*>/g, "").replace(/<\/span>/g, "")
+    .replace(/<i\b[^>]*>/g, "<i>").replace(/<b\b[^>]*>/g, "").replace(/<\/b>/g, "")
+    .replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&").replace(/&nbsp;/g, " ");
+  const out = [], re = /<i>([\s\S]*?)<\/i>|<sub>([\s\S]*?)<\/sub>|<sup>([\s\S]*?)<\/sup>|([^<]+)/g;
+  let m;
+  while ((m = re.exec(t))) {
+    const raw = s => s == null ? null : s.replace(/<[^>]*>/g, "");
+    if (m[1] != null) out.push({ s: raw(m[1]), i: true });
+    else if (m[2] != null) out.push({ s: raw(m[2]), sub: true });
+    else if (m[3] != null) out.push({ s: raw(m[3]), sup: true });
+    else if (m[4]) out.push({ s: m[4] });
+  }
+  return out;
+}
+function TXof(...a) { return catA(...a.map(TX)); }
+
+
+function PSci(v, n) {
+  if (!isFinite(v) || v === 0) return [{ s: "0" }];
+  const e = Math.floor(Math.log10(Math.abs(v)));
+  const m = (v / Math.pow(10, e)).toFixed(n === undefined ? 1 : n);
+  /* 1 ≦ |v| < 10 时直接写尾数，不再拖一个 ×10⁰（与 sciH 一致） */
+  if (e === 0) return [{ s: m }];
+  /* 指数负号用 U+2212 */
+  return [{ s: m + "×10" },
+          { s: String(e).replace("-", "−"), sup: true }];
+}
+
+/* ---------------- 0. 小工具 ---------------- */
+const $ = id => document.getElementById(id);
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const fmt = (v, n) => (isFinite(v) ? v.toFixed(n === undefined ? 2 : n) : "—");
+const MM = h => '<span class="m">' + h + "</span>";
+
+/* ---------------- 物理量符号常量：网页 innerHTML 与画布 TX() 共用同一份 ----------------
+   凡是要出现在读数面板、图例、画布上的符号，一律先在这里定义，
+   DOM 侧直接拼接，画布侧用 TX(H_*) 走 mRun —— 杜绝「网页斜体、画布正体」。 */
+const H_N   = MM("<i>n</i>");
+const H_P   = MM("<i>p</i>");
+const H_NP  = MM("<i>np</i>");
+const H_N0  = MM("<i>n</i><sub>0</sub>");
+const H_P0  = MM("<i>p</i><sub>0</sub>");
+const H_NI  = MM("<i>n</i><sub>i</sub>");
+const H_N1  = MM("<i>n</i><sub>1</sub>");
+const H_P1  = MM("<i>p</i><sub>1</sub>");
+const H_DN  = MM("Δ<i>n</i>");
+const H_DP  = MM("Δ<i>p</i>");
+const H_T   = MM("<i>T</i>");
+const H_EC  = MM("<i>E</i><sub>c</sub>");
+const H_EV  = MM("<i>E</i><sub>v</sub>");
+const H_EG  = MM("<i>E</i><sub>g</sub>");
+const H_ET  = MM("<i>E</i><sub>t</sub>");
+const H_EI  = MM("<i>E</i><sub>i</sub>");
+const H_HNU = MM("<i>h</i><i>ν</i>");
+const H_R   = MM("<i>R</i>");
+const H_RB  = MM("<i>R</i><sub>B</sub>");
+const H_RS  = MM("<i>R</i><sub>SRH</sub>");
+const H_RA  = MM("<i>R</i><sub>Aug</sub>");
+const H_RT  = MM("<i>R</i><sub>total</sub>");
+const H_RN  = MM("<i>R</i><sub>net</sub>");
+const H_G   = MM("<i>G</i>");
+const H_GO  = MM("<i>G</i><sub>opt</sub>");
+const H_TAU = MM("<i>τ</i>");
+const H_TN  = MM("<i>τ</i><sub>n</sub>");
+const H_TP  = MM("<i>τ</i><sub>p</sub>");
+const H_TEF = MM("<i>τ</i><sub>eff</sub>");
+const H_B   = MM("<i>B</i>");
+const H_C   = MM("<i>C</i>");
+/* 复合驱动力 np − n_i²（三种机制共用，写在读数面板与画布上） */
+const H_EXC = MM("<i>np</i><span class='op'>−</span><i>n</i><sub>i</sub><sup>2</sup>");
+const H_EQ  = MM("<span class='op'>=</span>");
+const H_MN  = MM("<span class='op'>−</span>");
+const H_PL  = MM("<span class='op'>+</span>");
+const H_SL  = MM("<span class='sl'>/</span>");
+const H_CM3 = MM("<span class='un'>cm<sup>−3</sup></span>");
+const H_CM3S = MM("<span class='un'>cm<sup>−3</sup>s<sup>−1</sup></span>");
+const H_PR  = MM("<span class='op'>∝</span>");
+
+/* 零件版自动折行：按测量宽度把零件切成多行，逐行画（公式不会被从中间截断） */
+function mWrap(g, parts, maxW, fp, bd) {
+  const ps = partsOf(parts), atoms = [];
+  for (const q of ps) for (const ch of String(q.s)) atoms.push({ s: ch, i: q.i, sub: q.sub, sup: q.sup });
+  const lines = []; let cur = [];
+  for (const a of atoms) {
+    const t = cur.concat([a]);
+    if (cur.length && mMeasure(g, t, fp, bd) > maxW) { lines.push(cur); cur = [a]; }
+    else cur = t;
+  }
+  if (cur.length) lines.push(cur);
+  return lines;
+}
+
+/* ---------------- 3. 画布与画布内排版 ---------------- */
+const CV = {};
+function fitCanvas(id) {
+  const el = $(id);
+  if (!el || !el.clientWidth) return null;
+  const w = el.clientWidth, h = +el.dataset.h;
+  const dpr = window.devicePixelRatio || 1;
+  el.width = Math.round(w * dpr); el.height = Math.round(h * dpr);
+  el.style.height = h + "px";
+  const g = el.getContext("2d");
+  g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  CV[id] = { g: g, W: w, H: h, el: el };
+  return CV[id];
+}
+function fitAll() { ["chain", "disp", "zoom"].forEach(fitCanvas); }
+
+const FONT = "\"Microsoft YaHei\",\"PingFang SC\",sans-serif";
+const FONTM = "\"Cambria Math\",\"Times New Roman\",Times,serif";
+const SUBR = 0.74, SUBDY = 0.22, SUPDY = 0.40;
+const C_AC = "#1976d2", C_OP = "#d94a3d";
+const C_HEAVY = "#2f4a6b", C_LIGHT = "#7fb2e3";
+const C_ARROW = "#ef8c1a", C_SUB = "#6b7a8c", C_GRID = "#e7edf4", C_REF = "#9aa5b1";
+
+function txt(g, s, x, y, col, font, align, base) {
+  g.fillStyle = col; g.font = font || "12px " + FONT;
+  g.textAlign = align || "left"; g.textBaseline = base || "middle";
+  if (typeof s === "string" && NEED_MATH.test(s)) {
+    const fi = fontInfo(font, 12);
+    mRun(g, AUTO(s), x, y, fi.fp, fi.bd, align || "left", false);
+    return;
+  }
+  g.fillText(s, x, y);
+}
+function txtHalo(g, s, x, y, col, font, align, base) {
+  g.font = font || "12px " + FONT;  g.textAlign = align || "left"; g.textBaseline = base || "middle";
+  g.lineJoin = "round"; g.strokeStyle = "rgba(255,255,255,0.94)"; g.lineWidth = 3.2;
+  if (typeof s === "string" && NEED_MATH.test(s)) {
+    const fi = fontInfo(font, 12), parts = AUTO(s);
+    g.lineJoin = "round";
+    mRun(g, parts, x, y, fi.fp, fi.bd, align || "left", true);
+    g.fillStyle = col;
+    mRun(g, parts, x, y, fi.fp, fi.bd, align || "left", false);
+    return;
+  }
+  g.strokeText(s, x, y); g.fillStyle = col; g.fillText(s, x, y);
+}
+function isCJKch(ch) {
+  const c = ch.codePointAt(0);
+  return (c >= 0x2E80 && c <= 0x9FFF) || (c >= 0xF900 && c <= 0xFAFF) ||
+    (c >= 0xFF00 && c <= 0xFF60) || c === 0x2014 || c === 0x2015 || c === 0x2026;
+}
+function segRuns(s) {
+  const out = []; let cur = "", curC = null;
+  for (const ch of s) {
+    const c = isCJKch(ch);
+    if (curC === null) { cur = ch; curC = c; }
+    else if (c === curC) cur += ch;
+    else { out.push({ s: cur, cjk: curC }); cur = ch; curC = c; }
+  }
+  if (cur) out.push({ s: cur, cjk: curC });
+  return out;
+}
+function pFont(q, fp, bd, cjk) {
+  const sz = fp * ((q.sub || q.sup) ? SUBR : 1);
+  return (bd ? "bold " : "") + (!cjk && q.i ? "italic " : "") + sz.toFixed(2) + "px " + (cjk ? FONT : FONTM);
+}
+/* i18n 注入点①：画布 token。带 i / sub / sup / un 标记的是物理量、下标与单位，一律不动；
+   没有这些标记的 token 才是自然语言，交给 T() —— 所以这里的判断只看标记，不看内容。 */
+const partsOf = p => p.map(q => {
+  const o = (typeof q === "string" ? { s: q } : q);
+  const natural = !(o.i || o.sub || o.sup || o.un);
+  if (LANG === "en" && natural && typeof o.s === "string" && /[\u4E00-\u9FFF]/.test(o.s)) {
+    const t = T(o.s);
+    return t === o.s ? o : Object.assign({}, o, { s: t });
+  }
+  return o;
+});
+function mMeasure(g, parts, fp, bd) {
+  let w = 0;
+  for (const q of partsOf(parts))
+    for (const sg of segRuns(q.s)) { g.font = pFont(q, fp, bd, sg.cjk); w += g.measureText(sg.s).width; }
+  return w;
+}
+function mRun(g, parts, x, y, fp, bd, align, stroke) {
+  const ps = partsOf(parts), w = mMeasure(g, ps, fp, bd);
+  let cx = align === "right" ? x - w : (align === "center" ? x - w / 2 : x);
+  g.textAlign = "left"; g.textBaseline = "middle"; g.lineJoin = "round";
+  for (const q of ps) {
+    const dy = q.sub ? fp * SUBDY : (q.sup ? -fp * SUPDY : 0);
+    for (const sg of segRuns(q.s)) {
+      g.font = pFont(q, fp, bd, sg.cjk);
+      if (stroke) { g.lineWidth = (q.sub || q.sup) ? 2.4 : 3.2; g.strokeText(sg.s, cx, y + dy); }
+      else g.fillText(sg.s, cx, y + dy);
+      cx += g.measureText(sg.s).width;
+    }
+  }
+}
+function mtxt(g, parts, x, y, col, fp, align, bd) {
+  g.fillStyle = col; mRun(g, parts, x, y, fp, bd || false, align, false);
+}
+function mtxtHalo(g, parts, x, y, col, fp, align, bd) {
+  g.strokeStyle = "rgba(255,255,255,0.94)";
+  mRun(g, parts, x, y, fp, bd || false, align, true);
+  mtxt(g, parts, x, y, col, fp, align, bd);
+}
+function line(g, x1, y1, x2, y2, col, lw, dash) {
+  g.save();
+  g.strokeStyle = col; g.lineWidth = lw || 1;
+  if (dash) g.setLineDash(dash);
+  g.beginPath(); g.moveTo(x1, y1); g.lineTo(x2, y2); g.stroke();
+  g.restore();
+}
+function arrowHead(g, x, y, ang, sz, col) {
+  g.save(); g.translate(x, y); g.rotate(ang);
+  g.beginPath(); g.moveTo(0, 0); g.lineTo(-sz, sz * 0.42); g.lineTo(-sz, -sz * 0.42);
+  g.closePath(); g.fillStyle = col; g.fill(); g.restore();
+}
+function arrow(g, x1, y1, x2, y2, col, lw, sz) {
+  const dx = x2 - x1, dy = y2 - y1, L = Math.hypot(dx, dy);
+  if (L < 0.5) return;
+  line(g, x1, y1, x2, y2, col, lw || 1.4);
+  arrowHead(g, x2, y2, Math.atan2(dy, dx), sz || 6, col);
+}
+function chip(g, s, x, y, col, font, align) {
+  g.font = font || "11px " + FONT;
+  const w = g.measureText(s).width, al = align || "left";
+  const bx = al === "right" ? x - w : (al === "center" ? x - w / 2 : x);
+  g.fillStyle = "rgba(255,255,255,0.92)";
+  g.fillRect(bx - 4, y - 8, w + 8, 16);
+  txt(g, s, bx, y, col, font, "left", "middle");
+}
+/* 白底标签的零件版：数量 / 下标 / 科学计数一律走这里，避免画布上出现 10^14.1 这类 ASCII 伪公式 */
+function chipP(g, parts, x, y, col, fp, align) {
+  const ps = partsOf(parts), w = mMeasure(g, ps, fp, false), al = align || "left";
+  const bx = al === "right" ? x - w : (al === "center" ? x - w / 2 : x);
+  g.fillStyle = "rgba(255,255,255,0.92)";
+  g.fillRect(bx - 4, y - fp * 0.72, w + 8, fp * 1.44);
+  mtxt(g, ps, bx, y, col, fp, "left", false);
+}
+
+
+"use strict";
+/* ==================================================================
+   载流子产生与复合交互教学工具
+   三种复合机制（均为“净”复合率，np = n_i² 时自动为零，满足细致平衡）：
+     直接（带间）：   R_B    = B (np − n_i²)                     能量 → 光子
+     间接（SRH）：    R_SRH  = (np − n_i²) / [τ_p(n+n₁) + τ_n(p+p₁)]  能量 → 声子（两步）
+     俄歇（三粒子）： R_Aug  = (C_n n + C_p p)(np − n_i²)        能量 → 第三个载流子
+   陷阱参数：n₁ = n_i e^{(E_t−E_i)/kT}，p₁ = n_i e^{−(E_t−E_i)/kT}
+   本征浓度：n_i(T) = n_i(300K) (T/300)^{3/2} exp[ (E_g/2k)(1/300 − 1/T) ]
+   平衡多数/少数载流子：n₀p₀ = n_i²，n₀ − p₀ = N_D − N_A
+   寿命：τ_i = Δn / R_i，1/τ_eff = Σ 1/τ_i（最快的机制主导）
+   光照：G_opt 与 R_total 相等时 → 净复合率 0 → 稳态
+   ================================================================== */
+
+/* ---------------- 1. 常数与状态 ---------------- */
+const KB_EV = 8.617333262e-5;      // eV/K
+
+/* 单一典型材料：硅（本工具不做材料对比，也不区分直接 / 间接带隙，
+   所有系数都放在控制面板里作为可调参数） */
+const MAT = {
+  name: "Si", Eg: 1.12, ni300: 1.0e10,
+  note: "Eg(300 K) ≈ 1.12 eV，n_i ≈ 1.0×10¹⁰ cm⁻³。固定系数取硅室温典型量级：B = 4.7×10⁻¹⁵ cm³/s（文献值）、C = 1×10⁻³⁰ cm⁶/s（文献 C_n + C_p ≈ 3.8×10⁻³¹，本工具简化成一个 C）、τ = 1 μs。"
+};
+
+const DOPES = [
+  { name: "本征",   N: 0,     lab: "本征" },
+  { name: "n 型 10¹⁶", N: 1e16, lab: "n 型 10¹⁶" },
+  { name: "p 型 10¹⁶", N: -1e16, lab: "p 型 10¹⁶" },
+  { name: "重掺 n 10¹⁹", N: 1e19, lab: "重掺 n 10¹⁹" }
+];
+
+const MODES = [
+  { k: "direct", name: "直接复合" },
+  { k: "srh", name: "间接（陷阱）" },
+  { k: "auger", name: "俄歇复合" },
+  { k: "all", name: "三种对比" }
+];
+
+const OPT = {
+  mode: "all", dope: 1,
+  inj: 30,        // 滑块 → log10 Δn = 12 + inj/100*7
+  playing: true, speed: 1,
+  ckPhoton: true, ckPhonon: true, ckTrap: true, ckThird: true, ckRate: true
+};
+
+/* 固定参数：本工具已锁定，控制面板里不再提供滑块，全部取硅的典型量级。
+   这样可以把注意力集中在“注入水平 / 温度 / 掺杂”这三个真正决定主次关系的变量上。 */
+const FIX = {
+  T: 300,         // 温度，K（室温）
+  et: 0,          // (E_t − E_i) = 0 eV，陷阱位于禁带中央（最有效的复合中心）
+  tau: 1.0e-6,    // τ_n = τ_p = 1 μs
+  B: 4.7e-15,     // 直接（辐射）复合系数 B，cm³/s —— 硅室温文献值（Altermatt 等，
+                  //   由 van Roosbroeck–Shockley 细致平衡对吸收谱积分得到，低载流子密度极限）
+  C: 1.0e-30,     // 俄歇系数 C = C_n = C_p，cm⁶/s（文献 C_n ≈ 2.8×10⁻³¹、C_p ≈ 1.0×10⁻³¹，
+                  //   本工具简化为单一 C，量级相同、数值偏高 3~5 倍，见读数面板的文献对照注）
+  G: 1.0e20       // 光产生率 G_opt，cm⁻³s⁻¹（中等光照，≈ 默认工作点的总复合率）
+};
+/* 跨材料对照用的文献值（本工具不做材料切换，只为把硅的 B 放到一把标尺上）：
+   Si 4.7×10⁻¹⁵（间接带隙，需声子参与）｜ GaAs 1.7×10⁻¹⁰（直接带隙）｜ GaN 2.0×10⁻¹¹。
+   注意量纲：辐射复合 B 是 cm³/s，俄歇 C 是 cm⁶/s —— 两者数量级相差十几个数量级，
+   不要把 C 的 10⁻³¹ 误当成 B（这是最容易犯的常数张冠李戴）。 */
+const B_LIT = { Si: 4.7e-15, GaAs: 1.7e-10, GaN: 2.0e-11 };
+
+/* ---------------- 2. 物理内核 ---------------- */
+const mat = () => MAT;
+
+function niNow() {
+  const M = mat(), T = FIX.T;
+  return M.ni300 * Math.pow(T / 300, 1.5) * Math.exp((M.Eg / (2 * KB_EV)) * (1 / 300 - 1 / T));
+}
+function dEt() { return FIX.et; }        // Et − Ei，eV（固定 0）
+function Bnow() { return FIX.B; }
+function Cnow() { return FIX.C; }
+function tauNow() { return FIX.tau; }
+function injNow() { return Math.pow(10, 12 + OPT.inj / 100 * 7); }
+function Gopt() { return FIX.G; }
+
+function carrier(ni, dop, dn) {
+  const n0 = (dop + Math.sqrt(dop * dop + 4 * ni * ni)) / 2;
+  const p0 = ni * ni / Math.max(n0, 1e-30);
+  return { n0: n0, p0: p0, n: n0 + dn, p: p0 + dn };
+}
+
+function rates(dn) {
+  const ni = niNow(), M = mat(), T = FIX.T;
+  const c = carrier(ni, DOPES[OPT.dope].N, dn);
+  const excess = c.n * c.p - ni * ni;
+  const B = Bnow(), C = Cnow(), tau = tauNow(), dE = dEt();
+  const n1 = ni * Math.exp(dE / (KB_EV * T));
+  const p1 = ni * Math.exp(-dE / (KB_EV * T));
+  const den = tau * (c.n + n1) + tau * (c.p + p1);
+  const rB = B * excess;
+  const rS = den > 0 ? excess / den : 0;
+  const rA = C * (c.n + c.p) * excess;
+  return { ni: ni, n0: c.n0, p0: c.p0, n: c.n, p: c.p, excess: excess,
+    rB: rB, rS: rS, rA: rA, rTot: rB + rS + rA, n1: n1, p1: p1, den: den, dE: dE, B: B, C: C, tau: tau };
+}
+
+function lifetime(r, dn) {
+  const one = x => (x > 1e-30 ? 1 / x : 0);
+  const tB = r.rB > 1e-30 ? dn / r.rB : Infinity;
+  const tS = r.rS > 1e-30 ? dn / r.rS : Infinity;
+  const tA = r.rA > 1e-30 ? dn / r.rA : Infinity;
+  const tT = r.rTot > 1e-30 ? dn / r.rTot : Infinity;
+  return { tB: tB, tS: tS, tA: tA, tT: tT };
+}
+
+function dominant(r) {
+  const arr = [["直接复合", r.rB], ["间接（SRH）", r.rS], ["俄歇复合", r.rA]];
+  arr.sort((a, b) => b[1] - a[1]);
+  return arr[0];
+}
+
+/* 交接点：SRH 与俄歇谁更大（返回交叉处的 Δn；全量程未交接返回 null）。
+   二分 40 次 ⇒ 精度 7/2⁴⁰ 个数量级，远超显示需要。这两个量都是 Δn 的单调函数，可直接二分。 */
+function crossSRHAuger() {
+  const f = x => { const r = rates(Math.pow(10, x)); return r.rA - r.rS; };
+  if (f(19) <= 0) return null;                  // 拉到 10¹⁹ 俄歇仍未追上
+  if (f(12) > 0) return Math.pow(10, 12);       // 一开局就是俄歇（重掺档）
+  let lo = 12, hi = 19;
+  for (let k = 0; k < 40; k++) { const m = (lo + hi) / 2; if (f(m) > 0) hi = m; else lo = m; }
+  return Math.pow(10, (lo + hi) / 2);
+}
+/* 光稳态工作点：解 R_tot(Δn) = G_opt（R_tot 是 Δn 的单调增函数 ⇒ 二分 40 次）。
+   返回 { dn, flag }：flag = "ok" | "under"（解在注入滑块量程之下，本档全程复合偏强）
+   | "over"（解在量程之上）。2026-10-22 新增，取代挑战五里写死的「Δn ≈ 10¹⁴、滑块 28–29」。 */
+function steadyDn() {
+  const G = Gopt();
+  const f = x => { const r = rates(Math.pow(10, x)); return r.rTot - G; };
+  if (f(19) < 0) return { dn: Math.pow(10, 19), flag: "over" };
+  if (f(12) > 0) return { dn: Math.pow(10, 12), flag: "under" };
+  let lo = 12, hi = 19;
+  for (let k = 0; k < 40; k++) { const m = (lo + hi) / 2; if (f(m) > 0) hi = m; else lo = m; }
+  return { dn: Math.pow(10, (lo + hi) / 2), flag: "ok" };
+}
+/* 稳态 Δn 对应的注入滑块刻度：Δn = 10^(12 + inj/100·7) */
+function injPosOf(dn) { return (Math.log10(Math.max(dn, 1e-30)) - 12) / 7 * 100; }
+
+/* 直接复合离“主导者”最近时还差几个数量级（全量程取最小值 ⇒ 最乐观的一次）。
+   硅是间接带隙，这个数在真实参数下永远 ≫ 0，即辐射复合永远当不了老大。 */
+function directGapDec() {
+  let g = Infinity;
+  for (let k = 0; k <= 140; k++) {
+    const r = rates(Math.pow(10, 12 + k * 0.05));
+    const d = Math.log10(Math.max(r.rS, r.rA, 1e-30) / Math.max(r.rB, 1e-30));
+    if (d < g) g = d;
+  }
+  return isFinite(g) ? g : 0;
+}
+
+/* 科学计数法 */
+function sci(v, n) {
+  if (!isFinite(v)) return "∞";
+  if (v === 0) return "0";
+  const e = Math.floor(Math.log10(Math.abs(v)));
+  const m = v / Math.pow(10, e);
+  const sup = String(e).replace("-", "⁻").replace(/[0-9]/g, d => "⁰¹²³⁴⁵⁶⁷⁸⁹"[+d]);
+  return m.toFixed(n === undefined ? 2 : n) + "×10" + sup;
+}
+/* 网页版：幂次用真 <sup>。画布/ Technician-like 显示位若要用，请走 PSci() 返回零件，
+   绝不要把 sci() 的 Unicode 串塞进画布（mRun 会把 10¹⁴ 当普通文本画过去）。 */
+function sciH(v, n) {
+  if (!isFinite(v) || v === 0) return "0";
+  const e = Math.floor(Math.log10(Math.abs(v)));
+  const m = (v / Math.pow(10, e)).toFixed(n === undefined ? 1 : n);
+  /* 1 ≦ |v| < 10 时直接写尾数，不再拖一个 ×10⁰ */
+  if (e === 0) return m;
+  /* 指数里的负号用 U+2212（LaTeX 减号），不用 ASCII 连字符 */
+  return m + "×10<sup>" + String(e).replace("-", "−") + "</sup>";
+}
+
+/* ---------------- 3. 事件系统（模块一动画） ---------------- */
+let EVS = [];
+let BGE = [], BGH = [];      // 背景电子/空穴的摆动相位（x 由当前数目在能带里均匀排布）
+let TCLK = 0;
+const R_REF = 1e21;          // 事件速率参考（把复合率映射到视觉频率）
+const BG_MAX = 16;           // 一排最多画这么多粒子（再多就挤了）
+
+function seedBG() {
+  BGE = []; BGH = [];
+  for (let i = 0; i < BG_MAX; i++) BGE.push({ ph: i * 1.31 });
+  for (let i = 0; i < BG_MAX; i++) BGH.push({ ph: i * 2.17 });
+}
+/* 背景粒子数 = 浓度的对数示意（不是等比缩放）：N = 2.2·log₁₀(x) − 25.8，钳在 3…BG_MAX。
+   于是 10¹²→3、10¹⁴→5、10¹⁶→9、10¹⁸→14、10¹⁹→16。
+   切换掺杂情境时：n 型电子排明显密、空穴排只剩几个（重掺 n 更极端），p 型反过来，本征两排一样多。
+   拖动注入滑块时：稀的那一排会跟着 Δn 长起来，直到高注入时两排一样多 —— 这正是“注入把少子抬起来了”。 */
+function bgCount(x) {
+  const v = Math.log10(Math.max(x, 1));
+  return clamp(Math.round(2.2 * v - 25.8), 3, BG_MAX);
+}
+function pickKind(r) {
+  if (OPT.mode !== "all") return OPT.mode;
+  const tot = r.rB + r.rS + r.rA;
+  if (tot <= 0) return "direct";
+  const u = Math.random() * tot;
+  return u < r.rB ? "direct" : (u < r.rB + r.rS ? "srh" : "auger");
+}
+function spawnEvent(r) {
+  const kind = pickKind(r);
+  const dur = kind === "srh" ? 2.6 : (kind === "auger" ? 2.4 : 1.7);
+  EVS.push({
+    kind: kind, x: 0.08 + Math.random() * 0.84, t: 0, dur: dur,
+    ph: [], third: 0.12 + Math.random() * 0.2
+  });
+}
+/* 光产生：入射光子被吸收 ⇒ 价带电子跃迁到导带，留下一对电子—空穴 */
+function spawnGen() {
+  EVS.push({ kind: "gen", x: 0.08 + Math.random() * 0.84, t: 0, dur: 2.3, ph: [], third: 0 });
+}
+function stepEvents(dt) {
+  const r = rates(injNow());
+  /* 事件生成：速率 ∝ R_total */
+  const lambda = 2.2 * OPT.speed * Math.min(6, r.rTot / R_REF + 0.05);
+  let expect = lambda * dt;
+  while (expect > 0) {
+    if (Math.random() < Math.min(1, expect)) spawnEvent(r);
+    expect -= 1;
+  }
+  /* 光产生事件：频率 ∝ G_opt（G_opt = 0 时一个都不出现） */
+  const lg = 2.2 * OPT.speed * Math.min(6, Gopt() / R_REF);
+  let eg = lg * dt;
+  while (eg > 0) {
+    if (Math.random() < Math.min(1, eg)) spawnGen();
+    eg -= 1;
+  }
+  for (const e of EVS) e.t += dt / e.dur;
+  EVS = EVS.filter(e => e.t < 1.35);
+  if (EVS.length > 14) EVS.splice(0, EVS.length - 14);
+  TCLK += dt;
+}
+
+
+let PHASE = 0;
+function fitAll() { ["band", "rate", "bal"].forEach(fitCanvas); }
+
+/* ---------------- 4. 模块一：能带图与微观过程 ---------------- */
+const C_EC = "#2f6fb5", C_EV = "#c9483c", C_TRAP = "#8a8595";
+const C_PHOTON = "#e8a825", C_PHONON = "#d94a3d", C_THIRD = "#2e9e5b";
+
+function bandGeom(W, H) {
+  const L = 66, R = Math.round(W * 0.66), T = 34, B = H - 26;
+  return { L: L, R: R, T: T, B: B, yEc: T + 62, yEv: T + 62 + 132, panelX: R + 14 };
+}
+
+function drawWave(g, x, y, prog, col, amp, wl, spread) {
+  const len = spread * prog;
+  g.save();
+  g.strokeStyle = col; g.lineWidth = 1.6; g.beginPath();
+  for (let s = 0; s <= len; s += 2) {
+    const yy = y + amp * Math.sin(s / wl * 6.2832) * (1 - s / Math.max(len, 1) * 0.5);
+    s === 0 ? g.moveTo(x + s, yy) : g.lineTo(x + s, yy);
+    s === 0 ? g.moveTo(x - s, yy) : g.lineTo(x - s, yy);
+  }
+  g.stroke();
+  g.restore();
+}
+/* 光子的经典教材画法：波浪形（正弦）箭头，末端带箭头
+   —— 从能带里向外画＝发光（发射），从外面指向能带＝吸光（吸收）
+   波峰幅度与波长随箭头长度自适应，末端留一小段直线接箭头 */
+function wavyArrow(g, x0, y0, x1, y1, col, lw, hs) {
+  const dx = x1 - x0, dy = y1 - y0, L = Math.hypot(dx, dy);
+  if (L < 5) return;
+  const ux = dx / L, uy = dy / L, nx = -uy, ny = ux;
+  const tail = Math.min(9, L * 0.16);                 // 末端直线段长度
+  const wl = L - tail;
+  const NW = Math.max(2, Math.round(wl / 17));        // 波浪个数（整数为保证首尾相位为 0）
+  const amp = Math.min(5, wl / NW * 0.34);            // 波峰幅度
+  g.save();
+  g.strokeStyle = col; g.lineWidth = lw || 2; g.lineCap = "round"; g.lineJoin = "round";
+  g.beginPath();
+  const NPT = Math.max(20, Math.round(wl / 1.6));
+  for (let i = 0; i <= NPT; i++) {
+    const s = wl * i / NPT;
+    const w = amp * Math.sin(s / wl * NW * 6.2832);
+    const px = x0 + ux * s + nx * w, py = y0 + uy * s + ny * w;
+    i === 0 ? g.moveTo(px, py) : g.lineTo(px, py);
+  }
+  g.stroke();
+  g.restore();
+  arrow(g, x0 + ux * wl, y0 + uy * wl, x1, y1, col, lw || 2, hs || 6.5);
+}
+/* 发射：光子从 x,y 沿 dir 方向射出（dir = ±1），随 prog 越飞越远、越来越淡 */
+function drawPhoton(g, x, y, prog, dir) {
+  const d = dir || 1, len = 26 + 62 * prog;
+  g.save(); g.globalAlpha = Math.max(0, 1 - prog * 0.85);
+  wavyArrow(g, x, y, x + d * len, y - len * 0.42, C_PHOTON, 2, 7);
+  g.restore();
+  if (prog < 0.75) mtxt(g, TX(H_HNU), x + d * (len * 0.5 + 4), y - len * 0.28 - 12, C_PHOTON, 10.5, "center", true);
+}
+/* 吸收：一个与发射光子等长的波浪箭头从外面飞进来，波头随 prog 推进到落点 tx,ty
+   （不再拉成一根贯穿禁带的长线，长度与 drawPhoton 保持同一量级） */
+function drawPhotonIn(g, sx, sy, tx, ty, prog) {
+  const dx = tx - sx, dy = ty - sy, L = Math.hypot(dx, dy);
+  if (L < 5) return;
+  const ux = dx / L, uy = dy / L, p = clamp(prog, 0, 1);
+  const len = Math.min(26 + 62 * p, L * 0.9);        // 与发射光子同量级（26 → 88 px）
+  const hx = sx + ux * L * p, hy = sy + uy * L * p;  // 波头（箭头尖端）
+  const ax = hx - ux * len, ay = hy - uy * len;      // 波尾
+  g.save(); g.globalAlpha = Math.max(0, 1 - Math.max(0, prog - 0.8) * 4);
+  wavyArrow(g, ax, ay, hx, hy, C_PHOTON, 2, 7);
+  g.restore();
+  mtxt(g, TX(H_HNU), (ax + hx) / 2 + (sx > tx ? -14 : 14), (ay + hy) / 2 - 10, C_PHOTON, 10.5, "center", true);
+}
+function drawPhonon(g, x, y, prog, lab) {
+  g.save(); g.globalAlpha = Math.max(0, 1 - prog * 0.9);
+  drawWave(g, x, y, prog, C_PHONON, 3.2, 6.5, 52);
+  g.restore();
+  if (lab && prog < 0.6) txt(g, "声子", x, y + 14, C_PHONON, "9.5px " + FONT, "center");
+}
+function electron(g, x, y, r, hl) {
+  g.beginPath(); g.arc(x, y, r || 6, 0, 6.2832);
+  g.fillStyle = hl ? "#5b93d6" : C_EC; g.fill();
+  g.lineWidth = 1.2; g.strokeStyle = "#1f4d80"; g.stroke();
+  g.fillStyle = "#fff"; g.font = "bold 8px " + FONTM; g.textAlign = "center"; g.textBaseline = "middle";
+  g.fillText("−", x, y + 0.5);
+}
+function hole(g, x, y, r, hl) {
+  g.beginPath(); g.arc(x, y, r || 6, 0, 6.2832);
+  g.fillStyle = hl ? "#e08477" : C_EV; g.fill();
+  g.lineWidth = 1.2; g.strokeStyle = "#8f2f24"; g.stroke();
+  g.fillStyle = "#fff"; g.font = "bold 8px " + FONTM; g.textAlign = "center"; g.textBaseline = "middle";
+  g.fillText("+", x, y + 0.5);
+}
+/* 俄歇的第三个载流子：它就是普通的电子或空穴，绝不是第三种粒子。
+   绿色只作“能量接收者”的高亮标识；通道随掺杂情境走真实物理：
+   n 型 / 本征 → e-e-h（另一个电子，被顶到导带更高处）；p 型 → e-h-h（另一个空穴，被顶到价带更深处） */
+function thirdKind() { return DOPES[OPT.dope].N < 0 ? "h" : "e"; }
+function thirdParticle(g, x, y, hot) {
+  if (thirdKind() === "e") electron(g, x, y, 6.5, false); else hole(g, x, y, 6.5, false);
+  g.beginPath(); g.arc(x, y, hot ? 10.5 : 9.5, 0, 6.2832);
+  g.lineWidth = hot ? 2.4 : 1.8; g.strokeStyle = C_THIRD; g.stroke();
+  if (hot) {
+    g.beginPath(); g.arc(x, y, 13.5, 0, 6.2832);
+    g.lineWidth = 1; g.strokeStyle = "rgba(46,158,91,.45)"; g.stroke();
+  }
+}
+
+function drawBand() {
+  const c = CV.band || fitCanvas("band"); if (!c) return;
+  const g = c.g, W = c.W, H = c.H;
+  g.clearRect(0, 0, W, H);
+  g.fillStyle = "#fff"; g.fillRect(0, 0, W, H);
+  const G = bandGeom(W, H), L = G.L, R = G.R;
+  const r = rates(injNow());
+  const yEc = G.yEc, yEv = G.yEv, gapH = yEv - yEc;
+  const yEi = (yEc + yEv) / 2;
+  const yEt = yEi - (r.dE / mat().Eg) * gapH;
+  const X = u => L + u * (R - L);
+
+  /* 能带底纹 */
+  g.fillStyle = "rgba(47,111,181,0.07)"; g.fillRect(L, G.T, R - L, yEc - G.T);
+  g.fillStyle = "rgba(201,72,60,0.07)"; g.fillRect(L, yEv, R - L, G.B - yEv);
+  line(g, L, yEc, R, yEc, C_EC, 2.2);
+  line(g, L, yEv, R, yEv, C_EV, 2.2);
+  mtxt(g, TX(H_EC + " 导带底"), L + 6, yEc - 12, C_EC, 11, "left", true);
+  mtxt(g, TX(H_EV + " 价带顶"), L + 6, yEv + 13, C_EV, 11, "left", true);
+  mtxt(g, catA(TX(H_EG + " = "), [{ s: fmt(mat().Eg, 2) + " eV" }]), L + 6, yEi, C_SUB, 10.5, "left", false);
+  line(g, L - 6, yEc, L - 6, yEv, "#c9d6e4", 1.2);
+
+  /* 陷阱能级 */
+  if (OPT.ckTrap && OPT.mode !== "direct") {
+    line(g, L, yEt, R, yEt, C_TRAP, 1.6, [7, 5]);
+    chipP(g, catA(TX(H_ET + "（陷阱） "), [{ s: (r.dE >= 0 ? "+" : "−") + fmt(Math.abs(r.dE), 2) + " eV" }]),
+      R - 6, yEt, C_TRAP, 10.5, "right");
+    for (let i = 0; i < 4; i++) {
+      const xx = X(0.12 + i * 0.25);
+      g.beginPath(); g.arc(xx, yEt, 3, 0, 6.2832);
+      g.fillStyle = "#fff"; g.fill(); g.lineWidth = 1.2; g.strokeStyle = C_TRAP; g.stroke();
+    }
+  }
+
+  /* 背景载流子：数目由 n / p 决定（对数示意），随掺杂情境与注入水平实时变化 */
+  const nE = bgCount(r.n), nH = bgCount(r.p);
+  for (let i = 0; i < nE; i++) {
+    const xx = X((i + 0.5) / nE) + Math.sin(TCLK * 1.7 + BGE[i].ph) * 3;
+    electron(g, xx, yEc - 13, 5.5, false);
+  }
+  for (let i = 0; i < nH; i++) {
+    const xx = X((i + 0.5) / nH) + Math.sin(TCLK * 1.5 + BGH[i].ph) * 3;
+    hole(g, xx, yEv + 13, 5.5, false);
+  }
+
+  /* 事件 */
+  for (const ev of EVS) {
+    const x = X(ev.x), t = ev.t;
+    if (t > 1.3) continue;
+    if (ev.kind === "direct") {
+      const f = clamp(t / 0.55, 0, 1);
+      const yE = yEc - 13 + (yEi - (yEc - 13)) * f;
+      const yH = yEv + 13 + (yEi - (yEv + 13)) * f;
+      if (t <= 0.58) { electron(g, x, yE, 6.5, true); hole(g, x, yH, 6.5, true); }
+      else if (OPT.ckPhoton) drawPhoton(g, x, yEi, (t - 0.55) / 0.8, x < R - 100 ? 1 : -1);
+    } else if (ev.kind === "gen") {                  /* 光产生：吸收光子 ⇒ 一对电子—空穴 */
+      const xr = X(clamp(ev.x, 0.06, 0.94));
+      const dir = xr < R - 104 ? 1 : -1;             // 入射光从哪一侧来（避开右侧说明面板）
+      const sx = xr + dir * 78, sy = yEc - 54;
+      if (t <= 0.45) {
+        if (OPT.ckPhoton) drawPhotonIn(g, sx, sy, xr, yEv + 13, clamp(t / 0.45, 0.14, 1));
+      } else {
+        const f = clamp((t - 0.45) / 0.34, 0, 1);
+        g.save(); g.globalAlpha = clamp((1.3 - t) / 0.42, 0, 1);
+        const yE = (yEv + 13) + ((yEc - 13) - (yEv + 13)) * f;
+        electron(g, xr, yE, 6.5, true);
+        hole(g, xr + dir * 26 * f, yEv + 13, 6, true);
+        g.restore();
+      }
+    } else if (ev.kind === "srh") {
+      const yT = yEt;
+      if (t <= 0.35) {                                  // 第一步：导带 → 陷阱
+        const f = clamp(t / 0.35, 0, 1);
+        electron(g, x, (yEc - 13) + (yT - (yEc - 13)) * f, 6.5, true);
+        hole(g, x + 26, yEv + 13, 5.5, false);
+      } else if (t <= 0.48) {                           // 停留
+        const j = Math.sin(t * 90) * 1.6;
+        electron(g, x + j, yT, 6.5, true);
+        hole(g, x + 26, yEv + 13, 5.5, false);
+        if (OPT.ckPhonon) drawPhonon(g, x, yT - 16, (t - 0.35) / 0.5, true);
+      } else if (t <= 0.78) {                           // 第二步：陷阱 → 价带
+        const f = clamp((t - 0.48) / 0.30, 0, 1);
+        const yE = yT + ((yEv + 13) - yT) * f;
+        electron(g, x + (x + 26 - x) * f, yE, 6.5, true);
+        hole(g, x + 26, yEv + 13, 5.5, true);
+        if (OPT.ckPhonon && t > 0.55) drawPhonon(g, x + 13, yEv + 34, (t - 0.55) / 0.6, false);
+      } else if (OPT.ckPhonon) {
+        drawPhonon(g, x + 13, yEv + 34, (t - 0.55) / 0.8, false);
+      }
+    } else {                                            // 俄歇
+      const x3 = X(clamp(ev.x + ev.third, 0.05, 0.95));
+      const k3 = thirdKind();
+      const y3b0 = k3 === "e" ? (yEc - 13) : (yEv + 13);        // 第三个载流子的静止位置
+      const yUp = k3 === "e" ? (yEc - 13) - 46 : (yEv + 13) + 46; // 被顶到的高能态（空穴则更深的价带态）
+      const phS = k3 === "e" ? -1 : 1;                          // 回落发的声子画在哪一侧
+      if (t <= 0.5) {
+        const f = clamp(t / 0.5, 0, 1);
+        electron(g, x, (yEc - 13) + (yEi - (yEc - 13)) * f, 6.5, true);
+        hole(g, x, (yEv + 13) + (yEi - (yEv + 13)) * f, 6.5, true);
+        if (OPT.ckThird) thirdParticle(g, x3, y3b0, false);
+      } else {
+        const f = clamp((t - 0.5) / 0.22, 0, 1);
+        const y3 = y3b0 + (yUp - y3b0) * f;
+        if (t < 0.72) arrow(g, x, yEi, x3, y3, C_THIRD, 2, 6.5);
+        if (t < 0.8) txt(g, "能量交给它", (x + x3) / 2, k3 === "e" ? yEi - 24 : yEi + 30, C_THIRD, "10.5px " + FONT, "center");
+        if (OPT.ckThird) thirdParticle(g, x3, y3, true);
+        const f2 = clamp((t - 0.72) / 0.55, 0, 1);
+        if (OPT.ckThird && t < 1.3) {
+          const y3b = yUp + (y3b0 - yUp) * f2;
+          thirdParticle(g, x3, y3b, true);
+          if (OPT.ckPhonon) {
+            for (let k = 0; k < 3; k++) {
+              const pk = (t - 0.75 - k * 0.12) / 0.35;
+              if (pk > 0 && pk < 1) drawPhonon(g, x3 + 14, y3b0 + phS * k * 13, pk, false);
+            }
+          }
+        }
+      }
+    }
+  }
+
+  /* ---- 右侧说明面板 ---- */
+  const px = G.panelX, pw = W - px - 12;
+  g.fillStyle = "#f7fafd";
+  g.fillRect(px, G.T - 12, pw, G.B - G.T + 24);
+  g.strokeStyle = "#e3eaf2"; g.lineWidth = 1;
+  g.strokeRect(px, G.T - 12, pw, G.B - G.T + 24);
+
+  let cur = OPT.mode === "all" ? null : OPT.mode;
+  if (!cur) {
+    const d = dominant(r);
+    cur = d[0] === "直接复合" ? "direct" : (d[0] === "间接（SRH）" ? "srh" : "auger");
+  }
+  const STEPS = {
+    direct: { title: "直接复合（带间）", col: C_PHOTON,
+      steps: ["① 导带电子直接落入价带空穴",
+              "② 多余能量交给<b>一个光子</b>：" + H_HNU + " ≈ " + H_EG,
+              "③ 速率 " + H_RB + H_EQ + H_B + H_EXC],
+      rate: r.rB },
+    srh: { title: "间接复合（SRH，陷阱）", col: C_PHONON,
+      steps: ["① 电子先被<b>陷阱能级</b> " + H_ET + " 俘获（发 1 个声子）",
+              "② 在陷阱上停留片刻",
+              "③ 再落入价带与空穴复合（又发 1 个声子）"],
+      rate: r.rS },
+    auger: { title: "俄歇复合（三粒子）", col: C_THIRD,
+      steps: ["① 电子与空穴复合，释放 " + H_EG,
+              "② 能量<b>不发光</b>，交给第三个载流子（也是电子或空穴）",
+              "③ 被顶到高能态，再逐步发<b>声子</b>回落"],
+      rate: r.rA }
+  };
+  const S = STEPS[cur];
+  txt(g, S.title, px + 10, G.T + 4, S.col, "bold 12.5px " + FONT);
+  let yy = G.T + 26;
+  S.steps.forEach(s => {
+    const wrapped = mWrap(g, TX(s), pw - 20, 11.5, false);
+    wrapped.forEach((ln, k) => {
+      mtxt(g, ln, px + 10, yy, k === 0 ? "#2c3e50" : "#6b7a8c", 11.5, "left", false);
+      yy += 15;
+    });
+    yy += 3;
+  });
+  yy += 4;
+  txt(g, "本机制复合率", px + 10, yy, C_SUB, "11px " + FONT); yy += 16;
+  mtxt(g, catA(PSci(S.rate, 2), TX(" " + H_CM3S)), px + 10, yy, S.col, 12, "left", true); yy += 22;
+
+  if (OPT.ckRate) {
+    txt(g, "三种机制的事件频率（按真实复合率分配）", px + 10, yy, C_SUB, "10.5px " + FONT); yy += 16;
+    const tot = Math.max(r.rB + r.rS + r.rA, 1e-30);
+    const bars = [["直接", r.rB, C_PHOTON], ["间接", r.rS, C_PHONON], ["俄歇", r.rA, C_THIRD]];
+    bars.forEach((b, i) => {
+      const by = yy + i * 20;
+      txt(g, b[0], px + 10, by + 6, C_SUB, "10.5px " + FONT);
+      g.fillStyle = "#eef2f7"; g.fillRect(px + 42, by, pw - 62, 12);
+      g.fillStyle = b[2]; g.fillRect(px + 42, by, Math.max(1, (pw - 62) * clamp(b[1] / tot, 0, 1)), 12);
+      txt(g, fmt(b[1] / tot * 100, 0) + "%", px + pw - 12, by + 6, b[2], "10px " + FONT, "right");
+    });
+  }
+
+  /* 底部：事件池提示 + 当前浓度（粒子数目就是这两个值的对数示意） */
+  txt(g, "当前主导：" + dominant(r)[0], L, G.B + 12, "#2c3e50", "bold 11px " + FONT);
+  mtxt(g, catA(TX(H_N + " = "), PSci(r.n, 2), [{ s: "　" }], TX(H_P + " = "), PSci(r.p, 2),
+    TX(" " + H_CM3 + "（两排粒子数 = 浓度的对数示意，非等比）")),
+    R, G.B + 12, C_SUB, 10.5, "right", false);
+}
+
+function wrapText(g, s, maxW, font) {
+  g.font = font || "11.5px " + FONT;
+  const out = [];
+  let cur = "";
+  for (const ch of s) {
+    if (g.measureText(cur + ch).width > maxW) { out.push(cur); cur = ch; }
+    else cur += ch;
+  }
+  if (cur) out.push(cur);
+  return out;
+}
+
+
+/* ---------------- 5. 模块二：复合率 vs 注入水平 ---------------- */
+function drawRate() {
+  const c = CV.rate || fitCanvas("rate"); if (!c) return;
+  const g = c.g, W = c.W, H = c.H;
+  g.clearRect(0, 0, W, H);
+  g.fillStyle = "#fff"; g.fillRect(0, 0, W, H);
+  const L = 66, R = W - 18, T = 26, B = H - 56;
+  const pw = R - L, ph = B - T;
+  const lo = 12, hi = 19;
+  const NS = 90;
+  const pts = [];
+  for (let i = 0; i <= NS; i++) {
+    const dn = Math.pow(10, lo + (hi - lo) * i / NS);
+    pts.push({ x: dn, r: rates(dn) });
+  }
+  let vmin = 1e30, vmax = 0;
+  for (const p of pts) {
+    const rr = [p.r.rB, p.r.rS, p.r.rA];
+    for (const v of rr) if (v > 1e-30) { vmin = Math.min(vmin, v); vmax = Math.max(vmax, v); }
+  }
+  const lmin = Math.floor(Math.log10(Math.max(vmin, 1e-30))) - 1;
+  const lmax = Math.ceil(Math.log10(Math.max(vmax, 1)));
+  const X = dn => L + (Math.log10(dn) - lo) / (hi - lo) * pw;
+  const Y = v => B - clamp((Math.log10(Math.max(v, 1e-30)) - lmin) / Math.max(1, lmax - lmin), 0, 1.05) * ph;
+
+  for (let e = lmin; e <= lmax; e++) {
+    const yy = Y(Math.pow(10, e));
+    line(g, L, yy, R, yy, C_GRID, 1);
+    txt(g, "10" + String(e).replace("-", "⁻").replace(/[0-9]/g, d => "⁰¹²³⁴⁵⁶⁷⁸⁹"[+d]), L - 6, yy, C_SUB, "10px " + FONT, "right");
+  }
+  for (let e = lo; e <= hi; e++) {
+    const xx = X(Math.pow(10, e));
+    line(g, xx, T, xx, B, C_GRID, 1);
+    txt(g, "10" + String(e).replace(/[0-9]/g, d => "⁰¹²³⁴⁵⁶⁷⁸⁹"[+d]), xx, B + 13, C_SUB, "10px " + FONT, "center");
+  }
+  line(g, L, B, R, B, "#b9c5d2", 1.2); line(g, L, T, L, B, "#b9c5d2", 1.2);
+  mtxt(g, TX(H_R + "（" + H_CM3S + "）"), L - 6, T - 12, C_SUB, 10.5, "left", false);
+  mtxt(g, TX("注入水平 " + H_DN + H_EQ + H_DP + "（" + H_CM3 + "）"),
+    (L + R) / 2, B + 30, C_SUB, 11, "center", false);
+
+  const series = [
+    { key: "rB", col: C_PHOTON, lab: "直接 " + H_B + H_EXC },
+    { key: "rS", col: C_PHONON, lab: "间接 SRH" },
+    { key: "rA", col: C_THIRD, lab: "俄歇 " + MM("(<i>n</i>" + "<span class='op'>+</span>" + "<span class='m'><i>p</i></span>)") + H_EXC }
+  ];
+  series.forEach(s => {
+    g.beginPath();
+    let started = false;
+    for (const p of pts) {
+      const v = p.r[s.key];
+      if (v <= 1e-30) { started = false; continue; }
+      const xx = X(p.x), yy = Y(v);
+      if (!started) { g.moveTo(xx, yy); started = true; } else g.lineTo(xx, yy);
+    }
+    g.strokeStyle = s.col; g.lineWidth = 2.4; g.stroke();
+  });
+
+  /* 底部主导区色条 */
+  const bh = 10, by = B + 20;
+  for (let i = 0; i < 120; i++) {
+    const dn = Math.pow(10, lo + (hi - lo) * i / 120);
+    const rr = rates(dn);
+    const arr = [[rr.rB, C_PHOTON], [rr.rS, C_PHONON], [rr.rA, C_THIRD]].sort((a, b) => b[0] - a[0]);
+    g.fillStyle = arr[0][1];
+    g.fillRect(L + pw * i / 120, by, pw / 120 + 1, bh);
+  }
+  txt(g, "底部色条 = 该注入水平下的主导机制", L, by + bh + 10, C_SUB, "10px " + FONT);
+
+  /* 当前工作点 */
+  const dn = injNow(), rc = rates(dn), xc = X(dn);
+  line(g, xc, T, xc, B, "rgba(44,62,80,.55)", 1.3, [4, 3]);
+  [["rB", C_PHOTON], ["rS", C_PHONON], ["rA", C_THIRD]].forEach(p => {
+    if (rc[p[0]] <= 1e-30) return;
+    g.beginPath(); g.arc(xc, Y(rc[p[0]]), 4.2, 0, 6.2832);
+    g.fillStyle = p[1]; g.fill(); g.lineWidth = 1.3; g.strokeStyle = "#fff"; g.stroke();
+  });
+  /* Δn 的数量级用真的科学计数法零件，不要拼 10^14.1 这种 ASCII 伪上标 */
+  chipP(g, catA(TX(H_DN + " = "), PSci(dn, 1)), xc, T + 8, "#2c3e50", 10.5, "center");
+
+  /* 曲线标签 */
+  let ly = T + 12;
+  series.forEach((s, i) => {
+    const yy = ly + i * 15;
+    g.fillStyle = s.col; g.fillRect(R - 128, yy - 4, 12, 3);
+    mtxt(g, TX(s.lab), R - 112, yy, C_SUB, 10, "left", false);
+  });
+}
+
+/* ---------------- 6. 模块三：平衡与寿命 ---------------- */
+function drawBal() {
+  const c = CV.bal || fitCanvas("bal"); if (!c) return;
+  const g = c.g, W = c.W, H = c.H;
+  g.clearRect(0, 0, W, H);
+  g.fillStyle = "#fff"; g.fillRect(0, 0, W, H);
+  const r = rates(injNow()), dn = injNow(), lt = lifetime(r, dn), G = Gopt();
+  const rnet = r.rTot - G;
+  const mid = W / 2 + 20;
+  const x0 = 108, x1 = mid - 74, bw = Math.max(40, x1 - x0);
+
+  const vals = [
+    { lab: "直接复合 " + H_RB, v: r.rB, col: C_PHOTON },
+    { lab: "间接 SRH " + H_R, v: r.rS, col: C_PHONON },
+    { lab: "俄歇 " + H_RA, v: r.rA, col: C_THIRD },
+    { lab: "光产生 " + H_GO, v: G, col: "#1976d2" }
+  ];
+  let vmax = 1e-30;
+  for (const v of vals) vmax = Math.max(vmax, v.v);
+  for (const v of vals) vmax = Math.max(vmax, Math.abs(rnet));
+  const ltop = Math.log10(Math.max(vmax, 1));
+  const lbot = ltop - 7;
+  const frac = v => (v <= 1e-30 ? 0 : clamp((Math.log10(v) - lbot) / 7, 0, 1));
+
+  txt(g, "复合率 vs 产生率（对数，cm⁻³s⁻¹）", 12, 14, "#2c3e50", "bold 11.5px " + FONT);
+  vals.forEach((v, i) => {
+    const y = 30 + i * 26;
+    mtxt(g, TX(v.lab), x0 - 8, y + 7, C_SUB, 10.5, "right", false);
+    g.fillStyle = "#eef2f7"; g.fillRect(x0, y, bw, 14);
+    g.fillStyle = v.col; g.fillRect(x0, y, Math.max(v.v > 0 ? 2 : 0, bw * frac(v.v)), 14);
+    mtxt(g, v.v > 0 ? PSci(v.v, 1) : [{ s: "0" }], x0 + bw + 6, y + 7, v.col, 10, "left", false);
+  });
+  const ynet = 30 + 4 * 26 + 8;
+  mtxt(g, TX("净复合 " + H_R + H_MN + H_G), x0 - 8, ynet + 7, "#2c3e50", 10.5, "right", true);
+  g.fillStyle = "#eef2f7"; g.fillRect(x0, ynet, bw, 14);
+  const netPos = rnet >= 0;
+  g.fillStyle = netPos ? "#6b7a8c" : "#2e9e5b";
+  g.fillRect(x0, ynet, Math.max(rnet !== 0 ? 2 : 0, bw * frac(Math.abs(rnet))), 14);
+  mtxt(g, catA([{ s: rnet >= 0 ? "" : "−" }], PSci(Math.abs(rnet), 1)),
+    x0 + bw + 6, ynet + 7, netPos ? "#6b7a8c" : "#2e9e5b", 10, "left", false);
+  const steady = Math.abs(rnet) < 0.02 * Math.max(r.rTot, G, 1e-30);
+  txt(g, steady ? "≈ 稳态（产生 = 复合）" : (rnet > 0 ? "净复合 > 0：载流子在减少" : "净产生 > 0：载流子在积累"),
+    x0, ynet + 30, steady ? "#2e9e5b" : "#6b7a8c", "bold 11px " + FONT);
+
+  /* 右：寿命 */
+  const xb = mid + 40, xbe = W - 84, bwb = Math.max(40, xbe - xb);
+  mtxt(g, TX("各机制寿命 " + H_TAU + H_EQ + H_DN + H_SL + H_R + "（对数，s）"),
+    mid + 8, 14, "#2c3e50", 11.5, "left", true);
+  const tl = [
+    { lab: H_TAU + " 直接", v: lt.tB, col: C_PHOTON },
+    { lab: H_TAU + " 间接", v: lt.tS, col: C_PHONON },
+    { lab: H_TAU + " 俄歇", v: lt.tA, col: C_THIRD },
+    { lab: H_TEF, v: lt.tT, col: "#2c3e50" }
+  ];
+  const tlo = -10, thi = -2;
+  const tfr = v => (!isFinite(v) ? 1 : clamp((Math.log10(Math.max(v, 1e-12)) - tlo) / (thi - tlo), 0, 1));
+  tl.forEach((v, i) => {
+    const y = 30 + i * 26;
+    mtxt(g, TX(v.lab), xb - 8, y + 7, C_SUB, 10.5, "right", false);
+    g.fillStyle = "#eef2f7"; g.fillRect(xb, y, bwb, 14);
+    g.fillStyle = v.col; g.fillRect(xb, y, Math.max(2, bwb * tfr(v.v)), 14);
+    mtxt(g, isFinite(v.v) ? catA(PSci(v.v, 1), [{ s: " s" }]) : [{ s: "∞" }],
+      xb + bwb + 6, y + 7, v.col, 10, "left", false);
+  });
+  mtxt(g, TX("1" + H_SL + H_TEF + H_EQ + "1" + H_SL + H_TAU + "<sub>直接</sub>" +
+    H_PL + "1" + H_SL + H_TAU + "<sub>间接</sub>" + H_PL + "1" + H_SL + H_TAU + "<sub>俄歇</sub>"),
+    xb - 8, 30 + 4 * 26 + 12, C_SUB, 10.5, "left", false);
+  txt(g, "最快的机制（寿命最短）主导总寿命", xb - 8, 30 + 4 * 26 + 28, "#6b7a8c", "10.5px " + FONT);
+  line(g, mid, 8, mid, H - 8, "#e3e9f0", 1);
+}
+
+/* ---------------- 7. 读数 ---------------- */
+function kvHd(s) { return '<div class="hd">' + s + "</div>"; }
+function kvRow(k, v) { return '<div class="row"><span class="k">' + k + '</span><span class="v">' + v + "</span></div>"; }
+function updateReadout() {
+  const r = rates(injNow()), dn = injNow(), lt = lifetime(r, dn), G = Gopt();
+  const dom = dominant(r);
+  const M = mat(), D = DOPES[OPT.dope];
+  /* ---- 核心区：注入 ⇒ 三种复合率 ⇒ 主导机制与寿命 ---- */
+  let html = "";
+  html += kvHd("注入与浓度");
+  html += kvRow("注入 " + H_DN + H_EQ + H_DP, "<b>" + sci(dn) + "</b> cm⁻³");
+  html += kvRow("电子 / 空穴浓度 " + H_N + H_SL + H_P, "<b>" + sci(r.n) + "</b> / <b>" + sci(r.p) + "</b> cm⁻³");
+
+  html += kvHd("三种复合率（净）");
+  html += kvRow("直接 " + H_RB + H_EQ + H_B + H_EXC, "<b>" + sci(r.rB) + "</b>");
+  html += kvRow("间接 " + H_RS, "<b>" + sci(r.rS) + "</b>");
+  html += kvRow("俄歇 " + H_RA, "<b>" + sci(r.rA) + "</b>");
+  html += kvRow("合计 " + H_RT, "<b>" + sci(r.rTot) + "</b> cm⁻³s⁻¹");
+  html += kvRow("主导机制", "<b>" + dom[0] + "</b>（占 " + fmt(dom[1] / Math.max(r.rTot, 1e-30) * 100, 0) + "%）");
+  html += kvRow("总寿命 " + H_TEF + H_EQ + H_DN + H_SL + H_R,
+    "<b>" + (isFinite(lt.tT) ? sci(lt.tT, 2) + " s" : "∞") + "</b>");
+  $("readout").innerHTML = html;
+
+  /* ---- 折叠区：材料与平衡态 / 固定参数（含文献对照） / 产生与分寿命 ---- */
+  let hm = "";
+  hm += kvHd("材料与平衡态（固定）");
+  hm += kvRow("材料 / 禁带 " + H_EG, M.name + " / <b>" + fmt(M.Eg, 2) + "</b> eV（固定，不做材料对比）");
+  hm += kvRow("温度 " + H_T + "（固定）/ 本征浓度 " + H_NI, FIX.T + " K / <b>" + sci(r.ni) + "</b> cm⁻³");
+  hm += kvRow("掺杂情境", D.name + "（" + H_N0 + " = " + sci(r.n0) + "，" + H_P0 + " = " + sci(r.p0) + "）");
+  hm += kvRow(H_EXC + "（复合驱动力）", sci(Math.max(0, r.excess)));
+
+  hm += kvHd("固定参数（硅典型量级，本工具锁定）");
+  hm += kvRow("陷阱能级 " + H_ET + H_MN + H_EI,
+    fmt(r.dE, 3) + " eV（" + (r.dE > 0.05 ? "偏导带" : (r.dE < -0.05 ? "偏价带" : "禁带中央")) + "）");
+  hm += kvRow("SRH 寿命 " + H_TN + H_EQ + H_TP, sci(r.tau) + " s");
+  hm += kvRow("直接复合系数 " + H_B, sci(Bnow(), 1) + " cm³/s");
+  hm += kvRow("俄歇系数 " + H_C, sci(Cnow(), 1) + " cm⁶/s");
+  hm += kvRow(H_N1 + " / " + H_P1, sci(r.n1) + " / " + sci(r.p1) + " cm⁻³");
+  /* 文献对照：把“硅的典型量级”这句话坐实成可核的数字，并顺手堵住最常见的常数张冠李戴
+     （把俄歇系数 C ≈ 10⁻³¹ cm⁶/s 误当成辐射系数 B ≈ 10⁻¹⁵ cm³/s，两者量纲不同、差十几个数量级）。 */
+  hm += '<div class="unit-note"><b>与文献对照：</b>硅室温辐射（直接）复合系数 ' + H_B + ' ≈ ' +
+    sciH(B_LIT.Si, 1) + ' cm<sup>3</sup>/s（本工具取值；Altermatt 等由 van Roosbroeck–Shockley ' +
+    '细致平衡对吸收谱积分得到）。直接带隙 GaAs 的 ' + H_B + ' ≈ ' + sciH(B_LIT.GaAs, 1) + ' cm<sup>3</sup>/s，' +
+    '比硅大 <b>' + fmt(Math.log10(B_LIT.GaAs / Bnow()), 1) + '</b> 个数量级 —— 这就是硅几乎不发光的定量原因。' +
+    '俄歇文献值 ' + MM("<i>C</i><sub>n</sub>") + ' ≈ 2.8×10<sup>−31</sup>、' + MM("<i>C</i><sub>p</sub>") +
+    ' ≈ 1.0×10<sup>−31</sup> cm<sup>6</sup>/s，本工具简化为单一 ' + H_C + ' = ' + sciH(Cnow(), 1) +
+    ' cm<sup>6</sup>/s（量级相同、数值偏高 3~5 倍）。<b>注意量纲</b>：' + H_B + ' 是 cm<sup>3</sup>/s、' +
+    H_C + ' 是 cm<sup>6</sup>/s，两者相差十几个数量级，不可互换。</div>';
+
+  hm += kvHd("产生与寿命（其余）");
+  hm += kvRow("光产生率 " + H_GO + "（固定）", sci(G) + " cm⁻³s⁻¹");
+  hm += kvRow(H_TAU + " 直接 / 间接 / 俄歇", sci(lt.tB, 1) + " / " + sci(lt.tS, 1) + " / " + sci(lt.tA, 1) + " s");
+  $("readoutMore").innerHTML = hm;
+}
+
+/* ---------------- 8. 图例 ---------------- */
+function buildLegends() {
+  $("legBand").innerHTML = [
+    '<span><span class="swatch dot" style="background:' + C_EC + '"></span>电子（导带）</span>',
+    '<span><span class="swatch dot" style="background:' + C_EV + '"></span>空穴（价带）</span>',
+    '<span><span class="swatch" style="border-color:' + C_PHOTON + '"></span>光子 ' + H_HNU + '：<b>波浪箭头</b>向外＝发光（辐射复合）</span>',
+    '<span><span class="swatch" style="border-color:' + C_PHOTON + '"></span>波浪箭头指向能带＝<b>吸光产生</b>电子—空穴对</span>',
+    '<span><span class="swatch" style="border-color:' + C_PHONON + '"></span>声子（发热）</span>',
+    '<span><span class="swatch sq" style="background:' + C_THIRD + '"></span>第三个载流子（俄歇）：<b>就是电子或空穴</b>，绿圈＝接收能量的那个</span>',
+    '<span><span class="swatch dash" style="border-color:' + C_TRAP + '"></span>陷阱能级 ' + H_ET + '</span>'
+  ].join("");
+  $("legRate").innerHTML = [
+    '<span><span class="swatch" style="border-color:' + C_PHOTON + '"></span>直接复合 ' +
+      MM("<span class='op'>∝</span>") + H_NP + '</span>',
+    '<span><span class="swatch" style="border-color:' + C_PHONON + '"></span>间接 SRH（陷阱饱和）</span>',
+    '<span><span class="swatch" style="border-color:' + C_THIRD + '"></span>俄歇 ' +
+      MM("<span class='op'>∝</span><i>n</i><sup>2</sup><i>p</i>") + '</span>'
+  ].join("");
+  $("legBal").innerHTML = [
+    '<span><span class="swatch sq" style="background:' + C_PHOTON + '"></span>直接</span>',
+    '<span><span class="swatch sq" style="background:' + C_PHONON + '"></span>间接</span>',
+    '<span><span class="swatch sq" style="background:' + C_THIRD + '"></span>俄歇</span>',
+    '<span><span class="swatch sq" style="background:#1976d2"></span>产生 ' + H_G + '</span>'
+  ].join("");
+}
+
+/* ---------------- 9. 引导探究 ---------------- */
+const CHAL = [
+  {
+    q: "切到「直接复合」模式。画面里那个<b>画成波浪形的光子箭头</b>表示什么？它的能量有多少？既然曲线定律都是 <span class=\"m\"><i>R</i><span class=\"op\">∝</span><i>np</i></span>，为什么硅几乎不发光？",
+    a: () => { const r = rates(injNow()); const dom = dominant(r); return "波浪形箭头就是光子：<b>箭头从能带里射出去＝发射了一个光子</b>（反之，箭头从外面指进来＝吸收光子）。它的能量就是<b>禁带宽度</b> <span class='m'><i>h</i><i>ν</i><span class='op'>≈</span><i>E</i><sub>g</sub><span class='op'>=</span>" +
+      fmt(mat().Eg, 2) + " eV</span> —— 价带电子一次性跨过整个禁带，多余能量全交给这一个光子。发光强弱由辐射复合系数 <span class='m'><i>B</i></span> 决定（<span class='m'><i>R</i><sub>B</sub><span class='op'>=</span><i>B</i>(<i>np</i><span class='op'>−</span><i>n</i><sub>i</sub><sup>2</sup>)</span>）：本工具把 <span class='m'><i>B</i></span> 固定在硅的典型值 <span class='m'><i>B</i><span class='op'>=</span>" +
+      sci(Bnow(), 1) + " cm³/s</span>。作为对照，直接带隙的砷化镓 <span class='m'><i>B</i><span class='op'>≈</span>" +
+      sci(B_LIT.GaAs, 1) + " cm³/s</span>，比硅大 <b>" + fmt(Math.log10(B_LIT.GaAs / Bnow()), 1) +
+      "</b> 个数量级 —— <b>硅是间接带隙半导体，辐射复合要声子“帮忙”，效率极低</b>。当前 <span class='m'><i>R</i><sub>直接</sub><span class='op'>=</span>" +
+      sci(r.rB, 1) + " cm⁻³s⁻¹</span>，主导者是<b>" + dom[0] + "</b>（注意单位：辐射系数 " +
+      "<span class='m'><i>B</i></span> 是 cm³/s，而俄歇系数 <span class='m'><i>C</i></span> 是 cm⁶/s，别把 " +
+      "<span class='m'>10<sup>−31</sup></span> 那个数安到 <span class='m'><i>B</i></span> 头上）。"; }
+  },
+  {
+    q: "切到「间接（陷阱）」。本工具把陷阱能级固定在<b>禁带中央</b>（<span class=\"m\"><i>E</i><sub>t</sub><span class=\"op\">=</span><i>E</i><sub>i</sub></span>）。为什么这是最“毒”的复合中心？如果把它移向带边，SRH 分母里的 <span class=\"m\"><i>n</i><sub>1</sub></span>、<span class=\"m\"><i>p</i><sub>1</sub></span> 会发生什么？",
+    a: () => { const r = rates(injNow()); return "陷阱位于<b>禁带中央</b>（" + H_ET + " ≈ " + H_EI + "，本工具固定为 " + fmt(r.dE, 2) + " eV）时复合率<b>最大</b>。SRH 公式的分母是 " +
+      MM("<i>τ</i>(<i>n</i><span class='op'>+</span><i>n</i><sub>1</sub>)<span class='op'>+</span><i>τ</i>(<i>p</i><span class='op'>+</span><i>p</i><sub>1</sub>)") +
+      "：陷阱越靠边，" + H_N1 + " 或 " + H_P1 + " 中有一个变得极大（指数依赖！），分母被撑大 ⇒ 复合率反而变小。物理上说，<b>偏带边的陷阱不容易同时高效俘获电子和空穴</b> —— 靠近导带的陷阱抓电子快、抓空穴慢；禁带中央的陷阱对两者都“来者不拒”，于是成了最有效的复合中心。这就是半导体工艺里深能级杂质（Au、Pt、Fe）必须严格清除的原因。"; }
+  },
+  {
+    q: "切到「俄歇复合」。复合释放的能量去了哪里？第三个载流子发生了什么？把注入水平拉到 10¹⁸ 以上，俄歇复合率如何变化？",
+    a: () => { const r = rates(injNow()); const k3 = thirdKind(); return "能量<b>没有变成光</b>，而是直接交给附近的第三个载流子 —— 注意它<b>就是普通的电子或空穴</b>，并不是第三种粒子，绿色只是“接收能量者”的高亮圈。当前掺杂下走的是 <b>" + (k3 === "e" ? "e-e-h" : "e-h-h") + "</b> 通道：" +
+      (k3 === "e" ? "另一个导带<b>电子</b>拿到能量，被顶到导带更高处" : "另一个价带<b>空穴</b>拿到能量，被顶到价带更深处") +
+      "；这个高能载流子随后一步步发<b>声子</b>把能量交给晶格（发热）。因为要有<b>三个载流子同时到场</b>，概率 " +
+      H_PR + MM("<i>n</i><sup>2</sup><i>p</i>") + "（或 " + MM("<i>n</i><i>p</i><sup>2</sup>") + "），注入越高涨得越猛：当前 " +
+      H_RA + H_EQ + sci(r.rA, 1) + " cm⁻³s⁻¹。这就是 LED 在高电流下<b>效率骤降</b>（droop）和硅器件高注入下寿命变短的主因。"; }
+  },
+  {
+    q: "切回「三种对比」，把注入水平从 10¹² 一路拉到 10¹⁹，看模块二的三条曲线：低注入谁主导？高注入谁主导？中间的“冠军交接”发生在哪？",
+    a: () => { const r = rates(injNow()); const dom = dominant(r);
+      const xc = crossSRHAuger(), gap = directGapDec();
+      return "低注入时 <b>SRH（间接）主导</b>：它的 " +
+      H_R + " 大致 " + H_PR + H_DN + " —— 整条曲线<b>斜率恒为 1</b>（寿命近乎常数，高注入只是从 " +
+      H_DN + "<span class='op'>/</span>" + H_TAU + " 降到 " + H_DN + "<span class='op'>/</span>2" + H_TAU +
+      "）。注入升高后是 <b>俄歇</b> 以最陡的斜率（高注入 " + H_PR + MM("Δ<i>n</i><sup>3</sup>") +
+      "）反超：本参数下的交接点在 <b>" + H_DN + " ≈ " + (xc ? sci(xc, 1) : "（本档全量程没交接）") +
+      "</b> cm<sup>−3</sup> 附近。至于<b>直接（辐射）复合</b>（高注入 " + H_PR + MM("Δ<i>n</i><sup>2</sup>") +
+      "）：在当前硅参数下它<b>从头到尾都没当过老大</b>，最接近时也还差 <b>" + fmt(gap, 1) +
+      "</b> 个数量级 —— 这正是间接带隙硅几乎不发光在图上的样子。当前 " + H_DN + H_EQ +
+      sci(injNow(), 1) + " 时主导者是 <b>" + dom[0] + "</b>。看模块二底部的彩色条，颜色的分界点就是“冠军交接”的位置 —— 而且交接点会随<b>掺杂情境</b>的改变而移动（温度、陷阱位置、<span class='m'><i>B</i></span>、<span class='m'><i>C</i></span> 本工具已固定）。"; }
+  },
+  {
+    q: "光产生率已固定为 <span class=\"m\"><i>G</i><sub>opt</sub><span class=\"op\">=</span>1.0<span class=\"op\">×</span>10<sup>20</sup></span> cm⁻³s⁻¹。拖动<b>注入水平</b>，找到 <span class=\"m\"><i>G</i><sub>opt</sub></span> 恰好等于总复合率的工作点（模块三里净复合率≈0）—— 此时系统处于什么状态？稳态的过剩载流子浓度是多少？",
+    a: () => { const r = rates(injNow()), G = Gopt(), st = steadyDn(); const rnet = r.rTot - G; return "当 <b>" + H_GO + " 等于总复合率</b>（当前 " +
+      H_DN + H_EQ + sci(injNow(), 1) + " 时 " + H_RT + H_EQ + sci(r.rTot, 1) + "，" + H_GO + H_EQ + sci(G, 1) +
+      " ⇒ 净复合率 " + H_RN + " " + (Math.abs(rnet) < 0.02 * Math.max(r.rTot, G, 1e-30) ? "≈ 0，正好达到稳态" : (rnet > 0 ? "> 0，复合偏强" : "< 0，产生偏强")) +
+      "）时，系统进入<b>稳态</b>：光照每产生一对，复合就消耗一对，浓度不再变化。稳态条件是 " +
+      H_RT + "(" + H_DN + ") " + H_EQ + " " + H_GO + "，注意 " + H_TEF + " 本身随 " + H_DN + " 变" +
+      "（" + H_DN + H_EQ + H_GO + "<span class='op'>·</span>" + H_TEF + " 是个隐式方程），所以这个点得解方程才准：" +
+      "本档的解为 " + H_DN + " ≈ <b>" + sci(st.dn, 2) + "</b> cm<sup>−3</sup>" +
+      (st.flag === "ok" ? "（注入水平滑块约 <b>" + fmt(injPosOf(st.dn), 0) + "</b>），拖到那里就能看到" + H_RN + "归零"
+        : "，<b>它落在滑块量程" + (st.flag === "under" ? "之下" : "之上") + "</b> —— 本档即便把注入拉到" +
+          (st.flag === "under" ? "最低，复合也始终强于产生" : "最高，产生也始终强于复合") +
+          "，滑块上只会看到" + H_RN + (st.flag === "under" ? "全程 &lt; 0" : "全程 &gt; 0")) +
+      "。这正是<b>光稳态</b>（太阳能电池、光电导器件的工作点）；由于 " +
+      H_TAU + " 本工具固定为 1 μs，<b>光照越强，稳态载流子就积累得越多</b>，光响应也越强。"; }
+  }
+];
+
+let ANS_EL = [], ANS_SHOWN = [];
+function buildChal() {
+  const grid = $("chalGrid");
+  grid.innerHTML = ""; ANS_EL = []; ANS_SHOWN = [];
+  CHAL.forEach((c, i) => {
+    const d = document.createElement("div");
+    d.className = "chal";
+    d.innerHTML = '<div class="chal-head"><b>' + (i + 1) + ". " + c.q + '</b><span class="chev">▶</span></div>' +
+      '<div class="chal-body"><div class="ans"></div><div class="btn-row"><button>看看答案</button></div></div>';
+    grid.appendChild(d);
+    d.querySelector(".chal-head").onclick = () => d.classList.toggle("open");
+    const ans = d.querySelector(".ans");
+    ANS_EL.push(ans);
+    d.querySelector(".btn-row button").onclick = e => {
+      e.stopPropagation(); ans.classList.toggle("show");
+      ANS_SHOWN[i] = ans.classList.contains("show"); refreshAnswers();
+    };
+  });
+}
+/* 和站内其余工具同一套门禁：没展开的答案不重建 innerHTML —— 否则拖动滑块（乃至每 6 帧一次
+   的动画刷新）都要把 7 段含几十个数学标签、其中两段还带全量程扫描的答案整段重算。 */
+function refreshAnswers() {
+  ANS_EL.forEach((el, i) => { if (ANS_SHOWN[i]) el.innerHTML = CHAL[i].a(); });
+}
+
+/* ---------------- 10. 交互绑定 ---------------- */
+function markActive() {
+  Array.prototype.forEach.call($("modeBtns").children, b => b.classList.toggle("sel", b.dataset.k === OPT.mode));
+  Array.prototype.forEach.call($("dopBtns").children, b => b.classList.toggle("sel", +b.dataset.i === OPT.dope));
+}
+function syncInputs() {
+  const r = rates(injNow());
+  $("injSlider").value = OPT.inj;
+  $("spSlider").value = Math.round(OPT.speed * 100);
+  $("ckPhoton").checked = OPT.ckPhoton; $("ckPhonon").checked = OPT.ckPhonon;
+  $("ckTrap").checked = OPT.ckTrap; $("ckThird").checked = OPT.ckThird; $("ckRate").checked = OPT.ckRate;
+  $("modeVal").textContent = MODES.find(m => m.k === OPT.mode).name;
+  $("dopVal").innerHTML = TEXH(DOPES[OPT.dope].lab);
+  /* .val 是可能含公式的显示位：必须 innerHTML + <sup>，不能用 textContent 拼 10^14.1 */
+  $("injVal").innerHTML = sciH(injNow(), 1) + " <span class='un'>cm<sup>−3</sup></span>";
+  $("spVal").textContent = fmt(OPT.speed, 2) + "×";
+  $("btnPlay").textContent = OPT.playing ? "⏸ 暂停" : "▶ 播放";
+  markActive();
+}
+/* 控制面板「固定参数」那一栏：一律从 FIX / Bnow() / Cnow() 现取。
+   教训：这一栏曾手写「B = 1.0×10⁻¹⁴」，而 FIX.B 早已改成硅室温文献值 4.7×10⁻¹⁵
+   （读数面板、预设说明、跨材料对照三处都是 4.7×10⁻¹⁵），页头一个数代码一个数，
+   学生拿页头去核对读数必然对不上 —— 写死的数字一定会腐化。 */
+function renderFixNote() {
+  const O = s => "<span class='op'>" + s + "</span>";
+  const IT = s => "<i>" + s + "</i>";
+  const SB = s => "<sub>" + s + "</sub>";
+  const SP = s => "<sup>" + s + "</sup>";
+  const M = h => "<span class='m'>" + h + "</span>";
+  const eq = (nm, v) => M(IT(nm) + O("=") + v);
+  $("fixNote").innerHTML =
+    "温度 " + eq("T", FIX.T + " K") + "（室温，" +
+      M(IT("n") + SB("i") + O("=") + sciH(mat().ni300, 1)) + " cm" + SP("−3") + "）· " +
+    "陷阱能级 " + M(IT("E") + SB("t") + O("−") + IT("E") + SB("i") + O("=") + FIX.et.toFixed(1)) +
+      " eV（禁带中央）· " +
+    "SRH 寿命 " + M(IT("τ") + O("=") + sciH(FIX.tau, 1)) + " s · " +
+    "直接复合系数 " + eq("B", sciH(Bnow(), 1)) + " cm" + SP("3") + "/s · " +
+    "俄歇系数 " + eq("C", sciH(Cnow(), 1)) + " cm" + SP("6") + "/s · " +
+    "光产生率 " + M(IT("G") + SB("opt") + O("=") + sciH(FIX.G, 1) + " cm" + SP("−3") + "s" + SP("−1")) + "。" +
+    "以上均取<b>硅的典型量级</b>并固定不动。";
+}
+function render() { drawBand(); drawRate(); drawBal(); updateReadout(); refreshAnswers(); }
+
+function init() {
+  buildLegends(); buildChal(); seedBG();
+  const mb = $("modeBtns");
+  MODES.forEach(m => {
+    const b = document.createElement("button");
+    b.innerHTML = TEXH(m.name); b.dataset.k = m.k;
+    b.onclick = () => { OPT.mode = m.k; EVS = []; syncInputs(); render(); };
+    mb.appendChild(b);
+  });
+  const db = $("dopBtns");
+  DOPES.forEach((d, i) => {
+    const b = document.createElement("button");
+    b.innerHTML = TEXH(d.lab); b.dataset.i = i;
+    b.onclick = () => { OPT.dope = i; syncInputs(); render(); };
+    db.appendChild(b);
+  });
+  const bind = (id, key) => { $(id).oninput = e => { OPT[key] = +e.target.value; syncInputs(); render(); }; };
+  bind("injSlider", "inj");
+  $("spSlider").oninput = e => { OPT.speed = +e.target.value / 100; syncInputs(); };
+  [["ckPhoton", "ckPhoton"], ["ckPhonon", "ckPhonon"], ["ckTrap", "ckTrap"],
+   ["ckThird", "ckThird"], ["ckRate", "ckRate"]].forEach(([id, key]) => {
+    $(id).addEventListener("change", e => { OPT[key] = e.target.checked; render(); });
+  });
+  $("btnPlay").onclick = () => { OPT.playing = !OPT.playing; syncInputs(); };
+  $("btnReset").onclick = () => { EVS = []; seedBG(); drawBand(); };
+  /* 折叠区（.fold）：事件委托，与挑战区完全独立 */
+  document.addEventListener("click", e => {
+    const h = e.target.closest ? e.target.closest(".fold-head") : null;
+    if (!h) return;
+    const f = h.parentNode;
+    if (f && f.classList && f.classList.contains("fold")) f.classList.toggle("open");
+  });
+  window.addEventListener("resize", () => { fitAll(); render(); });
+  renderFixNote();
+  syncInputs(); fitAll(); render();
+  requestAnimationFrame(loop);
+}
+
+/* ---------------- 11. 动画循环 ---------------- */
+let lastT = 0, FRAME = 0;
+function loop(ts) {
+  if (!lastT) lastT = ts;
+  const dt = Math.min(0.05, (ts - lastT) / 1000);
+  lastT = ts;
+  if (OPT.playing) {
+    stepEvents(dt);
+    drawBand();
+    FRAME++;
+    if (FRAME % 6 === 0) { drawRate(); drawBal(); updateReadout(); refreshAnswers(); }
+  }
+  requestAnimationFrame(loop);
+}
+
+init();
+
+/* i18n 启动必须在 init() 之后：setLang() 会重跑 syncInputs()/render()，
+   放到 init() 之前会在 fitAll() 之前触发绘制，一旦抛异常整个 init() 就跑不到（挑战与画布会空）。 */
+(function () {
+  try {
+    i18nWatch();
+    ORIG_TITLE = ORIG_TITLE || document.title;
+    var btn = document.getElementById("langBtn");
+    if (btn) btn.onclick = function () { setLang(LANG === "en" ? "zh" : "en"); };
+    if (LANG === "en") setLang("en"); else { document.title = ORIG_TITLE; i18nWalk(document.body); }
+  } catch (e) { }
+})();
+</script>
+</body>
+</html>
