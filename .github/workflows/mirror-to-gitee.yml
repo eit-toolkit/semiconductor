@@ -46,11 +46,9 @@ jobs:
             exit 1
           fi
           # No --mirror: it deletes refs that are missing on this side, and Gitee
-          # rejects the whole push when its default branch (master) would be
-          # deleted. Push main and tags explicitly, and also mirror them onto
-          # master so Gitee's default branch name works (failure = warning only).
+          # rejects the whole push when its default branch would be deleted.
+          # Push main and tags explicitly. Gitee's default branch is set to main,
+          # so there is no master to keep in sync.
           git push --force gitee refs/heads/main:refs/heads/main
           git push --force --tags gitee
-          git push --force gitee refs/heads/main:refs/heads/master \
-            || echo "::warning::master branch not synced (protected or absent), ignoring"
           echo "mirror done"
