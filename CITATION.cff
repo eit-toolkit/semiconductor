@@ -14,8 +14,8 @@ abstract: >-
   Each tool is a self-contained HTML file with no build step, no external
   libraries and no network requests, so it runs offline and remains usable
   without maintenance.
-version: 1.0.0
-date-released: "2026-10-18"
+version: 0.10
+date-released: "2026-10-24"
 license: MIT
 type: software
 repository-code: "https://github.com/eit-toolkit/semiconductor"
