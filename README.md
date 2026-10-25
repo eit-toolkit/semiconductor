@@ -7,7 +7,7 @@
 
 ![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)
 ![Dependencies: none](https://img.shields.io/badge/dependencies-none-brightgreen.svg)
-![Tools: 32](https://img.shields.io/badge/tools-32-orange.svg)
+![Tools: 34](https://img.shields.io/badge/tools-34-orange.svg)
 ![Build: not required](https://img.shields.io/badge/build-not%20required-lightgrey.svg)
 ![Version: 0.10](https://img.shields.io/badge/version-0.10-blue.svg)
 
@@ -66,7 +66,9 @@ This collection was developed with AI assistance.
 | Beyond: optics | Photoconductivity | [光生电导效应交互教学工具.html](./光生电导效应交互教学工具.html) |
 | Beyond: thermoelectric | Seebeck Effect | [塞贝克效应交互教学工具.html](./塞贝克效应交互教学工具.html) |
 | Beyond: magnetic | Hall Effect | [霍尔效应交互教学工具.html](./霍尔效应交互教学工具.html) |
-| Expansions | Graphene: sp² Hybridisation and the π Bond — Dawn of 2D | [sp2杂化与π键形成交互教学工具.html](./sp2杂化与π键形成交互教学工具.html) |
+| Expansions | Graphene: sp² Hybridization and the π Bond — Dawn of 2D | [sp2杂化与π键形成交互教学工具.html](./sp2杂化与π键形成交互教学工具.html) |
+| Expansions | Perovskite Solar Cells — Light of the World | [钙钛矿太阳能电池交互教学工具.html](./钙钛矿太阳能电池交互教学工具.html) |
+| Expansions | Spintronics — Hidden in Plain Sight | [自旋电子学交互教学工具.html](./自旋电子学交互教学工具.html) |
 
 ## Design principles
 
@@ -77,7 +79,7 @@ This collection was developed with AI assistance.
 5. **LaTeX-style formula typography.** Physical quantities in italics, descriptive subscripts and units upright, exponents as real superscripts; the canvas and DOM rendering paths share one set of typesetting constants, so the same quantity looks identical on the plot and in the readout.
 6. **A uniform interaction structure.** Every tool is built from a control panel, a readout panel, a guided-inquiry section and a set of challenge questions, so switching between tools requires no new learning.
 7. **Results can be checked.** What you read off the plot and what the readout panel shows come from the same source — one computation in two forms — so a number can be verified on the spot.
-8. **Organised in the order the subject itself unfolds.** Electronic states, impurities and defects, carrier statistics, then conductivity, non-equilibrium carriers, pn junctions, surfaces and MIS, and finally the optical, thermoelectric and magnetic effects: bands and statistics first, because transport only makes sense once they are in place, and junctions and devices only after that. This is the logical order of semiconductor physics rather than the idiosyncrasy of one book. Chapter names and numbers follow Liu Enke's *The Physics of Semiconductors* only so that the set can be dropped straight into an existing syllabus; with a different textbook the same sequence still holds.
+8. **Organized in the order the subject itself unfolds.** Electronic states, impurities and defects, carrier statistics, then conductivity, non-equilibrium carriers, pn junctions, surfaces and MIS, and finally the optical, thermoelectric and magnetic effects: bands and statistics first, because transport only makes sense once they are in place, and junctions and devices only after that. This is the logical order of semiconductor physics rather than the idiosyncrasy of one book. Chapter names and numbers follow Liu Enke's *The Physics of Semiconductors* only so that the set can be dropped straight into an existing syllabus; with a different textbook the same sequence still holds.
 
 ## Quick start
 
@@ -130,6 +132,6 @@ The only obligation is to **keep the copyright and license notice in copies**. O
 
 ## Contact and acknowledgements
 
-The collection grew out of the smart-course programme for *Semiconductor Physics* at the School of Physics and Technology, Wuhan University.
+The collection grew out of the smart-course program for *Semiconductor Physics* at the School of Physics and Technology, Wuhan University.
 
 Feedback and collaboration: doctorwanghao@qq.com

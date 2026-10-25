@@ -1,0 +1,2583 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<!-- SPDX-License-Identifier: MIT -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>钙钛矿太阳能电池交互教学工具</title>
+<style>
+  :root {
+    --bg: #f7f9fb;
+    --panel: #ffffff;
+    --border: #dde4ec;
+    --text: #2c3e50;
+    --text-sub: #6b7a8c;
+    --blue: #1976d2;
+    --blue-light: #e3f0fb;
+    --orange: #ef8c1a;
+    --red: #d94a3d;
+    --teal: #0f9b8e;
+    --green: #2e9e5b;
+    --purple: #8e5bd0;
+    --gray-ref: #9aa5b1;
+    --probe: #f5c518;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Microsoft YaHei", "PingFang SC", "Segoe UI", sans-serif;
+    background: var(--bg); color: var(--text); padding: 14px;
+  }
+  header { position: relative;
+    display: flex; align-items: baseline; justify-content: center;
+    gap: 14px; flex-wrap: wrap; text-align: center; margin-bottom: 12px;
+  }
+  .lang-btn { position: absolute; right: 0; top: 0; border: 1px solid var(--border); background: #fff;
+    color: var(--text-sub); padding: 3px 10px; border-radius: 7px; cursor: pointer; font-size: 12px; font-weight: 600; }
+  .lang-btn:hover { border-color: var(--blue); color: var(--blue); }
+  header h1 { font-size: 20px; }
+  .layout { display: flex; gap: 14px; align-items: flex-start; max-width: 1500px; margin: 0 auto; }
+  .viz { flex: 0 0 64%; min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+  .side { flex: 1; min-width: 300px; display: flex; flex-direction: column; gap: 12px; }
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; }
+  canvas { display: block; width: 100%; border-radius: 6px; touch-action: none; }
+  .chart-wrap { position: relative; }
+  .hint { font-size: 12px; color: var(--text-sub); margin-top: 6px; line-height: 1.6; }
+  .sec-title { font-size: 13.5px; font-weight: 700; margin: 2px 0 6px; }
+  /* 模块编号徽标：只有教学内容模块才带编号；控制面板等辅助面板不是模块，不加 */
+  .sec-title .mtag {
+    display: inline-block; background: var(--blue); color: #fff;
+    font-size: 11px; font-weight: 700; padding: 1.5px 7px;
+    border-radius: 5px; margin-right: 6px; vertical-align: 1.5px; letter-spacing: .3px;
+  }
+  .ctrl { margin-bottom: 12px; }
+  .ctrl:last-child { margin-bottom: 0; }
+  .ctrl-head { display: flex; justify-content: space-between; align-items: baseline; font-size: 13.5px; font-weight: 600; margin-bottom: 4px; }
+  .ctrl-head .val { color: var(--blue); font-variant-numeric: tabular-nums; font-weight: 700; }
+  .ctrl input[type=range] { width: 100%; accent-color: var(--blue); }
+  .ctrl .sub { font-size: 12px; color: var(--text-sub); margin-top: 2px; line-height: 1.55; }
+  .btn-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+  .btn-row button {
+    border: 1px solid var(--border); background: #fff; color: var(--text);
+    padding: 5px 11px; border-radius: 7px; cursor: pointer; font-size: 12.5px;
+  }
+  .btn-row button:hover { border-color: var(--blue); color: var(--blue); }
+  .btn-row button.primary { background: var(--blue-light); border-color: var(--blue); color: var(--blue); font-weight: 600; }
+  .btn-row button.sel { background: var(--blue); border-color: var(--blue); color: #fff; font-weight: 600; }
+  .btn-row button:disabled { opacity: .45; cursor: not-allowed; }
+  .btn-row.tight button { padding: 4px 9px; font-size: 12px; }
+  .btn-row button .etlv { font-weight: 500; opacity: .72; font-variant-numeric: tabular-nums; }
+  .legend { display: flex; gap: 6px 14px; flex-wrap: wrap; align-items: center; font-size: 12px; color: var(--text-sub); margin-top: 6px; }
+  .legend > span { display: inline-block; }
+  .swatch {
+    display: inline-block; vertical-align: middle; width: 20px; height: 0;
+    border-top: 3px solid currentColor; border-radius: 2px; margin-right: 6px;
+  }
+  .swatch.dash { border-top-style: dashed; }
+  .swatch.dot { width: 11px; height: 11px; border: none; border-radius: 50%; }
+  .swatch.sq { width: 11px; height: 11px; border: none; border-radius: 3px; }
+  .mini { font-size: 11.5px; color: var(--text-sub); line-height: 1.6; }
+  .empty { font-size: 12px; color: var(--text-sub); padding: 6px 2px; }
+  .kv { display: grid; grid-template-columns: auto 1fr; gap: 3px 10px; font-size: 12.5px; align-items: baseline; }
+  .kv .hd { grid-column: 1 / -1; font-weight: 700; color: var(--text); font-size: 12px; margin: 6px 0 2px; }
+  .kv .k { color: var(--text-sub); white-space: nowrap; }
+  .kv .v { color: var(--text); font-variant-numeric: tabular-nums; }
+  /* 公式直接写在模块说明里：沿用 .m 的数学排版，但说明行窄，允许换行 */
+  .hint .m { white-space: normal; }
+  .hint .eq { display: block; margin-top: 4px; color: var(--text); }
+  /* 挑战任务卡片 */
+  .chal-wrap { max-width: 1500px; margin: 14px auto 0; }
+  .chal-grid { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+  .chal { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 8px 12px; }
+  .chal-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; cursor: pointer; }
+  .chal-head b { font-size: 13.5px; }
+  .chal-head .chev { color: var(--text-sub); font-size: 12px; transition: transform .15s; }
+  .chal.open .chal-head .chev { transform: rotate(90deg); display: inline-block; }
+  .chal-body { display: none; margin-top: 6px; font-size: 12.5px; color: var(--text-sub); line-height: 1.75; }
+  .chal.open { border-color: var(--blue); }
+  .chal.open .chal-body { display: block; }
+  .chal-body .ans { display: none; margin-top: 6px; padding: 7px 10px; background: var(--blue-light); border-radius: 6px; color: var(--text); }
+  .chal-body .ans.show { display: block; }
+  .chal-body .ans b { color: var(--blue); }
+  .chal .q { color: var(--text); }
+  /* ============ 数学公式排版（纯 CSS，零依赖，离线可用） ============ */
+  .frac {
+    display: inline-block; vertical-align: -0.50em; text-align: center;
+    margin: 0 .18em; font-size: .92em; line-height: 1.25;
+  }
+  .frac > .num { display: block; padding: 0 .32em; border-bottom: 1px solid currentColor; }
+  .frac > .den { display: block; padding: 0 .32em; }
+  header .formula { font-size: 15px; color: var(--text-sub); }
+  header .formula.m { font-size: 14px; }   /* .m 的 1.05em 会把页首公式顶出一行 */
+
+  @media (max-width: 980px) {
+    .layout { flex-direction: column; }
+    .viz { flex: 1 1 auto; width: 100%; }
+  }
+  /* ---- 折叠区（.fold）：读数与控制的「更多」专用 ----
+     独立组件，类名一律 .fold：❌ 不许复用 .chal-head / .chev，
+     否则会被挑战区回归脚本按「挑战题」计数，也会污染挑战区视觉基线。 */
+  .fold { margin-top: 7px; border-top: 1px dotted var(--border); padding-top: 5px; }
+  .fold-head { display: flex; align-items: center; gap: 6px; cursor: pointer;
+    font-size: 12px; font-weight: 600; color: var(--text-sub); user-select: none; flex-wrap: wrap; }
+  .fold-head:hover { color: var(--blue); }
+  .fold-head .chev { font-size: 11px; transition: transform .15s; display: inline-block; }
+  .fold.open .fold-head .chev { transform: rotate(90deg); }
+  .fold-body { display: none; margin-top: 4px; }
+  .fold.open .fold-body { display: block; }
+  .fold-val { font-weight: 400; color: var(--text-sub); font-size: 11px; margin-left: auto; }
+  .fold-sub { font-size: 11.5px; color: var(--text-sub); line-height: 1.55; margin: 2px 0 5px; }
+  .kv .hd:first-child { margin-top: 0; }
+  /* ---- 课程页脚 ---- */
+  .site-foot { max-width: 1500px; margin: 18px auto 0; padding: 12px 16px 24px;
+    border-top: 1px solid var(--border); color: var(--text-sub);
+    font-size: 12.5px; line-height: 1.8; text-align: center; }
+  .site-foot a { color: var(--blue, #1976d2); text-decoration: none; }
+  .site-foot a:hover { text-decoration: underline; }
+
+  .m { font-family: "Cambria Math", "STIX Two Math", "Latin Modern Math", "Times New Roman", Times, serif;
+       font-size: 1.05em; font-style: normal; white-space: nowrap; letter-spacing: .01em; }
+  .m i, .m var { font-style: italic; }
+  .m .rm { font-style: normal; }
+  .m sub, .m sup { font-size: .70em; font-style: normal; line-height: 1; }
+  .m sub { vertical-align: -.28em; }
+  .m sup { vertical-align: .50em; }
+.m .m { font-size: 1em; }   /* 嵌套容器（TEXH 下标转换叠加）不再放大字号 */
+  .m .op { font-style: normal; padding: 0 .24em; }
+  .m .sl { font-style: normal; padding: 0 .05em; }
+  .m .un { font-style: normal; padding-left: .16em; }
+  .op, .rm, .un { font-style: normal; }
+  .frac { display: inline-flex; flex-direction: column; vertical-align: -.45em; text-align: center; margin: 0 .18em; }
+  .frac .num { border-bottom: 1px solid currentColor; padding: 0 .22em; line-height: 1.16; }
+  .frac .den { padding: 0 .22em; line-height: 1.16; }
+  .sqrt { display: inline-flex; align-items: stretch; }
+  .sqrt .rd { position: relative; padding-left: .30em; padding-top: .10em; }
+  .sqrt .rdc { border-top: 1px solid currentColor; }
+  .sqrt > .rdc, .sqrt .rdc { display: inline-block; position: static; font-size: 1em;
+             border-top: .055em solid currentColor; padding: .06em .12em 0 .10em; margin: 0; line-height: 1; }
+
+  /* 公式排版：分式 / 根式 —— 全站统一为「回旋共振 v06」写法（置于末尾，覆盖本文件早期变体） */
+  .frac { display: inline-block; vertical-align: -0.52em; text-align: center; font-size: .78em; margin: 0 .12em; }
+  .frac > .num, .frac .num { display: block; padding: 0 .22em; border-bottom: .055em solid currentColor; line-height: inherit; }
+  .frac > .den, .frac .den { display: block; padding: 0 .22em; line-height: inherit; }
+  .sqrt { display: inline-block; white-space: nowrap; vertical-align: baseline; margin: 0; font-size: 1em; }
+  .sqrt > .rd, .sqrt .rd { display: inline-block; position: static; font-size: 1em; line-height: inherit; padding: 0 .02em 0 0; margin: 0; }
+  .sqrt > .rdc, .sqrt .rdc { display: inline-block; position: static; font-size: 1em;
+             border-top: .055em solid currentColor; padding: .06em .12em 0 .10em; margin: 0; line-height: 1; }
+  .sqrt .rdc:has(sup) { padding-top: .18em; }
+  .ck-row { display: flex; flex-wrap: wrap; gap: 5px 16px; margin-top: 6px; font-size: 12.5px; color: var(--text-sub); }
+  .ck-row label { display: inline-flex; align-items: center; gap: 5px; cursor: pointer; user-select: none; }
+  .ck-row input { accent-color: var(--blue); margin: 0; }
+  .kv .warn { color: var(--red); font-weight: 700; }
+</style>
+<body>
+
+<header>
+  <button id="langBtn" class="lang-btn" data-noi18n title="中文 / English">EN</button>
+  <h1>钙钛矿太阳能电池交互教学工具</h1>
+  <div class="formula m">α <span class="op">∝</span> <span class="sqrt"><span class="rd">√</span><span class="rdc"><i>hν</i><span class="op">−</span><i>E</i><sub>g</sub></span></span>　·　<i>V</i><sub>OC</sub> <span class="op">≤</span> <i>E</i><sub>g</sub><span class="op">−</span>Δ<i>E</i><sub>C</sub><span class="op">−</span>Δ<i>E</i><sub>V</sub>　·　PCE <span class="op">=</span> <span class="frac"><span class="num"><i>J</i><sub>SC</sub><i>V</i><sub>OC</sub>FF</span><span class="den"><i>P</i><sub>in</sub></span></span></div>
+</header>
+
+<div class="layout">
+  <!-- ============ 左侧：器件、能带、J–V、缺陷容忍、晶体结构 ============ -->
+  <div class="viz">
+    <div class="card">
+      <div class="sec-title"><span class="mtag">模块一</span>器件结构与载流子的一生（层状三明治俯瞰）</div>
+      <div class="chart-wrap"><canvas id="dev" data-h="400" tabindex="0"></canvas></div>
+      <div class="legend" id="legDev"></div>
+      <div class="hint" id="hintDev"></div>
+    </div>
+
+    <div class="card">
+      <div class="sec-title"><span class="mtag">模块二</span>能带对齐与选择性接触（能量零点＝真空能级）</div>
+      <div class="chart-wrap"><canvas id="band" data-h="330" tabindex="0"></canvas></div>
+      <div class="hint" id="hintBand"></div>
+    </div>
+
+    <div class="card">
+      <div class="sec-title"><span class="mtag">模块三</span>J–V 曲线与效率（AM1.5 总量 100 mW/cm²，画的是 −J）</div>
+      <div class="chart-wrap"><canvas id="jv" data-h="330" tabindex="0"></canvas></div>
+      <div class="legend" id="legJv"></div>
+      <div class="hint" id="hintJv"></div>
+    </div>
+
+    <div class="card">
+      <div class="sec-title"><span class="mtag">模块四</span>缺陷容忍：为什么溶液法做的钙钛矿也能高效</div>
+      <div class="chart-wrap"><canvas id="def" data-h="250" tabindex="0"></canvas></div>
+      <div class="hint" id="hintDef"></div>
+    </div>
+
+    <div class="card">
+      <div class="sec-title"><span class="mtag">模块五</span><span class="m"><i>ABX</i><sub>3</sub></span> 晶胞：谁在撑结构，谁在定能带</div>
+      <div class="chart-wrap"><canvas id="lat" data-h="270" tabindex="0"></canvas></div>
+      <div class="legend" id="legLat"></div>
+      <div class="hint" id="hintLat"></div>
+    </div>
+  </div>
+
+  <!-- ============ 右侧：控制面板与读数 ============ -->
+  <div class="side">
+    <div class="card">
+      <div class="sec-title">控制面板</div>
+
+      <div class="ctrl">
+        <div class="ctrl-head"><span>钙钛矿带隙 <span class="m"><i>E</i><sub>g</sub></span></span><span class="val" id="egVal">1.55 eV</span></div>
+        <input type="range" id="egSlider" min="140" max="200" value="155">
+        <div class="sub" id="egSub"></div>
+      </div>
+
+      <div class="ctrl">
+        <div class="ctrl-head"><span>钙钛矿层厚 <span class="m"><i>d</i></span></span><span class="val" id="dVal">500 nm</span></div>
+        <input type="range" id="dSlider" min="200" max="1000" value="500" step="10">
+        <div class="sub" id="dSub"></div>
+      </div>
+
+      <div class="ctrl">
+        <div class="ctrl-head"><span>载流子扩散长度 <span class="m"><i>L</i><sub>D</sub></span></span><span class="val" id="ldVal">1000 nm</span></div>
+        <input type="range" id="ldSlider" min="100" max="1500" value="1000" step="20">
+        <div class="sub" id="ldSub"></div>
+      </div>
+
+      <div class="ctrl">
+        <div class="ctrl-head"><span>电子传输层 ETL　<span class="m">Δ<i>E</i><sub>C</sub></span></span></div>
+        <div class="btn-row tight" id="etlBtns" style="margin-top:0;"></div>
+        <div class="sub" id="decSub"></div>
+      </div>
+
+      <div class="ctrl">
+        <div class="ctrl-head"><span>空穴传输层 HTL</span></div>
+        <div class="btn-row tight" id="htlBtns" style="margin-top:0;"></div>
+        <div class="sub" id="htlSub"></div>
+      </div>
+
+      <div class="ctrl">
+        <div class="ctrl-head"><span>预设</span></div>
+        <div class="btn-row tight" id="preBtns" style="margin-top:0;"></div>
+      </div>
+
+      <div class="ctrl">
+        <div class="ctrl-head"><span>显示项目</span></div>
+        <div class="ck-row" id="ckRow">
+          <label><input type="checkbox" id="ckAnim" checked>载流子动画</label>
+          <label><input type="checkbox" id="ckRec" checked>复合事件</label>
+          <label><input type="checkbox" id="ckDark" checked>暗态 J–V</label>
+          <label><input type="checkbox" id="ckOff" checked>能带偏移标注</label>
+        </div>
+      </div>
+
+      <div class="ctrl">
+        <div class="ctrl-head"><span>固定参量</span></div>
+        <div class="sub" id="fixVal"></div>
+        <div class="sub" id="fixSub"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="sec-title">读数面板</div>
+      <div class="kv" id="readout"></div>
+      <div class="fold" id="foldRo">
+        <div class="fold-head"><span class="chev">▶</span><span>更多读数（中间量与损失拆分）</span></div>
+        <div class="fold-body"><div class="kv" id="readoutMore"></div></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ============ 底部：引导探究 ============ -->
+<div class="chal-wrap">
+  <div class="card">
+    <div style="display:flex; justify-content:space-between; align-items:baseline; gap:10px;">
+      <b style="font-size:14.5px;">引导探究（点击展开，先自己试一试再看答案）</b>
+      <span style="font-size:12px; color:var(--text-sub);">挑战任务</span>
+    </div>
+    <div class="chal-grid" id="chalGrid"></div>
+  </div>
+</div>
+
+<script>
+/* ==================================================================
+   i18n（C1 单文件双语：物理代码仍然只有一份）
+   LANG 取值优先级：URL ?lang=en / ?lang=zh  >  localStorage('opl_lang')  >  默认中文。
+   不做 location 跳转——保住「单文件拷走也能用」。
+   三个注入点，**业务字符串一个都不改**：
+     ① partsOf()   画布 token：带 i/sub/sup/un 标记的是物理量、下标与单位，跳过
+     ② fillText/measureText 原型挂钩：兜住直接写进画布的中文串
+     ③ DOM 文本节点：静态 HTML 与 JS 写进来的 innerHTML，用 MutationObserver 兜住新增节点
+   T() 先查整句词典，未命中再按「最长优先」做短语替换，因此拼接串也能翻。
+   漏翻会被记进 window.__MISS，可导出核对。 */
+var LANG = (function () {
+  var m = /[?&]lang=([a-zA-Z]+)/.exec(location.search);
+  var q = m ? m[1].toLowerCase() : "";
+  if (q === "en" || q === "zh") return q;
+  var s = "";
+  try { s = localStorage.getItem("opl_lang") || ""; } catch (e) { }
+  return (s === "en" || s === "zh") ? s : "zh";
+})();
+var ORIG_TITLE = document.title;
+var __MISS = [];
+try { window.__MISS = __MISS; } catch (e) { }
+function noteMiss(s) { if (__MISS.indexOf(s) < 0) __MISS.push(s); }
+function TSoft(s) {
+  if (!T._K) T._K = Object.keys(I18N).sort(function (a, b) { return b.length - a.length; });
+  var out = s, i, k, orig = s;
+  /* 两遍：第一遍只吃长度 ≥ 2 的短语；第二遍的单字 key 只在「传进来的串
+     恰好就是这一个字」时才上场——画布逐字排版会拿单字去 measureText，那一
+     路必须翻。反过来，绝不让单字 key 去切更长的句子：否则「导」「子」「原」
+     会把「半导体」「电子数」「泡利原理」切成半 conduction 体、电 quantum 数、
+     泡利 origin 理这类中英混排。同一条理由也适用于「下」：整句不该被切碎。 */
+  for (var pass = 0; pass < 2; pass++) {
+    for (i = 0; i < T._K.length; i++) {
+      k = T._K[i];
+      if (k.length < 2 && (pass === 0 || orig !== k)) continue;
+      if (out.indexOf(k) >= 0) out = out.split(k).join(I18N[k]);
+    }
+  }
+  return out;
+}
+/* 同一句被 DOM 切成好几个文本节点时，首尾空格会随机落在 data 里；
+   所以除了「整句命中」，再试一次「去空格后命中」并原样补回首尾空白。 */
+function trimMap() {
+  if (T._TM) return T._TM;
+  var m = {};
+  for (var k in I18N) if (Object.prototype.hasOwnProperty.call(I18N, k)) {
+    var t = k.replace(/^\s+|\s+$/g, "");
+    if (t && m[t] === undefined) m[t] = I18N[k];
+  }
+  T._TM = m;
+  return m;
+}
+/* eslint-disable no-use-before-define */
+function T(s) {
+  if (LANG !== "en" || typeof s !== "string" || !s) return s;
+  if (!/[一-鿿]/.test(s)) return s;
+  if (Object.prototype.hasOwnProperty.call(I18N, s)) return I18N[s];
+  var tm = trimMap(), core = s.replace(/^\s+|\s+$/g, "");
+  if (core && tm[core] !== undefined) {
+    var lead = s.slice(0, s.length - s.replace(/^\s+/, "").length);
+    var tail = s.slice(s.replace(/\s+$/, "").length);
+    return lead + tm[core] + tail;
+  }
+  var v = TSoft(s);
+  /* 译完还剩汉字也算漏翻：只翻掉一半的「半吊子译文」曾经让 __MISS 恒为 0。 */
+  if (v === s || /[\u3400-\u9FFF]/.test(v)) noteMiss(s);
+  return v;
+}
+var I18N = {
+  /* ---- 版面与通用 ---- */
+  "模块一": "Module 1", "模块二": "Module 2", "模块三": "Module 3", "模块四": "Module 4", "模块五": "Module 5",
+  "控制面板": "Control Panel",
+  "读数面板": "Readout Panel",
+  "挑战任务": "Challenges",
+  "引导探究（点击展开，先自己试一试再看答案）": "Explore (click to open — try it yourself before reading the answer)",
+  "看看答案": "Show answer",
+  "显示项目": "Display",
+  "预设": "Presets",
+  "固定参量": "Fixed parameters",
+  "更多读数（中间量与损失拆分）": "More readouts (intermediate quantities and the loss breakdown)",
+  "反馈意见": " Feedback",
+  "本工具是 EIT-SP（半导体物理交互式教学工具箱）的一部分（武汉大学物理学院《半导体物理》智慧课程），以 MIT 协议开源，可自由使用与二次开发；转载请保留出处。": "This tool is part of EIT-SP, the Educational Interactive Toolkit for Semiconductor Physics (School of Physics and Technology, Wuhan University). Released under the MIT license: free to use, modify and redistribute, including commercially. Please keep this attribution.",
+  "本工具是 EIT-SP（半导体物理交互式教学工具箱）的一部分（武汉大学物理学院《半导体物理》智慧课程），以 MIT 协议开源，可自由使用与二次开发；转载请保留出处。反馈意见": "This tool is part of EIT-SP, the Educational Interactive Toolkit for Semiconductor Physics (School of Physics and Technology, Wuhan University). Released under the MIT license: free to use, modify and redistribute, including commercially. Please keep this attribution. Feedback",
+  "钙钛矿太阳能电池交互教学工具": "Perovskite Solar Cells — Interactive Toolkit",
+
+  /* ---- 模块标题 ---- */
+  "器件结构与载流子的一生（层状三明治俯瞰）": "Device stack and the life of a carrier (a top-down view of the sandwich)",
+  "能带对齐与选择性接触（能量零点＝真空能级）": "Band alignment and selective contacts (zero of energy = vacuum level)",
+  "J–V 曲线与效率（AM1.5 总量 100 mW/cm²，画的是 −J）": "J–V curve and the efficiency (AM1.5 total 100 mW/cm²; the plot shows −J)",
+  "缺陷容忍：为什么溶液法做的钙钛矿也能高效": "Defect tolerance: why solution-processed perovskites can still be efficient",
+  " 晶胞：谁在撑结构，谁在定能带": " unit cell: who holds the structure up, who sets the bands",
+
+  /* ---- 控件 ---- */
+  "钙钛矿带隙": "Perovskite band gap",
+  "钙钛矿层厚": "Perovskite thickness",
+  "载流子扩散长度": "Carrier diffusion length",
+  "导带偏移 Δ": "Conduction-band offset Δ",
+  "（负＝势垒）": " (negative = a barrier)",
+  "空穴传输层 HTL": "Hole transport layer (HTL)",
+  "电子传输层 ETL": "Electron transport layer (ETL)",
+  "载流子动画": "Carrier animation",
+  "复合事件": "Recombination events",
+  "暗态 J–V": "Dark J–V",
+  "能带偏移标注": "Band-offset annotations",
+  "典型 MAPbI₃": "Typical MAPbI₃",
+  "宽带隙（叠层顶电池）": "Wide gap (tandem top cell)",
+  "能带失配": "Band mismatch",
+  "抽取势垒": "Extraction barrier",
+  "最常用的 HTL，ΔE_V 小 ⇒ 电压损失小": "The workhorse HTL: small ΔE_V, so little voltage is lost",
+  "HOMO 略深，抽空穴更顺": "A slightly deeper HOMO: holes are easier to extract",
+  "价带顶很深：空穴好抽，但电压被吃掉一大截": "A very deep valence-band top: holes are easy to extract, but a big slice of the voltage is gone",
+  "　当前 Δ": "　Current Δ",
+  "吸收边": "Absorption edge",
+  " nm；比边更长的光子基本不吸收，": " nm: photons beyond the edge are barely absorbed, while ",
+  "比边短的按 √(hν − E_g) 越吸越狠": "shorter ones are absorbed ever more strongly, as √(hν − E_g)",
+  "本档的 1/α ≈ ": "Here 1/α ≈ ",
+  " nm，厚薄就难在这里：": " nm — and that is the dilemma: ",
+  "太薄吃不完光，太厚来不及抽": "too thin leaves light unabsorbed, too thick leaves carriers unable to get out",
+  "由爱因斯坦关系反推寿命 τ = ": "Lifetime back-derived from the Einstein relation, τ = ",
+  "（迁移率固定）": " (mobility held fixed)",
+  "负号＝电子要往上爬 |Δ": "A negative sign means electrons must climb |Δ",
+  "|，界面抽取速度被压到原来的 e^(−|ΔE_C|/kT) ≈ ": "|, and the interface extraction velocity is suppressed by e^(−|ΔE_C|/kT) down to about ",
+  "偏移偏大：电子好抽，但接触电势被吃掉，V_OC 先降": "The offset is too large: electrons are easy to extract, but the contact potential is eaten away and V_OC falls first",
+  "0.1～0.3 eV 是常取的折中区：挡得住空穴，又不至于多丢太多电压": "0.1–0.3 eV is the usual compromise: enough to block holes without giving up too much voltage",
+  "这几项都没给滑块，取值与影响都在「更多读数」里现算：": "None of these have a slider; the values and their effect are recomputed live under “More readouts”: ",
+  "入射光谱取 ": "The incoming spectrum is a ",
+  " K 黑体稀释到 ": " K blackbody diluted to ",
+  " W/m² 近似 AM1.5G（同样的带隙下，短路电流比标准谱低约 5～10%）；": " W/m² as an approximation to AM1.5G (for the same band gap the short-circuit current comes out about 5–10% below the standard spectrum); ",
+  "α = α₀·√(hν − E_g) 只写直接带隙这一支，间接跃迁与反射损失都不计。": "α = α₀·√(hν − E_g) keeps only the direct-gap branch: indirect transitions and reflection losses are left out.",
+  "温度 ": "Temperature ",
+  " K · 迁移率 ": " K · mobility ",
+  " cm²/(V·s) · 激子结合能 ": " cm²/(V·s) · exciton binding energy ",
+  " meV · 外辐射效率 ": " meV · external radiative efficiency ",
+  " · 串联电阻 ": " · series resistance ",
+  " Ω·cm² · 传输层带隙（只画图）": " Ω·cm² · transport-layer band gaps (drawing only)",
+
+  /* ---- 模块一：层与图例 ---- */
+  "透明电极 FTO": "Transparent electrode (FTO)",
+  "入光侧的电极：透光又导电": "The illuminated-side electrode: transparent and conducting",
+  "抽电子、把空穴挡回去": "Extracts electrons and sends holes back",
+  "钙钛矿吸收层": "Perovskite absorber",
+  "吸光，直接产生自由电子–空穴对": "Absorbs light and creates free electron–hole pairs directly",
+  "抽空穴、把电子挡回去": "Extracts holes and sends electrons back",
+  "金属背电极": "Metal back electrode",
+  "收集空穴、把没吸收的光反射回去": "Collects holes and reflects the unabsorbed light back",
+  "电子（向 ETL 走）": "Electron (heading to the ETL)",
+  "空穴（向 HTL 走）": "Hole (heading to the HTL)",
+  "入射光 / 吸收位置": "Incoming light / where it is absorbed",
+  "复合事件（消失的那一个）": "Recombination event (the one that disappears)",
+  "光照 J–V": "J–V under illumination",
+  "最大功率矩形（FF）": "Maximum-power rectangle (FF)",
+  "A 位：MA⁺ / FA⁺ / Cs⁺": "A site: MA⁺ / FA⁺ / Cs⁺",
+  "B 位：Pb²⁺": "B site: Pb²⁺",
+  "X 位：I⁻（六个面心）": "X site: I⁻ (the six face centers)",
+  "入射光 hν": "Incoming light hν",
+  "电子流向负载": "Electrons flow to the load",
+  "空穴被挡": "Holes blocked",
+  "电子被挡": "Electrons blocked",
+  "光从上面射进来，穿过透明电极与电子传输层（它们基本不吸光），在钙钛矿层里按 Beer 定律被吃掉：": "Light comes in from the top, crosses the transparent electrode and the electron transport layer (which hardly absorb), and is eaten inside the perovskite layer according to Beer’s law: ",
+  "本档的吸收深度约 ": "the absorption depth here is about ",
+  " nm</b>（剩余强度随深度指数衰减，层里的黄色深浅就是它）。": " nm</b> (the surviving intensity decays exponentially with depth — that is exactly the shading inside the layer). ",
+  "浅色的阴阳小球是被拆开的电子–空穴对：": "The small light-shaded spheres are split electron–hole pairs: ",
+  " 往": " moves ",
+  "上走进 ETL、": "up into the ETL and ",
+  "下走进 HTL，谁在半路被复合就用灰叉标记。两侧 ✗ 是选择性接触在挡人：ETL 不让空穴过，HTL 不让电子过。": "down into the HTL; any carrier that recombines on the way is marked with a gray cross. The ✗ on both sides are the selective contacts doing their job: the ETL refuses holes, the HTL refuses electrons.",
+
+  /* ---- 模块二：能带图 ---- */
+  "钙钛矿": "Perovskite",
+  "平带近似：这里不画能带弯曲，只看三层能级怎么对齐": "Flat-band approximation: no band bending is drawn — only how the three layers line up",
+  "电子能量 E（eV，真空为 0）": "Electron energy E (eV, vacuum = 0)",
+  "电子注入": "Electron injection",
+  "空穴注入": "Hole injection",
+  "势垒 |ΔE_C|：抽取受阻": "Barrier |ΔE_C|: extraction blocked",
+  "空穴势垒 ": "Hole barrier ",
+  "电子势垒 ": "Electron barrier ",
+  " eV": " eV",
+  "三列的上下两条粗线分别是各自的 ": "In each of the three columns the two thick lines are that layer’s ",
+  " 与 ": " and ",
+  "，能量读数是相对真空能级的电子能量。": "; the energies are electron energies measured from the vacuum level. ",
+  "左边紫色竖线是接触电势上限 ": "The violet line on the left is the contact-potential ceiling ",
+  "：开压再高也高不过它。把 Δ": ": the open-circuit voltage cannot rise above it. Push Δ",
+  " 从 0 往上推，": " up from zero and ",
+  " 一动不动而 ": " stays put while ",
+  " 往下掉；推到 0 以下，电子要爬一个势垒，": " falls; push it below zero and electrons must climb a barrier, so ",
+  " 和 FF 先垮。所以「对齐」不是越平越好。": " and FF collapse first. Alignment, then, is not “the flatter the better”.",
+
+  /* ---- 模块三：J–V ---- */
+  "偏压 V（V）": "Bias V (V)",
+  "J（mA/cm²，发电方向为正）": "J (mA/cm², positive in the generating direction)",
+  "当前瓶颈：": "Current bottleneck: ",
+  "同 E_g 的 SQ 极限 ": "SQ limit for the same E_g: ",
+  "蓝色实线是光照下的 J–V，灰色虚线是同一只二极管在暗态的曲线（两者之差就是被收集的光生电流）。": "The solid blue line is the J–V under illumination, the gray dashed line the same diode in the dark (the gap between them is the collected photocurrent). ",
+  "虚线方框的面积是 ": "The area of the dashed box is ",
+  "，橙色实矩形是实际最大功率 ": "; the solid orange rectangle is the actual maximum power ",
+  "，两者之比即填充因子 FF。鼠标移到曲线上可以读出该点的 V、J 与功率。": "; their ratio is the fill factor FF. Hover the curve to read off V, J and the power at that point.",
+
+  /* ---- 模块四：缺陷容忍 ---- */
+  "常规半导体（Si、GaAs）": "Conventional semiconductor (Si, GaAs)",
+  "铅卤钙钛矿": "Lead halide perovskite",
+  "反键（antibonding）": "antibonding",
+  "成键（bonding）": "bonding",
+  "Pb 6p – I 5p 反键": "Pb 6p – I 5p antibonding",
+  "Pb 6s – I 5p 反键 ⇒ 也是反键": "Pb 6s – I 5p antibonding ⇒ antibonding as well",
+  "（成键态）": " (bonding state)",
+  "拿掉一个原子": "Remove one atom",
+  "深能级落在禁带中央 ⇒ 有效复合中心": "The deep level lands mid-gap ⇒ an efficient recombination center",
+  "禁带里没有深能级": "No deep level inside the gap",
+  "缺陷态被推入能带（浅能级 / 共振态）": "Defect states pushed into the bands (shallow levels / resonances)",
+  "抽掉一个原子必然留下悬挂键，但落点取决于原来那条键的形式：常规半导体的价带是": "Removing an atom always leaves a dangling bond, but where its level lands depends on the character of the bond: in a conventional semiconductor the valence band is ",
+  "态，悬键能级落在": ", so the dangling-bond level lands ",
+  "带隙中央，成为高效的复合中心；铅卤钙钛矿的价带顶与导带底": "mid-gap and becomes an efficient recombination center; in a lead halide perovskite the valence-band top and the conduction-band bottom are ",
+  "的（Pb 6s–I 5p 反键给出价带顶，Pb 6p–I 5p 反键给出导带底），缺陷态被推到带边之外或变成浅能级，于是「缺陷多」不等于「复合快」。": " (Pb 6s–I 5p antibonding gives the valence-band top, Pb 6p–I 5p antibonding the conduction-band bottom), so the defect states are pushed beyond the band edges or become shallow: “many defects” no longer means “fast recombination”.",
+  "同样的空位：一边压在带隙中央当复合中心，一边几乎没有深能级 —— 这就是溶液法也能高效的原因": "The same vacancy: on one side it sits mid-gap as a recombination center, on the other there is hardly any deep level — that is why solution processing can still be efficient",
+
+  /* ---- 模块五：晶胞 ---- */
+  "Pb²⁺（决定能带）": "Pb²⁺ (sets the bands)",
+  "I⁻（六配位，八面体共顶点）": "I⁻ (six-fold, corner-sharing octahedra)",
+  "MA⁺ / FA⁺（只撑结构，不进能带）": "MA⁺ / FA⁺ (holds the structure up, absent from the bands)",
+  "拖动旋转": "Drag to rotate",
+  "八面体共顶点连成三维骨架（B 位 Pb²⁺ 居中、X 位 I⁻ 在六个面心），A 位的一价阳离子坐在八个顶点围出的空隙里：": "Corner-sharing octahedra build the three-dimensional framework (Pb²⁺ at the center, I⁻ at the six face centers), and the monovalent A-site cation sits in the void enclosed by the eight corners: ",
+  "它不参与前线轨道，只在电荷平衡和结构稳定性上出力 —— 也就是": "it takes no part in the frontier orbitals and contributes only to charge balance and structural stability — which is why ",
+  " 主要由 Pb–X 骨架决定。拖动可旋转。": " is set mainly by the Pb–X framework. Drag to rotate.",
+
+  /* ---- 读数 ---- */
+  "（1240 / ": " (1240 / ",
+  "）": ")",
+  "光子吸收效率": "Photon absorption efficiency",
+  "（整层加权，含带边以下的那部分）": " (weighted over the whole layer, including the sub-gap part)",
+  "载流子收集效率": "Carrier collection efficiency",
+  "填充因子 FF": "Fill factor FF",
+  "（零串阻时约 ": " (about ",
+  "转换效率 PCE": "Power conversion efficiency (PCE)",
+  "（同 ": " (the SQ limit for the same ",
+  " 的 SQ 极限 ": " is ",
+  "当前瓶颈": "Current bottleneck",
+  "（占 SQ 极限的 ": " (about ",
+  " %）": " % of the SQ limit)",
+  "工作点": "Operating point",
+  "最大功率 ": "Maximum power ",
+  "钳制前的 ": "Before clamping, ",
+  "饱和电流 ": "Saturation current ",
+  " mA/cm²（其中辐射部分 ": " mA/cm² (of which the radiative part is ",
+  "非辐射损失的电压": "Voltage lost to non-radiative recombination",
+  "kT·ln(1/外辐射效率) = ": "kT·ln(1/ERE) = ",
+  "理想因子": "Ideality factor",
+  "1（本工具只有复合中心一条复合通道）": "1 (this tool has a single recombination channel)",
+  "能带与抽取": "Bands and extraction",
+  "接触电势上限": "Contact-potential ceiling",
+  " V = ": " V = ",
+  "界面抽取速度 S": "Interface extraction velocity S",
+  " cm/s（无势垒时取热速度量级 ": " cm/s (thermal-velocity scale when there is no barrier: ",
+  "走到界面后的抽取率": "Extraction probability once at the interface",
+  "载流子与吸收": "Carriers and absorption",
+  "扩散系数 D = µkT/q": "Diffusion coefficient D = µkT/q",
+  " cm²/s，反推寿命 τ = ": " cm²/s, which gives a lifetime τ = ",
+  "（越接近 1，越省着用扩散长度）": " (the closer to 1, the less the diffusion length is strained)",
+  "1/α（代表性光子）": "1/α (representative photon)",
+  " nm，层厚是它的 ": " nm; the layer is ",
+  " 倍": " times thicker",
+  "kT 与激子结合能": "kT and the exciton binding energy",
+  " eV，E_b/kT = ": " eV; E_b/kT = ",
+  "（远小于 1 ⇒ 室温自发解离）": " (well below 1 ⇒ dissociation is spontaneous at room temperature)",
+  "若折算成 Br 含量 x": "Convert to a Br fraction x",
+  "x ≈ ": "x ≈ ",
+  "（MAPb(I₁₋ₓBrₓ)₃ 的线性估算）": " (linear estimate for MAPb(I₁₋ₓBrₓ)₃)",
+  "低于 MAPbI₃ 的 1.55 eV，不在 I/Br 混晶的估算范围内": "below the 1.55 eV of MAPbI₃, outside the range of the I/Br mixed-crystal estimate",
+  "损失拆分（占 SQ 极限的比例）": "Loss breakdown (share of the SQ limit)",
+  "未被吸收的光子": "Photons never absorbed",
+  "复合与抽取损失": "Recombination and extraction",
+  "非辐射复合（1/ERE）": "Non-radiative recombination (1/ERE)",
+  "能带偏移（接触电势）": "Band offsets (contact potential)",
+  "串联电阻": "Series resistance",
+  "已被接触电势钳住": "clamped by the contact potential",
+  " V（": " V (",
+  " 高于接触电势上限，已被压回 ": " sits above the contact-potential ceiling and is pushed back to ",
+  "未触及接触电势上限 ": " stays below the contact-potential ceiling of ",
+  " V）": " V)",
+  " / ": " / ",
+  " mA/cm²": " mA/cm²",
+  " mA/cm²（理想上限 ": " mA/cm² (ideal ceiling ",
+  " %": " %",
+  /* ---- 补：画布逐字/TEXH 切碎后剩下的残片 ---- */
+  "成键": "bonding",
+  "都是反键": "antibonding as well",
+  "的 （Pb 6s–I 5p 反键给出价带顶，Pb 6p–I 5p 反键给出导带底），缺陷态被推到带边之外或变成浅能级，于是「缺陷多」不等于「复合快」。": " (Pb 6s–I 5p antibonding gives the valence-band top, Pb 6p–I 5p antibonding the conduction-band bottom), so the defect states are pushed beyond the band edges or become shallow: “many defects” no longer means “fast recombination”.",
+  "八面体共顶点连成三维骨架（B 位 Pb": "Corner-sharing octahedra build the three-dimensional framework (B-site Pb",
+  " 居中、X 位 I": " at the center, X-site I",
+  " 在六个面心），A 位的一价阳离子坐在八个顶点围出的空隙里：它不参与前线轨道，只在电荷平衡和结构稳定性上出力 —— 也就是": " at the six face centers), and the monovalent A-site cation sits in the void enclosed by the eight corners: it takes no part in the frontier orbitals and contributes only to charge balance and structural stability — which is why ",
+  "（剩余强度随深度指数衰减，层里的黄色深浅就是它）。": " (the surviving intensity decays exponentially with depth — that is exactly the shading inside the layer).",
+  "/(V·s) · 激子结合能 ": "/(V·s) · exciton binding energy ",
+  " meV · 外辐射效率 ": " meV · external radiative efficiency ",
+  " · 传输层带隙（只画图）": " · transport-layer band gaps (drawing only)",
+  " 近似 AM1.5G（同样的带隙下，短路电流比标准谱低约 5～10%）；α = α": " W/m² as an approximation to AM1.5G (for the same band gap the short-circuit current comes out about 5–10% below the standard spectrum); α = α",
+  " 只写直接带隙这一支，间接跃迁与反射损失都不计。": " keeps only the direct-gap branch: indirect transitions and reflection losses are left out.",
+  " nm；比边更长的光子基本不吸收，比边短的按 ": " nm: photons beyond the edge are barely absorbed, while shorter ones follow ",
+  " 越吸越狠": " ever more steeply",
+  "最常用的 HTL，Δ": "The workhorse HTL: Δ",
+  " 小 ⇒ 电压损失小": " is small, so little voltage is lost",
+  "　当前 Δ": "　current Δ",
+  /* ---- 补：ETL 三选一（ΔE_C） ---- */
+  "势垒型": "Barrier",
+  "折中型": "Balanced",
+  "悬崖型": "Cliff",
+  "ETL 导带底偏高：电子要往上爬一个台阶才进得去": "The ETL conduction-band edge sits high: an electron must climb a step before it can get in",
+  "常取的折中区：电子好抽，接触电势也只丢一点点": "The usual middle ground: electrons come out easily, and only a sliver of the contact potential is lost",
+  "ETL 导带底太低：电子好抽，但接触电势被吃掉一大截": "The ETL conduction-band edge sits low: electrons come out easily, but a large slice of the contact potential is eaten",
+  " eV：收集 ": " eV: collection ",
+  "理想上限 ": "ideal ceiling ",
+  "（其中辐射部分 ": "(of which the radiative part is ",
+  "，反推寿命 τ = ": ", which gives a lifetime τ = ",
+  " 的线性估算）": " (a linear estimate)",
+  "理想": "ideal",
+  "吸": "abs", "收": "coll",
+  "电子传输层": "Electron transport layer",
+  "，发电方向为正）": ", positive in the generating direction)",
+  "同 ": "Same ",
+  " 的 SQ 极限 ": " SQ limit ",
+  "（决定能带）": " (sets the bands)",
+  "（六配位，八面体共顶点）": " (six-fold, corner-sharing octahedra)",
+  "（只撑结构，不进能带）": " (holds the structure up, absent from the bands)",
+  "A 位：MA": "A site: MA",
+  "B 位：Pb": "B site: Pb",
+  "X 位：I": "X site: I",
+  "（六个面心）": " (the six face centers)",
+  "典型 MAPbI": "Typical MAPbI",
+  "势垒 |Δ": "Barrier |Δ",
+  "|：抽取受阻": "|: extraction blocked",
+  "|，界面抽取速度被压到原来的 e^(−|Δ": "|, and the interface extraction velocity is suppressed to e^(−|Δ",
+  "，界面抽取速度被压到原来的 e^(−|Δ": ", and the interface extraction velocity is suppressed to e^(−|Δ",
+  "高于接触电势上限，已被压回 ": "above the contact-potential ceiling and is pushed back to ",
+  "偏移偏大：电子好抽，但接触电势被吃掉，": "The offset is too large: electrons are easy to extract, but the contact potential is eaten away, ",
+  " 先降": " falls first",
+  "低于 MAPbI": "Below MAPbI",
+  " 的 1.55 eV，不在 I/Br 混晶的估算范围内": " of MAPbI₃’s 1.55 eV, outside the range of the I/Br mixed-crystal estimate",
+  "，厚 ": ", thickness ",
+  " → 收集 ": " → collection ",
+  "，收集 ": ", collection ",
+  "，PCE ": ", PCE ",
+  "当前这一档 Δ": "the present setting, Δ",
+
+  /* ---- 补：挑战一（ABX₃ 晶胞） ---- */
+  "1. 看模块五的晶胞：A 位阳离子坐在哪里？B 位与 X 位围成什么几何？把视角转一圈看看八面体是怎么连成骨架的——A 位的有机分子有没有出现在能带上？": "1. Look at the unit cell of Module 5: where does the A-site cation sit? What geometry do the B and X sites build? Rotate the view once around and watch how the octahedra link into a framework — does the organic molecule on the A site show up in the bands at all?",
+  "A 位坐在八个顶点围出的立方体空隙里": "The A site sits in the cubic void enclosed by the eight corners",
+  "（体心位置，图里橙色的球）：它是一价的 MA": " (the body center, the orange sphere in the figure): it is a monovalent MA",
+  "，靠电荷平衡把骨架撑住，并决定八面体怎么倾斜；": ", it holds the framework up through charge balance and decides how the octahedra tilt; ",
+  "前线轨道上没有它": "it is absent from the frontier orbitals",
+  "——价带顶是 I 5p（掺一点 Pb 6s），导带底主要是 Pb 6p。": "— the valence-band top is I 5p (with a little Pb 6s mixed in), the conduction-band bottom mainly Pb 6p.",
+  "B 位 Pb": "The B site, Pb",
+  " 居中，六个 X 位 I": " sits at the center, and the six X sites, I",
+  " 在六个面心": " occupy the six face centers",
+  "，围成 [PbI": ", together they make a [PbI",
+  " 正八面体；八面体": " regular octahedron; the octahedra",
+  "共顶点": "share corners",
+  "连出去就是三维骨架，转动视角能看到每一个 I": " and so link into a three-dimensional framework — rotate the view and you can see that every I",
+  " 都被两个八面体共用。所以带隙 ": " is shared by two octahedra. So the band gap ",
+  "现在 ": "now ",
+  "主要由 Pb–X 骨架决定": "is set mainly by the Pb–X framework",
+  "换 A 位只是微调（键角微变、带隙略动），换 X 位（I → Br）才是大改 —— 这就是「": ": swapping the A site only fine-tunes it (bond angles shift slightly, the gap moves a little) — swapping the X site (I → Br) is the big change, and that is why 「",
+  "」能连续调带隙的原因。": "」 can be tuned continuously.",
+
+  /* ---- 补：挑战二（带隙与吸收边） ---- */
+  "2. 把带隙从 1.40 eV 拉到 2.00 eV：吸收边 ": "2. Stretch the band gap from 1.40 eV to 2.00 eV: the absorption edge ",
+  " 往哪个方向走？": " moves in which direction? ",
+  " 与 PCE 是升还是降？为什么「宽带隙」的电池还要拿来当叠层电池的顶电池？": " and PCE — do they rise or fall? And why is a “wide-gap” cell still used as the top cell of a tandem?",
+  "吸收边按 ": "The absorption edge follows ",
+  " 走：带隙": ": the band gap ",
+  "变大": "grows",
+  "，吸收边就往": ", so the edge moves toward ",
+  "短波（蓝移）": "shorter wavelengths (a blue shift)",
+  "方向动，够得着的光子变少，": ", fewer photons can be reached, so ",
+  " 因此下降，而 ": " falls, while ",
+  " 是往上涨的 —— 涨回来的那部分补不上丢掉的那部分，所以单结效率会降。既然单结更差，为什么叠层还要用宽带隙顶电池？因为在窄带隙材料里，一个高能光子超出带隙的那部分能量会以热的形式浪费掉（热化损失）；交给宽带隙的顶层去接，这部分就能被捞回来，底层那片窄带隙的再去接剩下的红光。本工具只算单结，看的是「同样一片材料」的取舍。": " rises — but what comes back never makes up for what was lost, so a single junction loses efficiency. If a single junction does worse, why do tandems still use a wide-gap top cell? Because in a narrow-gap material the energy a high-energy photon carries above the gap is thrown away as heat (thermalization loss); hand that part to a wide-gap top layer and it can be recovered, while the narrow-gap bottom layer picks up the remaining red light. This tool models one junction only, so what you see here is the trade-off for one and the same piece of material.",
+  "本档读数：": "Readouts for this setting: ",
+
+  /* ---- 补：挑战三（缺陷容忍） ---- */
+  "3. 打开模块四的对比图：常规半导体的导带和价带分别是什么特征？钙钛矿呢？抽掉一个原子后，两边的缺陷能级分别落在哪里？这解释了钙钛矿的什么本事？": "3. Open the comparison of Module 4: what is the character of the conduction band and of the valence band in a conventional semiconductor? And in a perovskite? After removing one atom, where do the defect levels land in each case? What ability of the perovskite does that explain?",
+  "常规半导体的": "In a conventional semiconductor the ",
+  "导带是反键、价带是成键": "conduction band is antibonding and the valence band is bonding",
+  "：抽掉一个原子，剩下的悬挂键能级落在": ": remove one atom and the dangling-bond level it leaves lands ",
+  "带隙中央": "mid-gap",
+  "附近，正好处在复合最有效的位置（深能级是 Shockley–Read–Hall 复合的主力），所以缺陷多一点器件就废了。铅卤钙钛矿不一样：价带顶（Pb 6s–I 5p 反键）和导带底（Pb 6p–I 5p 反键）": ", right where recombination is most effective (deep levels are the workhorses of Shockley–Read–Hall recombination), so a few more defects and the device is finished. A lead halide perovskite is different: its valence-band top (Pb 6s–I 5p antibonding) and conduction-band bottom (Pb 6p–I 5p antibonding) ",
+  "都是反键的": "are both antibonding",
+  "，缺一个原子产生的能级因此被": ", so the level produced by a missing atom is ",
+  "推进能带里面": "pushed inside the bands",
+  "（或只留下浅能级），带隙中间反而是干净的。这解释了它的「缺陷容忍」：溶液法旋涂出来的多晶薄膜，缺陷密度比单晶硅高好几个数量级，却依然能拿到长载流子寿命与高发光效率 —— 剩下的损失主要落在「非辐射复合」这一项上（读数里「非辐射复合（1/ERE）」那一行就是它）。": " (or only a shallow level is left behind), and the middle of the gap stays clean. That is its “defect tolerance”: a solution-spun polycrystalline film carries a defect density orders of magnitude above single-crystal silicon, yet still delivers long carrier lifetimes and high luminescence efficiency — the loss that remains falls mainly on “non-radiative recombination” (it is the row labeled “Non-radiative recombination (1/ERE)” in the readout).",
+
+  /* ---- 补：挑战四（能带对齐） ---- */
+  "4. 只换电子传输层（Δ": "4. Swap only the electron transport layer (Δ",
+  " 三档各试一遍），其它不动：": " through all three settings and change nothing else: how do ",
+  "、FF、PCE 各自怎么变？为什么「能带对齐」不是越平越好？最优区间大概在哪？": ", FF and PCE each respond? Why is “band alignment” not a case of “the flatter the better”? Roughly where does the optimum lie?",
+  "负的那一侧是势垒：": "The negative side is a barrier: ",
+  " < 0 意味着电子要往上爬一个台阶才进得去 ETL，界面抽取速度按 e^(−|Δ": " < 0 means an electron must climb a step before it can enter the ETL, and the interface extraction velocity is suppressed by e^(−|Δ",
+  "|/kT) 被压掉，收集效率、": "|/kT); collection efficiency, ",
+  " 和 FF 一起垮。": " and FF all collapse together.",
+  "正的一旦过大（悬崖），": "Once the positive side grows too large (a cliff), ",
+  "电子好抽了，但接触电势上限被吃掉，": "electrons are easy to extract but the contact-potential ceiling is eaten away, ",
+  " 不动、": " stays put while ",
+  "折中区在 0.1～0.3 eV": "The compromise sits at 0.1–0.3 eV",
+  "：既挡得住空穴，又不至于白白丢太多电压 —— 所以「能带对齐」从来不是越平越好，完全齐平的时候电子过得去、空穴也容易跟着往回漏，选择性反而不行。": ": enough to block holes, without throwing away too much voltage for nothing — “band alignment” is therefore never “the flatter the better”: at perfect flatness electrons get through, but holes leak back just as easily and selectivity suffers.",
+
+  /* ---- 补：挑战五（扩散长度与厚度） ---- */
+  "5. 把扩散长度从 1500 nm 拉到 100 nm，再看层厚从 200 nm 拉到 1000 nm：收集效率怎么变？什么时候「加厚」反而亏？钙钛矿的扩散长度通常有多长——这解释了什么？": "5. Pull the diffusion length from 1500 nm down to 100 nm, then take the layer thickness from 200 nm up to 1000 nm: how does the collection efficiency change? When does “going thicker” actually lose? How long is the diffusion length in a typical perovskite — and what does that explain?",
+  "扩散长度那一边：": "On the diffusion-length side: ",
+  "扩散长度一短，载流子还没走到传输层就复合了，收集效率塌、短路电流跟着塌。": "once the diffusion length is short, carriers recombine before they ever reach a transport layer; collection efficiency collapses and the short-circuit current collapses with it.",
+  "厚度那一边：": "On the thickness side: ",
+  "加厚能把光吃得更干净（吸收效率上升），但更深处产生的载流子要走更远的路，收集效率反而下降 —— 所以厚度有个最优值，本工具里在几百 nm 量级。": "going thicker harvests the light more completely (absorption rises), but carriers born deeper have further to travel, so collection falls instead — thickness therefore has an optimum, a few hundred nm in this tool.",
+  "实际钙钛矿薄膜的扩散长度常常在几百 nm 到几 µm 量级": "In real perovskite films the diffusion length is often of the order of a few hundred nm to a few µm",
+  "，与片子厚度同量级甚至更长，这正解释了为什么它只要几百 nm 就能把光吃干净，不必像硅那样做到上百 µm。": " — the same order as the film thickness, or longer — which is exactly why a few hundred nm already harvests the light completely, with no need for the hundred-µm thickness that silicon demands.",
+  " nm 厚、": " nm thick, ",
+  " 从 1500 降到 100 nm：收集 ": " from 1500 down to 100 nm: collection ",
+  " = 1000 nm 时把厚度从 200 加到 1000 nm：吸收 ": " = 1000 nm, sweeping the thickness from 200 to 1000 nm: absorption ",
+
+  /* ---- 补：关系式分散进各模块说明后的新文案 ---- */
+  "短路电流是两级效率相乘：": "The short-circuit current is two efficiencies multiplied together: ",
+  "：吸收按 Beer 定律随深度 e^(−αz) 逐层衰减，收集由扩散方程在「界面抽取速度 S」这一边界条件下的解析解给出：": ": absorption falls off layer by layer with depth as e^(−αz) (Beer’s law), and collection comes from the analytic solution of the diffusion equation under the boundary condition of an interface extraction velocity S: ",
+  "开压取两者中的小者：": "The open-circuit voltage is the smaller of the two: ",
+  " —— 前一项是二极管方程给出的值，后一项就是左边那条紫色竖线。": " — the first term is what the diode equation gives, the second is exactly the violet line on the left.",
+  "曲线由单二极管方程隐式给出，": "The curve is given implicitly by the single-diode equation ",
+  "（每个 V 用二分法解出 J）；效率即 ": " (each V is solved for J by bisection); the efficiency is then ",
+  " = ": " = ",
+  "，": ", ",
+  "、": ", ",
+  "：": ": ",
+  "（": " (",
+  " — ": " — ",
+  "。": ".",
+};
+
+(function () {
+  if (typeof CanvasRenderingContext2D === "undefined") return;
+  var ft = CanvasRenderingContext2D.prototype.fillText;
+  CanvasRenderingContext2D.prototype.fillText = function (s, x, y) {
+    if (typeof s === "string") arguments[0] = T(s);
+    return ft.apply(this, arguments);
+  };
+  /* 描边文字（白边包字）走 strokeText，同样要过 T()，否则画布标签漏翻 */
+  var stx = CanvasRenderingContext2D.prototype.strokeText;
+  CanvasRenderingContext2D.prototype.strokeText = function (s, x, y) {
+    if (typeof s === "string") arguments[0] = T(s);
+    return stx.apply(this, arguments);
+  };
+  var mt = CanvasRenderingContext2D.prototype.measureText;
+  CanvasRenderingContext2D.prototype.measureText = function (s) {
+    return mt.call(this, typeof s === "string" ? T(s) : s);
+  };
+})();
+
+/* 注入点④：逐字绘制的画布串。drawMath 一类把中文按单字拆成 token 再逐个 fillText，
+   T() 每次只见到一个汉字 ⇒ 整句词条永远命中不了。这里在整串进入分词之前先整体翻译，
+   于是画布标注也走「整句优先」，与 DOM 同一个口径。没有这些函数的工具自动跳过。
+   ⚠️ 签名坑：drawMath / measureMath 的第一个参数是 canvas context（对象），文本在第
+   二位；早期版本照着 arguments[0] 翻，等于把 context 送去 T()，补丁全程空转。
+   这里改为「找到第一个含中文的字符串参数」再翻，既躲开 context，也不会误伤
+   align / weight 之类以英文字符串传的选项。 */
+(function () {
+  ["drawMath", "drawMathHalo", "measureMath"].forEach(function (n) {
+    var f = window[n];
+    if (typeof f !== "function") return;
+    window[n] = function () {
+      for (var i = 0; i < arguments.length; i++) {
+        if (typeof arguments[i] === "string" && /[\u3400-\u9FFF]/.test(arguments[i])) {
+          arguments[i] = T(arguments[i]);
+          break;
+        }
+      }
+      return f.apply(this, arguments);
+    };
+  });
+})();
+
+
+/* ---- DOM 文本节点 ---- */
+function i18nNode(n) {
+  var el = n.parentElement;
+  if (!el) return;
+  var tag = el.tagName;
+  if (tag === "SCRIPT" || tag === "STYLE") return;
+  if (el.closest && el.closest("[data-noi18n]")) return;
+  var cur = n.nodeValue;
+  if (n.__orig === undefined || (cur !== n.__last && cur !== n.__orig)) n.__orig = cur;
+  var want = LANG === "en" ? T(n.__orig) : n.__orig;
+  if (want !== cur) n.nodeValue = want;
+  n.__last = want;
+}
+/* 属性（title / placeholder / optgroup label …）不是文本节点，MutationObserver 覆盖不到，
+   必须单独过一遍：否则悬停提示、下拉分组名会残留中文。原文缓存在元素 expando 上，
+   切回中文时原样写回。改属性不会触发 childList/characterData 观察器，不会递归。 */
+var I18N_ATTRS = ["title", "placeholder", "aria-label", "alt", "label"];
+function i18nAttrs(root) {
+  var els = [root], i, j;
+  if (root.querySelectorAll) els = els.concat(Array.prototype.slice.call(root.querySelectorAll("*")));
+  for (i = 0; i < els.length; i++) {
+    var el = els[i];
+    if (!el.getAttribute) continue;
+    if (el.closest && el.closest("[data-noi18n]")) continue;
+    for (j = 0; j < I18N_ATTRS.length; j++) {
+      var a = I18N_ATTRS[j];
+      if (!el.hasAttribute(a)) continue;
+      var key = "__a_" + a;
+      if (el[key] === undefined) el[key] = el.getAttribute(a);
+      var want = LANG === "en" ? T(el[key]) : el[key];
+      if (want !== el.getAttribute(a)) el.setAttribute(a, want);
+    }
+  }
+}
+function i18nWalk(root) {
+  var w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null, false), n, c = 0;
+  while ((n = w.nextNode())) { i18nNode(n); c++; }
+  i18nAttrs(root);
+  return c;
+}
+var _i18nBusy = false;
+function i18nWatch() {
+  if (typeof MutationObserver === "undefined") return;
+  var mo = new MutationObserver(function (ms) {
+    if (_i18nBusy) return;
+    _i18nBusy = true;
+    try {
+      for (var i = 0; i < ms.length; i++) {
+        var m = ms[i];
+        if (m.type === "childList") {
+          for (var j = 0; j < m.addedNodes.length; j++) {
+            var nd = m.addedNodes[j];
+            if (nd.nodeType === 3) i18nNode(nd);
+            else if (nd.nodeType === 1) i18nWalk(nd);
+          }
+        } else if (m.type === "characterData") i18nNode(m.target);
+      }
+    } finally { _i18nBusy = false; }
+  });
+  mo.observe(document.body, { childList: true, subtree: true, characterData: true });
+}
+function setLang(l) {
+  LANG = l;
+  try { localStorage.setItem("opl_lang", l); } catch (e) { }
+  document.documentElement.lang = l === "en" ? "en" : "zh-CN";
+  var btn = document.getElementById("langBtn");
+  if (btn) btn.textContent = l === "en" ? "中文" : "EN";
+  document.title = l === "en" ? T(ORIG_TITLE) : ORIG_TITLE;
+  i18nWalk(document.body);
+  if (typeof syncInputs === "function") syncInputs();
+  if (typeof render === "function") render();
+}
+"use strict";
+"use strict";
+
+
+/* ---------------- HTML 侧自动 LaTeX 排版 ----------------
+   读数 / 说明 / 按钮名里由 JS 拼出来的 cm⁻³、E_c、2.5e+8，
+   在写进 innerHTML 之前转成真 <sup>/<sub>；标签与属性原样放过（title 不会被塞进尖括号）。
+   与画布侧 AUTO() 对偶，保证网页和画布按同一套规则排版。 */
+const AUTOH_SUP = { "⁰": "0", "¹": "1", "²": "2", "³": "3", "⁴": "4", "⁵": "5", "⁶": "6",
+  "⁷": "7", "⁸": "8", "⁹": "9", "⁺": "+", "⁻": "−", "⁼": "=", "⁽": "(", "⁾": ")", "ⁿ": "n", "ⁱ": "i" };
+const AUTOH_SUB = { "₀": "0", "₁": "1", "₂": "2", "₃": "3", "₄": "4", "₅": "5", "₆": "6",
+  "₇": "7", "₈": "8", "₉": "9", "₊": "+", "₋": "−", "₌": "=", "₍": "(", "₎": ")",
+  "ₐ": "a", "ₑ": "e", "ₒ": "o", "ₓ": "x", "ₔ": "ə", "ₕ": "h", "ₖ": "k", "ₗ": "l",
+  "ₘ": "m", "ₙ": "n", "ₚ": "p", "ₛ": "s", "ₜ": "t", "ᵣ": "r", "ᵤ": "u", "ᵥ": "v" };
+const TEXH_NEED = /[\u2070-\u209C\u00B2\u00B3\u00B9]|_\{?[A-Za-z0-9\u0370-\u03ff]|\^\{?[\d(\-]|\d(\.\d+)?[eE][+\-]\d|\u221A/;
+/* 从 i 处（必须是 '<'）扫出一个"完整元素"的结束下标（含嵌套），失败返回 -1 */
+function TEXH_elemEnd(h, i) {
+  if (h.charAt(i) !== "<") return -1;
+  let depth = 0, j = i, guard = 0;
+  while (j < h.length && guard++ < 4000) {
+    if (h.charAt(j) !== "<") { j++; continue; }
+    const e = TEXH_tagEnd(h, j);
+    if (e < 0) return -1;
+    const isClose = h.charAt(j + 1) === "/";
+    const selfClose = h.charAt(e - 2) === "/";
+    if (isClose) { depth--; j = e; if (depth <= 0) return j; }
+    else if (selfClose) { j = e; if (depth === 0) return j; }
+    else { depth++; j = e; }
+  }
+  return -1;
+}
+/* √ 后面直接跟一个元素：√<i>E</i> → √‾E（前两条规则只吃 √(A) 与 √字母串） */
+function TEXHsqrtElem(s) {
+  let out = "", i = 0, guard = 0;
+  while (guard++ < 400) {
+    const k = s.indexOf("\u221A", i);
+    if (k < 0) break;
+    out += s.slice(i, k);
+    /* 守卫：√ 后面已是闭标签 ⇒ 该 √ 已排版过（对整段 HTML 重复跑 TEXH 会把 </span> 当成被开方式，
+       层层包出空壳根号，视觉上变成 √−3 / √−E），原样输出不再包裹 */
+    if (s.charAt(k + 1) === "<" && s.charAt(k + 2) === "/") { out += "\u221A"; i = k + 1; continue; }
+    let rad = null, end = k + 1;
+    if (s.charAt(k + 1) === "(") {
+      /* √(…) ：被开方式里常有标签，括号本身不在同一个文本片段里，必须整串扫 */
+      let depth = 0, p = k + 1;
+      while (p < s.length) {
+        const c = s.charAt(p);
+        if (c === "(") depth++;
+        else if (c === ")") { depth--; if (depth === 0) { rad = s.slice(k + 2, p); end = p + 1; break; } }
+        p++;
+      }
+    } else {
+      const e = TEXH_elemEnd(s, k + 1);
+      if (e > 0 && e - k < 500) { rad = s.slice(k + 1, e); end = e; }
+    }
+    if (rad !== null && rad.length) {
+      out += "<span class=\"sqrt\"><span class=\"rd\">\u221A</span><span class=\"rdc\">" + rad + "</span></span>";
+      i = end;
+    } else { out += "\u221A"; i = k + 1; }
+  }
+  return out + s.slice(i);
+}
+function TEXHpart(t) {
+  let s = t;
+  /* 根号：√ 或 √(A) → <span class="sqrt">√<span class="rd"><span class="rdc">A</span></span></span>（A 内不含嵌套括号） */
+  s = s.replace(/<span class="(?:op|rm|fn|v|u)">\u221A<\/span>/g, "\u221A");
+  s = s.replace(/\u221A<span class="(?:op|rm)">\(<\/span>([^()]{1,120}?)<span class="(?:op|rm)">\)<\/span>/g, function (m, a) {
+    return "<span class=\"sqrt\"><span class=\"rd\">\u221A</span><span class=\"rdc\">" + a + "</span></span>";
+  });
+  s = s.replace(/\u221A\(([^()]{1,120})\)/g, function (m, a) {
+    return "<span class=\"sqrt\"><span class=\"rd\">\u221A</span><span class=\"rdc\">" + a + "</span></span>";
+  });
+  s = s.replace(/\u221A([A-Za-z0-9\u0370-\u03ff]{1,6})/g, function (m, a) {
+    return "<span class=\"sqrt\"><span class=\"rd\">\u221A</span><span class=\"rdc\">" + a + "</span></span>";
+  });
+  s = s.replace(/(\d(?:\.\d+)?)e([+-])(\d+)/g, function (m, a, sg, e) {
+    return a + "\u00d710<sup>" + (sg === "-" ? "\u2212" : "") + e + "</sup>";
+  });
+  s = s.replace(/([A-Za-z\u0370-\u03ff)\]])\^\{([^{}]{1,12})\}/g, "$1<sup>$2</sup>");
+  s = s.replace(/([A-Za-z\u0370-\u03ff)\]])\^(\d+(?:\.\d+)?)/g, "$1<sup>$2</sup>");
+  s = s.replace(/([A-Za-z\u0370-\u03ff])_\{([A-Za-z0-9\u0370-\u03ff+\-]{1,8})\}/g, "<span class='m'><i>$1</i><sub>$2</sub></span>");
+  s = s.replace(/([A-Za-z\u0370-\u03ff])_([A-Za-z0-9\u0370-\u03ff]{1,6})(?![A-Za-z0-9])/g, "<span class='m'><i>$1</i><sub>$2</sub></span>");
+  if (/[\u2070-\u209C\u00B2\u00B3\u00B9]/.test(s)) {
+    let out = "", i = 0;
+    while (i < s.length) {
+      const ch = s[i];
+      if (AUTOH_SUP[ch] !== undefined || AUTOH_SUB[ch] !== undefined) {
+        const isSup = AUTOH_SUP[ch] !== undefined, tab = isSup ? AUTOH_SUP : AUTOH_SUB;
+        let j = i, buf = "";
+        while (j < s.length && (isSup ? AUTOH_SUP[s[j]] !== undefined : AUTOH_SUB[s[j]] !== undefined)) {
+          buf += tab[s[j]]; j++;
+        }
+        out += "<" + (isSup ? "sup" : "sub") + ">" + buf + "</" + (isSup ? "sup" : "sub") + ">";
+        i = j;
+      } else { out += ch; i++; }
+    }
+    s = out;
+  }
+  return s.indexOf("\u221A") >= 0 ? TEXHsqrtElem(s) : s;
+}
+/* 只有真正的标签才整段跳过：正文里裸写的 '<'（如 "t₂ < 0"）必须当普通字符，
+   否则 indexOf('>') 会一路吞掉后面整段，E₂⁰ 这类记法就漏排了。 */
+function TEXH_tagEnd(h, i) {
+  if (h.charAt(i) !== "<") return -1;
+  const c = h.charAt(i + 1);
+  if (c === "!" || c === "/") { const j = h.indexOf(">", i); return (j >= 0 && j - i < 300) ? j + 1 : -1; }
+  if (!/[A-Za-z]/.test(c)) return -1;
+  let j = i + 1;
+  while (j < h.length && /[A-Za-z0-9]/.test(h.charAt(j))) j++;
+  if (j === i + 1) return -1;
+  if (h.charAt(j) === ">") return j + 1;
+  if (h.charAt(j) !== " " && h.charAt(j) !== "\n" && h.charAt(j) !== "\t") return -1;
+  const g = h.indexOf(">", j), nx = h.indexOf("<", j);
+  if (g < 0 || g - i > 300) return -1;
+  if (nx >= 0 && nx < g) return -1;
+  return g + 1;
+}
+function TEXH(h) {
+  if (typeof h !== "string" || !TEXH_NEED.test(h)) return h;
+  if (h.indexOf("\u221A") >= 0) h = h.replace(/<span class="(?:op|rm|fn|v|u)">\u221A<\/span>/g, "\u221A");
+  if (h.indexOf("<") < 0) return TEXHpart(h);
+  let out = "", i = 0, n = h.length, guard = 0;
+  while (i < n && guard++ < 40000) {
+    const e = TEXH_tagEnd(h, i);
+    if (e > 0) { out += h.slice(i, e); i = e; continue; }
+    let j = i;
+    while (j < n && TEXH_tagEnd(h, j) <= 0) j++;
+    out += TEXHpart(h.slice(i, j)); i = j;
+  }
+  const r = out + h.slice(i);
+  return r.indexOf("\u221A") >= 0 ? TEXHsqrtElem(r) : r;
+}
+(function hookHTML() {
+  if (window.__TEXH_HOOK) return; window.__TEXH_HOOK = 1;
+  const d = Object.getOwnPropertyDescriptor(Element.prototype, "innerHTML");
+  if (!d || !d.set) return;
+  Object.defineProperty(Element.prototype, "innerHTML", {
+    configurable: true, get: d.get,
+    set: function (v) { d.set.call(this, typeof v === "string" ? TEXH(v) : v); }
+  });
+  /* insertAdjacentHTML 也会被用到 */
+  const ia = Element.prototype.insertAdjacentHTML;
+  Element.prototype.insertAdjacentHTML = function (pos, v) {
+    return ia.call(this, pos, typeof v === "string" ? TEXH(v) : v);
+  };
+})();
+
+/* ---------------- 画布自动 LaTeX 排版（原型挂钩版） ----------------
+   这些老工具直接调用 g.fillText()，这里统一在绘制前把
+     cm⁻³ / ω₀      → 真上/下标（单位与描述符保持正体）
+     E_c / v_th / k → 主符号斜体 + 正体下标
+     X^{−3}          → 真上标
+     2.5e+8          → 2.5×10⁸
+   拆成分段绘制；measureText 同步返回分段宽度，白底标签框长度自动跟着变。 */
+const AUTO_SUP = { "⁰": "0", "¹": "1", "²": "2", "³": "3", "⁴": "4", "⁵": "5", "⁶": "6",
+  "⁷": "7", "⁸": "8", "⁹": "9", "⁺": "+", "⁻": "−", "⁼": "=", "⁽": "(", "⁾": ")", "ⁿ": "n", "ⁱ": "i" };
+const AUTO_SUB = { "₀": "0", "₁": "1", "₂": "2", "₃": "3", "₄": "4", "₅": "5", "₆": "6",
+  "₇": "7", "₈": "8", "₉": "9", "₊": "+", "₋": "−", "₌": "=", "₍": "(", "₎": ")",
+  "ₐ": "a", "ₑ": "e", "ₒ": "o", "ₓ": "x", "ₔ": "ə", "ₕ": "h", "ₖ": "k", "ₗ": "l",
+  "ₘ": "m", "ₙ": "n", "ₚ": "p", "ₛ": "s", "ₜ": "t", "ᵣ": "r", "ᵤ": "u", "ᵥ": "v" };
+const NEED_MATH = /[\u2070-\u209C\u00B2\u00B3\u00B9]|_\{?[A-Za-z0-9\u0370-\u03ff]|\^\{?[\d(\-]|\d(\.\d+)?[eE][+\-]\d/;
+function AUTO(s) {
+  const out = []; let buf = "", mode = 0;
+  const emit = (t, kind) => {
+    if (!t) return;
+    if (kind === 1) out.push({ s: t, sup: true });
+    else if (kind === -1) out.push({ s: t, sub: true });
+    else out.push({ s: t });
+  };
+  let i = 0;
+  while (i < s.length) {
+    const ch = s[i];
+    if (AUTO_SUP[ch] !== undefined) { if (mode !== 1) { emit(buf, mode); buf = ""; mode = 1; } buf += AUTO_SUP[ch]; i++; continue; }
+    if (AUTO_SUB[ch] !== undefined) { if (mode !== -1) { emit(buf, mode); buf = ""; mode = -1; } buf += AUTO_SUB[ch]; i++; continue; }
+    if (mode) { emit(buf, mode); buf = ""; mode = 0; }
+    const rest = s.slice(i);
+    const sc = /^\d(\.\d+)?[eE][+\-]\d{1,3}/.exec(rest);
+    if (sc) {
+      const pp = sc[0].split(/[eE]/);
+      emit(pp[0] + "\u00d710", 0); emit(String(+pp[1]).replace("-", "\u2212"), 1);
+      i += sc[0].length; continue;
+    }
+    if (/[A-Za-z\u0370-\u03ff]/.test(ch) && i + 1 < s.length && (s[i + 1] === "_" || s[i + 1] === "^")) {
+      const sup = s[i + 1] === "^";
+      let j = i + 2, grp = "";
+      if (s[j] === "{") { const e = s.indexOf("}", j); if (e > 0) { grp = s.slice(j + 1, e); j = e + 1; } }
+      else {
+        const RCJK = /[\u2E80-\u9FFF]/, RASC = /[A-Za-z0-9\u0370-\u03ff+\-]/;
+        if (RCJK.test(s[j])) { while (j < s.length && RCJK.test(s[j]) && j - i < 8) j++; }   /* 中文描述性下标：τ_直接、E_声子 */
+        else { while (j < s.length && RASC.test(s[j])) j++; }
+        grp = s.slice(i + 2, j);
+      }
+      if (grp) {
+        /* 先把累积的前缀 flush 出去。漏了这行，含「前缀 + X_y」的串（ΔE_sp、
+           E=(E_s+3E_p)/4 之类）会把前缀甩到段尾，渲染成「E_spΔ」。 */
+        emit(buf, 0); buf = "";
+        emit(ch, 0); out[out.length - 1].i = true;
+        emit(sup ? grp.replace(/-/g, "\u2212") : grp, sup ? 1 : -1);
+        i = j; continue;
+      }
+    }
+    buf += ch; i++;
+  }
+  emit(buf, mode);
+  return out;
+}
+function mathSegs(g, s) {
+  const f = String(g.font || "");
+  const size = (function () { const m = /(\d+(?:\.\d+)?)px/.exec(f); return m ? parseFloat(m[1]) : 12; })();
+  const family = f.replace(/^(?:\s*(?:italic|oblique|bold|[1-9]00)\s*)*\d+(?:\.\d+)?px\s*/, "");
+  const style = /italic|oblique/.test(f) ? "italic " : (/bold|[6-9]00/.test(f) ? "bold " : "");
+  const parts = AUTO(s), laid = [];
+  let w = 0;
+  for (const p of parts) {
+    const small = !!(p.sup || p.sub);
+    const fs = style + (small ? (size * 0.74).toFixed(2) : size.toFixed(2)) + "px " + family;
+    g.font = fs;
+    const tw = g.measureText(p.s).width;
+    laid.push({ s: p.s, w: tw, fs: fs, dy: small ? (p.sup ? -size * 0.40 : size * 0.22) : 0 });
+    w += tw;
+  }
+  return { laid, w, family, style, size };
+}
+(function hookMath() {
+  if (window.__MATH_HOOK) return; window.__MATH_HOOK = 1;
+  const P = CanvasRenderingContext2D.prototype;
+  const _fill = P.fillText, _stroke = P.strokeText, _measure = P.measureText;
+  function draw(drawRaw, g, s, x, y, rest) {
+    const info = mathSegs(g, s);
+    const al = g.textAlign, bl = g.textBaseline;
+    const cx = al === "right" ? x - info.w : (al === "center" ? x - info.w / 2 : x);
+    g.textAlign = "left"; g.textBaseline = bl || "middle";
+    let px = cx;
+    for (const L of info.laid) {
+      g.font = L.fs;
+      drawRaw.call(g, L.s, px, y + L.dy, ...rest);
+      px += L.w;
+    }
+    g.textAlign = al; g.textBaseline = bl;
+    g.font = info.style + info.size.toFixed(2) + "px " + info.family;
+    return info;
+  }
+  P.fillText = function (s, x, y) {
+    if (typeof s !== "string" || !NEED_MATH.test(s)) return _fill.apply(this, arguments);
+    draw(_fill, this, s, x, y, Array.prototype.slice.call(arguments, 3));
+  };
+  P.strokeText = function (s, x, y) {
+    if (typeof s !== "string" || !NEED_MATH.test(s)) return _stroke.apply(this, arguments);
+    draw(_stroke, this, s, x, y, Array.prototype.slice.call(arguments, 3));
+  };
+  P.measureText = function (s) {
+    if (typeof s !== "string" || !NEED_MATH.test(s)) return _measure.call(this, s);
+    const save = this.font;
+    const info = mathSegs(this, s);
+    this.font = save;
+    return { width: info.w, get actualBoundingBoxLeft() { return 0; }, get actualBoundingBoxRight() { return info.w; } };
+  };
+})();
+
+const FONT = '"Segoe UI","Microsoft YaHei",sans-serif';
+
+const FONTM = '"Cambria Math","STIX Two Math","Times New Roman",Times,serif';
+
+
+/* ---------------- 画布 LaTeX 排版层（零依赖；物理量斜体、下标/单位正体、幂次真上标） ---------------- */
+const SUBR = 0.74, SUBDY = 0.22, SUPDY = 0.40;
+function isCJKch(ch) {
+  const c = ch.codePointAt(0);
+  return (c >= 0x2E80 && c <= 0x9FFF) || (c >= 0xF900 && c <= 0xFAFF) ||
+    (c >= 0xFF00 && c <= 0xFF60) || c === 0x2014 || c === 0x2015 || c === 0x2026;
+}
+function segRuns(s) {
+  const out = []; let cur = "", curC = null;
+  for (const ch of s) {
+    const c = isCJKch(ch);
+    if (curC === null) { cur = ch; curC = c; }
+    else if (c === curC) cur += ch;
+    else { out.push({ s: cur, cjk: curC }); cur = ch; curC = c; }
+  }
+  if (cur) out.push({ s: cur, cjk: curC });
+  return out;
+}
+function pFont(q, fp, bd, cjk) {
+  const sz = fp * ((q.sub || q.sup) ? SUBR : 1);
+  return (bd ? "bold " : "") + (!cjk && q.i ? "italic " : "") + sz.toFixed(2) + "px " + (cjk ? FONT : FONTM);
+}
+/* i18n 注入点①：画布 token。带 i / sub / sup / un 标记的是物理量、下标与单位，一律不动；
+   没有这些标记的 token 才是自然语言，交给 T() —— 所以这里的判断只看标记，不看内容。 */
+const partsOf = p => p.map(q => {
+  const o = (typeof q === "string" ? { s: q } : q);
+  const natural = !(o.i || o.sub || o.sup || o.un);
+  if (LANG === "en" && natural && typeof o.s === "string" && /[\u4E00-\u9FFF]/.test(o.s)) {
+    const t = T(o.s);
+    return t === o.s ? o : Object.assign({}, o, { s: t });
+  }
+  return o;
+});
+function mMeasure(g, parts, fp, bd) {
+  let w = 0;
+  for (const q of partsOf(parts))
+    for (const sg of segRuns(q.s)) { g.font = pFont(q, fp, bd, sg.cjk); w += g.measureText(sg.s).width; }
+  return w;
+}
+function mRun(g, parts, x, y, fp, bd, align, stroke) {
+  const ps = partsOf(parts), w = mMeasure(g, ps, fp, bd);
+  let cx = align === "right" ? x - w : (align === "center" ? x - w / 2 : x);
+  g.textAlign = "left"; g.textBaseline = "middle"; g.lineJoin = "round";
+  for (const q of ps) {
+    const dy = q.sub ? fp * SUBDY : (q.sup ? -fp * SUPDY : 0);
+    for (const sg of segRuns(q.s)) {
+      g.font = pFont(q, fp, bd, sg.cjk);
+      if (stroke) { g.lineWidth = (q.sub || q.sup) ? 2.4 : 3.2; g.strokeText(sg.s, cx, y + dy); }
+      else g.fillText(sg.s, cx, y + dy);
+      cx += g.measureText(sg.s).width;
+    }
+  }
+}
+function mtxt(g, parts, x, y, col, fp, align, bd) {
+  g.fillStyle = col; mRun(g, parts, x, y, fp, bd || false, align, false);
+}
+function mtxtHalo(g, parts, x, y, col, fp, align, bd) {
+  g.strokeStyle = "rgba(255,255,255,0.94)";
+  mRun(g, parts, x, y, fp, bd || false, align, true);
+  mtxt(g, parts, x, y, col, fp, align, bd);
+}
+
+
+/* ---------------- HTML 字符串 → 画布零件（网页与画布共用同一份排版） ----------------
+   mtxt(g, TX(H_NA), x, y, col, fp) —— H_* 常量本来就在喂 innerHTML，
+   再喂给 TX() 就不会出现「网页斜体、画布正体」的两边不一致。
+   <i> 斜体、<sub> 下标、<sup> 上标；<span class="op|un|rm|sqrt|frac"> 只剥标签（保持正体）。 */
+const catA = (...a) => [].concat(...a);
+function TX(h) {
+  const t = String(h == null ? "" : h)
+    .replace(/<span\b[^>]*>/g, "").replace(/<\/span>/g, "")
+    .replace(/<i\b[^>]*>/g, "<i>").replace(/<b\b[^>]*>/g, "").replace(/<\/b>/g, "")
+    .replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&").replace(/&nbsp;/g, " ");
+  const out = [], re = /<i>([\s\S]*?)<\/i>|<sub>([\s\S]*?)<\/sub>|<sup>([\s\S]*?)<\/sup>|([^<]+)/g;
+  let m;
+  while ((m = re.exec(t))) {
+    const raw = s => s == null ? null : s.replace(/<[^>]*>/g, "");
+    if (m[1] != null) out.push({ s: raw(m[1]), i: true });
+    else if (m[2] != null) out.push({ s: raw(m[2]), sub: true });
+    else if (m[3] != null) out.push({ s: raw(m[3]), sup: true });
+    else if (m[4]) out.push({ s: m[4] });
+  }
+  return out;
+}
+function TXof(...a) { return catA(...a.map(TX)); }
+
+
+function PSci(v, n) {
+  if (!isFinite(v) || v === 0) return [{ s: "0" }];
+  const e = Math.floor(Math.log10(Math.abs(v)));
+  const m = (v / Math.pow(10, e)).toFixed(n === undefined ? 1 : n);
+  /* 1 ≦ |v| < 10 时直接写尾数，不再拖一个 ×10⁰（与 sciH 一致） */
+  if (e === 0) return [{ s: m }];
+  /* 指数负号用 U+2212 */
+  return [{ s: m + "×10" },
+          { s: String(e).replace("-", "−"), sup: true }];
+}
+
+/* ---------------- 通用工具 ---------------- */
+const $ = (id) => document.getElementById(id);
+const clamp = (v, a, b) => v < a ? a : (v > b ? b : v);
+const RAD = Math.PI / 180;
+const dot3 = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+const sub3 = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
+const add3 = (a, b) => [a[0] + b[0], a[1] + b[1], a[2] + b[2]];
+const mul3 = (a, s) => [a[0] * s, a[1] * s, a[2] * s];
+const len3 = (a) => Math.sqrt(dot3(a, a));
+const cross3 = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+const norm3 = (a) => { const L = len3(a) || 1; return [a[0] / L, a[1] / L, a[2] / L]; };
+const fmt = (v, n) => (Math.abs(v) < 5e-3 ? 0 : v).toFixed(n === undefined ? 2 : n);
+function parseCol(c) {
+  const m = c.charAt(0) === "#"
+    ? [parseInt(c.slice(1, 3), 16), parseInt(c.slice(3, 5), 16), parseInt(c.slice(5, 7), 16)]
+    : (c.match(/[\d.]+/g) || []).map(Number);
+  return [m[0] || 0, m[1] || 0, m[2] || 0];
+}
+function mixHex(a, b, t) {
+  const A = parseCol(a), B = parseCol(b);
+  return "rgb(" + Math.round(A[0] + (B[0] - A[0]) * t) + "," +
+                  Math.round(A[1] + (B[1] - A[1]) * t) + "," +
+                  Math.round(A[2] + (B[2] - A[2]) * t) + ")";
+}
+
+/* ==================================================================
+   钙钛矿太阳能电池交互教学工具
+   —— 零依赖单文件；Canvas 2D 绘制
+   —— 物理链：太阳光谱（黑体近似）→ 直接带隙吸收 → 扩散/界面抽取 → J–V → PCE
+   —— 所有数字均由本文件的函数现算，没有一处写死
+   ================================================================== */
+
+/* ---------------- 物理常数 ---------------- */
+const Q = 1.602176634e-19;      /* 元电荷 C */
+const KB = 8.617333262e-5;      /* 玻尔兹曼常数 eV/K */
+const EVJ = 1.602176634e-19;    /* 1 eV 折合的焦耳数 */
+const HC = 1239.841984;         /* hc，eV·nm */
+const SIGMA = 5.670374419e-8;   /* 斯特藩–玻尔兹曼常数 W·m^-2·K^-4 */
+
+/* ---------------- 固定参量（都不是旋钮，全部在「固定参量」卡片里现算披露） ---------------- */
+const TSUN = 5778;      /* 太阳有效温度 K（AM0 的黑体等效温度） */
+const PIN = 1000;       /* 入射总辐照 W/m²（＝ 100 mW/cm²，AM1.5 的总量） */
+const TCELL = 300;      /* 器件温度 K */
+const EB = 0.016;       /* 激子结合能 eV：室温 kT 约 26 meV，远大于它 ⇒ 自发解离 */
+const ALPHA0 = 1.0e5;   /* 直接带隙吸收系数前因子，α = α₀·√(hν − E_g)，cm^-1·eV^(-1/2) */
+const MU = 2.0;         /* 载流子迁移率 cm²/(V·s)，由爱因斯坦关系给出扩散系数 */
+const ESL = 1.0e7;      /* 无势垒时界面抽取速度的上限 cm/s（热速度量级） */
+const RS = 4.0;         /* 串联电阻 Ω·cm² */
+const RSH = 2000;       /* 并联电阻 Ω·cm² */
+const ERE = 3.0e-3;     /* 外辐射效率：剩下的 (1 − ERE) 走非辐射复合通道 */
+const EG_ETL = 3.2;     /* 电子传输层带隙 eV（仅画图用） */
+const EG_HTL = 3.0;     /* 空穴传输层带隙 eV（仅画图用） */
+const EV_PVK = -5.4;    /* 钙钛矿价带顶 eV（相对真空能级，MAPbI₃ 的常用值） */
+const EHI = 10.0;       /* 光谱积分上限 eV */
+const DI0 = 0.002;      /* 光谱积分步长 eV */
+
+/* ---------------- 可旋钮 ---------------- */
+const OPT = {
+  eg: 1.55, d: 500, ld: 1000, dec: 0.10,
+  htl: "spiro",
+  anim: true, recomb: true, dark: true, off: true,
+  yaw: 0.6, pitch: 0.45
+};
+/* 空穴传输层：只决定价带偏移 ΔE_V（＝ E_V(HTL) − E_V(钙钛矿)） */
+const HTLS = [
+  { key: "spiro", tag: "Spiro-OMeTAD", dev: 0.20, note: "最常用的 HTL，ΔE_V 小 ⇒ 电压损失小" },
+  { key: "ptaa", tag: "PTAA", dev: 0.30, note: "HOMO 略深，抽空穴更顺" },
+  { key: "nio", tag: "NiO", dev: 0.45, note: "价带顶很深：空穴好抽，但电压被吃掉一大截" }
+];
+const PRESETS = [
+  { tag: "典型 MAPbI₃", eg: 1.55, d: 500, ld: 1000, dec: 0.10, htl: "spiro" },
+  { tag: "宽带隙（叠层顶电池）", eg: 1.80, d: 400, ld: 800, dec: 0.10, htl: "ptaa" },
+  { tag: "能带失配", eg: 1.55, d: 500, ld: 1000, dec: 0.60, htl: "nio" },
+  { tag: "抽取势垒", eg: 1.55, d: 500, ld: 1000, dec: -0.30, htl: "spiro" }
+];
+/* 电子传输层：只决定导带偏移 ΔE_C（＝ E_C(钙钛矿) − E_C(ETL)）。
+   三档就是挑战四的三个对比点，改这里要同步改挑战四的题干口径与 ETLS 词条。
+   负＝ETL 导带底偏高，电子要爬坡（势垒）；正得太大＝悬崖，吃接触电势。 */
+const ETLS = [
+  { key: "barrier", tag: "势垒型", dec: -0.30, note: "ETL 导带底偏高：电子要往上爬一个台阶才进得去" },
+  { key: "balanced", tag: "折中型", dec: 0.10, note: "常取的折中区：电子好抽，接触电势也只丢一点点" },
+  { key: "cliff", tag: "悬崖型", dec: 0.60, note: "ETL 导带底太低：电子好抽，但接触电势被吃掉一大截" }
+];
+function htlOf() { for (const h of HTLS) if (h.key === OPT.htl) return h; return HTLS[0]; }
+const DEV = () => htlOf().dev;
+/* ΔE_C 由 ETL 按钮决定，但 OPT.dec 仍是唯一真源（挑战题要用 withOpt 取任意值） */
+function etlOf() { for (const e of ETLS) if (Math.abs(e.dec - OPT.dec) < 1e-6) return e; return null; }
+const fmtEc = (v) => (v >= 0 ? "+" : "−") + Math.abs(v).toFixed(2);
+
+/* ==================================================================
+   1. 物理模型
+   ================================================================== */
+/* 黑体光子数谱密度的形状因子：dN/dE ∝ E²/(e^{E/kT} − 1) */
+function bose(E, kT) {
+  if (E <= 0) return 0;
+  const x = E / kT;
+  if (x > 700) return 0;
+  return E * E / (Math.exp(x) - 1);
+}
+const KTS = KB * TSUN, KTC = KB * TCELL;
+
+/* 稀释因子 f：把 TSUN 的黑体稀释后总功率密度恰为 PIN。
+   f 由数值积分现场定出（不写死），换 TSUN / PIN 会自动跟着变。 */
+const FLUX_K = (function () {
+  let s = 0;
+  for (let e = DI0; e <= EHI; e += DI0) s += (e * bose(e, KTS) + (e - DI0) * bose(e - DI0, KTS)) / 2 * DI0;
+  return s > 0 ? PIN / (EVJ * s) : 0;
+})();
+/* 稀释因子（黑体被"稀释"到 1 sun 的比例），与数值归一化互为验算 */
+const FDIL = PIN / (SIGMA * Math.pow(TSUN, 4));
+function dNdE(E) { return FLUX_K * bose(E, KTS); }        /* photons·m^-2·s^-1·eV^-1 */
+
+/* 绝对黑体常数 A₀：σT⁴ = A₀·EVJ·(kT)⁴π⁴/15 ⇒ A₀ 与温度无关 */
+const A0 = SIGMA / (EVJ * Math.pow(KB, 4) * Math.pow(Math.PI, 4) / 15);
+
+function integ(f, a, b, n) {
+  if (b <= a) return 0;
+  n = n || 800;
+  const h = (b - a) / n;
+  let s = (f(a) + f(b)) / 2;
+  for (let i = 1; i < n; i++) s += f(a + i * h);
+  return s * h;
+}
+/* 直接带隙吸收：α = α₀·√(hν − E_g)（cm^-1） */
+function alphaAt(E, Eg) { const dE = E - Eg; return dE > 0 ? ALPHA0 * Math.sqrt(dE) : 0; }
+function absAt(E, Eg, dcm) { return 1 - Math.exp(-alphaAt(E, Eg) * dcm); }
+
+/* 收集效率：均匀产生 + 单一抽取界面（x=0）+ 另一侧反射（x=d）+ 界面复合速度 S
+   ⇓ 稳态扩散方程的解析解（Einstein 关系 D = µ·kT/q，τ = L²/D） */
+function collection(L, d, S, D, tau) {
+  if (!(L > 0) || !(d > 0) || !(D > 0)) return 0;
+  const th = Math.tanh(d / L);
+  const num = (D * S * tau / (L * d)) * th;
+  const den = (D / L) * th + S;
+  if (!(den > 0)) return 0;
+  return clamp(num / den, 0, 1);
+}
+/* 在深度 z 处产生的载流子，到达 z = 0 那一侧的抽取界面的概率（S → ∞ 的解析结果） */
+function reachProb(z, d, L) {
+  if (!(L > 0)) return 0;
+  return Math.cosh((d - z) / L) / Math.cosh(d / L);
+}
+
+/* J–V：单二极管 + 串联/并联电阻，隐式方程用二分求解（J 单位 mA/cm²） */
+function solveJ(s, V) {
+  const rs = RS / 1000;             /* V per (mA/cm²) */
+  const gsh = 1000 / RSH;           /* mA/(cm²·V) */
+  const f = (j) => {
+    const v = clamp(V - rs * j, -60 * s.vt, 60 * s.vt);
+    return j - (s.j0 * (Math.exp(v / s.vt) - 1) + gsh * v - s.jsc);
+  };
+  let lo = -80, hi = 200;
+  if (f(lo) > 0) return lo;
+  if (f(hi) < 0) return hi;
+  for (let i = 0; i < 70; i++) {
+    const mid = (lo + hi) / 2;
+    if (f(mid) > 0) hi = mid; else lo = mid;
+  }
+  return (lo + hi) / 2;
+}
+/* FF 的经验上限（Green 公式）：用来算「串联电阻损失」 */
+function ffGreen(voc, vt) {
+  const u = voc / vt;
+  if (!(u > 0)) return 0;
+  return (u - Math.log(u + 0.72)) / (u + 1);
+}
+
+function state() {
+  const Eg = OPT.eg, dcm = OPT.d * 1e-7, Lcm = OPT.ld * 1e-7;
+  const dEv = DEV(), dEc = OPT.dec;
+  const vt = KTC;                                   /* 热电压 V */
+  const D = MU * vt;                                /* 扩散系数 cm²/s */
+  const tau = Lcm * Lcm / D;                        /* 寿命 s（由 L 与 D 反推） */
+  const S = ESL * Math.exp(Math.min(0, dEc) / vt);  /* 界面抽取速度：有势垒时被压制 */
+  const th0 = Math.tanh(dcm / Lcm);
+  const coll = collection(Lcm, dcm, S, D, tau);
+  /* 走到界面之后能否真的被抽走：S 与「扩散送人能力」之比 */
+  const fext = ((D / Lcm) * th0 + S) > 0 ? clamp(S / ((D / Lcm) * th0 + S), 0, 1) : 0;
+
+  /* 光谱：这一档带隙下「全吸收」与「实际吸收」的电流上限 */
+  const step = 0.005;
+  let tot = 0, got = 0;
+  for (let E = Eg; E <= EHI; E += step) {
+    const p = dNdE(E);
+    tot += p; got += p * absAt(E, Eg, dcm);
+  }
+  const kA = 0.1 * Q * step;                        /* photons/m²/s → mA/cm² */
+  const jGenMax = kA * tot;                         /* 光子全用上的理想上限 */
+  const jGen = kA * got;                            /* 只过吸收这一关 */
+  const absEff = tot > 0 ? got / tot : 0;
+  const jsc = jGen * coll;
+
+  /* 反向饱和电流：辐射复合（详细平衡）× 非辐射通道 1/ERE */
+  const j0rad = 0.1 * Q * A0 * integ((E) => bose(E, KTC), Eg, EHI, 3000);
+  const j0 = j0rad / ERE;
+  /* 接触电势上限：两侧传输层能带边缘之差（平带口径） */
+  const vContact = Math.max(0, Eg - dEc - dEv);
+  const vDiode = vt * Math.log(jsc / j0 + 1);
+  const capped = vDiode > vContact;
+  const voc = Math.min(vDiode, vContact);
+  /* V_OC 被接触电势钳住时，反向用一个等效饱和电流让曲线恰好在 V_contact 处过零 */
+  const j0eff = capped ? jsc / (Math.exp(vContact / vt) - 1) : j0;
+
+  /* 理想导体 + 零串阻时的 J–V（用于拆分 FF 损失） */
+  const ff0 = ffGreen(voc, vt);
+  /* Shockley–Queisser 参照：全部光子带上并全收集，只留辐射复合 */
+  const vocSQ = vt * Math.log(jGenMax / j0rad + 1);
+  const ffSQ = ffGreen(vocSQ, vt);
+  const pceSQ = jGenMax * vocSQ * ffSQ / 100;
+
+  const s = {
+    Eg: Eg, d: OPT.d, ld: OPT.ld, dcm: dcm, Lcm: Lcm, dEc: dEc, dEv: dEv, vt: vt,
+    D: D, tau: tau, S: S, fext: fext, coll: coll, absEff: absEff, jGenMax: jGenMax, jGen: jGen,
+    jsc: jsc, j0: j0eff, j0rad: j0rad, vContact: vContact, vDiode: vDiode, capped: capped,
+    voc: voc, ff0: ff0, vocSQ: vocSQ, ffSQ: ffSQ, pceSQ: pceSQ, lamG: HC / Eg,
+    ecPvk: EV_PVK + Eg, evPvk: EV_PVK,
+    ecEtl: EV_PVK + Eg - dEc, evEtl: EV_PVK + Eg - dEc - EG_ETL,
+    evHtl: EV_PVK + dEv, ecHtl: EV_PVK + dEv + EG_HTL,
+    htl: htlOf()
+  };
+  /* J–V 采样（光照 + 暗态）。约定：电流以「发电方向为正」，即画的是 −J */
+  const vmax = Math.max(0.05, voc * 1.04);
+  const N = 200, lit = [], drk = [];
+  let pmax = 0, vmp = 0, jmp = 0;
+  for (let i = 0; i <= N; i++) {
+    const V = vmax * i / N;
+    const J = -solveJ(s, V);
+    lit.push([V, J]);
+    const p = V * J;
+    if (p > pmax) { pmax = p; vmp = V; jmp = J; }
+    drk.push([V, -solveJ({ jsc: 0, j0: j0eff, vt: vt }, V)]);
+  }
+  s.lit = lit; s.drk = drk; s.vmax = vmax;
+  s.vmp = vmp; s.jmp = jmp; s.pmax = pmax;
+  s.ff = (voc > 0 && jsc > 0) ? clamp(pmax / (voc * jsc), 0, 1) : 0;
+  s.pce = jsc > 0 ? pmax / 100 : 0;        /* P_in = 100 mW/cm² ⇒ PCE[%] = P_max[mW/cm²] */
+  /* 损失拆分（都折算成「相对 SQ 极限的百分比」） */
+  s.loss = [
+    { k: "未被吸收的光子", v: s.pceSQ > 0 ? (1 - jGen / jGenMax) : 0 },
+    { k: "复合与抽取损失", v: coll > 0 && jGen > 0 ? (1 - coll) * (jGen / jGenMax) : (s.pceSQ > 0 ? 1 : 0) },
+    { k: "非辐射复合（1/ERE）", v: s.pceSQ > 0 ? Math.max(0, (vocSQ - Math.min(vocSQ, vt * Math.log(jGen / j0 + 1)))) / Math.max(vocSQ, 1e-9) * (jGen / jGenMax) * coll : 0 },
+    { k: "能带偏移（接触电势）", v: jGen > 0 && coll > 0 ? Math.max(0, vDiode - voc) / Math.max(vocSQ, 1e-9) * (jGen / jGenMax) * coll : 0 },
+    { k: "串联电阻", v: Math.max(0, ff0 - s.ff) / Math.max(ff0, 1e-9) * (jsc * voc * ff0 / 100) / Math.max(s.pceSQ, 1e-9) }
+  ];
+  let top = s.loss[0];
+  for (const l of s.loss) if (l.v > top.v) top = l;
+  s.topLoss = top;
+  return s;
+}
+let ST = null;
+function S() { if (!ST) ST = state(); return ST; }
+
+/* ==================================================================
+   2. 画布视图与小工具
+   ================================================================== */
+const DV = { W: 600, H: 400, dpr: 1, g: null, canvas: null, hover: -1, rects: [] };
+const BD = { W: 600, H: 330, dpr: 1, g: null, canvas: null, hover: -1 };
+const JVC = { W: 600, H: 330, dpr: 1, g: null, canvas: null, hover: null };
+const DF = { W: 600, H: 250, dpr: 1, g: null, canvas: null };
+const LT = { W: 600, H: 270, dpr: 1, g: null, canvas: null, yaw: 0.62, pitch: 0.42, drag: null };
+
+function fitCanvas(v, id) {
+  const c = document.getElementById(id);
+  if (!c) return;
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  const w = c.clientWidth || 600, h = +c.dataset.h;
+  c.style.height = h + "px";
+  c.width = Math.round(w * dpr); c.height = Math.round(h * dpr);
+  v.W = w; v.H = h; v.dpr = dpr; v.g = c.getContext("2d"); v.canvas = c;
+}
+function label(g, s, x, y, col, fp, align, bd) {
+  g.fillStyle = col || "#5b6a7c";
+  g.font = (bd ? "bold " : "") + (fp || 11.5) + "px " + FONT;
+  g.textAlign = align || "left"; g.textBaseline = "middle";
+  g.fillText(s, x, y);
+}
+function chipBox(g, s, x, y, bg, fg, fp, align, Wlim) {
+  fp = fp || 11.5;
+  g.font = fp + "px " + FONT;
+  const w = g.measureText(s).width + 12, h = fp + 8;
+  const lim = (Wlim || DV.W || 600);
+  let cx = align === "right" ? x - w : (align === "center" ? x - w / 2 : x);
+  cx = clamp(cx, 2, Math.max(2, lim - w - 2));
+  g.fillStyle = bg; g.strokeStyle = "rgba(15,25,40,.14)"; g.lineWidth = 1;
+  const r = 5;
+  g.beginPath();
+  g.moveTo(cx + r, y - h / 2); g.lineTo(cx + w - r, y - h / 2);
+  g.quadraticCurveTo(cx + w, y - h / 2, cx + w, y - h / 2 + r);
+  g.lineTo(cx + w, y + h / 2 - r); g.quadraticCurveTo(cx + w, y + h / 2, cx + w - r, y + h / 2);
+  g.lineTo(cx + r, y + h / 2); g.quadraticCurveTo(cx, y + h / 2, cx, y + h / 2 - r);
+  g.lineTo(cx, y - h / 2 + r); g.quadraticCurveTo(cx, y - h / 2, cx + r, y - h / 2);
+  g.closePath(); g.fill(); g.stroke();
+  label(g, s, cx + 6, y + 0.5, fg, fp);
+  return { x: cx, y: y, w: w, h: h };
+}
+function arw(g, x1, y1, x2, y2, col, lw, head) {
+  const a = Math.atan2(y2 - y1, x2 - x1), hh = head || 6;
+  g.strokeStyle = col; g.fillStyle = col; g.lineWidth = lw || 1.4;
+  g.beginPath();
+  g.moveTo(x1, y1);
+  g.lineTo(x2 - Math.cos(a) * hh * 0.8, y2 - Math.sin(a) * hh * 0.8);
+  g.stroke();
+  g.beginPath();
+  g.moveTo(x2, y2);
+  g.lineTo(x2 - Math.cos(a - 0.40) * hh, y2 - Math.sin(a - 0.40) * hh);
+  g.lineTo(x2 - Math.cos(a + 0.40) * hh, y2 - Math.sin(a + 0.40) * hh);
+  g.closePath(); g.fill();
+}
+function dashLine(g, x1, y1, x2, y2, col, lw, dash) {
+  g.save();
+  g.strokeStyle = col; g.lineWidth = lw || 1;
+  g.setLineDash(dash || [4, 3]);
+  g.beginPath(); g.moveTo(x1, y1); g.lineTo(x2, y2); g.stroke();
+  g.restore();
+}
+function crossMark(g, x, y, r, col) {
+  g.save();
+  g.strokeStyle = col; g.lineWidth = 2;
+  g.beginPath();
+  g.moveTo(x - r, y - r); g.lineTo(x + r, y + r);
+  g.moveTo(x + r, y - r); g.lineTo(x - r, y + r);
+  g.stroke();
+  g.restore();
+}
+
+/* ==================================================================
+   3. 模块一：器件结构与载流子的一生
+   ================================================================== */
+const LGAP = { key: "light", tag: "入射光" };
+const LAYERS = [
+  { key: "fto", name: "透明电极 FTO", role: "入光侧的电极：透光又导电", fill: "#d7e6f4", edge: "#8fb2d4" },
+  { key: "etl", name: "电子传输层 ETL", role: "抽电子、把空穴挡回去", fill: "#c6e3da", edge: "#5fa795" },
+  { key: "pvk", name: "钙钛矿吸收层", role: "吸光，直接产生自由电子–空穴对", fill: "#f8e9bb", edge: "#d8b23f" },
+  { key: "htl", name: "空穴传输层 HTL", role: "抽空穴、把电子挡回去", fill: "#f6d3c2", edge: "#d98a5e" },
+  { key: "met", name: "金属背电极", role: "收集空穴、把没吸收的光反射回去", fill: "#c8ccd4", edge: "#7a8290" }
+];
+let PARTS = [], ANIM_T = 0, ANIM_RAF = null;
+
+/* 代表性光子的能量：取带隙之上 0.8 eV（可见光主体），据此决定"光被吃到多深" */
+const ILL_E = 0.8;
+function alphaRep(Eg) { return ALPHA0 * Math.sqrt(ILL_E); }
+
+function devBoxes(s) {
+  const H = DV.H, W = DV.W;
+  const xa = 26, xb = Math.max(xa + 160, W - 132);
+  const hFTO = 16, hETL = 24, hMET = 16, hHTL = 24;
+  const hPVK = clamp(54 + (OPT.d - 200) / 800 * 92, 54, 146);
+  const tot = hFTO + hETL + hPVK + hHTL + hMET;
+  const y0 = Math.max(42, (H - tot) / 2);
+  const B = {}, order = ["fto", "etl", "pvk", "htl", "met"];
+  let y = y0;
+  for (const k of order) {
+    const h = k === "fto" ? hFTO : (k === "etl" ? hETL : (k === "pvk" ? hPVK : (k === "htl" ? hHTL : hMET)));
+    B[k] = { x: xa, y: y, w: xb - xa, h: h };
+    y += h;
+  }
+  return { B: B, xa: xa, xb: xb, order: order, top: y0, bot: y };
+}
+function spawnPair(s, geo) {
+  const pvk = geo.B.pvk;
+  const aR = alphaRep(s.Eg);
+  const u = Math.random();
+  const z = -Math.log(1 - u * (1 - Math.exp(-aR * s.dcm))) / aR;   /* 按 Beer 定律抽样深度 */
+  const frac = clamp(z / s.dcm, 0.02, 0.98);
+  const x = pvk.x + 14 + Math.random() * (pvk.w - 28);
+  const yb = pvk.y + frac * pvk.h;
+  const pE = reachProb(z, s.dcm, s.Lcm) * s.fext;
+  const pH = reachProb(s.dcm - z, s.dcm, s.Lcm) * s.fext;
+  const mk = (kind, targetY, p) => {
+    const ok = OPT.recomb ? (Math.random() < p) : true;
+    return {
+      kind: kind, x: x, y: yb, y0: yb, target: targetY, ok: ok, born: ANIM_T,
+      recY: ok ? null : yb + (targetY - yb) * (0.25 + Math.random() * 0.6), fade: 0
+    };
+  };
+  PARTS.push(mk("e", pvk.y - 6, pE));
+  PARTS.push(mk("h", pvk.y + pvk.h + 6, pH));
+}
+function stepParts(s, geo) {
+  const pvk = geo.B.pvk, sp = 0.55 + Math.random() * 0.35;
+  for (let i = PARTS.length - 1; i >= 0; i--) {
+    const p = PARTS[i];
+    if (p.fade > 0) { p.fade -= 1; if (p.fade <= 0) PARTS.splice(i, 1); continue; }
+    const dir = Math.sign(p.target - p.y0);
+    p.y += dir * sp * 1.35;
+    const atDeath = p.recY !== null && ((dir > 0 && p.y >= p.recY) || (dir < 0 && p.y <= p.recY));
+    if (atDeath) { p.fade = 9; continue; }
+    if ((dir > 0 && p.y >= p.target) || (dir < 0 && p.y <= p.target)) PARTS.splice(i, 1);
+  }
+  if (PARTS.length < 34 && Math.random() < 0.34) spawnPair(s, geo);
+  if (PARTS.length < 34 && Math.random() < 0.22) spawnPair(s, geo);
+}
+function drawDev() {
+  const v = DV, g = v.g;
+  if (!g) return;
+  g.setTransform(v.dpr, 0, 0, v.dpr, 0, 0);
+  const W = v.W, H = v.H, s = S();
+  g.clearRect(0, 0, W, H);
+  const geo = devBoxes(s), B = geo.B;
+  DV.rects = [];
+  for (const k of geo.order) {
+    const b = B[k], L = LAYERS.find(o => o.key === k);
+    DV.rects.push({ key: k, x: b.x, y: b.y, w: b.w, h: b.h });
+  }
+  /* 每一层 */
+  for (const k of geo.order) {
+    const b = B[k], L = LAYERS.find(o => o.key === k);
+    const on = DV.hover === k;
+    g.fillStyle = L.fill;
+    g.fillRect(b.x, b.y, b.w, b.h);
+    g.strokeStyle = on ? "#1976d2" : L.edge;
+    g.lineWidth = on ? 2 : 1;
+    g.strokeRect(b.x + 0.5, b.y + 0.5, b.w - 1, b.h - 1);
+    label(g, L.name, b.x + 8, b.y + (b.h > 26 ? b.h / 2 - 6 : b.h / 2), "#33465c", b.h > 60 ? 13 : 11.5, "left", true);
+    if (b.h > 26) label(g, L.role, b.x + 8, b.y + b.h / 2 + 9, "#6b7a8c", 11, "left", false);
+  }
+  /* 钙钛矿层：吸收的光（Beer 定律的深浅） */
+  const pvk = B.pvk, aR = alphaRep(s.Eg);
+  const strips = 26;
+  for (let i = 0; i < strips; i++) {
+    const f0 = i / strips, f1 = (i + 1) / strips;
+    const zn = (f0 + f1) / 2 * s.d;                       /* nm */
+    const abs = 1 - Math.exp(-aR * zn * 1e-7);
+    g.fillStyle = "rgba(240,168,40," + (0.44 * (1 - abs)).toFixed(3) + ")";
+    g.fillRect(pvk.x, pvk.y + f0 * pvk.h, pvk.w, pvk.h / strips + 0.6);
+  }
+  /* 入射光：细光带 + 吸收深度处的亮点 */
+  const nray = 5;
+  for (let i = 0; i < nray; i++) {
+    const x = pvk.x + pvk.w * (i + 0.5) / nray;
+    const zw = -Math.log(1 - ((i + 0.5) / nray) * (1 - Math.exp(-aR * s.dcm))) / aR;
+    const frac = clamp(zw / s.dcm, 0.03, 0.95);
+    const yEnd = pvk.y + frac * pvk.h;
+    const ph = (ANIM_T * 0.05 + i * 0.37) % 1;
+    g.strokeStyle = "rgba(232,172,40,.85)"; g.lineWidth = 1.2;
+    g.beginPath();
+    for (let yy = 6; yy <= yEnd; yy += 4) {
+      const xx = x + (yy < pvk.y ? Math.sin((yy + ANIM_T * 0.14 + i) * 0.22) * 2.6 : 0);
+      if (yy === 6) g.moveTo(xx, yy); else g.lineTo(xx, yy);
+    }
+    g.stroke();
+    /* 正在往下走的光子 */
+    const py = 6 + (yEnd - 6) * ph;
+    g.fillStyle = "#e8ac28";
+    g.beginPath(); g.arc(x + (py < pvk.y ? Math.sin((py + ANIM_T * 0.14 + i) * 0.22) * 2.6 : 0), py, 2.6, 0, 6.2832); g.fill();
+    if (OPT.anim) {
+      g.strokeStyle = "rgba(232,172,40,.55)"; g.lineWidth = 1;
+      g.beginPath(); g.arc(x, yEnd, 3 + 2 * Math.sin(ANIM_T * 0.12 + i), 0, 6.2832); g.stroke();
+    }
+  }
+  label(g, "入射光 hν", geo.B.fto.x + 6, 14, "#a8791a", 11.5, "left", true);
+  /* 载流子 */
+  for (const p of PARTS) {
+    const inLayer = p.target < p.y0 ? B.etl : B.htl;
+    if (p.fade > 0) {
+      g.globalAlpha = Math.max(0, p.fade / 9);
+      crossMark(g, p.x, p.y, 4.5, "#7b8794");
+      g.globalAlpha = 1;
+      continue;
+    }
+    const col = p.kind === "e" ? "#1976d2" : "#d94a3d";
+    g.fillStyle = col;
+    g.beginPath(); g.arc(p.x, p.y, 4.4, 0, 6.2832); g.fill();
+    g.strokeStyle = "#ffffff"; g.lineWidth = 1; g.stroke();
+    label(g, p.kind === "e" ? "−" : "+", p.x, p.y + 0.5, "#ffffff", 9, "center", true);
+    /* 已被抽取：朝那一层的方向留一小段箭头 */
+    if (Math.abs(p.y - p.target) < 12) {
+      arw(g, p.x, p.y, p.x, p.target < p.y0 ? B.etl.y + B.etl.h * 0.5 : B.htl.y + B.htl.h * 0.5, col, 1.2, 5);
+    }
+  }
+  /* 选择性接触的阻挡（模块二的口语版） */
+  if (OPT.off) {
+    const eBox = B.etl, hBox = B.htl;
+    crossMark(g, eBox.x + eBox.w - 16, eBox.y + eBox.h / 2, 4, "#b0392f");
+    label(g, "空穴被挡", eBox.x + eBox.w - 26, eBox.y + eBox.h / 2, "#b0392f", 10.5, "right", true);
+    crossMark(g, hBox.x + hBox.w - 16, hBox.y + hBox.h / 2, 4, "#1d68b8");
+    label(g, "电子被挡", hBox.x + hBox.w - 26, hBox.y + hBox.h / 2, "#1d68b8", 10.5, "right", true);
+  }
+  /* 外电路：电子走 FTO 出，绕一圈回到背电极 */
+  const xw = geo.xb + 52;
+  const yT = B.fto.y + B.fto.h / 2, yB = B.met.y + B.met.h / 2;
+  g.strokeStyle = "#6b7a8c"; g.lineWidth = 1.6;
+  g.beginPath();
+  g.moveTo(geo.xb, yT); g.lineTo(xw, yT); g.lineTo(xw, geo.top + (geo.bot - geo.top) / 2 - 18);
+  g.moveTo(xw, geo.top + (geo.bot - geo.top) / 2 + 18); g.lineTo(xw, yB); g.lineTo(geo.xb, yB);
+  g.stroke();
+  /* 负载：锯齿电阻 */
+  const ym = geo.top + (geo.bot - geo.top) / 2;
+  g.strokeStyle = "#6b7a8c"; g.lineWidth = 1.6;
+  g.beginPath(); g.moveTo(xw, ym - 18);
+  for (let i = 0; i < 6; i++) g.lineTo(xw + (i % 2 ? 6 : -6), ym - 18 + (i + 1) * 6);
+  g.lineTo(xw, ym + 18); g.stroke();
+  arw(g, geo.xb + 6, yT - 10, geo.xb + 40, yT - 10, "#1976d2", 1.4, 6);
+  label(g, "电子流向负载", geo.xb + 44, yT - 10, "#1976d2", 10.5, "left", true);
+  label(g, "−J = " + s.jsc.toFixed(1) + " mA/cm²", xw + 12, ym + 26, "#33465c", 11, "left", true);
+  /* 悬停信息 */
+  if (DV.hover >= 0) {
+    const L = LAYERS.find(o => o.key === geo.order[DV.hover]);
+    let info = L.role;
+    if (L.key === "etl") info += "　E_C = " + s.ecEtl.toFixed(2) + " eV";
+    if (L.key === "pvk") info += "　E_g = " + s.Eg.toFixed(2) + " eV，厚 " + OPT.d + " nm";
+    if (L.key === "htl") info += "　ΔE_V = " + s.dEv.toFixed(2) + " eV（" + s.htl.tag + "）";
+    chipBox(g, L.name + "：" + info, 30, geo.top - 20, "rgba(255,255,255,.96)", "#33465c", 11.5);
+  }
+  g.setTransform(1, 0, 0, 1, 0, 0);
+}
+
+/* ==================================================================
+   4. 模块二：能带对齐
+   ================================================================== */
+function drawBand() {
+  const v = BD, g = v.g;
+  if (!g) return;
+  g.setTransform(v.dpr, 0, 0, v.dpr, 0, 0);
+  const W = v.W, H = v.H, s = S();
+  g.clearRect(0, 0, W, H);
+  const top = 30, bot = H - 44;
+  const vals = [s.ecEtl, s.evEtl, s.ecPvk, s.evPvk, s.ecHtl, s.evHtl];
+  let emax = -1e9, emin = 1e9;
+  for (const x of vals) { emax = Math.max(emax, x); emin = Math.min(emin, x); }
+  emax += 0.45; emin -= 0.45;
+  const E2Y = (E) => top + (emax - E) * (bot - top) / (emax - emin);
+  const xa = 58, xb = W - 58, span = xb - xa, gapC = 10;
+  const w1 = (span - 2 * gapC) * 0.28, w2 = (span - 2 * gapC) * 0.44, w3 = span - 2 * gapC - w1 - w2;
+  const cols = {
+    etl: { x: xa, w: w1, ec: s.ecEtl, ev: s.evEtl, name: "电子传输层", ecCol: "#2f7d6d", evCol: "#5fa795" },
+    pvk: { x: xa + w1 + gapC, w: w2, ec: s.ecPvk, ev: s.evPvk, name: "钙钛矿", ecCol: "#c08a12", evCol: "#d8b23f" },
+    htl: { x: xa + w1 + gapC + w2 + gapC, w: w3, ec: s.ecHtl, ev: s.evHtl, name: s.htl.tag, ecCol: "#9aa5b1", evCol: "#c9713c" }
+  };
+  /* 每层的允许带：导带往上、价带往下 */
+  for (const k in cols) {
+    const c = cols[k];
+    const yc = E2Y(c.ec), yv = E2Y(c.ev);
+    g.fillStyle = "rgba(25,118,210,.07)";
+    g.fillRect(c.x, top, c.w, Math.max(0, yc - top));
+    g.fillStyle = "rgba(214,160,40,.10)";
+    g.fillRect(c.x, yv, c.w, Math.max(0, bot - yv));
+    g.strokeStyle = c.ecCol; g.lineWidth = 2.6;
+    g.beginPath(); g.moveTo(c.x, yc); g.lineTo(c.x + c.w, yc); g.stroke();
+    g.strokeStyle = c.evCol; g.lineWidth = 2.6;
+    g.beginPath(); g.moveTo(c.x, yv); g.lineTo(c.x + c.w, yv); g.stroke();
+    label(g, "E_C = " + c.ec.toFixed(2) + " eV", c.x + c.w - 4, yc - 9, c.ecCol, 11, "right", true);
+    label(g, "E_V = " + c.ev.toFixed(2) + " eV", c.x + c.w - 4, yv + 10, c.evCol, 11, "right", true);
+    label(g, c.name, c.x + c.w / 2, bot + 16, "#33465c", 12, "center", true);
+  }
+  const etl = cols.etl, pvk = cols.pvk, htl = cols.htl;
+  /* 两条 |──| 对齐参考线 */
+  dashLine(g, etl.x + etl.w, E2Y(etl.ec), pvk.x + pvk.w, E2Y(etl.ec), "#9aa5b1", 1, [3, 3]);
+  dashLine(g, pvk.x, E2Y(pvk.ev), htl.x + htl.w, E2Y(pvk.ev), "#9aa5b1", 1, [3, 3]);
+  if (OPT.off) {
+    /* ΔE_C：钙钛矿导带底 与 ETL 导带底之差 */
+    const xm1 = etl.x + etl.w + gapC / 2;
+    const y1 = E2Y(pvk.ec), y2 = E2Y(etl.ec);
+    const badC = s.dEc < 0;
+    g.strokeStyle = badC ? "#d94a3d" : "#33465c"; g.lineWidth = 1.4;
+    g.beginPath(); g.moveTo(xm1, y1); g.lineTo(xm1, y2); g.stroke();
+    arw(g, xm1, y1, xm1, (y1 + y2) / 2, badC ? "#d94a3d" : "#33465c", 1.2, 5);
+    arw(g, xm1, y2, xm1, (y1 + y2) / 2, badC ? "#d94a3d" : "#33465c", 1.2, 5);
+    chipBox(g, "ΔE_C = " + s.dEc.toFixed(2) + " eV", xm1 + 6, (y1 + y2) / 2, "rgba(255,255,255,.96)", badC ? "#d94a3d" : "#33465c", 11.5, null, W);
+    /* ΔE_V */
+    const xm2 = pvk.x + pvk.w + gapC / 2;
+    const y3 = E2Y(pvk.ev), y4 = E2Y(htl.ev);
+    g.strokeStyle = "#33465c"; g.lineWidth = 1.4;
+    g.beginPath(); g.moveTo(xm2, y3); g.lineTo(xm2, y4); g.stroke();
+    arw(g, xm2, y3, xm2, (y3 + y4) / 2, "#33465c", 1.2, 5);
+    arw(g, xm2, y4, xm2, (y3 + y4) / 2, "#33465c", 1.2, 5);
+    chipBox(g, "ΔE_V = " + s.dEv.toFixed(2) + " eV", xm2 + 6, (y3 + y4) / 2, "rgba(255,255,255,.96)", "#33465c", 11.5, null, W);
+  }
+  /* 电子注入 ETL / 空穴注入 HTL */
+  const yeP = E2Y(pvk.ec), yeE = E2Y(etl.ec);
+  const xe0 = pvk.x + pvk.w * 0.30, xe1 = etl.x + etl.w * 0.62;
+  if (s.dEc >= 0) {
+    arw(g, xe0, yeP + 4, xe1, yeE + 4, "#1976d2", 2, 7);
+    label(g, "电子注入", (xe0 + xe1) / 2, yeP + 16, "#1976d2", 11, "center", true);
+  } else {
+    dashLine(g, xe0, yeP + 4, xe1, yeE + 4, "#d94a3d", 2, [5, 4]);
+    label(g, "势垒 |ΔE_C|：抽取受阻", (xe0 + xe1) / 2, yeP + 18, "#d94a3d", 11, "center", true);
+  }
+  const yhP = E2Y(pvk.ev), yhH = E2Y(htl.ev);
+  const xh0 = pvk.x + pvk.w * 0.70, xh1 = htl.x + htl.w * 0.38;
+  arw(g, xh0, yhP - 4, xh1, yhH - 4, "#d94a3d", 2, 7);
+  label(g, "空穴注入", (xh0 + xh1) / 2, yhP - 16, "#d94a3d", 11, "center", true);
+  /* 阻挡 */
+  if (OPT.off) {
+    const bh = pvk.ev - etl.ev, be = htl.ec - pvk.ec;
+    crossMark(g, etl.x + 14, (E2Y(etl.ev) + bot) / 2, 4.5, "#5fa795");
+    label(g, "空穴势垒 " + bh.toFixed(2) + " eV", etl.x + 24, (E2Y(etl.ev) + bot) / 2, "#47876f", 10.5, "left", true);
+    crossMark(g, htl.x + htl.w - 14, (E2Y(htl.ec) + top) / 2, 4.5, "#9aa5b1");
+    label(g, "电子势垒 " + be.toFixed(2) + " eV", htl.x + htl.w - 24, (E2Y(htl.ec) + top) / 2, "#6b7a8c", 10.5, "right", true);
+  }
+  /* 接触电势上限 */
+  const xv = xa - 26;
+  if (Math.max(s.vContact, 0.02) > 0.02) {
+    const yA = E2Y(etl.ec), yB2 = E2Y(htl.ev);
+    g.strokeStyle = "#8e5bd0"; g.lineWidth = 1.2;
+    g.beginPath(); g.moveTo(xv, yA); g.lineTo(xv, yB2); g.stroke();
+    arw(g, xv, yA, xv, (yA + yB2) / 2, "#8e5bd0", 1.2, 5);
+    arw(g, xv, yB2, xv, (yA + yB2) / 2, "#8e5bd0", 1.2, 5);
+    label(g, "≤ " + s.vContact.toFixed(2) + " V", xv - 4, (yA + yB2) / 2, "#8e5bd0", 11, "right", true);
+  }
+  label(g, "电子能量 E（eV，真空为 0）", 6, top - 14, "#6b7a8c", 11.5, "left", true);
+  label(g, "平带近似：这里不画能带弯曲，只看三层能级怎么对齐", xb, bot + 34, "#6b7a8c", 11, "right", false);
+  g.setTransform(1, 0, 0, 1, 0, 0);
+}
+
+/* ==================================================================
+   5. 模块三：J–V 曲线
+   ================================================================== */
+function drawJv() {
+  const v = JVC, g = v.g;
+  if (!g) return;
+  g.setTransform(v.dpr, 0, 0, v.dpr, 0, 0);
+  const W = v.W, H = v.H, s = S();
+  g.clearRect(0, 0, W, H);
+  const mL = 54, mR = 18, mT = 20, mB = 40;
+  const x0 = mL, x1 = W - mR, y0 = H - mB, y1 = mT;
+  const jmax = Math.max(5, Math.ceil(s.jsc * 1.22 / 5) * 5);
+  const X = (Vv) => x0 + clamp(Vv / s.vmax, 0, 1.02) * (x1 - x0);
+  const Y = (J) => y0 - clamp(J / jmax, -0.06, 1.06) * (y0 - y1);
+  /* 网格 */
+  g.strokeStyle = "#eef2f6"; g.lineWidth = 1;
+  for (let i = 0; i <= 5; i++) {
+    const yy = y1 + (y0 - y1) * i / 5;
+    g.beginPath(); g.moveTo(x0, yy); g.lineTo(x1, yy); g.stroke();
+  }
+  for (let i = 0; i <= 5; i++) {
+    const xx = x0 + (x1 - x0) * i / 5;
+    g.beginPath(); g.moveTo(xx, y0); g.lineTo(xx, y1); g.stroke();
+  }
+  /* 轴 */
+  g.strokeStyle = "#9aa5b1"; g.lineWidth = 1.2;
+  g.beginPath(); g.moveTo(x0, y1); g.lineTo(x0, y0); g.lineTo(x1, y0); g.stroke();
+  for (let i = 0; i <= 5; i++) {
+    const Vv = s.vmax * i / 5;
+    label(g, Vv.toFixed(2), x0 + (x1 - x0) * i / 5, y0 + 14, "#6b7a8c", 10.5, "center");
+    const J = jmax * i / 5;
+    label(g, J.toFixed(0), x0 - 6, y1 + (y0 - y1) * (1 - i / 5), "#6b7a8c", 10.5, "right");
+  }
+  label(g, "偏压 V（V）", (x0 + x1) / 2, H - 10, "#33465c", 11.5, "center", true);
+  label(g, "J（mA/cm²，发电方向为正）", 12, mT - 6, "#33465c", 11.5, "left", true);
+  /* FF：外框 + 实际功率矩形 */
+  if (s.voc > 0.01 && s.jsc > 0.01) {
+    dashLine(g, X(0), Y(0), X(s.voc), Y(0), "#9aa5b1", 1, [4, 3]);
+    dashLine(g, X(0), Y(0), X(0), Y(s.jsc), "#9aa5b1", 1, [4, 3]);
+    dashLine(g, X(s.voc), Y(0), X(s.voc), Y(s.jsc), "#9aa5b1", 1, [4, 3]);
+    dashLine(g, X(0), Y(s.jsc), X(s.voc), Y(s.jsc), "#9aa5b1", 1, [4, 3]);
+    g.fillStyle = "rgba(239,140,26,.22)";
+    g.fillRect(X(0), Y(s.jmp), X(s.vmp) - X(0), Y(0) - Y(s.jmp));
+    g.strokeStyle = "rgba(239,140,26,.85)"; g.lineWidth = 1;
+    g.strokeRect(X(0), Y(s.jmp), X(s.vmp) - X(0), Y(0) - Y(s.jmp));
+    label(g, "FF = " + s.ff.toFixed(3), X(s.vmp) + 6, Y(s.jmp) - 10, "#b26a06", 11, "left", true);
+  }
+  /* 暗态 */
+  if (OPT.dark) {
+    g.strokeStyle = "#9aa5b1"; g.lineWidth = 1.4; g.setLineDash([5, 4]);
+    g.beginPath();
+    for (let i = 0; i < s.drk.length; i++) {
+      const p = s.drk[i];
+      if (i === 0) g.moveTo(X(p[0]), Y(p[1])); else g.lineTo(X(p[0]), Y(p[1]));
+    }
+    g.stroke(); g.setLineDash([]);
+  }
+  /* 光照 */
+  g.strokeStyle = "#1976d2"; g.lineWidth = 2.4; g.lineJoin = "round";
+  g.beginPath();
+  for (let i = 0; i < s.lit.length; i++) {
+    const p = s.lit[i];
+    if (i === 0) g.moveTo(X(p[0]), Y(p[1])); else g.lineTo(X(p[0]), Y(p[1]));
+  }
+  g.stroke();
+  /* 三个关键点 */
+  const key = [
+    { x: X(0), y: Y(s.jsc), t: "J_SC = " + s.jsc.toFixed(1), c: "#1976d2", al: "left", dx: 6, dy: -2 },
+    { x: X(s.voc), y: Y(0), t: "V_OC = " + s.voc.toFixed(3) + " V", c: "#2e9e5b", al: "right", dx: -6, dy: -14 },
+    { x: X(s.vmp), y: Y(s.jmp), t: "P_max = " + s.pmax.toFixed(1) + " mW/cm²", c: "#b26a06", al: "left", dx: 8, dy: 14 }
+  ];
+  for (const k of key) {
+    g.fillStyle = k.c;
+    g.beginPath(); g.arc(k.x, k.y, 4, 0, 6.2832); g.fill();
+    label(g, k.t, k.x + k.dx, k.y + k.dy, k.c, 11, k.al, true);
+  }
+  /* 损失最大的那一环 */
+  chipBox(g, "当前瓶颈：" + s.topLoss.k, x1 - 6, y1 + 12, "rgba(255,255,255,.95)", "#b0392f", 11.5, "right", W);
+  chipBox(g, "同 E_g 的 SQ 极限 " + (s.pceSQ * 100).toFixed(1) + "%", x1 - 6, y1 + 34, "rgba(255,255,255,.95)", "#6b7a8c", 11.5, "right", W);
+  /* 悬停读数 */
+  if (JVC.hover) {
+    const mx = JVC.hover.x, my = JVC.hover.y;
+    if (mx >= x0 && mx <= x1 && my >= y1 - 4 && my <= y0 + 4) {
+      const Vv = clamp((mx - x0) / (x1 - x0), 0, 1) * s.vmax;
+      const J = -solveJ(s, Vv);
+      dashLine(g, mx, y0, mx, y1, "#1976d2", 1, [3, 3]);
+      chipBox(g, "V = " + Vv.toFixed(3) + " V　J = " + J.toFixed(2) + "　P = " + (Vv * J).toFixed(2) + " mW/cm²",
+        mx, y1 + 8, "rgba(255,255,255,.96)", "#1976d2", 11.5, "center", W);
+    }
+  }
+  g.setTransform(1, 0, 0, 1, 0, 0);
+}
+
+/* ==================================================================
+   6. 模块四：缺陷容忍（为什么没有深能级）
+   ================================================================== */
+function drawDef() {
+  const v = DF, g = v.g;
+  if (!g) return;
+  g.setTransform(v.dpr, 0, 0, v.dpr, 0, 0);
+  const W = v.W, H = v.H;
+  g.clearRect(0, 0, W, H);
+  const half = W / 2, pad = 14;
+  const panels = [
+    { x: pad, w: half - pad * 1.5, t: "常规半导体（Si、GaAs）", cbTag: "反键（antibonding）", vbTag: "成键（bonding）", deep: true },
+    { x: half + pad * 0.5, w: half - pad * 1.5, t: "铅卤钙钛矿", cbTag: "反键（antibonding）", vbTag: "反键（antibonding）", deep: false }
+  ];
+  for (const p of panels) {
+    const cx = p.x + p.w / 2;
+    const hB = 46, gapH = 66;
+    const yc = 42, yv = yc + hB + gapH;
+    label(g, p.t, cx, 18, "#33465c", 12.5, "center", true);
+    /* 导带 / 价带 */
+    g.fillStyle = "rgba(25,118,210,.13)";
+    g.fillRect(p.x, yc, p.w, hB);
+    g.strokeStyle = "#1976d2"; g.lineWidth = 2;
+    g.beginPath(); g.moveTo(p.x, yc + hB); g.lineTo(p.x + p.w, yc + hB); g.stroke();
+    g.fillStyle = "rgba(217,74,61,.14)";
+    g.fillRect(p.x, yv, p.w, hB);
+    g.strokeStyle = "#d94a3d"; g.lineWidth = 2;
+    g.beginPath(); g.moveTo(p.x, yv); g.lineTo(p.x + p.w, yv); g.stroke();
+    label(g, "E_C　" + p.cbTag, p.x + 6, yc + 16, "#1976d2", 11, "left", true);
+    if (!p.deep) label(g, "Pb 6p – I 5p 反键", p.x + 6, yc + 32, "#6b7a8c", 10.5, "left");
+    label(g, "E_V　" + p.vbTag, p.x + 6, yv + 16, "#b0392f", 11, "left", true);
+    label(g, p.deep ? "（成键态）" : "Pb 6s – I 5p 反键 ⇒ 也是反键", p.x + 6, yv + 32, "#6b7a8c", 10.5, "left");
+    /* 空位 */
+    const ymid = (yc + hB + yv) / 2;
+    g.strokeStyle = "#8e5bd0"; g.lineWidth = 1.4; g.setLineDash([4, 3]);
+    g.beginPath(); g.arc(cx, ymid, 13, 0, 6.2832); g.stroke(); g.setLineDash([]);
+    label(g, "拿掉一个原子", cx, ymid, "#8e5bd0", 10.5, "center", true);
+    /* 缺陷能级落点 */
+    if (p.deep) {
+      g.strokeStyle = "#d94a3d"; g.lineWidth = 2.2; g.setLineDash([6, 4]);
+      g.beginPath(); g.moveTo(p.x + 12, ymid); g.lineTo(p.x + p.w - 12, ymid); g.stroke(); g.setLineDash([]);
+      label(g, "深能级落在禁带中央 ⇒ 有效复合中心", cx, ymid + 16, "#d94a3d", 11, "center", true);
+    } else {
+      crossMark(g, cx, ymid, 6, "#2e9e5b");
+      label(g, "禁带里没有深能级", cx, ymid + 15, "#2e9e5b", 11, "center", true);
+      /* 缺陷态被推到能带边缘之外 */
+      g.strokeStyle = "#2e9e5b"; g.lineWidth = 2; g.setLineDash([5, 3]);
+      g.beginPath(); g.moveTo(p.x + 14, yc + hB + 9); g.lineTo(p.x + p.w - 14, yc + hB + 9); g.stroke();
+      g.beginPath(); g.moveTo(p.x + 14, yv - 9); g.lineTo(p.x + p.w - 14, yv - 9); g.stroke();
+      g.setLineDash([]);
+      label(g, "缺陷态被推入能带（浅能级 / 共振态）", cx, yc + hB + 24, "#2e9e5b", 10.5, "center", true);
+    }
+  }
+  /* 中间的分隔与结论 */
+  dashLine(g, half, 26, half, H - 34, "#dde4ec", 1, [4, 4]);
+  label(g, "同样的空位：一边压在带隙中央当复合中心，一边几乎没有深能级 —— 这就是溶液法也能高效的原因",
+    half, H - 16, "#6b7a8c", 11.5, "center", true);
+  g.setTransform(1, 0, 0, 1, 0, 0);
+}
+
+/* ==================================================================
+   7. 模块五：ABX₃ 晶胞（自研 Canvas 2D 透视投影 + 画家算法）
+   ================================================================== */
+const RADI = {
+  A: { r: 0.16, col: "#ef8c1a", name: "A 位阳离子" },
+  B: { r: 0.24, col: "#8a94a6", name: "B 位 Pb²⁺" },
+  X: { r: 0.20, col: "#8e5bd0", name: "X 位 I⁻" }
+};
+function latAtoms() {
+  const out = [];
+  out.push({ p: [0, 0, 0], k: "B" });
+  for (const a of [[1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0], [0, 0, 1], [0, 0, -1]]) out.push({ p: a, k: "X" });
+  for (const sx of [1, -1]) for (const sy of [1, -1]) for (const sz of [1, -1]) out.push({ p: [sx, sy, sz], k: "A" });
+  return out;
+}
+function latProj(p) {
+  const c = Math.cos(LT.yaw), s = Math.sin(LT.yaw);
+  const X = p[0] * c - p[2] * s, Z = p[0] * s + p[2] * c;
+  const Y = p[1];
+  const sx = X, sy = -Y * Math.cos(LT.pitch) + Z * Math.sin(LT.pitch);
+  const dep = Y * Math.sin(LT.pitch) + Z * Math.cos(LT.pitch);
+  return { x: sx, y: sy, d: dep };
+}
+/* ---------------- 模块五晶胞：景深与空气透视（画法参照「半导体晶格」工具） ---------------- */
+const LT_DOF   = 0.45;   /* 景深强度，固定 45%（远近虚化 + 空气透视），不提供调节 */
+const LT_BLUR  = 6.0;    /* 景深 100% 时最虚层的模糊半径（px） */
+const LT_SHARP = 0.50;   /* 离焦量小于此值视为在焦平面内（清晰层）：晶胞只有 15 个球，焦平面要留得宽 */
+const LT_LAYER = 0.72;   /* 虚化层的代表离焦量 */
+const LT_NEAR  = 0.40;   /* 近景离焦相对远端的比例（近景只轻微虚化，别挡住要看的结构） */
+const LT_FOG_N = 4;      /* 雾化档数（0 = 清晰，4 = 最远最淡） */
+const LT_FOG   = 0.64;   /* 最远档向背景色混合的比例 */
+const LT_BGRGB = [255, 255, 255], LT_WHT = [255, 255, 255], LT_BLK = [20, 27, 36];
+function ltShd(rgb, to, t) {
+  return "rgb(" + Math.round(rgb[0] + (to[0] - rgb[0]) * t) + ","
+                 + Math.round(rgb[1] + (to[1] - rgb[1]) * t) + ","
+                 + Math.round(rgb[2] + (to[2] - rgb[2]) * t) + ")";
+}
+/* 空气透视：t = 1 为最近、0 为最远；越远越向背景色（白）靠拢，量化成 LT_FOG_N+1 档 */
+function ltFog(t) {
+  if (LT_DOF <= 0.02) return 0;
+  return clamp(Math.round(clamp(1 - t, 0, 1) * LT_FOG_N * LT_DOF * 1.15), 0, LT_FOG_N);
+}
+/* 离屏画布：给某一层原子做一次整体模糊，尺寸随视图变化重建 */
+function ltOff(v) {
+  const w = Math.max(1, Math.round(v.W * v.dpr)), h = Math.max(1, Math.round(v.H * v.dpr));
+  if (!v.off || v.off.width !== w || v.off.height !== h) {
+    const cv = document.createElement("canvas");
+    cv.width = w; cv.height = h;
+    v.off = cv;
+  }
+  return v.off;
+}
+function drawLat() {
+  const v = LT, g = v.g;
+  if (!g) return;
+  g.setTransform(v.dpr, 0, 0, v.dpr, 0, 0);
+  const W = v.W, H = v.H;
+  g.clearRect(0, 0, W, H);
+  /* 缩放：顶角 A 位球的屏幕纵向极值约 ±1.48 个格距，留出球半径后取整，避免上下出框 */
+  const S1 = Math.min(W, H) * 0.27;
+  const cx = W / 2, cy = H / 2 + 4;
+  const SP = (p) => { const q = latProj(p); return { x: cx + q.x * S1, y: cy + q.y * S1, d: q.d }; };
+  const atoms = latAtoms();
+
+  /* --- 深度范围：latProj 的 d 与常见相机约定一致，d 越大越靠近观察者 --- */
+  const pp = atoms.map(a => SP(a.p));
+  let dmin = Infinity, dmax = -Infinity;
+  for (const p of pp) { dmin = Math.min(dmin, p.d); dmax = Math.max(dmax, p.d); }
+  if (dmax - dmin < 1e-6) dmax = dmin + 1;
+  const depT = (d) => clamp((d - dmin) / (dmax - dmin), 0, 1);   /* 1 = 最近，0 = 最远 */
+
+  /* --- 1. 棱：Pb–I 八面体键 + 立方框（按深度远 → 近） --- */
+  const edge = [[-1, -1, -1], [1, -1, -1], [1, 1, -1], [-1, 1, -1], [-1, -1, 1], [1, -1, 1], [1, 1, 1], [-1, 1, 1]];
+  const CORN = [[0, 1], [1, 3], [3, 2], [2, 0], [4, 5], [5, 7], [7, 6], [6, 4], [0, 4], [1, 5], [2, 6], [3, 7]];
+  const segs = [];
+  for (const a of atoms) if (a.k === "X") segs.push({ p: a.p, q: [0, 0, 0], col: "#8e5bd0", w: 2.2, a0: 1, dash: null });
+  for (const [i, j] of CORN) segs.push({ p: edge[i], q: edge[j], col: "#8c98a8", w: 1, a0: 0.55, dash: [4, 3] });
+  for (const s of segs) { const A = SP(s.p), B = SP(s.q); s.d = (A.d + B.d) / 2; }
+  segs.sort((a, b) => a.d - b.d);                                /* 远 → 近 */
+  for (const s of segs) {
+    const t = depT(s.d);
+    const f = ltFog(t) / LT_FOG_N * LT_FOG;                      /* 雾化比例 */
+    const c = parseCol(s.col).map((x, i) => x + (LT_BGRGB[i] - x) * f);
+    const A = SP(s.p), B2 = SP(s.q);
+    g.save();
+    g.strokeStyle = "rgba(" + Math.round(c[0]) + "," + Math.round(c[1]) + "," + Math.round(c[2]) + ","
+                  + (s.a0 * (1 - 0.30 * (1 - t) * LT_DOF)).toFixed(3) + ")";
+    g.lineWidth = Math.max(0.6, s.w * (0.80 + 0.32 * t));         /* 近粗远细 */
+    if (s.dash) g.setLineDash(s.dash);
+    g.beginPath(); g.moveTo(A.x, A.y); g.lineTo(B2.x, B2.y); g.stroke();
+    g.restore();
+  }
+
+  /* --- 2. 球：按深度远 → 近 --- */
+  const items = atoms.map((a, i) => {
+    const P = pp[i], conf = RADI[a.k];
+    const sc = clamp(1 + P.d * 0.16, 0.72, 1.32);                /* 近大远小 */
+    return { x: P.x, y: P.y, d: P.d, t: depT(P.d), r: conf.r * S1 * sc, col: conf.col, k: a.k };
+  }).sort((a, b) => a.d - b.d);
+
+  const drawBall = (gg, it) => {
+    const f = ltFog(it.t) / LT_FOG_N * LT_FOG;
+    const c = parseCol(it.col).map((x, i) => x + (LT_BGRGB[i] - x) * f);
+    const gl = 1 - f * 0.55, dk = 1 - f * 0.45;                  /* 雾化时高光/暗部一起减弱 */
+    const grd = gg.createRadialGradient(it.x - it.r * 0.35, it.y - it.r * 0.40, it.r * 0.15, it.x, it.y, it.r);
+    grd.addColorStop(0.00, ltShd(c, LT_WHT, 0.62 * gl));
+    grd.addColorStop(0.45, ltShd(c, LT_WHT, 0.10 * gl));
+    grd.addColorStop(0.74, ltShd(c, LT_BLK, 0.16 * dk));
+    grd.addColorStop(1.00, ltShd(c, LT_BLK, 0.42 * dk));
+    gg.fillStyle = grd;
+    gg.beginPath(); gg.arc(it.x, it.y, it.r, 0, 6.2832); gg.fill();
+    gg.strokeStyle = "rgba(15,25,40," + (0.22 * (1 - 0.5 * f)).toFixed(3) + ")";
+    gg.lineWidth = 0.8; gg.stroke();
+  };
+
+  /* 景深：把原子按离焦程度切成「远端虚化 / 焦平面清晰 / 近端虚化」三段，
+     从远到近依次合成，保持画家算法的遮挡关系，只需两次全屏模糊。 */
+  if (v.blurOK === undefined) {
+    let ok = false;
+    try { ok = typeof CanvasRenderingContext2D !== "undefined" && "filter" in CanvasRenderingContext2D.prototype; } catch (e) { ok = false; }
+    if (ok) { try { g.save(); g.filter = "blur(1px)"; ok = g.filter !== "none"; g.restore(); } catch (e) { ok = false; } }
+    v.blurOK = ok;
+  }
+  if (LT_DOF <= 0.02 || !v.blurOK) {
+    for (const it of items) drawBall(g, it);
+  } else {
+    const seg = [[], [], []];
+    for (const it of items) {
+      const coc = Math.abs(it.t - 0.5) * 2;                      /* 0 = 在焦平面，1 = 最虚 */
+      seg[coc < LT_SHARP ? 1 : (it.t > 0.5 ? 2 : 0)].push(it);
+    }
+    const off = ltOff(v), og = off.getContext("2d");
+    for (let k = 0; k < 3; k++) {
+      if (!seg[k].length) continue;
+      /* 远端虚化明显（空气感），近景只轻微离焦，避免挡住要看的结构 */
+      const bpx = (k === 1) ? 0 : LT_BLUR * LT_DOF * LT_LAYER * (k === 0 ? 1 : LT_NEAR);
+      if (bpx < 0.35) { for (const it of seg[k]) drawBall(g, it); continue; }
+      og.setTransform(1, 0, 0, 1, 0, 0);
+      og.clearRect(0, 0, off.width, off.height);
+      og.setTransform(v.dpr, 0, 0, v.dpr, 0, 0);
+      for (const it of seg[k]) drawBall(og, it);
+      g.save();
+      g.setTransform(1, 0, 0, 1, 0, 0);
+      g.filter = "blur(" + (bpx * v.dpr).toFixed(2) + "px)";
+      g.drawImage(off, 0, 0);
+      g.restore();
+    }
+    g.setTransform(v.dpr, 0, 0, v.dpr, 0, 0);
+    g.filter = "none";
+  }
+
+  /* --- 3. 标注：远处随之淡化（与景深一致），但幅度要小——这是教学标注，必须始终读得清 --- */
+  const putLabel = (s, P, dx, dy, col) => {
+    const x = P.x + dx, y = P.y + dy;
+    g.save();
+    g.font = "bold 11px " + FONT;
+    g.textAlign = "left"; g.textBaseline = "middle";
+    g.lineWidth = 3.2; g.lineJoin = "round";
+    g.strokeStyle = "rgba(255,255,255,.9)";
+    g.globalAlpha = 1;
+    g.strokeText(s, x, y);                                       /* 白边包字：标注常压在球上 */
+    g.globalAlpha = clamp(0.96 - 0.22 * (1 - depT(P.d)) * LT_DOF, 0.55, 1);
+    label(g, s, x, y, col, 11, "left", true);
+    g.restore();
+  };
+  putLabel("Pb²⁺（决定能带）", SP([0, 0, 0]), 14, -10, "#5b6577");
+  putLabel("I⁻（六配位，八面体共顶点）", SP([0, 0, 1]), 12, 12, "#7a4bb5");
+  putLabel("MA⁺ / FA⁺（只撑结构，不进能带）", SP([1, 1, 1]), 12, -10, "#a8640c");
+  label(g, "拖动旋转", W - 8, H - 12, "#9aa5b1", 11, "right", false);
+  g.setTransform(1, 0, 0, 1, 0, 0);
+}
+
+/* ==================================================================
+   8. 面板：图例、提示、读数、公式、挑战
+   ================================================================== */
+const E_G = "<span class=\"m\"><i>E</i><sub>g</sub></span>";
+const H_EG = "<span class=\"m\"><i>E</i><sub>g</sub></span>";
+const H_EC = "<span class=\"m\">Δ<i>E</i><sub>C</sub></span>";
+const H_EV = "<span class=\"m\">Δ<i>E</i><sub>V</sub></span>";
+const H_JSC = "<span class=\"m\"><i>J</i><sub>SC</sub></span>";
+const H_VOC = "<span class=\"m\"><i>V</i><sub>OC</sub></span>";
+const H_LAM = "<span class=\"m\"><i>λ</i><sub>g</sub></span>";
+const H_LD = "<span class=\"m\"><i>L</i><sub>D</sub></span>";
+const H_J0 = "<span class=\"m\"><i>J</i><sub>0</sub></span>";
+const pct = (v) => (v * 100).toFixed(1) + " %";
+function rowsTo(el, rows) {
+  el.innerHTML = rows.map(r => {
+    if (r.length === 1) return "<div class=\"hd\">" + r[0] + "</div>";
+    return "<div class=\"k\">" + r[0] + "</div><div class=\"v\">" + r[1] + "</div>";
+  }).join("");
+}
+function swatch(col, cls) { return "<span class=\"swatch " + (cls || "") + "\" style=\"color:" + col + "\"></span>"; }
+
+function buildLegend() {
+  const lg = $("legDev");
+  if (lg) lg.innerHTML = [
+    swatch("#1976d2", "dot") + "电子（向 ETL 走）",
+    swatch("#d94a3d", "dot") + "空穴（向 HTL 走）",
+    swatch("#e8ac28", "dot") + "入射光 / 吸收位置",
+    swatch("#7b8794", "sq") + "复合事件（消失的那一个）"
+  ].map(t => "<span>" + t + "</span>").join("");
+  const lj = $("legJv");
+  if (lj) lj.innerHTML = [
+    swatch("#1976d2") + "光照 J–V",
+    swatch("#9aa5b1", "dash") + "暗态 J–V",
+    swatch("#ef8c1a", "sq") + "最大功率矩形（FF）"
+  ].map(t => "<span>" + t + "</span>").join("");
+  const ll = $("legLat");
+  if (ll) ll.innerHTML = [
+    swatch("#ef8c1a", "dot") + "A 位：MA⁺ / FA⁺ / Cs⁺",
+    swatch("#8a94a6", "dot") + "B 位：Pb²⁺",
+    swatch("#8e5bd0", "dot") + "X 位：I⁻（六个面心）"
+  ].map(t => "<span>" + t + "</span>").join("");
+}
+/* 四个关系式：不再单列「效率账」卡片，而是各归其位——
+   吸光与收集进模块一、开压上限进模块二、二极管方程与 PCE 进模块三。 */
+const EQ_JSC = "<span class=\"m\"><i>J</i><sub>SC</sub><span class=\"op\">=</span><i>η</i><sub>吸</sub><i>η</i><sub>收</sub><i>J</i><sub>SC</sub><sup>理想</sup></span>";
+const EQ_COLL = "<span class=\"m\"><i>η</i><sub>收</sub><span class=\"op\">=</span><span class=\"frac\"><span class=\"num\"><i>S</i>(<i>L</i><sub>D</sub>/<i>d</i>)tanh(<i>d</i>/<i>L</i><sub>D</sub>)</span><span class=\"den\">(<i>D</i>/<i>L</i><sub>D</sub>)tanh(<i>d</i>/<i>L</i><sub>D</sub>)<span class=\"op\">+</span><i>S</i></span></span></span>";
+const EQ_VOC = "<span class=\"m\"><i>V</i><sub>OC</sub><span class=\"op\">=</span>min<span class=\"op\">[</span><i>kT</i>ln(<i>J</i><sub>SC</sub>/<i>J</i><sub>0</sub><span class=\"op\">+</span>1)<span class=\"op\">,</span><i>E</i><sub>g</sub><span class=\"op\">−</span>Δ<i>E</i><sub>C</sub><span class=\"op\">−</span>Δ<i>E</i><sub>V</sub><span class=\"op\">]</span></span>";
+const EQ_DIODE = "<span class=\"m\"><i>J</i><span class=\"op\">=</span><i>J</i><sub>0</sub><span class=\"op\">[</span>exp<span class=\"op\">(</span>(<i>V</i><span class=\"op\">−</span><i>J</i><i>R</i><sub>s</sub>)/<i>kT</i><span class=\"op\">)</span><span class=\"op\">−</span>1<span class=\"op\">]</span><span class=\"op\">+</span>(<i>V</i><span class=\"op\">−</span><i>J</i><i>R</i><sub>s</sub>)/<i>R</i><sub>sh</sub><span class=\"op\">−</span><i>J</i><sub>SC</sub></span>";
+const EQ_PCE = "<span class=\"m\">PCE<span class=\"op\">=</span><span class=\"frac\"><span class=\"num\"><i>J</i><sub>SC</sub><i>V</i><sub>OC</sub>FF</span><span class=\"den\"><i>P</i><sub>in</sub></span></span><span class=\"op\">,</span><i>P</i><sub>in</sub><span class=\"op\">=</span>100 mW/cm²</span>";
+function buildHints() {
+  const s = S();
+  const set = (id, t) => { const e = $(id); if (e) e.innerHTML = t; };
+  set("hintDev", "光从上面射进来，穿过透明电极与电子传输层（它们基本不吸光），在钙钛矿层里按 Beer 定律被吃掉：" +
+    "本档的吸收深度约 <b>" + (1e7 / alphaRep(s.Eg)).toFixed(0) + " nm</b>（剩余强度随深度指数衰减，层里的黄色深浅就是它）。" +
+    "浅色的阴阳小球是被拆开的电子–空穴对：<span class=\"m\">–</span> 往上走进 ETL、<span class=\"m\">+</span> 往下走进 HTL，" +
+    "谁在半路被复合就用灰叉标记。两侧 ✗ 是选择性接触在挡人：ETL 不让空穴过，HTL 不让电子过。" +
+    "<span class=\"eq\">短路电流是两级效率相乘：" + EQ_JSC + "：吸收按 Beer 定律随深度 e^(−αz) 逐层衰减，" +
+    "收集由扩散方程在「界面抽取速度 S」这一边界条件下的解析解给出：" + EQ_COLL + "</span>");
+  set("hintBand", "三列的上下两条粗线分别是各自的 <span class=\"m\"><i>E</i></span><sub>C</sub> 与 " +
+    "<span class=\"m\"><i>E</i></span><sub>V</sub>，能量读数是相对真空能级的电子能量。" +
+    "左边紫色竖线是接触电势上限 <span class=\"m\"><i>E</i><sub>g</sub><span class=\"op\">−</span>Δ<i>E</i><sub>C</sub><span class=\"op\">−</span>Δ<i>E</i><sub>V</sub></span>：" +
+    "开压再高也高不过它。把 Δ" + "<span class=\"m\"><i>E</i><sub>C</sub></span>" +
+    " 从 0 往上推，<span class=\"m\"><i>J</i><sub>SC</sub></span> 一动不动而 <span class=\"m\"><i>V</i><sub>OC</sub></span> 往下掉；" +
+    "推到 0 以下，电子要爬一个势垒，<span class=\"m\"><i>J</i><sub>SC</sub></span> 和 FF 先垮。所以「对齐」不是越平越好。" +
+    "<span class=\"eq\">开压取两者中的小者：" + EQ_VOC + " —— 前一项是二极管方程给出的值，后一项就是左边那条紫色竖线。</span>");
+  set("hintJv", "蓝色实线是光照下的 J–V，灰色虚线是同一只二极管在暗态的曲线（两者之差就是被收集的光生电流）。" +
+    "虚线方框的面积是 <span class=\"m\"><i>J</i><sub>SC</sub><i>V</i><sub>OC</sub></span>，橙色实矩形是实际最大功率 " +
+    "<span class=\"m\"><i>P</i><sub>max</sub></span>，两者之比即填充因子 FF。鼠标移到曲线上可以读出该点的 V、J 与功率。" +
+    "<span class=\"eq\">曲线由单二极管方程隐式给出，" + EQ_DIODE + "（每个 V 用二分法解出 J）；效率即 " + EQ_PCE + "</span>");
+  set("hintDef", "抽掉一个原子必然留下悬挂键，但落点取决于原来那条键的形式：常规半导体的价带是<b>成键</b>态，" +
+    "悬键能级落在带隙中央，成为高效的复合中心；铅卤钙钛矿的价带顶与导带底<b>都是反键</b>的 " +
+    "（Pb 6s–I 5p 反键给出价带顶，Pb 6p–I 5p 反键给出导带底），缺陷态被推到带边之外或变成浅能级，" +
+    "于是「缺陷多」不等于「复合快」。");
+  set("hintLat", "八面体共顶点连成三维骨架（B 位 Pb²⁺ 居中、X 位 I⁻ 在六个面心），A 位的一价阳离子坐在八个顶点围出的空隙里：" +
+    "它不参与前线轨道，只在电荷平衡和结构稳定性上出力 —— " +
+    "也就是<span class=\"m\"><i>E</i><sub>g</sub></span> 主要由 Pb–X 骨架决定。拖动可旋转。");
+}
+function buildBtns() {
+  const eb = $("etlBtns");
+  if (eb) {
+    eb.innerHTML = ETLS.map(e => "<button data-dec=\"" + e.dec + "\">" + e.tag +
+      " <span class=\"etlv\">" + fmtEc(e.dec) + " eV</span></button>").join("");
+    eb.querySelectorAll("button").forEach(b => {
+      b.onclick = () => { OPT.dec = +b.dataset.dec; changed(); };
+    });
+  }
+  const hb = $("htlBtns");
+  if (hb) {
+    hb.innerHTML = HTLS.map(h => "<button data-htl=\"" + h.key + "\">" + h.tag + "</button>").join("");
+    hb.querySelectorAll("button").forEach(b => {
+      b.onclick = () => { OPT.htl = b.dataset.htl; changed(); };
+    });
+  }
+  const pb = $("preBtns");
+  if (pb) {
+    pb.innerHTML = PRESETS.map((p, i) => "<button data-pre=\"" + i + "\">" + p.tag + "</button>").join("");
+    pb.querySelectorAll("button").forEach(b => {
+      b.onclick = () => {
+        const p = PRESETS[+b.dataset.pre];
+        OPT.eg = p.eg; OPT.d = p.d; OPT.ld = p.ld; OPT.dec = p.dec; OPT.htl = p.htl;
+        syncInputs(); changed(); startAnim();
+      };
+    });
+  }
+}
+function markActive() {
+  const eb = $("etlBtns");
+  if (eb) eb.querySelectorAll("button").forEach(b => b.classList.toggle("sel", Math.abs(+b.dataset.dec - OPT.dec) < 1e-6));
+  const hb = $("htlBtns");
+  if (hb) hb.querySelectorAll("button").forEach(b => b.classList.toggle("sel", b.dataset.htl === OPT.htl));
+  const pb = $("preBtns");
+  if (pb) {
+    pb.querySelectorAll("button").forEach(b => {
+      const p = PRESETS[+b.dataset.pre];
+      const on = Math.abs(p.eg - OPT.eg) < 1e-6 && p.d === OPT.d && p.ld === OPT.ld &&
+        Math.abs(p.dec - OPT.dec) < 1e-6 && p.htl === OPT.htl;
+      b.classList.toggle("sel", on);
+    });
+  }
+}
+function PSciArr(v) { return PSci(v, 1).map(p => p.sup ? "<sup>" + p.s + "</sup>" : p.s).join(""); }
+/* 时间量级的自动换挡：ns / µs / ms */
+function fmtTau(t) {
+  if (t < 1e-6) return (t * 1e9).toFixed(1) + " ns";
+  if (t < 1e-3) return (t * 1e6).toFixed(2) + " µs";
+  return (t * 1e3).toFixed(2) + " ms";
+}
+/* 抽取速度被势垒压掉后剩下的百分比：跨好几个数量级，
+   小到 0.01 % 以下就换科学记数法 —— 否则 ΔE_C = −0.30 eV 时只会显示「0.00 %」。 */
+function fmtSupp(f) {
+  const p = 100 * f;
+  return (p >= 0.01 ? p.toFixed(2) : PSciArr(p)) + " %";
+}
+function buildFix() {
+  const fv = $("fixVal"), fs = $("fixSub");
+  if (fv) fv.innerHTML = "温度 " + TCELL + " K · 迁移率 " + MU.toFixed(1) + " cm²/(V·s) · 激子结合能 " +
+    (EB * 1000).toFixed(0) + " meV · 外辐射效率 " + PSciArr(ERE) + " · 串联电阻 " + RS.toFixed(1) +
+    " Ω·cm² · 传输层带隙（只画图）" + EG_ETL.toFixed(1) + " / " + EG_HTL.toFixed(1) + " eV";
+  if (fs) fs.innerHTML = "这几项都没给滑块，取值与影响都在「更多读数」里现算：" +
+    "入射光谱取 " + TSUN + " K 黑体稀释到 " + PIN + " W/m² 近似 AM1.5G（同样的带隙下，短路电流比标准谱低约 5～10%）；" +
+    "α = α₀·√(hν − E_g) 只写直接带隙这一支，间接跃迁与反射损失都不计。";
+}
+
+function updatePanels() {
+  const s = S();
+  markActive();
+  buildHints();
+  buildFix();
+  /* 滑块旁的即时读数 */
+  const put = (id, t) => { const e = $(id); if (e) e.innerHTML = t; };
+  put("egVal", s.Eg.toFixed(2) + " eV");
+  put("egSub", "吸收边 " + H_LAM + " = " + s.lamG.toFixed(0) + " nm；比边更长的光子基本不吸收，" +
+    "比边短的按 √(hν − E_g) 越吸越狠");
+  put("dVal", OPT.d + " nm");
+  put("dSub", "本档的 1/α ≈ " + (1e7 / alphaRep(s.Eg)).toFixed(0) + " nm，厚薄就难在这里：" +
+    "太薄吃不完光，太厚来不及抽");
+  put("ldVal", OPT.ld + " nm");
+  put("ldSub", "由爱因斯坦关系反推寿命 τ = " + H_LD + "²/D = " + fmtTau(s.tau) + "（迁移率固定）");
+  const etl = etlOf();
+  put("decSub", (etl ? etl.note : "") + "　当前 Δ" +
+    "<span class=\"m\"><i>E</i><sub>C</sub></span> = " + fmtEc(s.dEc) + " eV" +
+    (s.dEc < 0 ? "，界面抽取速度被压到原来的 e^(−|ΔE_C|/kT) ≈ " + fmtSupp(Math.exp(s.dEc / s.vt)) : ""));
+  put("htlSub", s.htl.note + "　当前 Δ" + "<span class=\"m\"><i>E</i><sub>V</sub></span> = " + s.dEv.toFixed(2) + " eV");
+  /* 读数 */
+  const core = [
+    ["吸收边 " + H_LAM, "<b>" + s.lamG.toFixed(0) + " nm</b>（1240 / " + H_EG + "）"],
+    ["光子吸收效率", "<b>" + pct(s.absEff) + "</b>（整层加权，含带边以下的那部分）"],
+    ["载流子收集效率", "<b>" + pct(s.coll) + "</b>（" + H_LD + " / d = " + (s.ld / s.d).toFixed(2) + "）"],
+    [H_JSC, "<b>" + s.jsc.toFixed(2) + " mA/cm²</b>（理想上限 " + s.jGenMax.toFixed(2) + "）"],
+    [H_VOC, "<b>" + s.voc.toFixed(3) + " V</b>" + (s.capped
+      ? "<span class=\"warn\">　已被接触电势钳住</span>" : "")],
+    ["填充因子 FF", "<b>" + s.ff.toFixed(3) + "</b>（零串阻时约 " + s.ff0.toFixed(3) + "）"],
+    ["转换效率 PCE", "<b>" + (s.pce * 100).toFixed(2) + " %</b>（同 " + H_EG + " 的 SQ 极限 " + (s.pceSQ * 100).toFixed(1) + " %）"],
+    ["当前瓶颈", "<b>" + s.topLoss.k + "</b>（占 SQ 极限的 " + (s.topLoss.v * 100).toFixed(1) + " %）"]
+  ];
+  rowsTo($("readout"), core);
+  const more = [["工作点"],
+    ["最大功率 " + "<span class=\"m\"><i>P</i><sub>max</sub></span>", s.pmax.toFixed(2) + " mW/cm²　（V_mp = " + s.vmp.toFixed(3) + " V，J_mp = " + s.jmp.toFixed(2) + "）"],
+    ["钳制前的 " + H_VOC, s.vDiode.toFixed(3) + " V（" + (s.capped ? "高于接触电势上限，已被压回 " + s.vContact.toFixed(3) + " V" : "未触及接触电势上限 " + s.vContact.toFixed(3) + " V") + "）"],
+    ["饱和电流 " + H_J0, PSciArr(s.j0) + " mA/cm²（其中辐射部分 " + PSciArr(s.j0rad) + "）"],
+    ["非辐射损失的电压", "kT·ln(1/外辐射效率) = " + (s.vt * Math.log(1 / ERE)).toFixed(3) + " V"],
+    ["理想因子", "1（本工具只有复合中心一条复合通道）"],
+    ["能带与抽取"],
+    [H_EC + " / " + H_EV, s.dEc.toFixed(2) + " / " + s.dEv.toFixed(2) + " eV"],
+    ["接触电势上限", s.vContact.toFixed(3) + " V = " + H_EG + " − " + H_EC + " − " + H_EV],
+    ["界面抽取速度 S", PSciArr(s.S) + " cm/s（无势垒时取热速度量级 " + PSciArr(ESL) + "）"],
+    ["走到界面后的抽取率", pct(s.fext)],
+    ["载流子与吸收"],
+    ["扩散系数 D = µkT/q", PSciArr(s.D) + " cm²/s，反推寿命 τ = " + fmtTau(s.tau)],
+    [H_LD + " / d", (s.ld / s.d).toFixed(2) + "（越接近 1，越省着用扩散长度）"],
+    ["1/α（代表性光子）", (1e7 / alphaRep(s.Eg)).toFixed(0) + " nm，层厚是它的 " + (OPT.d / (1e7 / alphaRep(s.Eg))).toFixed(1) + " 倍"],
+    ["kT 与激子结合能", s.vt.toFixed(4) + " eV，E_b/kT = " + (EB / s.vt).toFixed(2) + "（远小于 1 ⇒ 室温自发解离）"],
+    ["若折算成 Br 含量 x", (s.Eg >= 1.55 ? "x ≈ " + ((s.Eg - 1.55) / 0.8).toFixed(2) + "（MAPb(I₁₋ₓBrₓ)₃ 的线性估算）" : "低于 MAPbI₃ 的 1.55 eV，不在 I/Br 混晶的估算范围内")],
+    ["损失拆分（占 SQ 极限的比例）"]
+  ];
+  for (const l of s.loss) more.push([l.k, (l.v * 100).toFixed(1) + " %"]);
+  rowsTo($("readoutMore"), more);
+}
+
+/* ==================================================================
+   9. 挑战任务
+   ================================================================== */
+/* 临时改 OPT 算一个对比值再还原（答案里的数字必须是这一档的真值） */
+function withOpt(o, fn) {
+  const bak = { eg: OPT.eg, d: OPT.d, ld: OPT.ld, dec: OPT.dec, htl: OPT.htl };
+  for (const k in o) OPT[k] = o[k];
+  ST = null;
+  const r = fn();
+  for (const k in bak) OPT[k] = bak[k];
+  ST = null;
+  return r;
+}
+const CHAL = [
+  {
+    q: "看模块五的晶胞：A 位阳离子坐在哪里？B 位与 X 位围成什么几何？把视角转一圈看看八面体是怎么连成骨架的——A 位的有机分子有没有出现在能带上？",
+    a: () => {
+      const s = S();
+      return "<b>A 位坐在八个顶点围出的立方体空隙里</b>（体心位置，图里橙色的球）：" +
+        "它是一价的 MA⁺ / FA⁺ / Cs⁺，靠电荷平衡把骨架撑住，并决定八面体怎么倾斜；" +
+        "<b>前线轨道上没有它</b>——价带顶是 I 5p（掺一点 Pb 6s），导带底主要是 Pb 6p。" +
+        "<b>B 位 Pb²⁺ 居中，六个 X 位 I⁻ 在六个面心</b>，围成 [PbI₆]⁴⁻ 正八面体；" +
+        "八面体<b>共顶点</b>连出去就是三维骨架，转动视角能看到每一个 I⁻ 都被两个八面体共用。" +
+        "所以带隙 " + H_EG + "（现在 " + s.Eg.toFixed(2) + " eV）主要由 Pb–X 骨架决定：" +
+        "换 A 位只是微调（键角微变、带隙略动），换 X 位（I → Br）才是大改 —— " +
+        "这就是「" + "<span class=\"m\">MAPb(I<sub>1−<i>x</i></sub>Br<sub><i>x</i></sub>)₃</span>" + "」能连续调带隙的原因。";
+    }
+  },
+  {
+    q: "把带隙从 1.40 eV 拉到 2.00 eV：吸收边 λ_g 往哪个方向走？J_SC 与 PCE 是升还是降？为什么「宽带隙」的电池还要拿来当叠层电池的顶电池？",
+    a: () => {
+      const lo = withOpt({ eg: 1.40 }, () => { const x = S(); return { lam: x.lamG, j: x.jsc, p: x.pce }; });
+      const hi = withOpt({ eg: 2.00 }, () => { const x = S(); return { lam: x.lamG, j: x.jsc, p: x.pce }; });
+      return "吸收边按 λ_g = 1240 / E_g 走：带隙<b>变大</b>，吸收边就往<b>短波（蓝移）</b>方向动，" +
+        "够得着的光子变少，" + H_JSC + " 因此下降，而 " + H_VOC + " 是往上涨的 —— 涨回来的那部分补不上丢掉的那部分，" +
+        "所以单结效率会降。既然单结更差，为什么叠层还要用宽带隙顶电池？因为在窄带隙材料里，" +
+        "一个高能光子超出带隙的那部分能量会以热的形式浪费掉（热化损失）；交给宽带隙的顶层去接，" +
+        "这部分就能被捞回来，底层那片窄带隙的再去接剩下的红光。本工具只算单结，看的是「同样一片材料」的取舍。" +
+        "<b>本档读数：</b>1.40 eV → λ_g = " + lo.lam.toFixed(0) + " nm，" + H_JSC + " = " + lo.j.toFixed(1) +
+        " mA/cm²，PCE = " + (lo.p * 100).toFixed(1) + " %；2.00 eV → λ_g = " + hi.lam.toFixed(0) + " nm，" +
+        H_JSC + " = " + hi.j.toFixed(1) + " mA/cm²，PCE = " + (hi.p * 100).toFixed(1) + " %。";
+    }
+  },
+  {
+    q: "打开模块四的对比图：常规半导体的导带和价带分别是什么特征？钙钛矿呢？抽掉一个原子后，两边的缺陷能级分别落在哪里？这解释了钙钛矿的什么本事？",
+    a: () => "常规半导体的<b>导带是反键、价带是成键</b>：抽掉一个原子，剩下的悬挂键能级落在<b>带隙中央</b>附近，" +
+      "正好处在复合最有效的位置（深能级是 Shockley–Read–Hall 复合的主力），所以缺陷多一点器件就废了。" +
+      "铅卤钙钛矿不一样：价带顶（Pb 6s–I 5p 反键）和导带底（Pb 6p–I 5p 反键）<b>都是反键的</b>，" +
+      "缺一个原子产生的能级因此被<b>推进能带里面</b>（或只留下浅能级），带隙中间反而是干净的。" +
+      "这解释了它的「缺陷容忍」：溶液法旋涂出来的多晶薄膜，缺陷密度比单晶硅高好几个数量级，" +
+      "却依然能拿到长载流子寿命与高发光效率 —— 剩下的损失主要落在「非辐射复合」这一项上" +
+      "（读数里「非辐射复合（1/ERE）」那一行就是它）。",
+  },
+  {
+    q: "只换电子传输层（ΔE_C 三档各试一遍），其它不动：J_SC、V_OC、FF、PCE 各自怎么变？为什么「能带对齐」不是越平越好？最优区间大概在哪？",
+    a: () => {
+      const cur = S();
+      const shot = (dec) => {
+        const r = withOpt({ dec: dec }, () => { const x = S(); return { j: x.jsc, v: x.voc, f: x.ff, p: x.pce, c: x.coll }; });
+        r.dec = dec; return r;
+      };
+      const neg = shot(ETLS[0].dec), mid = shot(ETLS[1].dec), big = shot(ETLS[2].dec);
+      const line = (x) => fmtEc(x.dec) + " eV：收集 " + pct(x.c) + "，" + H_JSC + " " + x.j.toFixed(1) +
+        " mA/cm²，" + H_VOC + " " + x.v.toFixed(3) + " V，FF " + x.f.toFixed(3) + "，PCE " + (x.p * 100).toFixed(1) + " %";
+      return "<b>负的那一侧是势垒：</b>Δ" + "<span class=\"m\"><i>E</i><sub>C</sub></span>" +
+        " &lt; 0 意味着电子要往上爬一个台阶才进得去 ETL，界面抽取速度按 e^(−|ΔE_C|/kT) 被压掉，" +
+        "收集效率、" + H_JSC + " 和 FF 一起垮。<b>正的一旦过大（悬崖），</b>电子好抽了，但接触电势上限被吃掉，" +
+        H_JSC + " 不动、" + H_VOC + " 先降。<b>折中区在 0.1～0.3 eV</b>：既挡得住空穴，又不至于白白丢太多电压 —— " +
+        "所以「能带对齐」从来不是越平越好，完全齐平的时候电子过得去、空穴也容易跟着往回漏，选择性反而不行。" +
+        "<b>本档读数：</b>Δ" + "<span class=\"m\"><i>E</i><sub>C</sub></span> = " +
+        line(neg) + "；" + line(mid) + "；" + line(big) + "。" +
+        "当前这一档 Δ" + "<span class=\"m\"><i>E</i><sub>C</sub></span> = " + fmtEc(cur.dEc) +
+        " eV，PCE = " + (cur.pce * 100).toFixed(2) + " %。";
+    }
+  },
+  {
+    q: "把扩散长度从 1500 nm 拉到 100 nm，再看层厚从 200 nm 拉到 1000 nm：收集效率怎么变？什么时候「加厚」反而亏？钙钛矿的扩散长度通常有多长——这解释了什么？",
+    a: () => {
+      const a1 = withOpt({ ld: 1500, d: 500 }, () => { const x = S(); return { c: x.coll, p: x.pce, j: x.jsc }; });
+      const a2 = withOpt({ ld: 100, d: 500 }, () => { const x = S(); return { c: x.coll, p: x.pce, j: x.jsc }; });
+      const b1 = withOpt({ ld: 1000, d: 200 }, () => { const x = S(); return { a: x.absEff, c: x.coll, p: x.pce }; });
+      const b2 = withOpt({ ld: 1000, d: 1000 }, () => { const x = S(); return { a: x.absEff, c: x.coll, p: x.pce }; });
+      return "<b>扩散长度那一边：</b>扩散长度一短，载流子还没走到传输层就复合了，收集效率塌、短路电流跟着塌。" +
+        "<b>厚度那一边：</b>加厚能把光吃得更干净（吸收效率上升），但更深处产生的载流子要走更远的路，" +
+        "收集效率反而下降 —— 所以厚度有个最优值，本工具里在几百 nm 量级。<b>实际钙钛矿薄膜的扩散长度" +
+        "常常在几百 nm 到几 µm 量级</b>，与片子厚度同量级甚至更长，这正解释了为什么它只要几百 nm " +
+        "就能把光吃干净，不必像硅那样做到上百 µm。" +
+        "<b>本档读数：</b>500 nm 厚、" + H_LD + " 从 1500 降到 100 nm：收集 " + pct(a1.c) + " → " + pct(a2.c) +
+        "，" + H_JSC + " " + a1.j.toFixed(1) + " → " + a2.j.toFixed(1) + " mA/cm²；" +
+        H_LD + " = 1000 nm 时把厚度从 200 加到 1000 nm：吸收 " + pct(b1.a) + " → " + pct(b2.a) +
+        "，收集 " + pct(b1.c) + " → " + pct(b2.c) + "，PCE " + (b1.p * 100).toFixed(1) + " % → " +
+        (b2.p * 100).toFixed(1) + " %。";
+    }
+  }
+];
+let ANS_EL = [];
+function buildChal() {
+  const grid = $("chalGrid");
+  if (!grid) return;
+  grid.innerHTML = ""; ANS_EL = [];
+  CHAL.forEach((c, i) => {
+    const d = document.createElement("div");
+    d.className = "chal";
+    d.innerHTML = "<div class=\"chal-head\"><b>" + (i + 1) + ". " + c.q + "</b><span class=\"chev\">▶</span></div>" +
+      "<div class=\"chal-body\"><div class=\"ans\"></div><div class=\"btn-row\"><button>看看答案</button></div></div>";
+    grid.appendChild(d);
+    d.querySelector(".chal-head").onclick = () => d.classList.toggle("open");
+    const ans = d.querySelector(".ans");
+    ANS_EL.push(ans);
+    d.querySelector(".btn-row button").onclick = e => {
+      e.stopPropagation();
+      if (!ans.innerHTML) ans.innerHTML = CHAL[i].a();
+      ans.classList.toggle("show");
+    };
+  });
+}
+function refreshAnswers() { ANS_EL.forEach((el, i) => { el.innerHTML = CHAL[i].a(); }); }
+
+/* ==================================================================
+   10. 控件、动画与初始化
+   ================================================================== */
+function changed() {
+  ST = null; PARTS = [];
+  syncInputs(); render();
+}
+function syncInputs() {
+  const sv = (id, v) => { const e = $(id); if (e) e.value = v; };
+  sv("egSlider", Math.round(OPT.eg * 100));
+  sv("dSlider", OPT.d);
+  sv("ldSlider", OPT.ld);
+}
+function bindAll() {
+  const sl = (id, set) => { const e = $(id); if (e) e.oninput = () => { set(+e.value); changed(); }; };
+  sl("egSlider", v => { OPT.eg = v / 100; });
+  sl("dSlider", v => { OPT.d = v; });
+  sl("ldSlider", v => { OPT.ld = v; });
+  const ck = (id, key) => {
+    const e = $(id);
+    if (!e) return;
+    e.checked = !!OPT[key];
+    e.onchange = () => { OPT[key] = e.checked; if (key === "anim") startAnim(); render(); };
+  };
+  ck("ckAnim", "anim"); ck("ckRec", "recomb"); ck("ckDark", "dark"); ck("ckOff", "off");
+}
+let _raf = null;
+function requestDraw() {
+  if (_raf) return;
+  _raf = (typeof requestAnimationFrame === "function")
+    ? requestAnimationFrame(() => { _raf = null; render(); })
+    : (render(), null);
+}
+function render() {
+  drawDev(); drawBand(); drawJv(); drawDef(); drawLat();
+  updatePanels();
+  if (ANS_EL.length) refreshAnswers();
+}
+function loop() {
+  ANIM_RAF = null;
+  if (!OPT.anim) return;
+  ANIM_T++;
+  const s = S();
+  stepParts(s, devBoxes(s));
+  drawDev();
+  ANIM_RAF = requestAnimationFrame(loop);
+}
+function startAnim() {
+  if (!OPT.anim) return;
+  if (ANIM_RAF) return;
+  ANIM_RAF = requestAnimationFrame(loop);
+}
+function fitAll() {
+  fitCanvas(DV, "dev"); fitCanvas(BD, "band"); fitCanvas(JVC, "jv");
+  fitCanvas(DF, "def"); fitCanvas(LT, "lat");
+  render();
+}
+function attach() {
+  const dc = DV.canvas;
+  if (dc) {
+    dc.addEventListener("mousemove", e => {
+      const r = dc.getBoundingClientRect();
+      const mx = e.clientX - r.left, my = e.clientY - r.top;
+      let h = -1;
+      for (let i = 0; i < DV.rects.length; i++) {
+        const b = DV.rects[i];
+        if (mx >= b.x && mx <= b.x + b.w && my >= b.y && my <= b.y + b.h) h = i;
+      }
+      if (h !== DV.hover) { DV.hover = h; drawDev(); }
+    });
+    dc.addEventListener("mouseleave", () => { if (DV.hover !== -1) { DV.hover = -1; drawDev(); } });
+  }
+  const jc = JVC.canvas;
+  if (jc) {
+    jc.addEventListener("mousemove", e => {
+      const r = jc.getBoundingClientRect();
+      JVC.hover = { x: e.clientX - r.left, y: e.clientY - r.top };
+      drawJv();
+    });
+    jc.addEventListener("mouseleave", () => { JVC.hover = null; drawJv(); });
+  }
+  const lc = LT.canvas;
+  if (lc) {
+    lc.addEventListener("mousedown", e => { LT.drag = { x: e.clientX, y: e.clientY }; });
+    window.addEventListener("mouseup", () => { LT.drag = null; });
+    window.addEventListener("mousemove", e => {
+      if (!LT.drag) return;
+      LT.yaw += (e.clientX - LT.drag.x) * 0.008;
+      LT.pitch = clamp(LT.pitch + (e.clientY - LT.drag.y) * 0.006, 0.06, 1.25);
+      LT.drag = { x: e.clientX, y: e.clientY };
+      drawLat();
+    });
+  }
+  document.addEventListener("click", e => {
+    const h = e.target.closest ? e.target.closest(".fold-head") : null;
+    if (h) h.parentNode.classList.toggle("open");
+  });
+  window.addEventListener("resize", () => fitAll());
+}
+function init() {
+  try {
+    buildLegend();
+    buildBtns();
+    buildChal();
+    fitCanvas(DV, "dev"); fitCanvas(BD, "band"); fitCanvas(JVC, "jv");
+    fitCanvas(DF, "def"); fitCanvas(LT, "lat");
+    bindAll();
+    attach();
+    syncInputs();
+  } catch (err) {
+    if (typeof console !== "undefined") console.error("[初始化]", err);
+  }
+  render();
+  startAnim();
+}
+if (typeof document !== "undefined" && document.getElementById) {
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
+  else init();
+}
+
+/* i18n 启动必须在 init() 之后：setLang() 会重跑 render()，
+   放到 init() 之前会在 fitAll() 之前触发绘制，一旦抛异常整个 init() 就跑不到（挑战与画布会空）。 */
+(function () {
+  try {
+    i18nWatch();
+    ORIG_TITLE = ORIG_TITLE || document.title;
+    var btn = document.getElementById("langBtn");
+    if (btn) btn.onclick = function () { setLang(LANG === "en" ? "zh" : "en"); };
+    if (LANG === "en") setLang("en"); else { document.title = ORIG_TITLE; i18nWalk(document.body); }
+  } catch (e) { }
+})();
+</script>
+<div class="site-foot">本工具是 EIT-SP（半导体物理交互式教学工具箱）的一部分（武汉大学物理学院《半导体物理》智慧课程），以 MIT 协议开源，可自由使用与二次开发；转载请保留出处。反馈意见 <a href="mailto:doctorwanghao@qq.com">doctorwanghao@qq.com</a></div>
+</body>
+</html>

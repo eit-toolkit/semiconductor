@@ -1,0 +1,2424 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<!-- SPDX-License-Identifier: MIT -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>自旋电子学交互教学工具</title>
+<style>
+  :root {
+    --bg: #f7f9fb;
+    --panel: #ffffff;
+    --border: #dde4ec;
+    --text: #2c3e50;
+    --text-sub: #6b7a8c;
+    --blue: #1976d2;
+    --blue-light: #e3f0fb;
+    --orange: #ef8c1a;
+    --red: #d94a3d;
+    --teal: #0f9b8e;
+    --green: #2e9e5b;
+    --purple: #8e5bd0;
+    --gray-ref: #9aa5b1;
+    --probe: #f5c518;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Microsoft YaHei", "PingFang SC", "Segoe UI", sans-serif;
+    background: var(--bg); color: var(--text); padding: 14px;
+  }
+  header { position: relative;
+    display: flex; align-items: baseline; justify-content: center;
+    gap: 14px; flex-wrap: wrap; text-align: center; margin-bottom: 12px;
+  }
+  .lang-btn { position: absolute; right: 0; top: 0; border: 1px solid var(--border); background: #fff;
+    color: var(--text-sub); padding: 3px 10px; border-radius: 7px; cursor: pointer; font-size: 12px; font-weight: 600; }
+  .lang-btn:hover { border-color: var(--blue); color: var(--blue); }
+  header h1 { font-size: 20px; }
+  .layout { display: flex; gap: 14px; align-items: flex-start; max-width: 1500px; margin: 0 auto; }
+  .viz { flex: 0 0 64%; min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+  .side { flex: 1; min-width: 300px; display: flex; flex-direction: column; gap: 12px; }
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; }
+  canvas { display: block; width: 100%; border-radius: 6px; touch-action: none; }
+  .chart-wrap { position: relative; }
+  .hint { font-size: 12px; color: var(--text-sub); margin-top: 6px; line-height: 1.6; }
+  .sec-title { font-size: 13.5px; font-weight: 700; margin: 2px 0 6px; }
+  /* 模块编号徽标：只有教学内容模块才带编号；控制面板等辅助面板不是模块，不加 */
+  .sec-title .mtag {
+    display: inline-block; background: var(--blue); color: #fff;
+    font-size: 11px; font-weight: 700; padding: 1.5px 7px;
+    border-radius: 5px; margin-right: 6px; vertical-align: 1.5px; letter-spacing: .3px;
+  }
+  .ctrl { margin-bottom: 12px; }
+  .ctrl:last-child { margin-bottom: 0; }
+  .ctrl-head { display: flex; justify-content: space-between; align-items: baseline; font-size: 13.5px; font-weight: 600; margin-bottom: 4px; }
+  .ctrl-head .val { color: var(--blue); font-variant-numeric: tabular-nums; font-weight: 700; }
+  .ctrl input[type=range] { width: 100%; accent-color: var(--blue); }
+  .ctrl .sub { font-size: 12px; color: var(--text-sub); margin-top: 2px; line-height: 1.55; }
+  .btn-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+  .btn-row button {
+    border: 1px solid var(--border); background: #fff; color: var(--text);
+    padding: 5px 11px; border-radius: 7px; cursor: pointer; font-size: 12.5px;
+  }
+  .btn-row button:hover { border-color: var(--blue); color: var(--blue); }
+  .btn-row button.primary { background: var(--blue-light); border-color: var(--blue); color: var(--blue); font-weight: 600; }
+  .btn-row button.sel { background: var(--blue); border-color: var(--blue); color: #fff; font-weight: 600; }
+  .btn-row button:disabled { opacity: .45; cursor: not-allowed; }
+  .btn-row.tight button { padding: 4px 9px; font-size: 12px; }
+  .btn-row button .etlv { font-weight: 500; opacity: .72; font-variant-numeric: tabular-nums; }
+  .legend { display: flex; gap: 6px 14px; flex-wrap: wrap; align-items: center; font-size: 12px; color: var(--text-sub); margin-top: 6px; }
+  .legend > span { display: inline-block; }
+  .swatch {
+    display: inline-block; vertical-align: middle; width: 20px; height: 0;
+    border-top: 3px solid currentColor; border-radius: 2px; margin-right: 6px;
+  }
+  .swatch.dash { border-top-style: dashed; }
+  .swatch.dot { width: 11px; height: 11px; border: none; border-radius: 50%; }
+  .swatch.sq { width: 11px; height: 11px; border: none; border-radius: 3px; }
+  .mini { font-size: 11.5px; color: var(--text-sub); line-height: 1.6; }
+  .empty { font-size: 12px; color: var(--text-sub); padding: 6px 2px; }
+  .kv { display: grid; grid-template-columns: auto 1fr; gap: 3px 10px; font-size: 12.5px; align-items: baseline; }
+  .kv .hd { grid-column: 1 / -1; font-weight: 700; color: var(--text); font-size: 12px; margin: 6px 0 2px; }
+  .kv .k { color: var(--text-sub); white-space: nowrap; }
+  .kv .v { color: var(--text); font-variant-numeric: tabular-nums; }
+  /* 公式直接写在模块说明里：沿用 .m 的数学排版，但说明行窄，允许换行 */
+  .hint .m { white-space: normal; }
+  .hint .eq { display: block; margin-top: 4px; color: var(--text); }
+  /* 挑战任务卡片 */
+  .chal-wrap { max-width: 1500px; margin: 14px auto 0; }
+  .chal-grid { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+  .chal { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 8px 12px; }
+  .chal-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; cursor: pointer; }
+  .chal-head b { font-size: 13.5px; }
+  .chal-head .chev { color: var(--text-sub); font-size: 12px; transition: transform .15s; }
+  .chal.open .chal-head .chev { transform: rotate(90deg); display: inline-block; }
+  .chal-body { display: none; margin-top: 6px; font-size: 12.5px; color: var(--text-sub); line-height: 1.75; }
+  .chal.open { border-color: var(--blue); }
+  .chal.open .chal-body { display: block; }
+  .chal-body .ans { display: none; margin-top: 6px; padding: 7px 10px; background: var(--blue-light); border-radius: 6px; color: var(--text); }
+  .chal-body .ans.show { display: block; }
+  .chal-body .ans b { color: var(--blue); }
+  .chal .q { color: var(--text); }
+  /* ============ 数学公式排版（纯 CSS，零依赖，离线可用） ============ */
+  .frac {
+    display: inline-block; vertical-align: -0.50em; text-align: center;
+    margin: 0 .18em; font-size: .92em; line-height: 1.25;
+  }
+  .frac > .num { display: block; padding: 0 .32em; border-bottom: 1px solid currentColor; }
+  .frac > .den { display: block; padding: 0 .32em; }
+  header .formula { font-size: 15px; color: var(--text-sub); }
+  header .formula.m { font-size: 14px; }   /* .m 的 1.05em 会把页首公式顶出一行 */
+
+  @media (max-width: 980px) {
+    .layout { flex-direction: column; }
+    .viz { flex: 1 1 auto; width: 100%; }
+  }
+  /* ---- 折叠区（.fold）：读数与控制的「更多」专用 ----
+     独立组件，类名一律 .fold：❌ 不许复用 .chal-head / .chev，
+     否则会被挑战区回归脚本按「挑战题」计数，也会污染挑战区视觉基线。 */
+  .fold { margin-top: 7px; border-top: 1px dotted var(--border); padding-top: 5px; }
+  .fold-head { display: flex; align-items: center; gap: 6px; cursor: pointer;
+    font-size: 12px; font-weight: 600; color: var(--text-sub); user-select: none; flex-wrap: wrap; }
+  .fold-head:hover { color: var(--blue); }
+  .fold-head .chev { font-size: 11px; transition: transform .15s; display: inline-block; }
+  .fold.open .fold-head .chev { transform: rotate(90deg); }
+  .fold-body { display: none; margin-top: 4px; }
+  .fold.open .fold-body { display: block; }
+  .fold-val { font-weight: 400; color: var(--text-sub); font-size: 11px; margin-left: auto; }
+  .fold-sub { font-size: 11.5px; color: var(--text-sub); line-height: 1.55; margin: 2px 0 5px; }
+  .kv .hd:first-child { margin-top: 0; }
+  /* ---- 课程页脚 ---- */
+  .site-foot { max-width: 1500px; margin: 18px auto 0; padding: 12px 16px 24px;
+    border-top: 1px solid var(--border); color: var(--text-sub);
+    font-size: 12.5px; line-height: 1.8; text-align: center; }
+  .site-foot a { color: var(--blue, #1976d2); text-decoration: none; }
+  .site-foot a:hover { text-decoration: underline; }
+
+  .m { font-family: "Cambria Math", "STIX Two Math", "Latin Modern Math", "Times New Roman", Times, serif;
+       font-size: 1.05em; font-style: normal; white-space: nowrap; letter-spacing: .01em; }
+  .m i, .m var { font-style: italic; }
+  .m .rm { font-style: normal; }
+  .m sub, .m sup { font-size: .70em; font-style: normal; line-height: 1; }
+  .m sub { vertical-align: -.28em; }
+  .m sup { vertical-align: .50em; }
+.m .m { font-size: 1em; }   /* 嵌套容器（TEXH 下标转换叠加）不再放大字号 */
+  .m .op { font-style: normal; padding: 0 .24em; }
+  .m .sl { font-style: normal; padding: 0 .05em; }
+  .m .un { font-style: normal; padding-left: .16em; }
+  .op, .rm, .un { font-style: normal; }
+  .frac { display: inline-flex; flex-direction: column; vertical-align: -.45em; text-align: center; margin: 0 .18em; }
+  .frac .num { border-bottom: 1px solid currentColor; padding: 0 .22em; line-height: 1.16; }
+  .frac .den { padding: 0 .22em; line-height: 1.16; }
+  .sqrt { display: inline-flex; align-items: stretch; }
+  .sqrt .rd { position: relative; padding-left: .30em; padding-top: .10em; }
+  .sqrt .rdc { border-top: 1px solid currentColor; }
+  .sqrt > .rdc, .sqrt .rdc { display: inline-block; position: static; font-size: 1em;
+             border-top: .055em solid currentColor; padding: .06em .12em 0 .10em; margin: 0; line-height: 1; }
+
+  /* 公式排版：分式 / 根式 —— 全站统一为「回旋共振 v06」写法（置于末尾，覆盖本文件早期变体） */
+  .frac { display: inline-block; vertical-align: -0.52em; text-align: center; font-size: .78em; margin: 0 .12em; }
+  .frac > .num, .frac .num { display: block; padding: 0 .22em; border-bottom: .055em solid currentColor; line-height: inherit; }
+  .frac > .den, .frac .den { display: block; padding: 0 .22em; line-height: inherit; }
+  .sqrt { display: inline-block; white-space: nowrap; vertical-align: baseline; margin: 0; font-size: 1em; }
+  .sqrt > .rd, .sqrt .rd { display: inline-block; position: static; font-size: 1em; line-height: inherit; padding: 0 .02em 0 0; margin: 0; }
+  .sqrt > .rdc, .sqrt .rdc { display: inline-block; position: static; font-size: 1em;
+             border-top: .055em solid currentColor; padding: .06em .12em 0 .10em; margin: 0; line-height: 1; }
+  .sqrt .rdc:has(sup) { padding-top: .18em; }
+  .ck-row { display: flex; flex-wrap: wrap; gap: 5px 16px; margin-top: 6px; font-size: 12.5px; color: var(--text-sub); }
+  .ck-row label { display: inline-flex; align-items: center; gap: 5px; cursor: pointer; user-select: none; }
+  .ck-row input { accent-color: var(--blue); margin: 0; }
+  .kv .warn { color: var(--red); font-weight: 700; }
+  /* ---- 本工具专属：顶部跳转条（不做隐藏标签页，避免模块徽标不可见） ---- */
+  .jumpbar { display: flex; gap: 8px; max-width: 1500px; margin: 0 auto 12px; flex-wrap: wrap; }
+  .jumpbar button {
+    border: 1px solid var(--border); background: #fff; color: var(--text-sub);
+    padding: 6px 12px; border-radius: 8px; cursor: pointer;
+    font-size: 12.5px; font-weight: 600; font-family: inherit;
+  }
+  .jumpbar button:hover { border-color: var(--blue); color: var(--blue); }
+  .jumpbar button.sel { background: var(--blue); border-color: var(--blue); color: #fff; }
+  /* ---- 本工具专属：控制面板分组标题 ---- */
+  .grp {
+    margin: 14px 0 2px; padding-top: 9px; border-top: 1px dashed var(--border);
+    font-size: 12px; font-weight: 700; color: var(--blue); letter-spacing: .3px;
+  }
+  .grp:first-of-type { margin-top: 2px; border-top: 0; padding-top: 0; }
+</style>
+<body>
+
+<header>
+  <button id="langBtn" class="lang-btn" data-noi18n title="中文 / English">EN</button>
+  <h1>自旋电子学交互教学工具</h1>
+  <div class="formula m"><i>P</i> <span class="op">=</span> <span class="frac"><span class="num"><i>N</i><sub>↑</sub><span class="op">−</span><i>N</i><sub>↓</sub></span><span class="den"><i>N</i><sub>↑</sub><span class="op">+</span><i>N</i><sub>↓</sub></span></span>　·　TMR <span class="op">=</span> <span class="frac"><span class="num">2<i>P</i><sub>1</sub><i>P</i><sub>2</sub></span><span class="den">1<span class="op">−</span><i>P</i><sub>1</sub><i>P</i><sub>2</sub></span></span>　·　<i>L</i><sub>s</sub> <span class="op">=</span> <span class="sqrt"><span class="rd">√</span><span class="rdc"><i>D</i><sub>s</sub><i>τ</i><sub>s</sub></span></span></div>
+</header>
+
+<div class="jumpbar" id="jumpbar">
+  <button class="sel" data-card="card1">① MTJ 与 TMR</button>
+  <button data-card="card2">② 标定曲线</button>
+  <button data-card="card3">③ 自旋注入</button>
+  <button data-card="card4">④ 电流写磁矩</button>
+</div>
+
+<div class="layout">
+  <!-- ============ 左侧：四个模块 ============ -->
+  <div class="viz">
+
+    <div class="card" id="card1">
+      <div class="sec-title"><span class="mtag">模块一</span>磁性隧道结：两侧自旋态密度的匹配</div>
+      <div class="chart-wrap"><canvas id="mtj" data-h="400" tabindex="0"></canvas></div>
+      <div class="legend" id="legMtj"></div>
+      <div class="hint" id="hintMtj"></div>
+    </div>
+
+    <div class="card" id="card2">
+      <div class="sec-title"><span class="mtag">模块二</span>TMR 随极化率、电阻随势垒厚度</div>
+      <div class="chart-wrap"><canvas id="tmr" data-h="290" tabindex="0"></canvas></div>
+      <div class="hint" id="hintTmr"></div>
+    </div>
+
+    <div class="card" id="card3">
+      <div class="sec-title"><span class="mtag">模块三</span>自旋注入与扩散：非平衡自旋的空间衰减</div>
+      <div class="chart-wrap"><canvas id="inj" data-h="340" tabindex="0"></canvas></div>
+      <div class="legend" id="legInj"></div>
+      <div class="hint" id="hintInj"></div>
+    </div>
+
+    <div class="card" id="card4">
+      <div class="sec-title"><span class="mtag">模块四</span>自旋转移矩 / 自旋轨道矩：LLG 动力学</div>
+      <div class="chart-wrap"><canvas id="dyn" data-h="360" tabindex="0"></canvas></div>
+      <div class="legend" id="legDyn"></div>
+      <div class="hint" id="hintDyn"></div>
+    </div>
+
+  </div>
+
+  <!-- ============ 右侧：控制面板与读数 ============ -->
+  <div class="side">
+    <div class="card">
+      <div class="sec-title">控制面板</div>
+
+      <div class="grp">隧道结（模块一、模块二）</div>
+
+      <div class="ctrl">
+        <div class="ctrl-head"><span>自由层磁化取向</span><span class="val" id="cfgVal">平行</span></div>
+        <div class="btn-row tight" id="cfgBtns" style="margin-top:0;"></div>
+        <div class="sub" id="cfgSub"></div>
+      </div>
+
+      <div class="ctrl">
+        <div class="ctrl-head"><span>参考层极化率 <span class="m"><i>P</i><sub>1</sub></span></span><span class="val" id="p1Val">0.70</span></div>
+        <input type="range" id="p1Slider" min="10" max="95" value="70" step="1">
+        <div class="sub" id="p1Sub"></div>
+      </div>
+
+      <div class="ctrl">
+        <div class="ctrl-head"><span>自由层极化率 <span class="m"><i>P</i><sub>2</sub></span></span><span class="val" id="p2Val">0.70</span></div>
+        <input type="range" id="p2Slider" min="10" max="95" value="70" step="1">
+        <div class="sub" id="p2Sub"></div>
+      </div>
+
+      <div class="ctrl">
+        <div class="ctrl-head"><span>势垒厚度 <span class="m"><i>d</i></span></span><span class="val" id="dVal">1.00 nm</span></div>
+        <input type="range" id="dSlider" min="6" max="30" value="10" step="1">
+        <div class="sub" id="dSub"></div>
+      </div>
+
+      <div class="grp">自旋注入与扩散（模块三）</div>
+
+      <div class="ctrl">
+        <div class="ctrl-head"><span>自旋扩散系数 <span class="m"><i>D</i><sub>s</sub></span></span><span class="val" id="dsVal">20 cm<sup>2</sup>/s</span></div>
+        <input type="range" id="dsSlider" min="1" max="120" value="20" step="1">
+        <div class="sub" id="dsSub"></div>
+      </div>
+
+      <div class="ctrl">
+        <div class="ctrl-head"><span>自旋寿命 <span class="m"><i>τ</i><sub>s</sub></span></span><span class="val" id="tsVal">100 ps</span></div>
+        <input type="range" id="tsSlider" min="1" max="600" value="100" step="1">
+        <div class="sub" id="tsSub"></div>
+      </div>
+
+      <div class="ctrl">
+        <div class="ctrl-head"><span>沟道长度 <span class="m"><i>L</i></span></span><span class="val" id="lcVal">600 nm</span></div>
+        <input type="range" id="lcSlider" min="100" max="2000" value="600" step="20">
+        <div class="sub" id="lcSub"></div>
+      </div>
+
+      <div class="grp">磁矩动力学（模块四）</div>
+
+      <div class="ctrl">
+        <div class="ctrl-head"><span>驱动方式</span><span class="val" id="tqVal">自旋转移矩</span></div>
+        <div class="btn-row tight" id="tqBtns" style="margin-top:0;"></div>
+        <div class="sub" id="tqSub"></div>
+      </div>
+
+      <div class="ctrl">
+        <div class="ctrl-head"><span>电流密度 <span class="m"><i>J</i></span></span><span class="val" id="jVal">4.0 MA/cm<sup>2</sup></span></div>
+        <input type="range" id="jSlider" min="0" max="120" value="40" step="1">
+        <div class="sub" id="jSub"></div>
+      </div>
+
+      <div class="ctrl">
+        <div class="ctrl-head"><span>吉尔伯特阻尼 <span class="m"><i>α</i></span></span><span class="val" id="alpVal">0.010</span></div>
+        <input type="range" id="alpSlider" min="4" max="60" value="10" step="1">
+        <div class="sub" id="alpSub"></div>
+      </div>
+
+      <div class="ctrl">
+        <div class="ctrl-head"><span>面内辅助场 <span class="m"><i>H</i><sub>x</sub></span></span><span class="val" id="hxVal">0 mT</span></div>
+        <input type="range" id="hxSlider" min="0" max="200" value="0" step="5">
+        <div class="sub" id="hxSub"></div>
+      </div>
+
+      <div class="ctrl">
+        <div class="ctrl-head"><span>显示项目</span></div>
+        <div class="ck-row" id="ckRow">
+          <label><input type="checkbox" id="ckAnim" checked>隧穿 / 磁矩动画</label>
+          <label><input type="checkbox" id="ckTrail" checked>磁矩轨迹</label>
+        </div>
+      </div>
+
+      <div class="ctrl">
+        <div class="ctrl-head"><span>预设</span></div>
+        <div class="btn-row tight" id="preBtns" style="margin-top:0;"></div>
+      </div>
+
+      <div class="ctrl">
+        <div class="ctrl-head"><span>固定参量</span></div>
+        <div class="sub" id="fixVal"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="sec-title">读数面板</div>
+      <div class="kv" id="readout"></div>
+      <div class="fold" id="foldRo">
+        <div class="fold-head"><span class="chev">▶</span><span>更多读数（中间量与模型边界）</span></div>
+        <div class="fold-body"><div class="kv" id="readoutMore"></div></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ============ 底部：引导探究 ============ -->
+<div class="chal-wrap">
+  <div class="card">
+    <div style="display:flex; justify-content:space-between; align-items:baseline; gap:10px;">
+      <b style="font-size:14.5px;">引导探究（点击展开，先自己试一试再看答案）</b>
+      <span style="font-size:12px; color:var(--text-sub);">挑战任务</span>
+    </div>
+    <div class="chal-grid" id="chalGrid"></div>
+  </div>
+</div>
+<script>
+/* ==================================================================
+   i18n（C1 单文件双语：物理代码仍然只有一份）
+   LANG 取值优先级：URL ?lang=en / ?lang=zh  >  localStorage('opl_lang')  >  默认中文。
+   不做 location 跳转——保住「单文件拷走也能用」。
+   三个注入点，**业务字符串一个都不改**：
+     ① partsOf()   画布 token：带 i/sub/sup/un 标记的是物理量、下标与单位，跳过
+     ② fillText/measureText 原型挂钩：兜住直接写进画布的中文串
+     ③ DOM 文本节点：静态 HTML 与 JS 写进来的 innerHTML，用 MutationObserver 兜住新增节点
+   T() 先查整句词典，未命中再按「最长优先」做短语替换，因此拼接串也能翻。
+   漏翻会被记进 window.__MISS，可导出核对。 */
+var LANG = (function () {
+  var m = /[?&]lang=([a-zA-Z]+)/.exec(location.search);
+  var q = m ? m[1].toLowerCase() : "";
+  if (q === "en" || q === "zh") return q;
+  var s = "";
+  try { s = localStorage.getItem("opl_lang") || ""; } catch (e) { }
+  return (s === "en" || s === "zh") ? s : "zh";
+})();
+var ORIG_TITLE = document.title;
+var __MISS = [];
+try { window.__MISS = __MISS; } catch (e) { }
+function noteMiss(s) { if (__MISS.indexOf(s) < 0) __MISS.push(s); }
+function TSoft(s) {
+  if (!T._K) T._K = Object.keys(I18N).sort(function (a, b) { return b.length - a.length; });
+  var out = s, i, k, orig = s;
+  /* 两遍：第一遍只吃长度 ≥ 2 的短语；第二遍的单字 key 只在「传进来的串
+     恰好就是这一个字」时才上场——画布逐字排版会拿单字去 measureText，那一
+     路必须翻。反过来，绝不让单字 key 去切更长的句子：否则「导」「子」「原」
+     会把「半导体」「电子数」「泡利原理」切成半 conduction 体、电 quantum 数、
+     泡利 origin 理这类中英混排。同一条理由也适用于「下」：整句不该被切碎。 */
+  for (var pass = 0; pass < 2; pass++) {
+    for (i = 0; i < T._K.length; i++) {
+      k = T._K[i];
+      if (k.length < 2 && (pass === 0 || orig !== k)) continue;
+      if (out.indexOf(k) >= 0) out = out.split(k).join(I18N[k]);
+    }
+  }
+  return out;
+}
+/* 同一句被 DOM 切成好几个文本节点时，首尾空格会随机落在 data 里；
+   所以除了「整句命中」，再试一次「去空格后命中」并原样补回首尾空白。 */
+function trimMap() {
+  if (T._TM) return T._TM;
+  var m = {};
+  for (var k in I18N) if (Object.prototype.hasOwnProperty.call(I18N, k)) {
+    var t = k.replace(/^\s+|\s+$/g, "");
+    if (t && m[t] === undefined) m[t] = I18N[k];
+  }
+  T._TM = m;
+  return m;
+}
+/* eslint-disable no-use-before-define */
+function T(s) {
+  if (LANG !== "en" || typeof s !== "string" || !s) return s;
+  if (!/[一-鿿]/.test(s)) return s;
+  if (Object.prototype.hasOwnProperty.call(I18N, s)) return I18N[s];
+  var tm = trimMap(), core = s.replace(/^\s+|\s+$/g, "");
+  if (core && tm[core] !== undefined) {
+    var lead = s.slice(0, s.length - s.replace(/^\s+/, "").length);
+    var tail = s.slice(s.replace(/\s+$/, "").length);
+    return lead + tm[core] + tail;
+  }
+  var v = TSoft(s);
+  /* 译完还剩汉字也算漏翻：只翻掉一半的「半吊子译文」曾经让 __MISS 恒为 0。 */
+  if (v === s || /[\u3400-\u9FFF]/.test(v)) noteMiss(s);
+  return v;
+}
+
+var I18N = {
+  /* ---- 词典：中文原文 → 英文。key 禁含运行时数字（换个参数就漏），数字前后要拆开 ---- */
+  "自旋电子学交互教学工具": "Spintronics — Interactive Toolkit",
+  "模块一": "Module 1",
+  "模块二": "Module 2",
+  "模块三": "Module 3",
+  "模块四": "Module 4",
+  "控制面板": "Control Panel",
+  "读数面板": "Readout Panel",
+  "挑战任务": "Challenges",
+  "引导探究（点击展开，先自己试一试再看答案）": "Explore (click to open — try it yourself before reading the answer)",
+  "看看答案": "Show answer",
+  "显示项目": "Display",
+  "预设": "Presets",
+  "固定参量": "Fixed parameters",
+  "更多读数（中间量与模型边界）": "More readouts (intermediate quantities and model limits)",
+  "① MTJ 与 TMR": "① MTJ and TMR",
+  "② 标定曲线": "② Calibration curves",
+  "③ 自旋注入": "③ Spin injection",
+  "④ 电流写磁矩": "④ Writing with current",
+  "⑤ MRAM": "⑤ MRAM",
+  "磁性隧道结：两侧自旋态密度的匹配": "Magnetic tunnel junction: matching the two spin densities of states",
+  "TMR 随极化率、电阻随势垒厚度": "TMR versus polarization, resistance versus barrier thickness",
+  "自旋注入与扩散：非平衡自旋的空间衰减": "Spin injection and diffusion: how nonequilibrium spin decays in space",
+  "自旋转移矩 / 自旋轨道矩：LLG 动力学": "Spin-transfer / spin-orbit torque: LLG dynamics",
+  "隧道结（模块一、模块二）": "Tunnel junction (Modules 1–2)",
+  "自旋注入与扩散（模块三）": "Spin injection and diffusion (Module 3)",
+  "磁矩动力学（模块四）": "Magnetization dynamics (Module 4)",
+  "自由层磁化取向": "Free-layer magnetization",
+  "参考层极化率 ": "Reference-layer polarization ",
+  "自由层极化率 ": "Free-layer polarization ",
+  "势垒厚度 ": "Barrier thickness ",
+  "自旋扩散系数 ": "Spin diffusion coefficient ",
+  "自旋寿命 ": "Spin lifetime ",
+  "沟道长度 ": "Channel length ",
+  "驱动方式": "Driving scheme",
+  "电流密度 ": "Current density ",
+  "吉尔伯特阻尼 ": "Gilbert damping ",
+  "面内辅助场 ": "In-plane assist field ",
+  "隧穿 / 磁矩动画": "Tunneling / magnetization animation",
+  "磁矩轨迹": "Trajectory trail",
+  "平行": "parallel",
+  "反平行": "antiparallel",
+  "自旋转移矩": "spin-transfer torque",
+  "自旋轨道矩": "spin-orbit torque",
+  "典型 MgO 结": "Typical MgO junction",
+  "低极化金属结": "Weakly polarized metal",
+  "写入操作": "Writing operation",
+  "长寿命沟道": "Long-lived channel",
+  "两侧做多数自旋的标准不一致 ⇒ 两条通道一起变差。": "The two layers disagree on which spin is the majority, so both channels degrade together.",
+  "两侧共用同一套多数/少数划分 ⇒ 匹配最好。": "Both layers share the same majority/minority split, so the match is best.",
+  "注意 L_s 只对它取平方根。": "Mind that L_s only takes the square root of it.",
+  "阻尼越大越“黏”，进动越容易收敛，代价是阈值线性抬高。": "Larger damping is stickier: the precession settles more easily, at the cost of a linearly higher threshold.",
+  "顺着电流方向的面内场，可以降低 STT 的阈值。": "An in-plane field along the current lowers the STT threshold.",
+  "SOT 单独只能把磁矩拉到面内；加上面内场才有确定的翻转方向。": "SOT alone only drags the moment in-plane; an assist field is needed for a deterministic direction.",
+  "自旋翻转散射（Elliott–Yafet、Dyakonov–Perel 等）的快慢；注意 L_s 只对它取平方根。": "The rate of spin-flip scattering (Elliott–Yafet, Dyakonov–Perel, …); mind that L_s only takes the square root of it.",
+  "势垒平均高度 Φ": "Mean barrier height Φ",
+  "自由层厚度 / M_s": "Free-layer thickness / M_s",
+  "有效垂直各向异性 μ₀H_k": "Effective perpendicular anisotropy μ₀H_k",
+  "自旋霍尔角 θ_SH": "Spin Hall angle θ_SH",
+  "参考 RA₀（1 nm 平行态）": "Reference RA₀ (1 nm, parallel)",
+  "读出电压 V": "Read voltage V",
+  "初始倾角 / 模拟时长": "Initial tilt / simulation span",
+  "隧道结（模块一、二）": "Tunnel junction (Modules 1–2)",
+  "自旋输运（模块三）": "Spin transport (Module 3)",
+  "磁化动力学（模块四）": "Magnetization dynamics (Module 4)",
+  "当前构型": "Current configuration",
+  "电导 G / G′": "Conductance G / G′",
+  "TMR": "TMR",
+  "RA（当前构型）": "RA (current configuration)",
+  "读出电流密度": "Read current density",
+  "自旋扩散长度 L_s": "Spin diffusion length L_s",
+  "临界电流密度 J_c": "Critical current density J_c",
+  "J / J_c": "J / J_c",
+  "是否翻转": "Switched?",
+  "中间量": "Intermediate quantities",
+  "模型边界": "Model limits",
+  "参考层 D↑ / D↓": "Reference layer D↑ / D↓",
+  "自由层 D↑ / D↓": "Free layer D↑ / D↓",
+  "衰减常数 κ": "Decay constant κ",
+  "WKB 透射因子 exp(−2κd)": "WKB transmission factor exp(−2κd)",
+  "相对阻值（对 1 nm 平行态）": "Resistance relative to 1 nm parallel",
+  "进动频率 γH_k/2π": "Precession frequency γH_k/2π",
+  "Slonczewski 效率 η = P₁/2": "Slonczewski efficiency η = P₁/2",
+  "扩散通过沟道的时间": "Time to diffuse across the channel",
+  "Jullière 模型": "Jullière model",
+  "真实 MgO 隧道结": "Real MgO junction",
+  "面内辅助场缺失时": "Without an in-plane assist field",
+  "自旋 ↑ 通道（多数自旋，与磁化同向）": "Spin-↑ channel (majority, aligned with M)",
+  "自旋 ↓ 通道（少数自旋）": "Spin-↓ channel (minority)",
+  "MgO 隧穿势垒": "MgO tunnel barrier",
+  "平行态 P": "Parallel state P",
+  "反平行态 AP": "Antiparallel state AP",
+  "剩余自旋极化深浅": "Shading: remaining spin polarization",
+  "探测端位置": "Detector position",
+  "磁矩轨迹（失稳后的进动）": "Moment trajectory (precession after destabilization)",
+  "易轴 z / 参考极化方向 p̂": "Easy axis z / reference polarization p̂",
+  "m_z 时间曲线": "m_z versus time",
+  "参考层 FM₁（CoFeB）": "Reference layer FM₁ (CoFeB)",
+  "自由层 FM₂（CoFeB）": "Free layer FM₂ (CoFeB)",
+  "多数 / 少数": "majority / minority",
+  "同向": "aligned",
+  "翻转后：↑ 成少数": "flipped: ↑ becomes minority",
+  "E_F": "E_F",
+  "总隧穿电导（相对单位）": "Total tunneling conductance (relative units)",
+  "平行 P": "Parallel P",
+  "反平行 AP": "Antiparallel AP",
+  "工作点": "operating point",
+  "自由层极化率 P₂": "Free-layer polarization P₂",
+  "势垒厚度 d（nm）": "Barrier thickness d (nm)",
+  "铁磁注入极": "Ferromagnetic injector",
+  "非磁沟道 NM（自旋在此逐渐遗忘）": "Nonmagnetic channel NM (spin is gradually forgotten here)",
+  "归一化自旋极化 Δn(x)/Δn(0)": "Normalized spin polarization Δn(x)/Δn(0)",
+  "距注入界面的距离 x（nm）": "Distance from the injection interface, x (nm)",
+  "易轴 z（垂直各向异性）": "Easy axis z (perpendicular anisotropy)",
+  "时间 t（ns）": "Time t (ns)",
+  "费米面占据由极化率直接定出，两条通道之和归一化为 1（数值见读数面板）。": "The Fermi-level occupation follows directly from the polarization; the two channels are normalized to sum to 1 (values in the readout panel).",
+  "两条通道的份额同样由极化率定出，之和归一化为 1（数值见读数面板）。": "The two channel shares are set the same way and normalized to sum to 1 (values in the readout panel).",
+  "κ 由势垒高度定；电阻随厚度指数放大，放大倍数记在读数面板。": "κ is set by the barrier height; the resistance grows exponentially with thickness — the factor is listed in the readout panel.",
+  "与迁移率的爱因斯坦关系同型：": "Same form as the Einstein relation for mobility: ",
+  "，越大走得越远。": ", the larger it is, the farther spin travels.",
+  "自旋翻转散射（Elliott–Yafet、Dyakonov–Perel 等）的快慢；注意 ": "How fast spin-flip scattering acts (Elliott–Yafet, Dyakonov–Perel, and so on); note that ",
+  " 只对它取平方根。": " depends on it only through a square root.",
+  "到探测端还剩多少、扩散穿越要多久，都记在读数面板。": "How much is left at the detector and how long the diffusive transit takes are both listed in the readout panel.",
+  "极化电流穿过参考层后把横向角动量交给自由层。": "The polarized current crosses the reference layer and hands its transverse angular momentum to the free layer.",
+  "阈值与当前倍数记在读数面板；低于阈值时只能看到进动被“拖慢”（临界慢化），把电流继续加上去才会真的翻过去。": "The threshold and the current multiple are listed in the readout panel; below threshold you only see the precession being “dragged out” (critical slowing down) — keep raising the current and it really does switch.",
+  "面内场把磁矩掰离易轴、势垒变浅，STT 的阈值随之下降（本工具里 ": "The in-plane field bends the moment off the easy axis and shallows the barrier, so the STT threshold falls (in this tool ",
+  " 只按 α 现算，": " is computed from α alone; ",
+  " 的作用请直接看轨迹曲线的翻转时间）。": " shows its effect directly in the switching time on the trajectory curve).",
+  "自由层厚度 / ": "Free-layer thickness / ",
+  "有效垂直各向异性 μ": "Effective perpendicular anisotropy μ",
+  "自旋霍尔角 ": "Spin Hall angle ",
+  "（1 nm 平行态）": " (1 nm, parallel state)",
+  "自旋扩散长度 ": "Spin diffusion length ",
+  "走 L 后剩余": "Remaining after distance L",
+  "临界电流密度 ": "Critical current density ",
+  "已翻转（−z）": "Switched (−z)",
+  "翻转耗时": "Switching time",
+  "进动频率 γ": "Precession frequency γ",
+  "Slonczewski 效率 η = P": "Slonczewski efficiency η = P",
+  "拉平面内所需 ": "Damping-like field needed to pull it in-plane ",
+  "对应电流 J（SOT）": "Corresponding current J (SOT)",
+  "只计自旋守恒隧穿，TMR 与势垒厚度无关": "Counts spin-conserving tunneling only; TMR independent of barrier thickness",
+  "相干滤波使 TMR 远超本模型": "Coherent filtering pushes TMR far beyond this model",
+  "SOT 只能拉到面内（90°）": "SOT alone pulls it only into the plane (90°)",
+  "铁磁体的 3d 带交换劈裂，两套自旋在费米面处的态密度不再相等 ⇒ ": "Exchange splitting of the ferromagnet’s 3d band makes the two spin species unequal in density of states at the Fermi level ⇒ ",
+  "：同自旋通道的态密度乘积之和才是隧穿电导。": ": it is the sum of products of matching-spin densities of states that gives the tunneling conductance.",
+  "平行时 ↑ 对 ↑、↓ 对 ↓，匹配最好 ⇒ 总电导最高（数值见读数面板）。": "When parallel, ↑ pairs with ↑ and ↓ with ↓ — the best possible match, so the total conductance is highest (values in the readout panel).",
+  "左图是两个极化率相乘的结果：": "The left panel is the product of two polarizations: ",
+  "，所以只调一边收益有限，两边同时高才有量级差异。": ", so tuning one side alone buys little — both must be high to get an order-of-magnitude difference.",
+  "：厚度只改变绝对电阻，不改变 TMR —— 这是 Jullière 模型的直接结论。": ": thickness changes only the absolute resistance, not the TMR — a direct consequence of the Jullière model.",
+  "实际 MgO 单晶势垒靠相干滤波能把 TMR 做到远超本模型的水平，属于模型边界之外。": "Real single-crystal MgO barriers exploit coherent filtering to reach TMR values far above this model — that lies outside its scope.",
+  "注入的非平衡自旋一边扩散一边弛豫 ⇒ ": "The injected nonequilibrium spin diffuses and relaxes at the same time ⇒ ",
+  " 缩短到 1/4，": " shrinks to a quarter, ",
+  " 只缩短一半。": " shrinks only by half.",
+  "沟道越长、寿命越短，到探测端剩下的就越少 —— 具体数字记在右侧读数面板。": "A longer channel or a shorter lifetime leaves less at the detector — the numbers are listed in the readout panel on the right.",
+  "宏自旋近似下的 LLG：": "LLG in the macrospin approximation: ",
+  "STT 的类阻尼力矩 ": "The STT damping-like torque ",
+  " 与矢量 m 共面，能把垂直磁矩一路推过赤道。": " is coplanar with the vector m, so it can push a perpendicular moment all the way across the equator.",
+  " 是多少、有没有翻过去，都记在右侧读数面板。": " is, and whether it switched, are both listed in the readout panel on the right.",
+  "参考层 FM": "Reference layer FM",
+  "自由层 FM": "Free layer FM",
+  "当前：平行 P（低阻）": "Current: parallel P (low resistance)",
+  "）：两个极化率相乘": "): the two polarizations multiply",
+  "）随势垒厚度": ") vs. barrier thickness",
+  "∝ exp(2κd)：每加厚一层，指数贵一倍": "∝ exp(2κd): each extra layer costs another factor of e",
+  "探测端 x = ": "Detector at x = ",
+  "L_s（降到 1/e）= ": "L_s (down to 1/e) = ",
+  "p̂（参考层极化，沿 z）": "p̂ (reference-layer polarization, along z)",
+  "翻转 ": "Switching at ",
+  "终态：已翻转到 −z": "Final state: switched to −z",
+  "1. 自旋是内禀角动量，却从不出现在 Schr. 方程的非相对论形式里。看模块一左侧两套自旋的态密度柱：它们为什么不等？如果把两个极化率都拉到 0.9，TMR 会变成多少？（彩蛋：The 720° Secret —— 转一圈回不来、转两圈才回来，指的是什么？）": "1. Spin is an intrinsic angular momentum, yet it never appears in the nonrelativistic Schrödinger equation. Look at the two sets of density-of-states bars on the left of Module 1: why are they unequal? If you pull both polarizations up to 0.9, what does the TMR become? (Easter egg: The 720° Secret — what is it that fails to come back after one turn and only returns after two?)",
+  " 的乘积，而不是两者相加？": " rather than a sum of the two?",
+  "3. 把势垒厚度从 1.0 nm 加到 2.0 nm：RA 变成多少倍？TMR 变了吗？如果变了，动一动课本上的模型；如果没变，说明这个模型忽略了什么。": "3. Increase the barrier thickness from 1.0 nm to 2.0 nm: by what factor does RA change? Does the TMR change? If it does, revise the textbook model; if it does not, say what this model leaves out.",
+  " 从 100 ps 降到 25 ps（缩到 1/4），": " from 100 ps down to 25 ps (a factor of four shorter), ",
+  " 会不会也缩到 1/4？在沟道长度 600 nm 下，到达探测端的自旋还剩多少？这对自旋器件的集成度意味着什么？": " shrink by a factor of four as well? With a 600 nm channel, how much of the spin survives at the detector? What does this imply for the integration density of spintronic devices?",
+  "5. 在模块四把电流密度从 0 慢慢加上去：为什么非得到某个临界值 ": "5. In Module 4, raise the current density slowly from zero: why must it reach a certain critical value ",
+  " 才开始翻转？把 SOT 与 STT 对比着看，各自的力矩几何差在哪，工程上为什么 SOT 更省？": " before switching begins? Compare SOT with STT: how do their torque geometries differ, and why is SOT the cheaper option in practice?",
+  "不等的根源是": "The root cause of the difference is ",
+  "交换作用": "the exchange interaction",
+  "：泡利原理让自旋平行的两个电子必须占据不同的空间轨道，库仑排斥因此下降，等价于一个与自旋方向有关的有效场（交换场），把 3d 带沿能量轴劈开，": ": the Pauli principle forces two parallel-spin electrons into different spatial orbitals, which lowers their Coulomb repulsion — equivalent to a spin-dependent effective field (the exchange field) that splits the 3d band along the energy axis, so ",
+  " 自然不同。劈裂不改变总电子数，只改变两套自旋在费米面上的“配额”，于是有了不为零的 ": " are naturally different. The splitting does not change the total electron count, only the “quota” each spin species holds at the Fermi level, which is why we end up with a nonzero ",
+  "数值：": "Numbers: ",
+  "；同为 0.4 时只有 ": "; with both at 0.4 it is only ",
+  " —— 因为 TMR 是两个极化率相乘，不是相加。": " — because the TMR is a product of the two polarizations, not a sum.",
+  "彩蛋 ": "Easter egg ",
+  "：自旋 1/2 的态矢量转 360° 只回到 −ψ，要到 ": ": a spin-1/2 state vector returns only to −ψ after 360°; it takes ",
+  " 才真正复原；这正是“费米子”与矢量、张量这类“转一圈就回来”的经典量的根本差别。": " to truly come back — the fundamental difference between fermions and classical quantities such as vectors and tensors, which return after a single turn.",
+  " 掉到 ": " down to ",
+  "，约为原来的 ": ", about ",
+  "原因是隧穿要": "The reason is that tunneling needs ",
+  "两个电极同时配合": "both electrodes to cooperate",
+  "：电子从左电极的某个自旋通道出发，必须落进右电极": ": an electron leaving a given spin channel of the left electrode must land in the right electrode’s ",
+  "同一个": "same",
+  "自旋通道。电导因此是两侧态密度的": " spin channel. The conductance is therefore the ",
+  "之和，不是各自之和。左电极极化率再高，只要右电极不分辨自旋，两条通道的贡献就一样多，TMR 照样为零 —— 单个参数不可能翻盘，这叫“一个巴掌拍不响”。": " of the products of the two sides’ densities of states, not the sum of each side on its own. However high the left electrode’s polarization, if the right electrode does not resolve spin the two channels contribute equally and the TMR stays zero — no single parameter can turn it around.",
+  "，约 ": ", about ",
+  "；而 TMR 恒定为 ": "; while the TMR stays fixed at ",
+  "，一动没动。": ", it has not budged.",
+  "不会。": "No.",
+  "关系：": " dependence: ",
+  " 从 ": " from ",
+  "，只掉一半。": ", it only halves.",
+  "相应的剩余极化从 ": "The remaining polarization falls correspondingly from ",
+  " 降到 ": " down to ",
+  "含义：自旋信息在传播途中被弛豫吃掉，且": "What it means: spin information is eaten by relaxation while it travels, and ",
+  "越长的沟道代价增长得比线性更快": "the longer the channel, the faster than linearly the cost grows",
+  " 是头重脚轻的衰减）。所以自旋器件之间的间距必须短于 ": " is a front-loaded decay). So the spacing between spintronic devices must be shorter than ",
+  "，这一条直接锁死了它的集成度上限；反过来说，提高 ": ", and this single fact caps its integration density; conversely, raising ",
+  " 的收益也是平方根打折的 —— 想把传递距离翻倍，得把 ": " also pays off only as a square root — to double the transfer distance you must raise ",
+  " 提高四倍。": " fourfold.",
+  "先抵消掉这份阻尼": "cancel this damping first",
+  "才能让进动幅度发散，这个“收支相抵”的电流就是 ": " before the precession amplitude can grow; the current at which the two balance is ",
+  " = 1.0 时终态 ": " = 1.0 the final state is ",
+  "（没翻），": " (no switch), ",
+  " = 8.0 时终态 ": " = 8.0 the final state is ",
+  "（翻了，用了 ": " (it switched, after ",
+  " ns）。": " ns).",
+  "几何差别：STT 的类阻尼力矩 ": "The geometric difference: the STT damping-like torque ",
+  ") 与 p̂ 共面，一路顶着阻尼把磁矩推过赤道，所以只要 ": ") is coplanar with p̂ and pushes the moment across the equator against damping, so as soon as ",
+  " 过了阈值就一定翻；SOT 的 ": " passes the threshold it always switches; the SOT ",
+  ") 等价的场是 ": ") is equivalent to a field ",
+  "横着": "sideways",
+  "推，只能把磁矩拉到面内——本模型里推平的判据是 ": " that pushes it sideways and can only pull the moment into the plane — in this model the criterion for pulling it flat is ",
+  " 仅仅降到 ": " falls only to ",
+  "（被掰弯，没拉平）；": " (bent, not pulled flat); ",
+  "，是“停在赤道”，不是“翻过去”。": ", it “stops at the equator” rather than “going over”.",
+  "工程上的好处：写电流走的是重金属层的横向路径，不必穿过隧道结本身，读写两条路分开 ⇒ 势垒不再被写电流反复冲击，可靠性与速度不再互相牺牲。": "The engineering payoff: the write current takes a lateral path through the heavy-metal layer and never crosses the tunnel junction itself, so the read and write paths are separate ⇒ the barrier is no longer hammered by the write current, and reliability and speed stop trading against each other.",
+  "两条量级提醒：① 这里的几百 MA/cm": "Two reminders about magnitude: (i) the several hundred MA/cm",
+  "单畴（宏自旋）": "single-domain (macrospin)",
+  "模型算出来的，比真实 SOT 器件（10～30 MA/cm": " here comes out of the model, one to two orders of magnitude above real SOT devices (10–30 MA/cm",
+  "）高一到两个数量级——真实翻转靠畴壁形核与推进，不需要整层磁矩一起硬顶各向异性场。② 拖一拖面内辅助场 ": ") — real switching relies on domain-wall nucleation and propagation, not on the whole layer’s moment pushing hard against the anisotropy field. (ii) Drag the in-plane assist field ",
+  " 会发现 ": " and you will see ",
+  " 反而被顶回 +1 侧：确定性翻转在单畴方程里根本给不出来，本工具仍取宏自旋口径，SOT 分支请读作「电流能把磁矩掰到什么程度」。": " pushed back toward +1 instead: deterministic switching simply cannot be produced by the single-domain equations. This tool stays with the macrospin convention, so read the SOT branch as “how far the current can bend the moment”.",
+  "，": ", ",
+  "：": ": ",
+  "；": "; ",
+  "（": " (",
+  "）": ")",
+  "本工具是 EIT-SP（半导体物理交互式教学工具箱）的一部分（武汉大学物理学院《半导体物理》智慧课程），以 MIT 协议开源，可自由使用与二次开发；转载请保留出处。": "This tool is part of EIT-SP, the Educational Interactive Toolkit for Semiconductor Physics (School of Physics and Technology, Wuhan University). Released under the MIT license: free to use, modify and redistribute, including commercially. Please keep this attribution.",
+  "反馈意见": " Feedback",
+  "从 ": " from ",
+  "），": "), and ",
+  " 的 ": " ",
+  " 的": " ",
+  "本工具是 EIT-SP（半导体物理交互式教学工具箱）的一部分（武汉大学物理学院《半导体物理》智慧课程），以 MIT 协议开源，可自由使用与二次开发；转载请保留出处。反馈意见": "This tool is part of EIT-SP, the Educational Interactive Toolkit for Semiconductor Physics (School of Physics and Technology, Wuhan University). Released under the MIT license: free to use, modify and redistribute, including commercially. Please keep this attribution. Feedback",
+  "本工具是": "This tool is part of",
+  "（半导体物理交互式教学工具箱）的一部分（武汉大学物理学院《半导体物理》智慧课程），以": ", the Educational Interactive Toolkit for Semiconductor Physics (School of Physics and Technology, Wuhan University). Released under the",
+  "协议开源，可自由使用与二次开发；转载请保留出处。反馈意见": "license: free to use, modify and redistribute, including commercially. Please keep this attribution. Feedback",
+  "协议开源，可自由使用与二次开发；转载请保留出处。": "license: free to use, modify and redistribute, including commercially. Please keep this attribution.",
+  "注意": "note",
+  "到": "to",
+  "开": "on",
+  "只有": "only",
+  "是": "is",
+  "随": "varies with",
+  "时": "when",
+  "大": "larger",
+  "导": "conduction",
+  "的": "",
+  "倍": " times",
+  "到 ": "to ",
+  "个": "bound states",
+  "有 ": " ",
+  "曲线": "curve",
+  " 拉到 ": " pulled to ",
+  "从": "from",
+  "一": "one",
+  "时间": "Time",
+  "半导体": "Semiconductor",
+  " 倍。": " times the lattice constant.",
+  "平方": "square",
+  "4. 把": "4. Switch",
+  "平方根": "square root",
+  "率": "probability",
+  "参考": "reference",
+  "降到": "falls to",
+  "电流": "current",
+  "态密度 ": "Density of states ",
+  "。本工具": ". This tool ",
+  "方": "squares",
+  "平": "flat",
+  "处。": ".",
+  "，它": ", which ",
+  "当前": "Present",
+  "剩余": "remaining",
+  "本工具是 EIT-SP（半导体物理交互式教学工具箱）的一部分（武汉大学物理学院《半导体物理》智慧课程），以 MIT 协议开源，可自由使用与二次开发；转载请保留出处。反馈意见 ": "This tool is part of EIT-SP (Educational Interactive Toolkit for Semiconductor Physics), built for the smart course on Semiconductor Physics at the School of Physics and Technology, Wuhan University. It is open source under the MIT license and free to use and build upon; if you redistribute it, please keep the attribution. Feedback: ",
+  "寿命": "lifetime",
+  "寿命 ": "Lifetime ",
+  " 涨到 ": " rises to ",
+  " 处": " ",
+  " 缩到 ": " down to ",
+  "态密度": "Density of states",
+  "乘积": "Product",
+  " 处的": " at the center ",
+  "极化": "polarization",
+  " = ": " = ",
+  "): 两个极化率相乘": "): the two polarizations multiply",
+  ")：两个极化率相乘": "): the two polarizations multiply",
+  "（降到 1/e）= ": "(down to 1/e) = ",
+  "注意是平方根：": "Note the square root: ",
+  "TMR 随极化率（P": "TMR vs. polarization (P",
+  " = 0.9 时 TMR = ": " = 0.9 the TMR is ",
+  "终态：仍在 +z（未翻转）": "Final state: still at +z (not switched)",
+  "未翻转（仍在 +z）": "Not switched (still +z)",
+  " = 200 时 ": " = 200, ",
+  " = 123 mT）时 ": " = 123 mT), ",
+  "读出用的是「同样的电压、不同的电阻」：两态电流相差的倍数就是判 0 / 判 1 的窗口（数值见读数面板）。": "Readout works on “same voltage, different resistance”: the ratio between the two state currents is the window for deciding 0 versus 1 (values in the readout panel).",
+  "写入则要求 j > ": "Writing, by contrast, requires j > ",
+  "：读电流必须远低于临界值，否则「读」会把「写」的内容擦掉 —— 这是 MRAM 的核心折中。": ": the read current must stay far below the critical value, otherwise reading erases what writing stored — the central trade-off of MRAM.",
+  "TMR 的用处就在这一步：同样的读出电压下，两个构型给出不同的电流 —— 这就是磁存储器判 0 / 判 1 的窗口。反过来写入要求 ": "This is what the TMR is for: at the same read voltage the two configurations deliver different currents — that is the window a magnetic memory uses to decide 0 from 1. Writing, in turn, requires ",
+  "，所以读电流必须远低于临界值，否则「读」会把「写」进去的内容擦掉。": ", so the read current must stay far below the critical value, otherwise reading erases what writing stored.",
+  "当前 J/J": "What the current J/J",
+  "参考 RA": "Reference RA",
+  " 倍": " times",
+  "选中单元：平行 → 存 0（低阻）": "Selected cell: parallel → stores 0 (low resistance)",
+  "读出 j（P） = ": "Readout j (P) = ",
+  "读出 j（AP） = ": "Readout j (AP) = ",
+  "2. 在模块二把 ": "2. In Module 2, drag ",
+  " 不动）。TMR 降为原来的几分之几？为什么 TMR 里是 ": " unchanged). To what fraction of its original value does the TMR drop? Why is the TMR a product of ",
+  "TMR 不变是因为 ": "The TMR does not change because ",
+  " 对两条自旋通道是同一个值，exp(−2": " is the same for both spin channels, so exp(−2",
+  ") 在比值里整整约掉 —— Jullière 模型只问「有多少态可穿」，不问「穿得多快」，势垒的职责只是给绝对值打个折扣。这也正是它的盲区：真实 MgO 单晶势垒里不同对称性的波函数衰减快慢不同（相干滤波），有效衰减小的一类被筛选出来，厚度上去反而会把 TMR 抬高，这就超出本模型了。": ") cancels exactly in the ratio — the Jullière model only asks “how many states are there to tunnel through”, not “how fast they get through”; the barrier's only job is to discount the absolute value. That is also its blind spot: in a real single-crystal MgO barrier, wave functions of different symmetry decay at different rates (coherent filtering), and the slowly decaying family is selected, so a thicker barrier can actually raise the TMR — which is beyond this model.",
+  "LLG 里阻尼 ": "In the LLG equation the damping ",
+  " 一直在把磁矩拽回易轴，自旋力矩要": " keeps dragging the moment back to the easy axis, so the spin torque must ",
+  " 与 p̂ 共面，一路顶着阻尼把磁矩推过赤道，所以只要 ": " is coplanar with p̂ and pushes the moment across the equator against damping, so as soon as ",
+  " 等价的场是 ": " is equivalent to a field ",
+  "4. 把自旋寿命 τ_s 从 100 ps 降到 25 ps（缩到 1/4），L_s 会不会也缩到 1/4？在沟道长度 600 nm 下，到达探测端的自旋还剩多少？这对自旋器件的集成度意味着什么？": "4. Drop the spin lifetime τ_s from 100 ps to 25 ps (a factor of 4). Does L_s shrink by a factor of 4 as well? With a channel length of 600 nm, how much of the spin survives at the detector? What does that imply for the integration density of spintronic devices?",
+  "5. 在模块四把电流密度从 0 慢慢加上去：为什么非得到某个临界值 J_c 才开始翻转？把 SOT 与 STT 对比着看，各自的力矩几何差在哪，工程上为什么 SOT 更省？": "5. In Module 4, raise the current density slowly from zero: why does switching not start until a certain critical value J_c is reached? Compare SOT with STT — how do their torque geometries differ, and why is SOT cheaper in practice?",
+  "反平行时两边「多数」错位配对，两条通道一起变差 ⇒ 总电导掉到最低（数值见读数面板）。": "In the antiparallel state the two “majority” channels are mismatched, so both channels degrade together ⇒ the total conductance falls to its minimum (values are in the readout panel).",
+  "当前：反平行 AP（高阻）": "Present: antiparallel AP (high resistance)",
+  "重金属中的面内电流经自旋霍尔效应在界面堆出自旋，再从侧面注入自由层。": "An in-plane current in the heavy metal piles up spin at the interface through the spin Hall effect, and then injects it into the free layer from the side.",
+  "SOT 不是反阻尼，它给的是一个": "SOT is not an antidamping torque; what it provides is a",
+  "横着推": "sideways",
+  "两条量级提醒：① 单畴（宏自旋）模型把 SOT 阈值估高了约一个数量级 —— 真实器件靠畴壁形核与推进，10～30 MA/cm": "Two reminders about magnitude: (i) the single-domain (macrospin) model overestimates the SOT threshold by about an order of magnitude — real devices rely on domain-wall nucleation and propagation, and 10–30 MA/cm",
+  " 就能翻，这里的": " is enough to switch; here the ",
+  " 后，本模型的": " , the ",
+  " 反而被顶回 +1 侧而不是翻过去 —— 这正是宏自旋近似的边界：真实 SOT 的确定性翻转靠畴壁成核，单畴方程给不出来。本工具仍取宏自旋口径，请把 SOT 分支读作「电流能把磁矩掰到什么程度」。": " instead of switching, the moment is pushed back toward the +1 side — that is exactly the limit of the macrospin approximation: deterministic switching in a real SOT device comes from domain-wall nucleation, which a single-domain equation cannot deliver. This tool keeps the macrospin picture, so please read the SOT branch as “how far the current can bend the moment”.",
+  "宏自旋模型里": "In the macrospin model, ",
+  " 只会把磁矩往 +z 侧顶回来，并不产生确定性翻转 —— 拖一拖它，看到的就是这条近似的边界本身。": " only pushes the moment back toward the +z side and does not give deterministic switching — drag it and what you see is the limit of this approximation itself.",
+  "SOT 的推力用等效类阻尼场 B_DL 与 μ₀H_k 之比衡量：不到一半只是被掰弯，到一半就被拉到面内（m_z → 0），也就停在那儿了 —— 比值见读数面板。": "The SOT drive is measured by the ratio of the equivalent damping-like field B_DL to μ₀H_k: below one half the moment is merely bent, at one half it is pulled into the plane (m_z → 0) and stays there — the ratio is in the readout panel.",
+  "把磁矩拉向面内的 σ̂ —— 单靠它只能翻 90°，确定性翻转还要靠面内辅助场。": " pulls the moment toward the in-plane σ̂ — on its own it can only turn the moment by 90°, and deterministic switching still needs an in-plane assist field.",
+  "SOT 的": "SOT's ",
+  "只会把磁矩往 +z 侧顶回来，并不产生确定性翻转 —— 拖一拖它，看到的就是这条近似的边界本身。": " only pushes the moment back toward the +z side and does not give deterministic switching — drag it and what you see is the limit of this approximation itself.",
+  "当前 J/J_c 是多少、有没有翻过去，都记在右侧读数面板。": "The present value of J/J_c and whether the moment has switched are both recorded in the readout panel on the right.",
+  "注意是平方根：τ_s 缩短到 1/4，L_s 只缩短一半。": "Note that it is a square root: shorten τ_s to a quarter and L_s shrinks by only a factor of two.",
+  "关系：τ_s 缩到 1/4，": " dependence: shorten τ_s to a quarter and ",
+  "的收益也是平方根打折的 —— 想把传递距离翻倍，得把 τ_s 提高四倍。": " is discounted by the square root as well — to double the transfer distance you have to raise τ_s fourfold.",
+  "↑2P₁P₂/(1−P₁P₂)：两个极化率相乘": "↑2P₁P₂/(1−P₁P₂): the two polarizations multiply",
+  "RA（Ω·μm²）随势垒厚度": "RA (Ω·μm²) versus barrier thickness",
+  "σ̂（自旋霍尔积累，沿 y）": "σ̂ (spin Hall accumulation, along y)",
+  "TMR 随极化率（P₁ =": "TMR versus polarization (P₁ = ",
+  "从 0.70 拉到 0.35（": " from 0.70 down to 0.35 (",
+  "。本工具 STT 的": ". The STT value used in this tool is ",
+  "自旋转移矩 STT": "Spin-transfer torque STT",
+  "自旋轨道矩 SOT": "Spin-orbit torque SOT",
+  "处的态密度": "the density of states at ",
+  "nm 缩到": " nm down to ",
+  "RA 从": "RA rises from ",
+  ") 是": ") is ",
+  /* ---- 按 DOM 文本节点边界登记（AUTO() 会把 B_DL / m_z / μ₀H_k 切成 .m 片段） ---- */
+  "SOT 的推力用等效类阻尼场 ": "The SOT drive is measured by the ratio of the equivalent damping-like field ",
+  " 与 μ": " to μ",
+  " 之比衡量：不到一半只是被掰弯，到一半就被拉到面内（": " : below one half the moment is merely bent, at one half it is pulled into the plane (",
+  " → 0），也就停在那儿了 —— 比值见读数面板。": " → 0), and it stays there — the ratio is in the readout panel.",
+  "的等效类阻尼场：当前 ": " equivalent damping-like field: the present ",
+  " mT，推平到面内的判据是 ": " mT, and the criterion for pulling it flat into the plane is ",
+  " 请当作 ": " should be read as a proxy for ",
+  " 的代理量读。② 加上面内辅助场 ": " value. (ii) Add an in-plane assist field ",
+  "等效类阻尼场 ": "Equivalent damping-like field ",
+
+};
+
+(function () {
+  if (typeof CanvasRenderingContext2D === "undefined") return;
+  var ft = CanvasRenderingContext2D.prototype.fillText;
+  CanvasRenderingContext2D.prototype.fillText = function (s, x, y) {
+    if (typeof s === "string") arguments[0] = T(s);
+    return ft.apply(this, arguments);
+  };
+  /* 描边文字（白边包字）走 strokeText，同样要过 T()，否则画布标签漏翻 */
+  var stx = CanvasRenderingContext2D.prototype.strokeText;
+  CanvasRenderingContext2D.prototype.strokeText = function (s, x, y) {
+    if (typeof s === "string") arguments[0] = T(s);
+    return stx.apply(this, arguments);
+  };
+  var mt = CanvasRenderingContext2D.prototype.measureText;
+  CanvasRenderingContext2D.prototype.measureText = function (s) {
+    return mt.call(this, typeof s === "string" ? T(s) : s);
+  };
+})();
+
+/* 注入点④：逐字绘制的画布串。drawMath 一类把中文按单字拆成 token 再逐个 fillText，
+   T() 每次只见到一个汉字 ⇒ 整句词条永远命中不了。这里在整串进入分词之前先整体翻译，
+   于是画布标注也走「整句优先」，与 DOM 同一个口径。没有这些函数的工具自动跳过。
+   ⚠️ 签名坑：drawMath / measureMath 的第一个参数是 canvas context（对象），文本在第
+   二位；早期版本照着 arguments[0] 翻，等于把 context 送去 T()，补丁全程空转。
+   这里改为「找到第一个含中文的字符串参数」再翻，既躲开 context，也不会误伤
+   align / weight 之类以英文字符串传的选项。 */
+(function () {
+  ["drawMath", "drawMathHalo", "measureMath"].forEach(function (n) {
+    var f = window[n];
+    if (typeof f !== "function") return;
+    window[n] = function () {
+      for (var i = 0; i < arguments.length; i++) {
+        if (typeof arguments[i] === "string" && /[\u3400-\u9FFF]/.test(arguments[i])) {
+          arguments[i] = T(arguments[i]);
+          break;
+        }
+      }
+      return f.apply(this, arguments);
+    };
+  });
+})();
+
+
+/* ---- DOM 文本节点 ---- */
+function i18nNode(n) {
+  var el = n.parentElement;
+  if (!el) return;
+  var tag = el.tagName;
+  if (tag === "SCRIPT" || tag === "STYLE") return;
+  if (el.closest && el.closest("[data-noi18n]")) return;
+  var cur = n.nodeValue;
+  if (n.__orig === undefined || (cur !== n.__last && cur !== n.__orig)) n.__orig = cur;
+  var want = LANG === "en" ? T(n.__orig) : n.__orig;
+  if (want !== cur) n.nodeValue = want;
+  n.__last = want;
+}
+/* 属性（title / placeholder / optgroup label …）不是文本节点，MutationObserver 覆盖不到，
+   必须单独过一遍：否则悬停提示、下拉分组名会残留中文。原文缓存在元素 expando 上，
+   切回中文时原样写回。改属性不会触发 childList/characterData 观察器，不会递归。 */
+var I18N_ATTRS = ["title", "placeholder", "aria-label", "alt", "label"];
+function i18nAttrs(root) {
+  var els = [root], i, j;
+  if (root.querySelectorAll) els = els.concat(Array.prototype.slice.call(root.querySelectorAll("*")));
+  for (i = 0; i < els.length; i++) {
+    var el = els[i];
+    if (!el.getAttribute) continue;
+    if (el.closest && el.closest("[data-noi18n]")) continue;
+    for (j = 0; j < I18N_ATTRS.length; j++) {
+      var a = I18N_ATTRS[j];
+      if (!el.hasAttribute(a)) continue;
+      var key = "__a_" + a;
+      if (el[key] === undefined) el[key] = el.getAttribute(a);
+      var want = LANG === "en" ? T(el[key]) : el[key];
+      if (want !== el.getAttribute(a)) el.setAttribute(a, want);
+    }
+  }
+}
+function i18nWalk(root) {
+  var w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null, false), n, c = 0;
+  while ((n = w.nextNode())) { i18nNode(n); c++; }
+  i18nAttrs(root);
+  return c;
+}
+var _i18nBusy = false;
+function i18nWatch() {
+  if (typeof MutationObserver === "undefined") return;
+  var mo = new MutationObserver(function (ms) {
+    if (_i18nBusy) return;
+    _i18nBusy = true;
+    try {
+      for (var i = 0; i < ms.length; i++) {
+        var m = ms[i];
+        if (m.type === "childList") {
+          for (var j = 0; j < m.addedNodes.length; j++) {
+            var nd = m.addedNodes[j];
+            if (nd.nodeType === 3) i18nNode(nd);
+            else if (nd.nodeType === 1) i18nWalk(nd);
+          }
+        } else if (m.type === "characterData") i18nNode(m.target);
+      }
+    } finally { _i18nBusy = false; }
+  });
+  mo.observe(document.body, { childList: true, subtree: true, characterData: true });
+}
+function setLang(l) {
+  LANG = l;
+  try { localStorage.setItem("opl_lang", l); } catch (e) { }
+  document.documentElement.lang = l === "en" ? "en" : "zh-CN";
+  var btn = document.getElementById("langBtn");
+  if (btn) btn.textContent = l === "en" ? "中文" : "EN";
+  document.title = l === "en" ? T(ORIG_TITLE) : ORIG_TITLE;
+  i18nWalk(document.body);
+  if (typeof syncInputs === "function") syncInputs();
+  if (typeof render === "function") render();
+}
+
+/* ---------------- HTML 侧自动 LaTeX 排版 ----------------
+   读数 / 说明 / 按钮名里由 JS 拼出来的 cm⁻³、E_c、2.5e+8，
+   在写进 innerHTML 之前转成真 <sup>/<sub>；标签与属性原样放过（title 不会被塞进尖括号）。
+   与画布侧 AUTO() 对偶，保证网页和画布按同一套规则排版。 */
+const AUTOH_SUP = { "⁰": "0", "¹": "1", "²": "2", "³": "3", "⁴": "4", "⁵": "5", "⁶": "6",
+  "⁷": "7", "⁸": "8", "⁹": "9", "⁺": "+", "⁻": "−", "⁼": "=", "⁽": "(", "⁾": ")", "ⁿ": "n", "ⁱ": "i" };
+const AUTOH_SUB = { "₀": "0", "₁": "1", "₂": "2", "₃": "3", "₄": "4", "₅": "5", "₆": "6",
+  "₇": "7", "₈": "8", "₉": "9", "₊": "+", "₋": "−", "₌": "=", "₍": "(", "₎": ")",
+  "ₐ": "a", "ₑ": "e", "ₒ": "o", "ₓ": "x", "ₔ": "ə", "ₕ": "h", "ₖ": "k", "ₗ": "l",
+  "ₘ": "m", "ₙ": "n", "ₚ": "p", "ₛ": "s", "ₜ": "t", "ᵣ": "r", "ᵤ": "u", "ᵥ": "v" };
+const TEXH_NEED = /[\u2070-\u209C\u00B2\u00B3\u00B9]|_\{?[A-Za-z0-9\u0370-\u03ff]|\^\{?[\d(\-]|\d(\.\d+)?[eE][+\-]\d|\u221A/;
+/* 从 i 处（必须是 '<'）扫出一个"完整元素"的结束下标（含嵌套），失败返回 -1 */
+function TEXH_elemEnd(h, i) {
+  if (h.charAt(i) !== "<") return -1;
+  let depth = 0, j = i, guard = 0;
+  while (j < h.length && guard++ < 4000) {
+    if (h.charAt(j) !== "<") { j++; continue; }
+    const e = TEXH_tagEnd(h, j);
+    if (e < 0) return -1;
+    const isClose = h.charAt(j + 1) === "/";
+    const selfClose = h.charAt(e - 2) === "/";
+    if (isClose) { depth--; j = e; if (depth <= 0) return j; }
+    else if (selfClose) { j = e; if (depth === 0) return j; }
+    else { depth++; j = e; }
+  }
+  return -1;
+}
+/* √ 后面直接跟一个元素：√<i>E</i> → √‾E（前两条规则只吃 √(A) 与 √字母串） */
+function TEXHsqrtElem(s) {
+  let out = "", i = 0, guard = 0;
+  while (guard++ < 400) {
+    const k = s.indexOf("\u221A", i);
+    if (k < 0) break;
+    out += s.slice(i, k);
+    /* 守卫：√ 后面已是闭标签 ⇒ 该 √ 已排版过（对整段 HTML 重复跑 TEXH 会把 </span> 当成被开方式，
+       层层包出空壳根号，视觉上变成 √−3 / √−E），原样输出不再包裹 */
+    if (s.charAt(k + 1) === "<" && s.charAt(k + 2) === "/") { out += "\u221A"; i = k + 1; continue; }
+    let rad = null, end = k + 1;
+    if (s.charAt(k + 1) === "(") {
+      /* √(…) ：被开方式里常有标签，括号本身不在同一个文本片段里，必须整串扫 */
+      let depth = 0, p = k + 1;
+      while (p < s.length) {
+        const c = s.charAt(p);
+        if (c === "(") depth++;
+        else if (c === ")") { depth--; if (depth === 0) { rad = s.slice(k + 2, p); end = p + 1; break; } }
+        p++;
+      }
+    } else {
+      const e = TEXH_elemEnd(s, k + 1);
+      if (e > 0 && e - k < 500) { rad = s.slice(k + 1, e); end = e; }
+    }
+    if (rad !== null && rad.length) {
+      out += "<span class=\"sqrt\"><span class=\"rd\">\u221A</span><span class=\"rdc\">" + rad + "</span></span>";
+      i = end;
+    } else { out += "\u221A"; i = k + 1; }
+  }
+  return out + s.slice(i);
+}
+function TEXHpart(t) {
+  let s = t;
+  /* 根号：√ 或 √(A) → <span class="sqrt">√<span class="rd"><span class="rdc">A</span></span></span>（A 内不含嵌套括号） */
+  s = s.replace(/<span class="(?:op|rm|fn|v|u)">\u221A<\/span>/g, "\u221A");
+  s = s.replace(/\u221A<span class="(?:op|rm)">\(<\/span>([^()]{1,120}?)<span class="(?:op|rm)">\)<\/span>/g, function (m, a) {
+    return "<span class=\"sqrt\"><span class=\"rd\">\u221A</span><span class=\"rdc\">" + a + "</span></span>";
+  });
+  s = s.replace(/\u221A\(([^()]{1,120})\)/g, function (m, a) {
+    return "<span class=\"sqrt\"><span class=\"rd\">\u221A</span><span class=\"rdc\">" + a + "</span></span>";
+  });
+  s = s.replace(/\u221A([A-Za-z0-9\u0370-\u03ff]{1,6})/g, function (m, a) {
+    return "<span class=\"sqrt\"><span class=\"rd\">\u221A</span><span class=\"rdc\">" + a + "</span></span>";
+  });
+  s = s.replace(/(\d(?:\.\d+)?)e([+-])(\d+)/g, function (m, a, sg, e) {
+    return a + "\u00d710<sup>" + (sg === "-" ? "\u2212" : "") + e + "</sup>";
+  });
+  s = s.replace(/([A-Za-z\u0370-\u03ff)\]])\^\{([^{}]{1,12})\}/g, "$1<sup>$2</sup>");
+  s = s.replace(/([A-Za-z\u0370-\u03ff)\]])\^(\d+(?:\.\d+)?)/g, "$1<sup>$2</sup>");
+  s = s.replace(/([A-Za-z\u0370-\u03ff])_\{([A-Za-z0-9\u0370-\u03ff+\-]{1,8})\}/g, "<span class='m'><i>$1</i><sub>$2</sub></span>");
+  s = s.replace(/([A-Za-z\u0370-\u03ff])_([A-Za-z0-9\u0370-\u03ff]{1,6})(?![A-Za-z0-9])/g, "<span class='m'><i>$1</i><sub>$2</sub></span>");
+  if (/[\u2070-\u209C\u00B2\u00B3\u00B9]/.test(s)) {
+    let out = "", i = 0;
+    while (i < s.length) {
+      const ch = s[i];
+      if (AUTOH_SUP[ch] !== undefined || AUTOH_SUB[ch] !== undefined) {
+        const isSup = AUTOH_SUP[ch] !== undefined, tab = isSup ? AUTOH_SUP : AUTOH_SUB;
+        let j = i, buf = "";
+        while (j < s.length && (isSup ? AUTOH_SUP[s[j]] !== undefined : AUTOH_SUB[s[j]] !== undefined)) {
+          buf += tab[s[j]]; j++;
+        }
+        out += "<" + (isSup ? "sup" : "sub") + ">" + buf + "</" + (isSup ? "sup" : "sub") + ">";
+        i = j;
+      } else { out += ch; i++; }
+    }
+    s = out;
+  }
+  return s.indexOf("\u221A") >= 0 ? TEXHsqrtElem(s) : s;
+}
+/* 只有真正的标签才整段跳过：正文里裸写的 '<'（如 "t₂ < 0"）必须当普通字符，
+   否则 indexOf('>') 会一路吞掉后面整段，E₂⁰ 这类记法就漏排了。 */
+function TEXH_tagEnd(h, i) {
+  if (h.charAt(i) !== "<") return -1;
+  const c = h.charAt(i + 1);
+  if (c === "!" || c === "/") { const j = h.indexOf(">", i); return (j >= 0 && j - i < 300) ? j + 1 : -1; }
+  if (!/[A-Za-z]/.test(c)) return -1;
+  let j = i + 1;
+  while (j < h.length && /[A-Za-z0-9]/.test(h.charAt(j))) j++;
+  if (j === i + 1) return -1;
+  if (h.charAt(j) === ">") return j + 1;
+  if (h.charAt(j) !== " " && h.charAt(j) !== "\n" && h.charAt(j) !== "\t") return -1;
+  const g = h.indexOf(">", j), nx = h.indexOf("<", j);
+  if (g < 0 || g - i > 300) return -1;
+  if (nx >= 0 && nx < g) return -1;
+  return g + 1;
+}
+function TEXH(h) {
+  if (typeof h !== "string" || !TEXH_NEED.test(h)) return h;
+  if (h.indexOf("\u221A") >= 0) h = h.replace(/<span class="(?:op|rm|fn|v|u)">\u221A<\/span>/g, "\u221A");
+  if (h.indexOf("<") < 0) return TEXHpart(h);
+  let out = "", i = 0, n = h.length, guard = 0;
+  while (i < n && guard++ < 40000) {
+    const e = TEXH_tagEnd(h, i);
+    if (e > 0) { out += h.slice(i, e); i = e; continue; }
+    let j = i;
+    while (j < n && TEXH_tagEnd(h, j) <= 0) j++;
+    out += TEXHpart(h.slice(i, j)); i = j;
+  }
+  const r = out + h.slice(i);
+  return r.indexOf("\u221A") >= 0 ? TEXHsqrtElem(r) : r;
+}
+(function hookHTML() {
+  if (window.__TEXH_HOOK) return; window.__TEXH_HOOK = 1;
+  const d = Object.getOwnPropertyDescriptor(Element.prototype, "innerHTML");
+  if (!d || !d.set) return;
+  Object.defineProperty(Element.prototype, "innerHTML", {
+    configurable: true, get: d.get,
+    set: function (v) { d.set.call(this, typeof v === "string" ? TEXH(v) : v); }
+  });
+  /* insertAdjacentHTML 也会被用到 */
+  const ia = Element.prototype.insertAdjacentHTML;
+  Element.prototype.insertAdjacentHTML = function (pos, v) {
+    return ia.call(this, pos, typeof v === "string" ? TEXH(v) : v);
+  };
+})();
+
+/* ---------------- 画布自动 LaTeX 排版（原型挂钩版） ----------------
+   这些老工具直接调用 g.fillText()，这里统一在绘制前把
+     cm⁻³ / ω₀      → 真上/下标（单位与描述符保持正体）
+     E_c / v_th / k → 主符号斜体 + 正体下标
+     X^{−3}          → 真上标
+     2.5e+8          → 2.5×10⁸
+   拆成分段绘制；measureText 同步返回分段宽度，白底标签框长度自动跟着变。 */
+const AUTO_SUP = { "⁰": "0", "¹": "1", "²": "2", "³": "3", "⁴": "4", "⁵": "5", "⁶": "6",
+  "⁷": "7", "⁸": "8", "⁹": "9", "⁺": "+", "⁻": "−", "⁼": "=", "⁽": "(", "⁾": ")", "ⁿ": "n", "ⁱ": "i" };
+const AUTO_SUB = { "₀": "0", "₁": "1", "₂": "2", "₃": "3", "₄": "4", "₅": "5", "₆": "6",
+  "₇": "7", "₈": "8", "₉": "9", "₊": "+", "₋": "−", "₌": "=", "₍": "(", "₎": ")",
+  "ₐ": "a", "ₑ": "e", "ₒ": "o", "ₓ": "x", "ₔ": "ə", "ₕ": "h", "ₖ": "k", "ₗ": "l",
+  "ₘ": "m", "ₙ": "n", "ₚ": "p", "ₛ": "s", "ₜ": "t", "ᵣ": "r", "ᵤ": "u", "ᵥ": "v" };
+const NEED_MATH = /[\u2070-\u209C\u00B2\u00B3\u00B9]|_\{?[A-Za-z0-9\u0370-\u03ff]|\^\{?[\d(\-]|\d(\.\d+)?[eE][+\-]\d/;
+function AUTO(s) {
+  const out = []; let buf = "", mode = 0;
+  const emit = (t, kind) => {
+    if (!t) return;
+    if (kind === 1) out.push({ s: t, sup: true });
+    else if (kind === -1) out.push({ s: t, sub: true });
+    else out.push({ s: t });
+  };
+  let i = 0;
+  while (i < s.length) {
+    const ch = s[i];
+    if (AUTO_SUP[ch] !== undefined) { if (mode !== 1) { emit(buf, mode); buf = ""; mode = 1; } buf += AUTO_SUP[ch]; i++; continue; }
+    if (AUTO_SUB[ch] !== undefined) { if (mode !== -1) { emit(buf, mode); buf = ""; mode = -1; } buf += AUTO_SUB[ch]; i++; continue; }
+    if (mode) { emit(buf, mode); buf = ""; mode = 0; }
+    const rest = s.slice(i);
+    const sc = /^\d(\.\d+)?[eE][+\-]\d{1,3}/.exec(rest);
+    if (sc) {
+      const pp = sc[0].split(/[eE]/);
+      emit(pp[0] + "\u00d710", 0); emit(String(+pp[1]).replace("-", "\u2212"), 1);
+      i += sc[0].length; continue;
+    }
+    if (/[A-Za-z\u0370-\u03ff]/.test(ch) && i + 1 < s.length && (s[i + 1] === "_" || s[i + 1] === "^")) {
+      const sup = s[i + 1] === "^";
+      let j = i + 2, grp = "";
+      if (s[j] === "{") { const e = s.indexOf("}", j); if (e > 0) { grp = s.slice(j + 1, e); j = e + 1; } }
+      else {
+        const RCJK = /[\u2E80-\u9FFF]/, RASC = /[A-Za-z0-9\u0370-\u03ff+\-]/;
+        if (RCJK.test(s[j])) { while (j < s.length && RCJK.test(s[j]) && j - i < 8) j++; }   /* 中文描述性下标：τ_直接、E_声子 */
+        else { while (j < s.length && RASC.test(s[j])) j++; }
+        grp = s.slice(i + 2, j);
+      }
+      if (grp) {
+        /* 先把累积的前缀 flush 出去。漏了这行，含「前缀 + X_y」的串（ΔE_sp、
+           E=(E_s+3E_p)/4 之类）会把前缀甩到段尾，渲染成「E_spΔ」。 */
+        emit(buf, 0); buf = "";
+        emit(ch, 0); out[out.length - 1].i = true;
+        emit(sup ? grp.replace(/-/g, "\u2212") : grp, sup ? 1 : -1);
+        i = j; continue;
+      }
+    }
+    buf += ch; i++;
+  }
+  emit(buf, mode);
+  return out;
+}
+function mathSegs(g, s) {
+  const f = String(g.font || "");
+  const size = (function () { const m = /(\d+(?:\.\d+)?)px/.exec(f); return m ? parseFloat(m[1]) : 12; })();
+  const family = f.replace(/^(?:\s*(?:italic|oblique|bold|[1-9]00)\s*)*\d+(?:\.\d+)?px\s*/, "");
+  const style = /italic|oblique/.test(f) ? "italic " : (/bold|[6-9]00/.test(f) ? "bold " : "");
+  const parts = AUTO(s), laid = [];
+  let w = 0;
+  for (const p of parts) {
+    const small = !!(p.sup || p.sub);
+    const fs = style + (small ? (size * 0.74).toFixed(2) : size.toFixed(2)) + "px " + family;
+    g.font = fs;
+    const tw = g.measureText(p.s).width;
+    laid.push({ s: p.s, w: tw, fs: fs, dy: small ? (p.sup ? -size * 0.40 : size * 0.22) : 0 });
+    w += tw;
+  }
+  return { laid, w, family, style, size };
+}
+(function hookMath() {
+  if (window.__MATH_HOOK) return; window.__MATH_HOOK = 1;
+  const P = CanvasRenderingContext2D.prototype;
+  const _fill = P.fillText, _stroke = P.strokeText, _measure = P.measureText;
+  function draw(drawRaw, g, s, x, y, rest) {
+    const info = mathSegs(g, s);
+    const al = g.textAlign, bl = g.textBaseline;
+    const cx = al === "right" ? x - info.w : (al === "center" ? x - info.w / 2 : x);
+    g.textAlign = "left"; g.textBaseline = bl || "middle";
+    let px = cx;
+    for (const L of info.laid) {
+      g.font = L.fs;
+      drawRaw.call(g, L.s, px, y + L.dy, ...rest);
+      px += L.w;
+    }
+    g.textAlign = al; g.textBaseline = bl;
+    g.font = info.style + info.size.toFixed(2) + "px " + info.family;
+    return info;
+  }
+  P.fillText = function (s, x, y) {
+    if (typeof s !== "string" || !NEED_MATH.test(s)) return _fill.apply(this, arguments);
+    draw(_fill, this, s, x, y, Array.prototype.slice.call(arguments, 3));
+  };
+  P.strokeText = function (s, x, y) {
+    if (typeof s !== "string" || !NEED_MATH.test(s)) return _stroke.apply(this, arguments);
+    draw(_stroke, this, s, x, y, Array.prototype.slice.call(arguments, 3));
+  };
+  P.measureText = function (s) {
+    if (typeof s !== "string" || !NEED_MATH.test(s)) return _measure.call(this, s);
+    const save = this.font;
+    const info = mathSegs(this, s);
+    this.font = save;
+    return { width: info.w, get actualBoundingBoxLeft() { return 0; }, get actualBoundingBoxRight() { return info.w; } };
+  };
+})();
+
+const FONT = '"Segoe UI","Microsoft YaHei",sans-serif';
+
+const FONTM = '"Cambria Math","STIX Two Math","Times New Roman",Times,serif';
+
+
+/* ---------------- 画布 LaTeX 排版层（零依赖；物理量斜体、下标/单位正体、幂次真上标） ---------------- */
+const SUBR = 0.74, SUBDY = 0.22, SUPDY = 0.40;
+function isCJKch(ch) {
+  const c = ch.codePointAt(0);
+  return (c >= 0x2E80 && c <= 0x9FFF) || (c >= 0xF900 && c <= 0xFAFF) ||
+    (c >= 0xFF00 && c <= 0xFF60) || c === 0x2014 || c === 0x2015 || c === 0x2026;
+}
+function segRuns(s) {
+  const out = []; let cur = "", curC = null;
+  for (const ch of s) {
+    const c = isCJKch(ch);
+    if (curC === null) { cur = ch; curC = c; }
+    else if (c === curC) cur += ch;
+    else { out.push({ s: cur, cjk: curC }); cur = ch; curC = c; }
+  }
+  if (cur) out.push({ s: cur, cjk: curC });
+  return out;
+}
+function pFont(q, fp, bd, cjk) {
+  const sz = fp * ((q.sub || q.sup) ? SUBR : 1);
+  return (bd ? "bold " : "") + (!cjk && q.i ? "italic " : "") + sz.toFixed(2) + "px " + (cjk ? FONT : FONTM);
+}
+/* i18n 注入点①：画布 token。带 i / sub / sup / un 标记的是物理量、下标与单位，一律不动；
+   没有这些标记的 token 才是自然语言，交给 T() —— 所以这里的判断只看标记，不看内容。 */
+const partsOf = p => p.map(q => {
+  const o = (typeof q === "string" ? { s: q } : q);
+  const natural = !(o.i || o.sub || o.sup || o.un);
+  if (LANG === "en" && natural && typeof o.s === "string" && /[\u4E00-\u9FFF]/.test(o.s)) {
+    const t = T(o.s);
+    return t === o.s ? o : Object.assign({}, o, { s: t });
+  }
+  return o;
+});
+function mMeasure(g, parts, fp, bd) {
+  let w = 0;
+  for (const q of partsOf(parts))
+    for (const sg of segRuns(q.s)) { g.font = pFont(q, fp, bd, sg.cjk); w += g.measureText(sg.s).width; }
+  return w;
+}
+function mRun(g, parts, x, y, fp, bd, align, stroke) {
+  const ps = partsOf(parts), w = mMeasure(g, ps, fp, bd);
+  let cx = align === "right" ? x - w : (align === "center" ? x - w / 2 : x);
+  g.textAlign = "left"; g.textBaseline = "middle"; g.lineJoin = "round";
+  for (const q of ps) {
+    const dy = q.sub ? fp * SUBDY : (q.sup ? -fp * SUPDY : 0);
+    for (const sg of segRuns(q.s)) {
+      g.font = pFont(q, fp, bd, sg.cjk);
+      if (stroke) { g.lineWidth = (q.sub || q.sup) ? 2.4 : 3.2; g.strokeText(sg.s, cx, y + dy); }
+      else g.fillText(sg.s, cx, y + dy);
+      cx += g.measureText(sg.s).width;
+    }
+  }
+}
+function mtxt(g, parts, x, y, col, fp, align, bd) {
+  g.fillStyle = col; mRun(g, parts, x, y, fp, bd || false, align, false);
+}
+function mtxtHalo(g, parts, x, y, col, fp, align, bd) {
+  g.strokeStyle = "rgba(255,255,255,0.94)";
+  mRun(g, parts, x, y, fp, bd || false, align, true);
+  mtxt(g, parts, x, y, col, fp, align, bd);
+}
+
+
+/* ---------------- HTML 字符串 → 画布零件（网页与画布共用同一份排版） ----------------
+   mtxt(g, TX(H_NA), x, y, col, fp) —— H_* 常量本来就在喂 innerHTML，
+   再喂给 TX() 就不会出现「网页斜体、画布正体」的两边不一致。
+   <i> 斜体、<sub> 下标、<sup> 上标；<span class="op|un|rm|sqrt|frac"> 只剥标签（保持正体）。 */
+const catA = (...a) => [].concat(...a);
+function TX(h) {
+  const t = String(h == null ? "" : h)
+    .replace(/<span\b[^>]*>/g, "").replace(/<\/span>/g, "")
+    .replace(/<i\b[^>]*>/g, "<i>").replace(/<b\b[^>]*>/g, "").replace(/<\/b>/g, "")
+    .replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&").replace(/&nbsp;/g, " ");
+  const out = [], re = /<i>([\s\S]*?)<\/i>|<sub>([\s\S]*?)<\/sub>|<sup>([\s\S]*?)<\/sup>|([^<]+)/g;
+  let m;
+  while ((m = re.exec(t))) {
+    const raw = s => s == null ? null : s.replace(/<[^>]*>/g, "");
+    if (m[1] != null) out.push({ s: raw(m[1]), i: true });
+    else if (m[2] != null) out.push({ s: raw(m[2]), sub: true });
+    else if (m[3] != null) out.push({ s: raw(m[3]), sup: true });
+    else if (m[4]) out.push({ s: m[4] });
+  }
+  return out;
+}
+function TXof(...a) { return catA(...a.map(TX)); }
+
+
+function PSci(v, n) {
+  if (!isFinite(v) || v === 0) return [{ s: "0" }];
+  const e = Math.floor(Math.log10(Math.abs(v)));
+  const m = (v / Math.pow(10, e)).toFixed(n === undefined ? 1 : n);
+  /* 1 ≦ |v| < 10 时直接写尾数，不再拖一个 ×10⁰（与 sciH 一致） */
+  if (e === 0) return [{ s: m }];
+  /* 指数负号用 U+2212 */
+  return [{ s: m + "×10" },
+          { s: String(e).replace("-", "−"), sup: true }];
+}
+
+/* ---------------- 通用工具 ---------------- */
+const $ = (id) => document.getElementById(id);
+const clamp = (v, a, b) => v < a ? a : (v > b ? b : v);
+const RAD = Math.PI / 180;
+const dot3 = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+const sub3 = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
+const add3 = (a, b) => [a[0] + b[0], a[1] + b[1], a[2] + b[2]];
+const mul3 = (a, s) => [a[0] * s, a[1] * s, a[2] * s];
+const len3 = (a) => Math.sqrt(dot3(a, a));
+const cross3 = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+const norm3 = (a) => { const L = len3(a) || 1; return [a[0] / L, a[1] / L, a[2] / L]; };
+const fmt = (v, n) => (Math.abs(v) < 5e-3 ? 0 : v).toFixed(n === undefined ? 2 : n);
+function parseCol(c) {
+  const m = c.charAt(0) === "#"
+    ? [parseInt(c.slice(1, 3), 16), parseInt(c.slice(3, 5), 16), parseInt(c.slice(5, 7), 16)]
+    : (c.match(/[\d.]+/g) || []).map(Number);
+  return [m[0] || 0, m[1] || 0, m[2] || 0];
+}
+function mixHex(a, b, t) {
+  const A = parseCol(a), B = parseCol(b);
+  return "rgb(" + Math.round(A[0] + (B[0] - A[0]) * t) + "," +
+                  Math.round(A[1] + (B[1] - A[1]) * t) + "," +
+                  Math.round(A[2] + (B[2] - A[2]) * t) + ")";
+}
+
+/* ==================================================================
+   自旋电子学交互教学工具
+   —— 零依赖单文件；Canvas 2D 绘制
+   —— 物理链：铁磁体交换劈裂 → 自旋极化率 P → Jullière 自旋相关隧穿 → TMR
+               → 自旋注入与扩散方程 → LLG 磁化动力学 → MRAM 的读与写
+   —— 所有数字全部由本文件的函数现算，没有一处写死
+   ================================================================== */
+
+/* ---------------- 物理常数 ---------------- */
+const QQ = 1.602176634e-19;        /* 元电荷 C */
+const HBAR = 1.054571817e-34;      /* 约化普朗克常数 J·s */
+const ME = 9.1093837015e-31;       /* 自由电子质量 kg */
+const MU0 = 4 * Math.PI * 1e-7;    /* 真空磁导率 H/m */
+const GAMMA_E = 1.76085963023e11;  /* 电子旋磁比 rad/(s·T) */
+const GAMMA = GAMMA_E * MU0;       /* 磁场改用 A/m 计量时的旋磁比，m/(A·s) */
+const EVJ = 1.602176634e-19;       /* 1 eV 折合的焦耳数 */
+
+/* ---------------- 固定参量（不是旋钮，全部在「固定参量」区披露） ---------------- */
+const PHIB = 0.90;      /* MgO 势垒平均高度 eV */
+const MST = 2.0e-9;     /* 自由层厚度 m */
+const MSS = 1.0e6;      /* 饱和磁化强度 A/m（μ₀M_s ≈ 1.26 T） */
+const MU0HK = 0.20;     /* 有效垂直各向异性场 T（形状各向异性已折进去） */
+const THETA_SH = 0.15;  /* Pt 的自旋霍尔角 */
+const RA0 = 10;         /* 参考值：1 nm 势垒、平行态的 RA，Ω·μm² */
+const VREAD = 0.10;     /* 读出电压 V */
+const TILT0 = 5;        /* 初始倾角，度（真实器件由热涨落提供，这里给确定值） */
+const TSTEP = 5e-13;    /* LLG 积分步长 s */
+const TMAX = 20e-9;     /* LLG 模拟时长 s */
+const P_CUT = 0.951;    /* 极化率上限保护：Jullière 在 P→1 时发散 */
+
+/* ---------------- 可调参量 ---------------- */
+const OPT = {
+  ap: false,      /* 自由层相对参考层是否反平行 */
+  p1: 0.70,       /* 参考层自旋极化率 */
+  p2: 0.70,       /* 自由层自旋极化率 */
+  d: 1.00,        /* 势垒厚度 nm */
+  ds: 20,         /* 自旋扩散系数 cm²/s */
+  ts: 100,        /* 自旋寿命 ps */
+  lc: 600,        /* 自旋输运沟道长度 nm */
+  tq: "stt",      /* 驱动方式：stt 自旋转移矩 / sot 自旋轨道矩 */
+  j: 8.0,         /* 电流密度 MA/cm²（两种几何的量程不同，见 syncInputs） */
+  alp: 0.010,     /* 吉尔伯特阻尼 */
+  hx: 0           /* 面内辅助场 mT */
+};
+
+/* 电流滑块按驱动方式换量程。两种几何的“够用”电流差了两个数量级：
+   STT 的反阻尼力矩直接抵消阻尼，MA/cm² 个位数就够；
+   SOT 的类阻尼力矩要硬顶各向异性场，单畴模型下要拉平磁矩得 ~10² MA/cm²。
+   k 是「滑块刻度 → MA/cm²」的换算系数。 */
+const JRANGE = {
+  stt: { k: 0.1, max: 120, step: 1 },   /* 0 – 12.0 MA/cm² */
+  sot: { k: 10, max: 100, step: 1 }     /* 0 – 1000 MA/cm²（拉平面内需 ≈ B_DL ≥ μ₀H_k） */
+};
+function jToSlider(j) { return Math.round(j / JRANGE[OPT.tq].k); }
+function sliderToJ(v) { return v * JRANGE[OPT.tq].k; }
+/* 两种驱动方式各记一个“看得出动静”的电流：切换时各自保留，
+   否则从 STT 切到 SOT 会停在 8 MA/cm²（B_DL 只有 2 mT，画面纹丝不动）。 */
+const JLAST = { stt: 8.0, sot: 500 };
+function switchTq() {
+  JLAST[OPT.tq] = OPT.j;
+  OPT.tq = OPT.tq === "stt" ? "sot" : "stt";
+  OPT.j = JLAST[OPT.tq];
+}
+
+let ST = null;     /* derived() 的缓存 */
+let TRAJ = null;   /* LLG 轨迹的缓存 */
+
+/* ---------------- 派生量：一切数字的唯一来源 ---------------- */
+function derived() {
+  const P1 = Math.min(OPT.p1, P_CUT), P2 = Math.min(OPT.p2, P_CUT);
+
+  /* 交换劈裂让两套自旋在费米面处的态密度不再相等。归一化到 D↑ + D↓ = 1，
+     于是极化率 P 的定义直接给出两条通道的份额。 */
+  const D1u = (1 + P1) / 2, D1d = (1 - P1) / 2;
+  const D2u = (1 + P2) / 2, D2d = (1 - P2) / 2;
+
+  /* Jullière 模型：隧穿电导 ∝ 两侧同自旋通道态密度之积的和 */
+  const gP = D1u * D2u + D1d * D2d;
+  const gA = D1u * D2d + D1d * D2u;
+  const tmr = (gP - gA) / gA;
+
+  /* 方势垒 WKB：κ = √(2m*Φ)/ħ，透射率 ∝ exp(−2κd) */
+  const kap = Math.sqrt(2 * ME * PHIB * EVJ) / HBAR;   /* 1/m */
+  const kapN = kap * 1e-9;                             /* 1/nm */
+  const Tk = Math.exp(-2 * kapN * OPT.d);
+  const Tk1 = Math.exp(-2 * kapN * 1);                 /* 1 nm 基准 */
+  const decayFac = Tk1 / Tk;                           /* exp[2κ(d−1 nm)] */
+
+  /* RA：以「1 nm 势垒的平行态」为 RA₀，电阻 ∝ exp(2κd)/g */
+  const raP = RA0 * decayFac;
+  const raA = RA0 * decayFac * (gP / gA);
+  const raNow = OPT.ap ? raA : raP;
+  /* V/(Ω·μm²) → A/μm² → A/m² */
+  /* 读出电流密度 A/m²：j = V / RA，RA 用 Ω·μm² ⇒ 换算系数 10¹² */
+  const jReadNow = VREAD / raNow * 1e12;
+
+  /* 自旋注入与扩散 */
+  const Ds = OPT.ds * 1e-4;                            /* cm²/s → m²/s */
+  const tau = OPT.ts * 1e-12;                          /* ps → s */
+  const Ls = Math.sqrt(Ds * tau);                      /* m */
+  const xd = OPT.lc * 1e-9;
+  const decay = Math.exp(-xd / Ls);                    /* 到达探测端的剩余极化份额 */
+  const tauTrans = xd * xd / Ds;                       /* 扩散穿过沟道所需的时间 */
+
+  /* LLG 磁化动力学 */
+  const Hk = MU0HK / MU0;                              /* A/m */
+  const eta = 0.5 * P1;                                /* 简化 Slonczewski 效率 */
+  const J = OPT.j * 1e10;                              /* MA/cm² → A/m² */
+  const cSTT = GAMMA * HBAR * eta * J / (2 * QQ * MU0 * MSS * MST);
+  const cSOT = GAMMA * HBAR * THETA_SH * J / (2 * QQ * MU0 * MSS * MST);
+  /* STT 的失稳阈值：类阻尼力矩压过吉尔伯特阻尼时开始翻转 */
+  const JcSTT = OPT.alp * 2 * QQ * MU0 * MSS * MST * Hk / (HBAR * eta) / 1e10;
+  /* SOT 的类阻尼力矩 m×(σ×m) 等价的场是 m×σ（⊥ m、随 m 转），
+     其幅值就是常说的类阻尼等效场 B_DL = ħθ_SH·J / (2e·M_s·t)，单位 T。
+     它不反阻尼，而是横着把磁矩往面内推；单畴模型下推平（m_z → 0）的判据是
+     B_DL ≥ μ₀H_k / 2（数值扫描实测：J = 300 时 m_z = 0.91，J = 400 时已为 0）。 */
+  const Bdl = HBAR * THETA_SH * J / (2 * QQ * MSS * MST);
+  const Jinplane = QQ * MSS * MST * MU0HK / (HBAR * THETA_SH) / 1e10;
+  const f0 = GAMMA * Hk / (2 * Math.PI);               /* 进动频率 Hz */
+
+  return {
+    P1: P1, P2: P2, D1u: D1u, D1d: D1d, D2u: D2u, D2d: D2d,
+    gP: gP, gA: gA, tmr: tmr,
+    kapN: kapN, Tk: Tk, decayFac: decayFac,
+    raP: raP, raA: raA, raNow: raNow,
+    jReadNow: jReadNow,
+    Ds: Ds, tau: tau, Ls: Ls, xd: xd, decay: decay, tauTrans: tauTrans,
+    Hk: Hk, eta: eta, J: J, cSTT: cSTT, cSOT: cSOT,
+    JcSTT: JcSTT, Bdl: Bdl, Jinplane: Jinplane, f0: f0
+  };
+}
+function D() { if (!ST) ST = derived(); return ST; }
+/* 倍数格式化：1 ≤ v < 1000 直接写数字，再大才走科学记数法。
+   直接用 toExponential 在指数为 0 时会拖出一个“×10⁰”，与 PSci 的口径不一致。 */
+function timesFmt(v) { return v < 1000 ? v.toFixed(2) : v.toExponential(2); }
+
+/* ---------------- LLG：显式求解 Gilbert 方程后再 RK4 ----------------
+   dm/dt = −γ m×H + α m×(dm/dt) + τ
+   把隐式项解出来（|m| = 1 且力矩均垂直于 m）：
+   v = (A + α m×A)/(1 + α²)，A = −γ m×H + τ
+   STT 用 Slonczewski 类阻尼力矩 m×(m×p̂)，p̂ 沿参考层磁化（取 z）；
+   SOT 用自旋霍尔效应给出的类阻尼力矩 m×(σ̂×m)，σ̂ 沿 y（与面内电流垂直）。 */
+function llgSim() {
+  const d = D();
+  const alp = OPT.alp, Hk = d.Hk;
+  const Hxs = OPT.hx * 1e-3 / MU0;                  /* mT → A/m */
+  const c = OPT.tq === "stt" ? d.cSTT : d.cSOT;
+  const pSTT = [0, 0, 1], sSOT = [0, 1, 0];
+
+  function acc(m) {
+    const h = [Hxs, 0, Hk * m[2]];
+    const A = add3(mul3(cross3(m, h), -GAMMA),
+      OPT.tq === "stt"
+        ? mul3(cross3(m, cross3(m, pSTT)), c)
+        : mul3(cross3(m, cross3(sSOT, m)), c));
+    return mul3(add3(A, mul3(cross3(m, A), alp)), 1 / (1 + alp * alp));
+  }
+  let m = [Math.sin(TILT0 * RAD), 0, Math.cos(TILT0 * RAD)];
+  const n = Math.round(TMAX / TSTEP);
+  const tr = new Array(n + 1);
+  tr[0] = m.slice();
+  let tsw = -1;
+  for (let i = 0; i < n; i++) {
+    const k1 = acc(m);
+    const k2 = acc(add3(m, mul3(k1, TSTEP / 2)));
+    const k3 = acc(add3(m, mul3(k2, TSTEP / 2)));
+    const k4 = acc(add3(m, mul3(k3, TSTEP)));
+    let v = [0, 0, 0];
+    for (var u = 0; u < 3; u++)
+      v[u] = TSTEP / 6 * (k1[u] + 2 * k2[u] + 2 * k3[u] + k4[u]);
+    const nm = add3(m, v);
+    m = norm3(nm);
+    tr[i + 1] = m.slice();
+    if (tsw < 0 && TSTEP * (i + 1) > 0.2e-9 && m[2] < 0) tsw = TSTEP * (i + 1);
+  }
+  /* 终态：最后 2 ns 的平均，避开尚未衰减掉的进动摆幅 */
+  let mz = 0, cnt = 0;
+  for (let i = Math.max(0, n - Math.round(2e-9 / TSTEP)); i <= n; i++) { mz += tr[i][2]; cnt++; }
+  return { tr: tr, tsw: tsw, mzEnd: cnt ? mz / cnt : tr[n][2], dt: TSTEP };
+}
+function TR() { if (!TRAJ) TRAJ = llgSim(); return TRAJ; }
+
+/* ---------------- 数值表格赋值给挑战答案时用同一套参数 ---------------- */
+function withOpt(o) {
+  const bak = {};
+  for (const k in o) if (Object.prototype.hasOwnProperty.call(o, k)) { bak[k] = OPT[k]; OPT[k] = o[k]; }
+  ST = null; TRAJ = null;
+  const d = D(), tr = llgSim();
+  for (const k in bak) if (Object.prototype.hasOwnProperty.call(bak, k)) OPT[k] = bak[k];
+  ST = null; TRAJ = null;
+  return { d: d, tr: tr };
+}
+
+/* ---------------- 画布容器与通用绘制工具 ---------------- */
+const MTJV = { W: 600, H: 400, dpr: 1, g: null, canvas: null, t: 0 };
+const TMRV = { W: 600, H: 290, dpr: 1, g: null, canvas: null };
+const INJV = { W: 600, H: 340, dpr: 1, g: null, canvas: null };
+const DYNV = { W: 600, H: 360, dpr: 1, g: null, canvas: null, t: 0 };
+const VIEWS = [["mtj", MTJV], ["tmr", TMRV], ["inj", INJV], ["dyn", DYNV]];
+
+const C_UP = "#d94a3d";    /* 自旋向上通道（多数自旋） */
+const C_DN = "#1976d2";    /* 自旋向下通道（少数自旋） */
+const C_HYB = "#8e5bd0";   /* 力矩与易轴 */
+const C_TEAL = "#0f9b8e";
+const C_AX = "#9aa5b1";
+const C_TXT = "#2c3e50";
+const C_SUB = "#6b7a8c";
+
+function fitCanvas(v, id) {
+  const c = document.getElementById(id);
+  if (!c) return;
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  const w = c.clientWidth || 600, h = +c.dataset.h;
+  c.style.height = h + "px";
+  c.width = Math.round(w * dpr); c.height = Math.round(h * dpr);
+  v.W = w; v.H = h; v.dpr = dpr; v.g = c.getContext("2d"); v.canvas = c;
+}
+function fitAll() { VIEWS.forEach(function (p) { fitCanvas(p[1], p[0]); }); }
+function begin(v) {
+  const g = v.g; if (!g) return null;
+  g.setTransform(1, 0, 0, 1, 0, 0);
+  g.clearRect(0, 0, v.canvas.width, v.canvas.height);
+  g.setTransform(v.dpr, 0, 0, v.dpr, 0, 0);
+  g.fillStyle = "#fbfcfe"; g.fillRect(0, 0, v.W, v.H);
+  g.lineJoin = "round";
+  return g;
+}
+function lbl(g, s, x, y, col, fp, align, bd) {
+  g.fillStyle = col || C_SUB;
+  g.font = (bd ? "600 " : "") + (fp || 11) + "px " + FONT;
+  g.textAlign = align || "left"; g.textBaseline = "middle";
+  g.fillText(s, x, y);
+}
+/* 「文字 + 运行时数字」必须拆成两次 fillText。合成一个串的话，T() 会因为串里混着
+   随参数变化的数字而整条漏翻（词典 key 禁含运行时数字 —— 换个参数就对不上）。
+   num 形如 "447 nm"，本身不含汉字，不进词典。
+   measureText 已被 i18n 层改成测 T(s) 的宽度，所以跟随译文长度自动排版。 */
+function lblN(g, s, num, x, y, col, fp, align, bd) {
+  g.font = (bd ? "600 " : "") + (fp || 11) + "px " + FONT;
+  const ws = g.measureText(s).width, wn = g.measureText(num).width;
+  if (align === "right") {
+    lbl(g, num, x, y, col, fp, "right", bd);
+    lbl(g, s, x - wn, y, col, fp, "right", bd);
+  } else if (align === "center") {
+    const x0 = x - (ws + wn) / 2;
+    lbl(g, s, x0, y, col, fp, "left", bd);
+    lbl(g, num, x0 + ws, y, col, fp, "left", bd);
+  } else {
+    lbl(g, s, x, y, col, fp, "left", bd);
+    lbl(g, num, x + ws, y, col, fp, "left", bd);
+  }
+}
+function line(g, x0, y0, x1, y1, col, w, dash) {
+  g.save();
+  g.strokeStyle = col; g.lineWidth = w || 1;
+  if (dash) g.setLineDash(dash);
+  g.beginPath(); g.moveTo(x0, y0); g.lineTo(x1, y1); g.stroke();
+  g.restore();
+}
+function arrow(g, x0, y0, x1, y1, col, w) {
+  g.save();
+  g.strokeStyle = col; g.fillStyle = col; g.lineWidth = w || 2;
+  g.beginPath(); g.moveTo(x0, y0); g.lineTo(x1, y1); g.stroke();
+  const a = Math.atan2(y1 - y0, x1 - x0), s = 6 + (w || 2);
+  g.beginPath();
+  g.moveTo(x1, y1);
+  g.lineTo(x1 - s * Math.cos(a - 0.42), y1 - s * Math.sin(a - 0.42));
+  g.lineTo(x1 - s * Math.cos(a + 0.42), y1 - s * Math.sin(a + 0.42));
+  g.closePath(); g.fill();
+  g.restore();
+}
+function rrect(g, x, y, w, h, r, fill, stroke) {
+  g.beginPath();
+  const rr = Math.min(r, Math.abs(w) / 2, Math.abs(h) / 2);
+  g.moveTo(x + rr, y);
+  g.lineTo(x + w - rr, y); g.quadraticCurveTo(x + w, y, x + w, y + rr);
+  g.lineTo(x + w, y + h - rr); g.quadraticCurveTo(x + w, y + h, x + w - rr, y + h);
+  g.lineTo(x + rr, y + h); g.quadraticCurveTo(x, y + h, x, y + h - rr);
+  g.lineTo(x, y + rr); g.quadraticCurveTo(x, y, x + rr, y);
+  g.closePath();
+  if (fill) { g.fillStyle = fill; g.fill(); }
+  if (stroke) { g.strokeStyle = stroke; g.lineWidth = 1.2; g.stroke(); }
+}
+function upDown(g, x, y, up, r, col) {
+  /* 自旋小箭头：↑ / ↓，形状区分（不只靠颜色） */
+  g.save();
+  g.fillStyle = col; g.strokeStyle = col; g.lineWidth = 1.6;
+  const s = up ? -1 : 1;
+  g.beginPath();
+  g.moveTo(x, y + s * r * 1.35); g.lineTo(x, y - s * r * 1.35); g.stroke();
+  g.beginPath();
+  g.moveTo(x, y - s * r * 1.5);
+  g.lineTo(x - r * 0.62, y - s * r * 0.5);
+  g.lineTo(x + r * 0.62, y - s * r * 0.5);
+  g.closePath(); g.fill();
+  g.restore();
+}
+
+/* ==================================================================
+   模块一：MTJ —— 两侧自旋态密度的匹配
+   ================================================================== */
+function drawMtj() {
+  const v = MTJV, g = begin(v); if (!g) return;
+  const d = D();
+  const cx = v.W / 2, yEF = 214, yTop = 52;
+  const bwid = 14 + OPT.d * 16;                  /* 势垒宽度随厚度变化 */
+  const bx0 = cx - bwid / 2, bx1 = cx + bwid / 2;
+  const xF1 = bx0 - 78, xF2 = bx1 + 78;          /* 两侧 DOS 柱的中心 */
+
+  /* 铁磁层衬底 */
+  const layW = 96, layH = 210, layY = yTop + 8;
+  rrect(g, xF1 - layW / 2, layY, layW, layH, 8, "rgba(25,118,210,0.06)", "rgba(25,118,210,0.22)");
+  rrect(g, xF2 - layW / 2, layY, layW, layH, 8, "rgba(25,118,210,0.06)", "rgba(25,118,210,0.22)");
+  lbl(g, "参考层 FM₁（CoFeB）", xF1, layY + 14, "#1976d2", 11.5, "center", true);
+  lbl(g, "自由层 FM₂（CoFeB）", xF2, layY + 14, "#1976d2", 11.5, "center", true);
+  /* 势垒 */
+  rrect(g, bx0, layY, bwid, layH, 4, "rgba(142,91,208,0.10)", "rgba(142,91,208,0.40)");
+  lbl(g, "MgO", cx, layY - 12, C_HYB, 11, "center", true);
+  lbl(g, OPT.d.toFixed(2) + " nm", cx, layY + layH + 14, C_HYB, 11, "center", true);
+
+  /* 能量轴与费米面 */
+  arrow(g, 40, yEF + 62, 40, layY - 16, C_AX, 1.2);
+  lbl(g, "E", 40, layY - 26, C_AX, 11, "center", true);
+  line(g, 40, yEF, v.W - 40, yEF, C_AX, 1, [5, 4]);
+  lbl(g, "E_F", v.W - 40, yEF - 12, C_AX, 11, "right", true);
+
+  /* DOS 柱：高度 ∝ D(E_F)，两条通道并排 */
+  const bwBar = 24, gap = 10, hMax = 132;
+  function dosPair(xc, Du, Dd, flip, tag) {
+    const hU = Du * hMax, hD = Dd * hMax;
+    const xu = flip ? xc + (bwBar + gap) / 2 : xc - (bwBar + gap) / 2;
+    const xd = flip ? xc - (bwBar + gap) / 2 : xc + (bwBar + gap) / 2;
+    rrect(g, xu - bwBar / 2, yEF - hU, bwBar, hU, 3, C_UP + "33", C_UP);
+    rrect(g, xd - bwBar / 2, yEF - hD, bwBar, hD, 3, C_DN + "33", C_DN);
+    upDown(g, xu, yEF - hU - 11, true, 4.6, C_UP);
+    upDown(g, xd, yEF - hD - 11, false, 4.6, C_DN);
+    lbl(g, (Du * 100).toFixed(0) + "%", xu, yEF - hU - 26, C_UP, 10.5, "center", true);
+    lbl(g, (Dd * 100).toFixed(0) + "%", xd, yEF - hD - 26, C_DN, 10.5, "center", true);
+    lbl(g, tag, xc, yEF + 20, C_SUB, 10.5, "center", false);
+  }
+  dosPair(xF1, d.D1u, d.D1d, false, "多数 / 少数");
+  dosPair(xF2, d.D2u, d.D2d, OPT.ap, OPT.ap ? "翻转后：↑ 成少数" : "同向");
+
+  /* 磁化方向：FM₂ 反平行时箭头向下 */
+  arrow(g, xF1, layY + 30, xF1, layY + 30 - 26, C_UP, 3);
+  lbl(g, "M₁", xF1 + 12, layY + 20, C_UP, 10.5, "left", true);
+  const m2Up = !OPT.ap;
+  arrow(g, xF2, m2Up ? layY + 30 : layY + 4, xF2, m2Up ? layY + 4 : layY + 30, C_UP, 3);
+  lbl(g, "M₂", xF2 + 12, layY + 20, C_UP, 10.5, "left", true);
+
+  /* 隧穿通道：线宽 ∝ 该自旋通道的态密度乘积 */
+  const cUpA = d.D1u * d.D2u, cDnA = d.D1d * d.D2d;
+  const cUpB = d.D1u * d.D2d, cDnB = d.D1d * d.D2u;
+  const cUp = OPT.ap ? cUpB : cUpA, cDn = OPT.ap ? cDnB : cDnA;
+  const cMax = Math.max(d.D1u * d.D2u, d.D1d * d.D2d, 1e-6);
+  function wavy(x0, y0, x1, y1, col, amp, lw) {
+    const ph = MTJV.t * 3.4;
+    g.save();
+    g.strokeStyle = col; g.lineWidth = lw; g.globalAlpha = 0.85;
+    g.beginPath();
+    g.moveTo(x0, y0);
+    const n = 16;
+    for (let i = 1; i <= n; i++) {
+      const t = i / n, x = x0 + (x1 - x0) * t;
+      const y = y0 + (y1 - y0) * t + Math.sin(t * Math.PI * 3 + ph) * amp;
+      g.lineTo(x, y);
+    }
+    g.stroke();
+    g.restore();
+  }
+  wavy(xF1 + bwBar / 2 + 4, yEF - d.D1u * hMax * 0.62, xF2 - bwBar / 2 - 4,
+    yEF - (OPT.ap ? d.D2d : d.D2u) * hMax * 0.62, C_UP, 6, 1.2 + 7.4 * cUp / cMax);
+  wavy(xF1 + bwBar / 2 + 4, yEF - d.D1d * hMax * 0.62, xF2 - bwBar / 2 - 4,
+    yEF - (OPT.ap ? d.D2u : d.D2d) * hMax * 0.62, C_DN, 6, 1.2 + 7.4 * cDn / cMax);
+
+  /* 底部：两种构型的总电导对比 */
+  const yB = 292, x0 = 60, bwTot = v.W - 120, hB = 26;
+  const gMax = Math.max(d.gP, d.gA, 1e-6);
+  lbl(g, "总隧穿电导（相对单位）", x0, yB - 14, C_TXT, 11.5, "left", true);
+  [["平行 P", d.gP, "#2e9e5b", !OPT.ap], ["反平行 AP", d.gA, "#8b97a6", OPT.ap]].forEach(function (q, i) {
+    const y = yB + i * (hB + 16), w = bwTot * q[1] / gMax;
+    rrect(g, x0, y, Math.max(w, 3), hB, 4, q[2] + "", "rgba(0,0,0,0.10)");
+    lbl(g, q[0], x0 - 6, y + hB / 2, C_TXT, 11.5, "right", true);
+    lbl(g, q[1].toFixed(3), x0 + Math.max(w, 3) + 8, y + hB / 2, q[2], 11.5, "left", true);
+    if (q[3]) rrect(g, x0 - 2, y - 2, bwTot + 4, hB + 4, 5, null, "rgba(25,118,210,0.55)");
+  });
+  /* TMR 标注：从 AP 条末端指向 P 条末端的增量 */
+  const yP = yB, yA = yB + hB + 16;
+  const xP = x0 + bwTot * d.gP / gMax, xA = x0 + bwTot * d.gA / gMax;
+  if (d.gP > d.gA) {
+    arrow(g, xA + 46, yA + hB / 2, xP + 46, yP + hB / 2, C_UP, 1.6);
+    lblN(g, "TMR ", (d.tmr * 100).toFixed(0) + "%", (xA + xP) / 2 + 96, (yP + yA) / 2 + hB / 2,
+      C_UP, 12, "center", true);
+  }
+}
+
+/* ==================================================================
+   模块二：TMR 随极化率、电阻随势垒厚度
+   ================================================================== */
+function tmrAt(p2, p1) {
+  const Du1 = (1 + p1) / 2, Dd1 = (1 - p1) / 2;
+  const Du2 = (1 + p2) / 2, Dd2 = (1 - p2) / 2;
+  const gP = Du1 * Du2 + Dd1 * Dd2, gA = Du1 * Dd2 + Dd1 * Du2;
+  return (gP - gA) / gA;
+}
+function niceMax(v) {
+  const p = Math.pow(10, Math.floor(Math.log10(v)));
+  const r = v / p;
+  return (r <= 1 ? 1 : r <= 2 ? 2 : r <= 5 ? 5 : 10) * p;
+}
+function drawTmr() {
+  const v = TMRV, g = begin(v); if (!g) return;
+  const d = D();
+  const mid = 322;
+
+  /* ---- 左：TMR 对自由层极化率 ---- */
+  const x0 = 56, x1 = mid - 30, y0 = 44, y1 = v.H - 56;
+  let mx = 0.001;
+  for (let i = 0; i <= 60; i++) { const p = 0.05 + 0.9 * i / 60; mx = Math.max(mx, tmrAt(p, d.P1)); }
+  const ymax = Math.max(1.2, niceMax(mx * 1.08));
+  const X = p => x0 + (p - 0.05) / 0.9 * (x1 - x0);
+  const Y = t => y1 - clamp(t / ymax, 0, 1) * (y1 - y0);
+  rrect(g, x0, y0, x1 - x0, y1 - y0, 4, "#ffffff", "#dde4ec");
+  for (let i = 0; i <= 4; i++) {
+    const t = ymax * i / 4, y = Y(t);
+    line(g, x0, y, x1, y, "#eef2f6", 1);
+    lbl(g, (t * 100).toFixed(0) + "%", x0 - 6, y, C_SUB, 10.5, "right");
+  }
+  for (let i = 0; i <= 4; i++) {
+    const p = 0.05 + 0.9 * i / 4, x = X(p);
+    line(g, x, y0, x, y1, "#eef2f6", 1);
+    lbl(g, p.toFixed(2), x, y1 + 14, C_SUB, 10.5, "center");
+  }
+  g.save();
+  g.strokeStyle = "#1976d2"; g.lineWidth = 2.2; g.beginPath();
+  for (let i = 0; i <= 120; i++) {
+    const p = 0.05 + 0.9 * i / 120, x = X(p), y = Y(tmrAt(p, d.P1));
+    if (i === 0) g.moveTo(x, y); else g.lineTo(x, y);
+  }
+  g.stroke(); g.restore();
+  const cxm = X(OPT.p2), cym = Y(d.tmr);
+  line(g, cxm, y0, cxm, y1, C_UP, 1.2, [4, 3]);
+  g.save();
+  g.fillStyle = C_UP; g.beginPath(); g.arc(cxm, cym, 4.6, 0, 2 * Math.PI); g.fill();
+  g.strokeStyle = "#fff"; g.lineWidth = 1.6; g.stroke(); g.restore();
+  lbl(g, "工作点", cxm + 9, cym - 13, C_UP, 11, "left", true);
+  lblN(g, "TMR 随极化率（P₁ = ", d.P1.toFixed(2) + "）", (x0 + x1) / 2, y0 - 14, C_TXT, 12, "center", true);
+  lbl(g, "自由层极化率 P₂", (x0 + x1) / 2, y1 + 30, C_SUB, 11, "center");
+  lbl(g, "↑2P₁P₂/(1−P₁P₂)：两个极化率相乘", x0, v.H - 12, C_SUB, 10.5, "left");
+
+  /* ---- 右：RA 随势垒厚度（对数纵轴） ---- */
+  const rx0 = mid + 26, rx1 = v.W - 52;
+  const lo = Math.log10(0.5), hi = Math.log10(2e4);
+  const RX = t => rx0 + (t - 0.6) / (3 - 0.6) * (rx1 - rx0);
+  const RY = r => y1 - clamp((Math.log10(Math.max(r, 0.5)) - lo) / (hi - lo), 0, 1) * (y1 - y0);
+  rrect(g, rx0, y0, rx1 - rx0, y1 - y0, 4, "#ffffff", "#dde4ec");
+  for (let e = 0; e <= 4; e++) {
+    const r = Math.pow(10, e), y = RY(r);
+    line(g, rx0, y, rx1, y, "#eef2f6", 1);
+    lbl(g, r >= 1000 ? (r / 1000) + "k" : String(r), rx0 - 6, y, C_SUB, 10.5, "right");
+  }
+  for (let i = 0; i <= 4; i++) {
+    const t = 0.6 + (3 - 0.6) * i / 4, x = RX(t);
+    line(g, x, y0, x, y1, "#eef2f6", 1);
+    lbl(g, t.toFixed(1), x, y1 + 14, C_SUB, 10.5, "center");
+  }
+  /* 当前构型所在的那条分支加粗、另一条淡出 —— 否则 P/AP 开关在这张图上留不下任何痕迹。
+     （左侧的 TMR–P₂ 曲线本身与构型无关：TMR 是个比值，两态共用同一条。） */
+  const isAP = !!OPT.ap;
+  [["P", d.gP, "#2e9e5b"], ["AP", d.gA, "#8b97a6"]].forEach(function (q) {
+    const act = (q[0] === "AP") === isAP;
+    g.save();
+    g.globalAlpha = act ? 1 : 0.34;
+    g.strokeStyle = q[2]; g.lineWidth = act ? 3.0 : 1.4; g.beginPath();
+    for (let i = 0; i <= 100; i++) {
+      const t = 0.6 + (3 - 0.6) * i / 100;
+      const ra = RA0 * Math.exp(2 * d.kapN * (t - 1)) * (d.gP / q[1]);
+      const x = RX(t), y = RY(ra);
+      if (i === 0) g.moveTo(x, y); else g.lineTo(x, y);
+    }
+    g.stroke(); g.restore();
+  });
+  const rx = RX(OPT.d);
+  line(g, rx, y0, rx, y1, C_HYB, 1.2, [4, 3]);
+  [["P", d.raP, "#2e9e5b"], ["AP", d.raA, "#8b97a6"]].forEach(function (q) {
+    const act = (q[0] === "AP") === isAP;
+    g.save();
+    if (act) {
+      g.fillStyle = q[2]; g.beginPath(); g.arc(rx, RY(q[1]), 5.4, 0, 2 * Math.PI); g.fill();
+      g.strokeStyle = "#fff"; g.lineWidth = 1.8; g.stroke();
+    } else {
+      g.globalAlpha = 0.5; g.strokeStyle = q[2]; g.lineWidth = 1.4;
+      g.beginPath(); g.arc(rx, RY(q[1]), 4.2, 0, 2 * Math.PI); g.stroke();
+    }
+    g.restore();
+  });
+  lbl(g, isAP ? "当前：反平行 AP（高阻）" : "当前：平行 P（低阻）",
+    rx0 + 8, y0 + 13, isAP ? "#5f6b78" : "#2e9e5b", 11.5, "left", true);
+  lbl(g, "RA（Ω·μm²）随势垒厚度", (rx0 + rx1) / 2, y0 - 14, C_TXT, 12, "center", true);
+  lbl(g, "势垒厚度 d（nm）", (rx0 + rx1) / 2, y1 + 30, C_SUB, 11, "center");
+  lbl(g, "∝ exp(2κd)：每加厚一层，指数贵一倍", rx0, v.H - 12, C_SUB, 10.5, "left");
+}
+
+/* ==================================================================
+   模块三：自旋注入与扩散
+   ================================================================== */
+function drawInj() {
+  const v = INJV, g = begin(v); if (!g) return;
+  const d = D();
+  const x0 = 66, x1 = v.W - 58, yS = 46, hS = 96, yC = 214, hC = 86;
+  const Lnm = d.Ls * 1e9;                              /* 扩散长度 nm */
+  const SPAN = 2000;                                   /* 屏幕横向代表的 nm 跨度 */
+  const wFM = 74, xNM = x0 + wFM;                      /* 注入界面所在像素 */
+  const xOf = nm => xNM + (x1 - xNM) * clamp(nm / SPAN, 0, 1);
+
+  /* ---- 上：器件剖面 + 自旋积累分布（与上排共用同一条 x 映射） ---- */
+  rrect(g, x0, yS, wFM, hS, 5, "rgba(217,74,61,0.10)", "rgba(217,74,61,0.45)");
+  lbl(g, "铁磁注入极", x0 + wFM / 2, yS + hS / 2 - 12, C_UP, 11.5, "center", true);
+  arrow(g, x0 + wFM / 2, yS + hS / 2 + 16, x0 + wFM / 2, yS + hS / 2 - 6, C_UP, 2.4);
+  lbl(g, "M", x0 + wFM / 2 + 10, yS + hS / 2 + 8, C_UP, 10.5, "left", true);
+
+  /* 非磁沟道：颜色深浅 ∝ 剩余自旋极化 exp(−x/L_s) */
+  const steps = 140, chW = x1 - xNM;
+  for (let i = 0; i < steps; i++) {
+    const nm = SPAN * i / steps;
+    const frac = Math.exp(-nm / Lnm);
+    g.fillStyle = "rgba(217,74,61," + (0.05 + 0.60 * frac).toFixed(3) + ")";
+    g.fillRect(xNM + chW * i / steps, yS, chW / steps + 1.2, hS);
+  }
+  rrect(g, xNM, yS, chW, hS, 5, null, "rgba(139,151,166,0.55)");
+  lbl(g, "非磁沟道 NM（自旋在此逐渐遗忘）", (xNM + x1) / 2, yS - 12, C_SUB, 11, "center", true);
+  for (let i = 0; i < 6; i++) {
+    const nm = SPAN * (i + 0.5) / 6;
+    upDown(g, xOf(nm), yS + hS / 2, true, 4.2, "rgba(217,74,61,0.85)");
+  }
+
+  /* ---- 下：衰减曲线 ---- */
+  rrect(g, xNM, yC, chW, hC, 4, "#ffffff", "#dde4ec");
+  for (let i = 0; i <= 4; i++) {
+    const f = i / 4, y = yC + hC - f * hC;
+    line(g, xNM, y, x1, y, "#eef2f6", 1);
+    lbl(g, f.toFixed(2), xNM - 6, y, C_SUB, 10.5, "right");
+  }
+  for (let i = 0; i <= 4; i++) {
+    const nm = SPAN * i / 4, x = xOf(nm);
+    line(g, x, yC, x, yC + hC, "#eef2f6", 1);
+    lbl(g, String(nm), x, yC + hC + 14, C_SUB, 10.5, "center");
+  }
+  const Yof = f => yC + hC - clamp(f, 0, 1.05) * hC;
+  g.save();
+  g.strokeStyle = C_UP; g.lineWidth = 2.4; g.beginPath();
+  for (let i = 0; i <= 200; i++) {
+    const nm = SPAN * i / 200, x = xOf(nm), y = Yof(Math.exp(-nm / Lnm));
+    if (i === 0) g.moveTo(x, y); else g.lineTo(x, y);
+  }
+  g.stroke(); g.restore();
+  /* 探测端竖线贯穿上下两排，说明「位置」是同一件事 */
+  const xEnd = xOf(OPT.lc);
+  line(g, xEnd, yS, xEnd, yC + hC, C_TEAL, 1.6, [5, 3]);
+  lblN(g, "探测端 x = ", OPT.lc + " nm", xEnd, yS + hS + 14, C_TEAL, 10.5, "center", true);
+  const xL = xOf(Lnm), yE1e = Yof(1 / Math.E);
+  line(g, xL, yC, xL, yC + hC, C_HYB, 1.4, [4, 3]);
+  line(g, x0, yE1e, x1, yE1e, C_HYB, 1, [2, 3]);
+  lblN(g, "L_s（降到 1/e）= ", Lnm.toFixed(0) + " nm", xL + 6, yC + 16, C_HYB, 11, "left", true);
+  const xdDot = xOf(OPT.lc), ydDot = Yof(d.decay);
+  g.save();
+  g.fillStyle = C_TEAL; g.beginPath(); g.arc(xdDot, ydDot, 4.6, 0, 2 * Math.PI); g.fill();
+  g.strokeStyle = "#fff"; g.lineWidth = 1.6; g.stroke(); g.restore();
+  lblN(g, "剩余 ", (d.decay * 100).toFixed(1) + "%", xdDot + 8, ydDot - 13, C_TEAL, 11, "left", true);
+  lbl(g, "归一化自旋极化 Δn(x)/Δn(0)", (x0 + x1) / 2, yC - 12, C_TXT, 12, "center", true);
+  lbl(g, "距注入界面的距离 x（nm）", (x0 + x1) / 2, yC + hC + 30, C_SUB, 11, "center");
+}
+
+/* ==================================================================
+   模块四：STT / SOT 磁化动力学
+   ================================================================== */
+function drawDyn() {
+  const v = DYNV, g = begin(v); if (!g) return;
+  const d = D(), tr = TR();
+  const Rc = 96, cx = 176, cy = 176;
+  /* 轴测投影：z 向上，x 向右下，y 向右上 */
+  const PX = m => cx + Rc * (m[0] * 0.90 - m[1] * 0.90) * 0.72;
+  const PY = m => cy - Rc * (m[2] * 0.98 - (m[0] + m[1]) * 0.30);
+
+  /* 单位球与参考大圆 */
+  g.save();
+  g.strokeStyle = "#dde4ec"; g.lineWidth = 1.2;
+  g.beginPath(); g.arc(cx, cy, Rc, 0, 2 * Math.PI); g.stroke();
+  g.restore();
+  function great(f) {
+    g.save(); g.strokeStyle = "#e7edf4"; g.lineWidth = 1; g.beginPath();
+    for (let i = 0; i <= 72; i++) {
+      const a = 2 * Math.PI * i / 72, m = f(a);
+      const x = PX(m), y = PY(m);
+      if (i === 0) g.moveTo(x, y); else g.lineTo(x, y);
+    }
+    g.closePath(); g.stroke(); g.restore();
+  }
+  great(a => [Math.cos(a), Math.sin(a), 0]);              /* 赤道面 */
+  great(a => [Math.cos(a), 0, Math.sin(a)]);              /* xz 面 */
+  great(a => [0, Math.cos(a), Math.sin(a)]);              /* yz 面 */
+
+  /* 易轴（z）与参考方向 */
+  arrow(g, cx, PY([0, 0, -1.18]), cx, PY([0, 0, 1.18]), C_HYB, 1.6);
+  lbl(g, "易轴 z（垂直各向异性）", cx + 10, PY([0, 0, 1.18]) - 4, C_HYB, 10.5, "left", true);
+  if (OPT.tq === "stt") {
+    lbl(g, "p̂（参考层极化，沿 z）", cx + 10, PY([0, 0, 1.0]) + 14, C_UP, 10.5, "left", true);
+  } else {
+    const sy = PY([0, 1, 0]), sx = PX([0, 1, 0]);
+    arrow(g, cx, cy, sx, sy, C_UP, 1.8);
+    lbl(g, "σ̂（自旋霍尔积累，沿 y）", sx + 8, sy - 8, C_UP, 10.5, "left", true);
+  }
+
+  /* 轨迹 */
+  if ($("ckTrail") && $("ckTrail").checked) {
+    g.save();
+    g.strokeStyle = "rgba(217,74,61,0.55)"; g.lineWidth = 1.6; g.beginPath();
+    const N = tr.tr.length, step = Math.max(1, Math.floor(N / 900));
+    for (let i = 0; i < N; i += step) {
+      const x = PX(tr.tr[i]), y = PY(tr.tr[i]);
+      if (i === 0) g.moveTo(x, y); else g.lineTo(x, y);
+    }
+    g.stroke(); g.restore();
+  }
+
+  /* 当前磁矩 */
+  const idx = Math.min(tr.tr.length - 1, Math.round(DYNV.t / tr.dt));
+  const m = tr.tr[idx];
+  arrow(g, cx, cy, PX(m), PY(m), tr.mzEnd > 0 ? C_DN : C_UP, 3.4);
+  g.save();
+  g.fillStyle = tr.mzEnd > 0 ? C_DN : C_UP;
+  g.beginPath(); g.arc(PX(m), PY(m), 5.2, 0, 2 * Math.PI); g.fill();
+  g.strokeStyle = "#fff"; g.lineWidth = 1.8; g.stroke(); g.restore();
+  lbl(g, "m", PX(m) + 9, PY(m) - 10, tr.mzEnd > 0 ? C_DN : C_UP, 11, "left", true);
+  lbl(g, OPT.tq === "stt" ? "自旋转移矩 STT" : "自旋轨道矩 SOT", cx, cy + Rc + 34, C_TXT, 12.5, "center", true);
+
+  /* ---- 右：m_z 时间轨迹 ---- */
+  const px0 = 320, px1 = v.W - 46, py0 = 52, py1 = 292;
+  rrect(g, px0, py0, px1 - px0, py1 - py0, 4, "#ffffff", "#dde4ec");
+  for (let i = 0; i <= 4; i++) {
+    const f = 1 - i / 2, y = py0 + (py1 - py0) * i / 4;
+    line(g, px0, y, px1, y, "#eef2f6", 1);
+    lbl(g, f.toFixed(1), px0 - 6, y, C_SUB, 10.5, "right");
+  }
+  const Tns = TMAX * 1e9;
+  for (let i = 0; i <= 4; i++) {
+    const t = Tns * i / 4, x = px0 + (px1 - px0) * i / 4;
+    line(g, x, py0, x, py1, "#eef2f6", 1);
+    lbl(g, t.toFixed(0), x, py1 + 14, C_SUB, 10.5, "center");
+  }
+  const XY = i => [px0 + (px1 - px0) * (i * tr.dt / TMAX), py0 + (py1 - py0) * (1 - tr.tr[i][2]) / 2];
+  g.save();
+  g.strokeStyle = "#1976d2"; g.lineWidth = 2; g.beginPath();
+  const N2 = tr.tr.length, stp = Math.max(1, Math.floor(N2 / 700));
+  for (let i = 0; i < N2; i += stp) { const q = XY(i); if (i === 0) g.moveTo(q[0], q[1]); else g.lineTo(q[0], q[1]); }
+  g.stroke(); g.restore();
+  if (tr.tsw > 0) {
+    const x = px0 + (px1 - px0) * (tr.tsw / TMAX);
+    line(g, x, py0, x, py1, C_UP, 1.6, [5, 3]);
+    lblN(g, "翻转 ", (tr.tsw * 1e9).toFixed(2) + " ns", x + 6, py0 + 14, C_UP, 11, "left", true);
+  }
+  const cur = XY(idx);
+  line(g, cur[0], py0, cur[0], py1, "rgba(25,118,210,0.45)", 1.4);
+  g.save();
+  g.fillStyle = "#1976d2"; g.beginPath(); g.arc(cur[0], cur[1], 4, 0, 2 * Math.PI); g.fill();
+  g.strokeStyle = "#fff"; g.lineWidth = 1.5; g.stroke(); g.restore();
+  lbl(g, "m_z(t)", (px0 + px1) / 2, py0 - 14, C_TXT, 12, "center", true);
+  lbl(g, "时间 t（ns）", (px0 + px1) / 2, py1 + 30, C_SUB, 11, "center");
+  lbl(g, tr.mzEnd > 0 ? "终态：仍在 +z（未翻转）" : "终态：已翻转到 −z",
+    px0, v.H - 22, tr.mzEnd > 0 ? C_SUB : C_UP, 12, "left", true);
+  /* SOT 没有「J_c」这个概念（它不反阻尼），改报等效类阻尼场占各向异性场的比例。
+     数字必须单独一次 fillText，否则整条串会因含运行时数字而漏翻。 */
+  if (OPT.tq === "stt") {
+    lblN(g, "J/J_c = ", (OPT.j / d.JcSTT).toFixed(2), px1, v.H - 22,
+      OPT.j > d.JcSTT ? C_UP : C_SUB, 12, "right", true);
+  } else {
+    lblN(g, "B_DL/μ₀H_k = ", (d.Bdl / MU0HK).toFixed(2), px1, v.H - 22,
+      d.Bdl > MU0HK ? C_UP : C_SUB, 12, "right", true);
+  }
+}
+
+/* ==================================================================
+   图例、提示、读数
+   ================================================================== */
+function swatch(col, cls) { return "<span class=\"swatch " + (cls || "") + "\" style=\"color:" + col + "\"></span>"; }
+
+const M_P = "<span class=\"m\"><i>P</i></span>", M_TMR = "<span class=\"m\">TMR</span>";
+const EQ_POL = "<span class=\"m\"><i>P</i><span class=\"op\">=</span><span class=\"frac\"><span class=\"num\"><i>N</i><sub>↑</sub><span class=\"op\">−</span><i>N</i><sub>↓</sub></span><span class=\"den\"><i>N</i><sub>↑</sub><span class=\"op\">+</span><i>N</i><sub>↓</sub></span></span></span>";
+const EQ_JUL = "<span class=\"m\">TMR<span class=\"op\">=</span><span class=\"frac\"><span class=\"num\">2<i>P</i><sub>1</sub><i>P</i><sub>2</sub></span><span class=\"den\">1<span class=\"op\">−</span><i>P</i><sub>1</sub><i>P</i><sub>2</sub></span></span></span>";
+const EQ_WKB = "<span class=\"m\"><i>G</i><span class=\"op\">∝</span>exp<span class=\"op\">(</span><span class=\"op\">−</span>2<i>κd</i><span class=\"op\">)</span><span class=\"op\">,</span><i>κ</i><span class=\"op\">=</span><span class=\"sqrt\"><span class=\"rd\">√</span><span class=\"rdc\">2<i>m</i>Φ</span></span>/<i>ħ</i></span>";
+const EQ_DIF = "<span class=\"m\">Δ<i>n</i>(<i>x</i>)<span class=\"op\">=</span>Δ<i>n</i>(0)exp<span class=\"op\">(</span><span class=\"op\">−</span><i>x</i>/<i>L</i><sub>s</sub><span class=\"op\">)</span><span class=\"op\">,</span><i>L</i><sub>s</sub><span class=\"op\">=</span><span class=\"sqrt\"><span class=\"rd\">√</span><span class=\"rdc\"><i>D</i><sub>s</sub><i>τ</i><sub>s</sub></span></span></span>";
+const EQ_LLG = "<span class=\"m\">d<i>m</i>/d<i>t</i><span class=\"op\">=</span><span class=\"op\">−</span><i>γ</i><i>m</i><span class=\"op\">×</span><i>H</i><span class=\"op\">+</span><i>α</i><i>m</i><span class=\"op\">×</span>d<i>m</i>/d<i>t</i><span class=\"op\">+</span><i>τ</i></span>";
+
+function buildLegend() {
+  const l1 = $("legMtj");
+  if (l1) l1.innerHTML = [
+    swatch(C_UP, "dot") + "自旋 ↑ 通道（多数自旋，与磁化同向）",
+    swatch(C_DN, "dot") + "自旋 ↓ 通道（少数自旋）",
+    swatch(C_HYB, "sq") + "MgO 隧穿势垒",
+    swatch("#2e9e5b", "sq") + "平行态 P",
+    swatch("#8b97a6", "sq") + "反平行态 AP"
+  ].map(t => "<span>" + t + "</span>").join("");
+  const l3 = $("legInj");
+  if (l3) l3.innerHTML = [
+    swatch(C_UP, "sq") + "剩余自旋极化深浅",
+    swatch(C_HYB, "dash") + "自旋扩散长度 L_s",
+    swatch(C_TEAL, "dash") + "探测端位置"
+  ].map(t => "<span>" + t + "</span>").join("");
+  const l4 = $("legDyn");
+  if (l4) l4.innerHTML = [
+    swatch(C_UP, "dot") + "磁矩轨迹（失稳后的进动）",
+    swatch(C_HYB, "dash") + "易轴 z / 参考极化方向 p̂",
+    swatch("#1976d2", "dash") + "m_z 时间曲线"
+  ].map(t => "<span>" + t + "</span>").join("");
+}
+function buildHints() {
+  const d = D();
+  const h1 = $("hintMtj");
+  if (h1) h1.innerHTML =
+    "铁磁体的 3d 带交换劈裂，两套自旋在费米面处的态密度不再相等 ⇒ " + EQ_POL +
+    "<span class=\"eq\">" + EQ_JUL + "：同自旋通道的态密度乘积之和才是隧穿电导。</span>" +
+    (OPT.ap
+      ? "反平行时两边「多数」错位配对，两条通道一起变差 ⇒ 总电导掉到最低（数值见读数面板）。"
+      : "平行时 ↑ 对 ↑、↓ 对 ↓，匹配最好 ⇒ 总电导最高（数值见读数面板）。");
+  const h2 = $("hintTmr");
+  if (h2) h2.innerHTML =
+    "左图是两个极化率相乘的结果：" + EQ_JUL + "，所以只调一边收益有限，两边同时高才有量级差异。" +
+    "<span class=\"eq\">" + EQ_WKB + "：厚度只改变绝对电阻，不改变 TMR —— 这是 Jullière 模型的直接结论。</span>" +
+    "实际 MgO 单晶势垒靠相干滤波能把 TMR 做到远超本模型的水平，属于模型边界之外。" +
+    "<span class=\"eq\">TMR 的用处就在这一步：同样的读出电压下，两个构型给出不同的电流 —— "
+    + "这就是磁存储器判 0 / 判 1 的窗口。反过来写入要求 <span class=\"m\"><i>j</i></span> &gt; <span class=\"m\"><i>J</i><sub>c</sub></span>，"
+    + "所以读电流必须远低于临界值，否则「读」会把「写」进去的内容擦掉。</span>";
+  const h3 = $("hintInj");
+  if (h3) h3.innerHTML =
+    "注入的非平衡自旋一边扩散一边弛豫 ⇒ " + EQ_DIF +
+    "<span class=\"eq\">注意是平方根：τ_s 缩短到 1/4，L_s 只缩短一半。</span>" +
+    "沟道越长、寿命越短，到探测端剩下的就越少 —— 具体数字记在右侧读数面板。";
+  const h4 = $("hintDyn");
+  if (h4) h4.innerHTML =
+    "宏自旋近似下的 LLG：" + EQ_LLG +
+    "<span class=\"eq\">" + (OPT.tq === "stt"
+      ? "STT 的类阻尼力矩 <span class=\"m\"><i>m</i><span class=\"op\">×</span><span class=\"op\">(</span><i>m</i><span class=\"op\">×</span><i>p</i><span class=\"op\">)</span></span> 与矢量 m 共面，能把垂直磁矩一路推过赤道。"
+      : "SOT 的 <span class=\"m\"><i>m</i><span class=\"op\">×</span><span class=\"op\">(</span><i>σ</i><span class=\"op\">×</span><i>m</i><span class=\"op\">)</span></span> 把磁矩拉向面内的 σ̂ —— 单靠它只能翻 90°，确定性翻转还要靠面内辅助场。") + "</span>" +
+    (OPT.tq === "stt"
+      ? "当前 J/J_c 是多少、有没有翻过去，都记在右侧读数面板。"
+      : "SOT 的推力用等效类阻尼场 B_DL 与 μ₀H_k 之比衡量：不到一半只是被掰弯，"
+        + "到一半就被拉到面内（m_z → 0），也就停在那儿了 —— 比值见读数面板。");
+}
+
+/* ==================================================================
+   读数面板
+   ================================================================== */
+function kvHTML(rows) {
+  return rows.map(function (q) {
+    return q.hd ? "<span class=\"hd\">" + q.hd + "</span>"
+      : "<span class=\"k\">" + q[0] + "</span><span class=\"v\">" + q[1] + "</span>";
+  }).join("");
+}
+function buildReadout() {
+  const d = D(), tr = TR();
+  const isSTT = OPT.tq === "stt";
+  const ro = $("readout");
+  if (ro) ro.innerHTML = kvHTML([
+    { hd: "隧道结（模块一、二）" },
+    ["当前构型", OPT.ap ? "反平行 AP" : "平行 P"],
+    ["电导 G / G′", d.gP.toFixed(3) + " / " + d.gA.toFixed(3)],
+    ["TMR", (d.tmr * 100).toFixed(1) + " %"],
+    ["RA（当前构型）", d.raNow.toFixed(2) + " Ω·μm<sup>2</sup>"],
+    /* A/m² → MA/cm²：1 MA/cm² = 10⁶ A/cm² = 10¹⁰ A/m² */
+    ["读出电流密度", (d.jReadNow / 1e10).toFixed(2) + " MA/cm<sup>2</sup>"],
+    { hd: "自旋输运（模块三）" },
+    ["自旋扩散长度 L_s", (d.Ls * 1e9).toFixed(0) + " nm"],
+    ["走 L 后剩余", (d.decay * 100).toFixed(1) + " % (L = " + OPT.lc + " nm)"],
+    { hd: "磁化动力学（模块四）" },
+    isSTT
+      ? ["临界电流密度 J_c", d.JcSTT.toFixed(2) + " MA/cm<sup>2</sup>"]
+      : ["等效类阻尼场 B_DL", (d.Bdl * 1e3).toFixed(1) + " mT"],
+    isSTT
+      ? ["J / J_c", (OPT.j / d.JcSTT).toFixed(2)]
+      : ["B_DL / μ₀H_k", (d.Bdl / MU0HK).toFixed(3)],
+    ["是否翻转", tr.mzEnd > 0 ? "未翻转（仍在 +z）" : "已翻转（−z）"],
+    ["翻转耗时", tr.tsw > 0 ? (tr.tsw * 1e9).toFixed(2) + " ns" : "—"]
+  ]);
+  const rm = $("readoutMore");
+  if (rm) rm.innerHTML = kvHTML([
+    { hd: "中间量" },
+    ["参考层 D↑ / D↓", (d.D1u * 100).toFixed(1) + " / " + (d.D1d * 100).toFixed(1) + " %"],
+    ["自由层 D↑ / D↓", (d.D2u * 100).toFixed(1) + " / " + (d.D2d * 100).toFixed(1) + " %"],
+    ["衰减常数 κ", d.kapN.toFixed(3) + " nm<sup>−1</sup>"],
+    ["WKB 透射因子 exp(−2κd)", d.Tk.toExponential(2)],
+    ["相对阻值（对 1 nm 平行态）", timesFmt(d.decayFac) + " 倍"],
+    ["进动频率 γH_k/2π", (d.f0 / 1e9).toFixed(2) + " GHz"],
+    ["Slonczewski 效率 η = P₁/2", d.eta.toFixed(3)],
+    ["拉平面内所需 B_DL", (MU0HK * 1e3 / 2).toFixed(0) + " mT (= μ₀H_k/2)"],
+    ["对应电流 J（SOT）", d.Jinplane.toFixed(0) + " MA/cm<sup>2</sup>"],
+    ["扩散通过沟道的时间", (d.tauTrans * 1e12).toFixed(1) + " ps"],
+    { hd: "模型边界" },
+    ["Jullière 模型", "只计自旋守恒隧穿，TMR 与势垒厚度无关"],
+    ["真实 MgO 隧道结", "相干滤波使 TMR 远超本模型"],
+    ["面内辅助场缺失时", "SOT 只能拉到面内（90°）"]
+  ]);
+}
+
+/* ==================================================================
+   挑战与预设按钮
+   ================================================================== */
+const CFGS = [["平行 P", false], ["反平行 AP", true]];
+const TQS = [["STT", "stt"], ["SOT", "sot"]];
+const PRES = [
+  ["典型 MgO 结", { ap: false, p1: 0.70, p2: 0.70, d: 1.00 }],
+  ["低极化金属结", { ap: false, p1: 0.40, p2: 0.40, d: 1.00 }],
+  ["写入操作", { tq: "stt", j: 6.0, alp: 0.010, hx: 0 }],
+  ["长寿命沟道", { ds: 20, ts: 500, lc: 600 }]
+];
+function buildBtns() {
+  const cb = $("cfgBtns");
+  if (cb) cb.innerHTML = CFGS.map(function (q) {
+    return "<button" + (OPT.ap === q[1] ? " class=\"sel\"" : "") + " data-cfg=\"" + (q[1] ? "1" : "0") + "\">" + q[0] + "</button>";
+  }).join("");
+  const tb = $("tqBtns");
+  if (tb) tb.innerHTML = TQS.map(function (q) {
+    return "<button" + (OPT.tq === q[1] ? " class=\"sel\"" : "") + " data-tq=\"" + q[1] + "\">" + q[0] + "</button>";
+  }).join("");
+  const pb = $("preBtns");
+  if (pb) pb.innerHTML = PRES.map(function (q) { return "<button>" + q[0] + "</button>"; }).join("");
+}
+
+let ANS_EL = [];
+const CHAL = [
+  {
+    q: "自旋是内禀角动量，却从不出现在 Schr. 方程的非相对论形式里。看模块一左侧两套自旋的态密度柱：它们为什么不等？如果把两个极化率都拉到 0.9，TMR 会变成多少？（彩蛋：The 720° Secret —— 转一圈回不来、转两圈才回来，指的是什么？）",
+    a: function () {
+      const hi = withOpt({ p1: 0.90, p2: 0.90 }).d;
+      const lo = withOpt({ p1: 0.40, p2: 0.40 }).d;
+      return "不等的根源是<b>交换作用</b>：泡利原理让自旋平行的两个电子必须占据不同的空间轨道，库仑排斥因此下降，" +
+        "等价于一个与自旋方向有关的有效场（交换场），把 3d 带沿能量轴劈开，<span class=\"m\"><i>E</i><sub>F</sub></span> 处的态密度 <span class=\"m\"><i>N</i><sub>↑</sub></span>、<span class=\"m\"><i>N</i><sub>↓</sub></span> 自然不同。" +
+        "劈裂不改变总电子数，只改变两套自旋在费米面上的“配额”，于是有了不为零的 <span class=\"m\"><i>P</i></span>。<br>" +
+        "数值：<span class=\"m\"><i>P</i><sub>1</sub></span> = <span class=\"m\"><i>P</i><sub>2</sub></span> = 0.9 时 TMR = <b>" + (hi.tmr * 100).toFixed(0) + " %</b>；" +
+        "同为 0.4 时只有 <b>" + (lo.tmr * 100).toFixed(0) + " %</b> —— 因为 TMR 是两个极化率相乘，不是相加。" +
+        "<br>彩蛋 <i>The 720° Secret</i>：自旋 1/2 的态矢量转 360° 只回到 −ψ，要到 <b>720°</b> 才真正复原；" +
+        "这正是“费米子”与矢量、张量这类“转一圈就回来”的经典量的根本差别。";
+    }
+  },
+  {
+    q: "在模块二把 <span class=\"m\"><i>P</i><sub>2</sub></span> 从 0.70 拉到 0.35（<span class=\"m\"><i>P</i><sub>1</sub></span> 不动）。TMR 降为原来的几分之几？为什么 TMR 里是 <span class=\"m\"><i>P</i><sub>1</sub><i>P</i><sub>2</sub></span> 的乘积，而不是两者相加？",
+    a: function () {
+      const a = withOpt({ p1: 0.70, p2: 0.70 }).d;
+      const b = withOpt({ p1: 0.70, p2: 0.35 }).d;
+      return "从 <b>" + (a.tmr * 100).toFixed(0) + " %</b> 掉到 <b>" + (b.tmr * 100).toFixed(0) + " %</b>，约为原来的 <b>" +
+        (b.tmr / a.tmr).toFixed(2) + "</b> 倍。<br>" +
+        "原因是隧穿要<b>两个电极同时配合</b>：电子从左电极的某个自旋通道出发，必须落进右电极<b>同一个</b>自旋通道。" +
+        "电导因此是两侧态密度的<b>乘积</b>之和，不是各自之和。左电极极化率再高，只要右电极不分辨自旋，" +
+        "两条通道的贡献就一样多，TMR 照样为零 —— 单个参数不可能翻盘，这叫“一个巴掌拍不响”。";
+    }
+  },
+  {
+    q: "把势垒厚度从 1.0 nm 加到 2.0 nm：RA 变成多少倍？TMR 变了吗？如果变了，动一动课本上的模型；如果没变，说明这个模型忽略了什么。",
+    a: function () {
+      const a = withOpt({ d: 1.00 }).d;
+      const b = withOpt({ d: 2.00 }).d;
+      return "RA 从 " + a.raP.toFixed(2) + " 涨到 <b>" + b.raP.toExponential(2) + " Ω·μm<sup>2</sup></b>，" +
+        "约 <b>" + (b.raP / a.raP).toExponential(2) + " 倍</b>；而 TMR 恒定为 <b>" + (b.tmr * 100).toFixed(1) + " %</b>，一动没动。<br>" +
+        "TMR 不变是因为 <span class=\"m\"><i>κ</i></span> 对两条自旋通道是同一个值，exp(−2<span class=\"m\"><i>κ</i><i>d</i></span>) 在比值里整整约掉 —— " +
+        "Jullière 模型只问「有多少态可穿」，不问「穿得多快」，势垒的职责只是给绝对值打个折扣。这也正是它的盲区：" +
+        "真实 MgO 单晶势垒里不同对称性的波函数衰减快慢不同（相干滤波），有效衰减小的一类被筛选出来，" +
+        "厚度上去反而会把 TMR 抬高，这就超出本模型了。";
+    }
+  },
+  {
+    q: "把自旋寿命 τ_s 从 100 ps 降到 25 ps（缩到 1/4），L_s 会不会也缩到 1/4？在沟道长度 600 nm 下，到达探测端的自旋还剩多少？这对自旋器件的集成度意味着什么？",
+    a: function () {
+      const a = withOpt({ ts: 100, lc: 600 }).d;
+      const b = withOpt({ ts: 25, lc: 600 }).d;
+      return "不会。<span class=\"m\"><i>L</i><sub>s</sub></span> = √(<span class=\"m\"><i>D</i><sub>s</sub><i>τ</i><sub>s</sub></span>) 是<b>平方根</b>关系：" +
+        "τ_s 缩到 1/4，<span class=\"m\"><i>L</i><sub>s</sub></span> 从 " + (a.Ls * 1e9).toFixed(0) + " nm 缩到 <b>" + (b.Ls * 1e9).toFixed(0) +
+        " nm</b>，只掉一半。<br>" +
+        "相应的剩余极化从 <b>" + (a.decay * 100).toFixed(1) + " %</b> 降到 <b>" + (b.decay * 100).toFixed(1) + " %</b>。<br>" +
+        "含义：自旋信息在传播途中被弛豫吃掉，且<b>越长的沟道代价增长得比线性更快</b>（e<small>−</small><span class=\"m\"><i>x</i>/<i>L</i><sub>s</sub></span> 是头重脚轻的衰减）。" +
+        "所以自旋器件之间的间距必须短于 <span class=\"m\"><i>L</i><sub>s</sub></span>，这一条直接锁死了它的集成度上限；" +
+        "反过来说，提高 <span class=\"m\"><i>L</i><sub>s</sub></span> 的收益也是平方根打折的 —— 想把传递距离翻倍，得把 τ_s 提高四倍。";
+    }
+  },
+  {
+    q: "在模块四把电流密度从 0 慢慢加上去：为什么非得到某个临界值 J_c 才开始翻转？把 SOT 与 STT 对比着看，各自的力矩几何差在哪，工程上为什么 SOT 更省？",
+    a: function () {
+      const stt = withOpt({ tq: "stt", j: 4.0, hx: 0 });
+      const sttLo = withOpt({ tq: "stt", j: 1.0, hx: 0 });
+      const sttHi = withOpt({ tq: "stt", j: 8.0, hx: 0 });
+      const sot = withOpt({ tq: "sot", j: 500, hx: 0 });
+      const sotLo = withOpt({ tq: "sot", j: 200, hx: 0 });
+      return "LLG 里阻尼 <span class=\"m\"><i>α</i></span> 一直在把磁矩拽回易轴，自旋力矩要<b>先抵消掉这份阻尼</b>才能让进动幅度发散，" +
+        "这个“收支相抵”的电流就是 <span class=\"m\"><i>J</i><sub>c</sub></span>。本工具 STT 的 <span class=\"m\"><i>J</i><sub>c</sub></span> = <b>" +
+        stt.d.JcSTT.toFixed(2) + " MA/cm<sup>2</sup></b>：<span class=\"m\"><i>J</i></span> = 1.0 时终态 <span class=\"m\"><i>m</i><sub>z</sub></span> = <b>" + sttLo.tr.mzEnd.toFixed(2) +
+        "</b>（没翻），<span class=\"m\"><i>J</i></span> = 8.0 时终态 <span class=\"m\"><i>m</i><sub>z</sub></span> = <b>" + sttHi.tr.mzEnd.toFixed(2) + "</b>（翻了，用了 " +
+        (sttHi.tr.tsw > 0 ? (sttHi.tr.tsw * 1e9).toFixed(2) : "—") + " ns）。<br>" +
+        "几何差别：STT 的类阻尼力矩 <span class=\"m\"><i>m</i>×(<i>m</i>×<i>p</i>)</span> 与 p̂ 共面，一路顶着阻尼把磁矩推过赤道，" +
+        "所以只要 <span class=\"m\"><i>J</i></span> 过了阈值就一定翻；SOT 的 <span class=\"m\"><i>m</i>×(<i>σ</i>×<i>m</i>)</span> 等价的场是 <span class=\"m\"><i>m</i>×<i>σ</i></span>，" +
+        "它<b>横着</b>推，只能把磁矩拉到面内——本模型里推平的判据是 <span class=\"m\"><i>B</i><sub>DL</sub></span> ≥ μ₀<span class=\"m\"><i>H</i><sub>k</sub></span>/2 = " +
+        (MU0HK * 1e3 / 2).toFixed(0) + " mT：<span class=\"m\"><i>J</i></span> = 200 时 <span class=\"m\"><i>B</i><sub>DL</sub></span> 只有 " +
+        (sotLo.d.Bdl * 1e3).toFixed(0) + " mT，<span class=\"m\"><i>m</i><sub>z</sub></span> 仅仅降到 <b>" + sotLo.tr.mzEnd.toFixed(2) +
+        "</b>（被掰弯，没拉平）；<span class=\"m\"><i>J</i></span> = 500（<span class=\"m\"><i>B</i><sub>DL</sub></span> = " + (sot.d.Bdl * 1e3).toFixed(0) +
+        " mT）时 <span class=\"m\"><i>m</i><sub>z</sub></span> = <b>" + sot.tr.mzEnd.toFixed(2) +
+        "</b>，是“停在赤道”，不是“翻过去”。<br>" +
+        "工程上的好处：写电流走的是重金属层的横向路径，不必穿过隧道结本身，" +
+        "读写两条路分开 ⇒ 势垒不再被写电流反复冲击，可靠性与速度不再互相牺牲。" +
+        "<span class=\"eq\">两条量级提醒：① 这里的几百 MA/cm<sup>2</sup> 是<b>单畴（宏自旋）</b>模型算出来的，" +
+        "比真实 SOT 器件（10～30 MA/cm<sup>2</sup>）高一到两个数量级——真实翻转靠畴壁形核与推进，" +
+        "不需要整层磁矩一起硬顶各向异性场。② 拖一拖面内辅助场 <span class=\"m\"><i>H</i><sub>x</sub></span> 会发现 " +
+        "<span class=\"m\"><i>m</i><sub>z</sub></span> 反而被顶回 +1 侧：确定性翻转在单畴方程里根本给不出来，" +
+        "本工具仍取宏自旋口径，SOT 分支请读作「电流能把磁矩掰到什么程度」。</span>";
+    }
+  }
+];
+function buildChal() {
+  const grid = $("chalGrid");
+  if (!grid) return;
+  grid.innerHTML = ""; ANS_EL = [];
+  CHAL.forEach(function (c, i) {
+    const d = document.createElement("div");
+    d.className = "chal";
+    d.innerHTML = "<div class=\"chal-head\"><b>" + (i + 1) + ". " + c.q + "</b><span class=\"chev\">▶</span></div>" +
+      "<div class=\"chal-body\"><div class=\"ans\"></div><div class=\"btn-row\"><button>看看答案</button></div></div>";
+    grid.appendChild(d);
+    d.querySelector(".chal-head").onclick = () => d.classList.toggle("open");
+    const ans = d.querySelector(".ans");
+    ANS_EL.push(ans);
+    d.querySelector(".btn-row button").onclick = e => {
+      e.stopPropagation();
+      if (!ans.innerHTML) ans.innerHTML = CHAL[i].a();
+      ans.classList.toggle("show");
+    };
+  });
+}
+function refreshAnswers() {
+  /* 只刷新已经展开过的答案：挑战五要跑 4 遍 LLG 轨迹，
+     拖动滑块时若每题都重算，一次输入就是上百万步 RK4。 */
+  ANS_EL.forEach(function (el, i) { if (el.innerHTML) el.innerHTML = CHAL[i].a(); });
+}
+
+/* ==================================================================
+   控件同步、渲染、动画、初始化
+   ================================================================== */
+function changed() {
+  ST = null; TRAJ = null;
+  buildBtns(); syncInputs(); render();
+}
+function syncInputs() {
+  const sv = (id, v) => { const e = $(id); if (e) e.value = v; };
+  sv("p1Slider", Math.round(OPT.p1 * 100));
+  sv("p2Slider", Math.round(OPT.p2 * 100));
+  sv("dSlider", Math.round(OPT.d * 10));
+  sv("dsSlider", OPT.ds);
+  sv("tsSlider", OPT.ts);
+  sv("lcSlider", OPT.lc);
+  /* 电流滑块：两种驱动方式量程不同，切换时连 max/step 一起换，
+     否则 STT 的 12 MA/cm² 上限会把 SOT 死死卡在“看不见动静”的区间。 */
+  const js = $("jSlider");
+  if (js) {
+    js.max = JRANGE[OPT.tq].max; js.step = JRANGE[OPT.tq].step;
+    js.value = jToSlider(OPT.j);
+  }
+  sv("alpSlider", Math.round(OPT.alp * 1000));
+  sv("hxSlider", OPT.hx);
+  const d = D();
+  const sv2 = (id, t) => { const e = $(id); if (e) e.textContent = t; };
+  sv2("cfgVal", OPT.ap ? "反平行" : "平行");
+  sv2("p1Val", OPT.p1.toFixed(2));
+  sv2("p2Val", OPT.p2.toFixed(2));
+  sv2("dVal", OPT.d.toFixed(2) + " nm");
+  sv2("dsVal", OPT.ds + " cm<sup>2</sup>/s");
+  sv2("tsVal", OPT.ts + " ps");
+  sv2("lcVal", OPT.lc + " nm");
+  sv2("tqVal", OPT.tq === "stt" ? "自旋转移矩" : "自旋轨道矩");
+  sv2("jVal", OPT.j.toFixed(1) + " MA/cm<sup>2</sup>" + (OPT.tq === "sot" ? "（B_DL " + (d.Bdl * 1e3).toFixed(0) + " mT）" : ""));
+  sv2("alpVal", OPT.alp.toFixed(3));
+  sv2("hxVal", OPT.hx + " mT");
+
+  const s_cfg = $("cfgSub"); if (s_cfg) s_cfg.innerHTML = OPT.ap
+    ? "两侧做多数自旋的标准不一致 ⇒ 两条通道一起变差。"
+    : "两侧共用同一套多数/少数划分 ⇒ 匹配最好。";
+  const s_p1 = $("p1Sub"); if (s_p1) s_p1.innerHTML =
+    "费米面占据由极化率直接定出，两条通道之和归一化为 1（数值见读数面板）。";
+  const s_p2 = $("p2Sub"); if (s_p2) s_p2.innerHTML =
+    "两条通道的份额同样由极化率定出，之和归一化为 1（数值见读数面板）。";
+  const s_d = $("dSub"); if (s_d) s_d.innerHTML =
+    "κ 由势垒高度定；电阻随厚度指数放大，放大倍数记在读数面板。";
+  const s_ds = $("dsSub"); if (s_ds) s_ds.innerHTML =
+    "与迁移率的爱因斯坦关系同型：<span class=\"m\"><i>D</i><sub>s</sub></span> = <span class=\"m\"><i>μkT</i>/<i>q</i></span>，越大走得越远。";
+  const s_ts = $("tsSub"); if (s_ts) s_ts.innerHTML =
+    "自旋翻转散射（Elliott–Yafet、Dyakonov–Perel 等）的快慢；注意 L_s 只对它取平方根。";
+  const s_lc = $("lcSub"); if (s_lc) s_lc.innerHTML =
+    "到探测端还剩多少、扩散穿越要多久，都记在读数面板。";
+  const s_tq = $("tqSub"); if (s_tq) s_tq.innerHTML = OPT.tq === "stt"
+    ? "极化电流穿过参考层后把横向角动量交给自由层。"
+    : "重金属中的面内电流经自旋霍尔效应在界面堆出自旋，再从侧面注入自由层。";
+  const s_j = $("jSub"); if (s_j) s_j.innerHTML = OPT.tq === "stt"
+    ? "阈值与当前倍数记在读数面板；低于阈值时只能看到进动被“拖慢”（临界慢化），"
+      + "把电流继续加上去才会真的翻过去。"
+    : "SOT 不是反阻尼，它给的是一个<b>横着推</b>的等效类阻尼场：当前 B_DL = <b>" + (d.Bdl * 1e3).toFixed(1)
+      + "</b> mT，推平到面内的判据是 B_DL ≥ μ₀H_k / 2 = <b>" + (MU0HK * 1e3 / 2).toFixed(0) + "</b> mT。"
+      + "<span class=\"eq\">两条量级提醒：① 单畴（宏自旋）模型把 SOT 阈值估高了约一个数量级 —— "
+      + "真实器件靠畴壁形核与推进，10～30 MA/cm<sup>2</sup> 就能翻，这里的 <span class=\"m\"><i>J</i></span> 请当作 B_DL 的代理量读。"
+      + "② 加上面内辅助场 <span class=\"m\"><i>H</i><sub>x</sub></span> 后，本模型的 <span class=\"m\"><i>m</i><sub>z</sub></span> 反而被顶回 +1 侧而不是翻过去 —— "
+      + "这正是宏自旋近似的边界：真实 SOT 的确定性翻转靠畴壁成核，单畴方程给不出来。"
+      + "本工具仍取宏自旋口径，请把 SOT 分支读作「电流能把磁矩掰到什么程度」。</span>";
+  const s_alp = $("alpSub"); if (s_alp) s_alp.innerHTML =
+    "阻尼越大越“黏”，进动越容易收敛，代价是阈值线性抬高。";
+  const s_hx = $("hxSub"); if (s_hx) s_hx.innerHTML = OPT.tq === "sot"
+    ? "宏自旋模型里 <span class=\"m\"><i>H</i><sub>x</sub></span> 只会把磁矩往 +z 侧顶回来，并不产生确定性翻转 —— "
+      + "拖一拖它，看到的就是这条近似的边界本身。"
+    : "面内场把磁矩掰离易轴、势垒变浅，STT 的阈值随之下降（本工具里 <span class=\"m\"><i>J</i><sub>c</sub></span> 只按 α 现算，"
+      + "<span class=\"m\"><i>H</i><sub>x</sub></span> 的作用请直接看轨迹曲线的翻转时间）。";
+
+  const fv = $("fixVal");
+  if (fv) fv.innerHTML = kvHTML([
+    ["势垒平均高度 Φ", PHIB.toFixed(2) + " eV"],
+    ["自由层厚度 / M_s", (MST * 1e9).toFixed(1) + " nm ／ " + (MSS / 1e6).toFixed(2) + "×10<sup>6</sup> A/m"],
+    ["有效垂直各向异性 μ₀H_k", MU0HK.toFixed(2) + " T"],
+    ["自旋霍尔角 θ_SH", THETA_SH.toFixed(2)],
+    ["参考 RA₀（1 nm 平行态）", RA0 + " Ω·μm<sup>2</sup>"],
+    ["读出电压 V", VREAD.toFixed(2) + " V"],
+    ["初始倾角 / 模拟时长", TILT0 + "° ／ " + (TMAX * 1e9).toFixed(0) + " ns"]
+  ]);
+}
+function bindAll() {
+  const sl = (id, set) => { const e = $(id); if (e) e.oninput = () => { set(+e.value); changed(); }; };
+  sl("p1Slider", v => { OPT.p1 = v / 100; });
+  sl("p2Slider", v => { OPT.p2 = v / 100; });
+  sl("dSlider", v => { OPT.d = v / 10; });
+  sl("dsSlider", v => { OPT.ds = v; });
+  sl("tsSlider", v => { OPT.ts = v; });
+  sl("lcSlider", v => { OPT.lc = v; });
+  sl("jSlider", v => { OPT.j = sliderToJ(v); });
+  sl("alpSlider", v => { OPT.alp = v / 1000; });
+  sl("hxSlider", v => { OPT.hx = v; });
+
+  const cb = $("cfgBtns");
+  if (cb) cb.onclick = e => {
+    const b = e.target.closest ? e.target.closest("button") : null;
+    if (!b) return;
+    OPT.ap = b.getAttribute("data-cfg") === "1"; changed();
+  };
+  const tb = $("tqBtns");
+  if (tb) tb.onclick = e => {
+    const b = e.target.closest ? e.target.closest("button") : null;
+    if (!b) return;
+    if (b.getAttribute("data-tq") !== OPT.tq) switchTq();
+    changed();
+  };
+  const pb = $("preBtns");
+  if (pb) pb.onclick = e => {
+    const bs = pb.querySelectorAll("button");
+    const i = Array.prototype.indexOf.call(bs, e.target);
+    if (i < 0) return;
+    for (const k in PRES[i][1]) OPT[k] = PRES[i][1][k];
+    changed();
+  };
+  const ck = $("ckAnim");
+  if (ck) ck.onchange = () => render();
+  const ct = $("ckTrail");
+  if (ct) ct.onchange = () => render();
+
+  const jb = $("jumpbar");
+  if (jb) jb.onclick = e => {
+    const b = e.target.closest ? e.target.closest("button") : null;
+    if (!b) return;
+    const t = $(b.getAttribute("data-card"));
+    if (t) t.scrollIntoView({ behavior: "smooth", block: "start" });
+    Array.prototype.forEach.call(jb.querySelectorAll("button"), x => x.classList.remove("sel"));
+    b.classList.add("sel");
+  };
+  document.addEventListener("click", e => {
+    const h = e.target.closest ? e.target.closest(".fold-head") : null;
+    if (h) h.parentNode.classList.toggle("open");
+  });
+  window.addEventListener("resize", () => fitAll());
+}
+function render() {
+  try {
+    drawMtj(); drawTmr(); drawInj(); drawDyn();
+    buildLegend(); buildHints(); buildReadout(); refreshAnswers();
+  } catch (err) {
+    if (typeof console !== "undefined") console.error("[渲染]", err);
+  }
+}
+function startAnim() {
+  let last = 0;
+  function step(ts) {
+    if (!last) last = ts;
+    const dt = (ts - last) / 1000; last = ts;
+    const ck = $("ckAnim");
+    if (ck && ck.checked && $("dyn")) {
+      DYNV.t = (DYNV.t + dt * 2.6e-9) % TMAX;
+      MTJV.t = MTJV.t === undefined ? 0 : MTJV.t + dt;
+      drawDyn(); drawMtj();
+    }
+    requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+function init() {
+  try {
+    buildLegend(); buildBtns(); buildChal();
+    fitCanvas(MTJV, "mtj"); fitCanvas(TMRV, "tmr"); fitCanvas(INJV, "inj");
+    fitCanvas(DYNV, "dyn");
+    bindAll(); syncInputs();
+  } catch (err) {
+    if (typeof console !== "undefined") console.error("[初始化]", err);
+  }
+  render(); startAnim();
+}
+if (typeof document !== "undefined" && document.getElementById) {
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
+  else init();
+}
+
+/* i18n 启动必须在 init() 之后：setLang() 会重跑 render()，
+   放到 init() 之前会在 fitAll() 之前触发绘制，一旦抛异常整个 init() 就跑不到。 */
+(function () {
+  try {
+    i18nWatch();
+    ORIG_TITLE = ORIG_TITLE || document.title;
+    var btn = document.getElementById("langBtn");
+    if (btn) btn.onclick = function () { setLang(LANG === "en" ? "zh" : "en"); };
+    if (LANG === "en") setLang("en"); else { document.title = ORIG_TITLE; i18nWalk(document.body); }
+  } catch (e) { }
+})();
+</script>
+<div class="site-foot">本工具是 EIT-SP（半导体物理交互式教学工具箱）的一部分（武汉大学物理学院《半导体物理》智慧课程），以 MIT 协议开源，可自由使用与二次开发；转载请保留出处。反馈意见 <a href="mailto:doctorwanghao@qq.com">doctorwanghao@qq.com</a></div>
+</body>
+</html>
