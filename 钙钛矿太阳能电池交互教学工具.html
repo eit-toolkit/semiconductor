@@ -200,14 +200,20 @@
       <div class="hint" id="hintJv"></div>
     </div>
 
-    <!-- 模块四：两张参考图都不读 OPT（不随旋钮变化），故并为一卡 -->
+    <!-- 模块四：两张参考图都不读 OPT（不随旋钮变化），故并为一卡、左右并排以省纵向空间 -->
     <div class="card">
       <div class="sec-title"><span class="mtag">模块四</span>材料本征：缺陷容忍与 <span class="m"><i>ABX</i><sub>3</sub></span> 晶胞（两张参考图，不随旋钮变化）</div>
-      <div class="chart-wrap"><canvas id="def" data-h="250" tabindex="0"></canvas></div>
-      <div class="hint" id="hintDef"></div>
-      <div class="chart-wrap" style="margin-top:9px;"><canvas id="lat" data-h="270" tabindex="0"></canvas></div>
-      <div class="legend" id="legLat"></div>
-      <div class="hint" id="hintLat"></div>
+      <div style="display:flex; gap:12px; align-items:flex-start;">
+        <div style="flex:1.4; min-width:0;">
+          <div class="chart-wrap"><canvas id="def" data-h="280" tabindex="0"></canvas></div>
+          <div class="hint" id="hintDef"></div>
+        </div>
+        <div style="flex:1; min-width:0;">
+          <div class="chart-wrap"><canvas id="lat" data-h="280" tabindex="0"></canvas></div>
+          <div class="legend" id="legLat"></div>
+          <div class="hint" id="hintLat"></div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -496,14 +502,16 @@ var I18N = {
   "Pb 6s – I 5p 反键 ⇒ 也是反键": "Pb 6s – I 5p antibonding ⇒ antibonding as well",
   "（成键态）": " (bonding state)",
   "拿掉一个原子": "Remove one atom",
-  "深能级落在禁带中央 ⇒ 有效复合中心": "The deep level lands mid-gap ⇒ an efficient recombination center",
+  "深能级落在禁带中央": "The deep level lands mid-gap",
+  "⇒ 有效复合中心": "⇒ an efficient recombination center",
   "禁带里没有深能级": "No deep level inside the gap",
-  "缺陷态被推入能带（浅能级 / 共振态）": "Defect states pushed into the bands (shallow levels / resonances)",
+  "缺陷态被推入能带或变浅能级": "Defect states pushed into bands or become shallow",
   "抽掉一个原子必然留下悬挂键，但落点取决于原来那条键的形式：常规半导体的价带是": "Removing an atom always leaves a dangling bond, but where its level lands depends on the character of the bond: in a conventional semiconductor the valence band is ",
   "态，悬键能级落在": ", so the dangling-bond level lands ",
   "带隙中央，成为高效的复合中心；铅卤钙钛矿的价带顶与导带底": "mid-gap and becomes an efficient recombination center; in a lead halide perovskite the valence-band top and the conduction-band bottom are ",
   "的（Pb 6s–I 5p 反键给出价带顶，Pb 6p–I 5p 反键给出导带底），缺陷态被推到带边之外或变成浅能级，于是「缺陷多」不等于「复合快」。": " (Pb 6s–I 5p antibonding gives the valence-band top, Pb 6p–I 5p antibonding the conduction-band bottom), so the defect states are pushed beyond the band edges or become shallow: “many defects” no longer means “fast recombination”.",
-  "同样的空位：一边压在带隙中央当复合中心，一边几乎没有深能级 —— 这就是溶液法也能高效的原因": "The same vacancy: on one side it sits mid-gap as a recombination center, on the other there is hardly any deep level — that is why solution processing can still be efficient",
+  "同样的空位：一边当复合中心，一边几乎没有深能级": "The same vacancy: a recombination center on one side, but not on the other",
+  "—— 这就是溶液法也能高效的原因": "— that is why solution processing can still be efficient",
 
   /* ---- 模块五：晶胞 ---- */
   "Pb²⁺（决定能带）": "Pb²⁺ (sets the bands)",
@@ -632,7 +640,7 @@ var I18N = {
   "当前这一档 Δ": "the present setting, Δ",
 
   /* ---- 补：挑战一（ABX₃ 晶胞） ---- */
-  "1. 看模块四下方的晶胞：A 位阳离子坐在哪里？B 位与 X 位围成什么几何？把视角转一圈看看八面体是怎么连成骨架的——A 位的有机分子有没有出现在能带上？": "1. Look at the unit cell in the lower part of Module 4: where does the A-site cation sit? What geometry do the B and X sites build? Rotate the view once around and watch how the octahedra link into a framework — does the organic molecule on the A site show up in the bands at all?",
+  "1. 看模块四右侧的晶胞：A 位阳离子坐在哪里？B 位与 X 位围成什么几何？把视角转一圈看看八面体是怎么连成骨架的——A 位的有机分子有没有出现在能带上？": "1. Look at the unit cell on the right of Module 4: where does the A-site cation sit? What geometry do the B and X sites build? Rotate the view once around and watch how the octahedra link into a framework — does the organic molecule on the A site show up in the bands at all?",
   "A 位坐在八个顶点围出的立方体空隙里": "The A site sits in the cubic void enclosed by the eight corners",
   "（体心位置，图里橙色的球）：它是一价的 MA": " (the body center, the orange sphere in the figure): it is a monovalent MA",
   "，靠电荷平衡把骨架撑住，并决定八面体怎么倾斜；": ", it holds the framework up through charge balance and decides how the octahedra tilt; ",
@@ -666,7 +674,7 @@ var I18N = {
   "本档读数：": "Readouts for this setting: ",
 
   /* ---- 补：挑战三（缺陷容忍） ---- */
-  "3. 打开模块四上方的对比图：常规半导体的导带和价带分别是什么特征？钙钛矿呢？抽掉一个原子后，两边的缺陷能级分别落在哪里？这解释了钙钛矿的什么本事？": "3. Open the comparison in the upper part of Module 4: what is the character of the conduction band and of the valence band in a conventional semiconductor? And in a perovskite? After removing one atom, where do the defect levels land in each case? What ability of the perovskite does that explain?",
+  "3. 打开模块四左侧的对比图：常规半导体的导带和价带分别是什么特征？钙钛矿呢？抽掉一个原子后，两边的缺陷能级分别落在哪里？这解释了钙钛矿的什么本事？": "3. Open the comparison on the left of Module 4: what is the character of the conduction band and of the valence band in a conventional semiconductor? And in a perovskite? After removing one atom, where do the defect levels land in each case? What ability of the perovskite does that explain?",
   "常规半导体的": "In a conventional semiconductor the ",
   "导带是反键、价带是成键": "conduction band is antibonding and the valence band is bonding",
   "：抽掉一个原子，剩下的悬挂键能级落在": ": remove one atom and the dangling-bond level it leaves lands ",
@@ -1691,7 +1699,12 @@ function drawDev() {
   for (let i = 0; i < 6; i++) g.lineTo(xw + (i % 2 ? 6 : -6), ym - 18 + (i + 1) * 6);
   g.lineTo(xw, ym + 18); g.stroke();
   arw(g, geo.xb + 6, yT - 10, geo.xb + 40, yT - 10, "#1976d2", 1.4, 6);
-  label(g, "电子流向负载", geo.xb + 44, yT - 10, "#1976d2", 10.5, "left", true);
+  /* 「电子流向负载」挂在负载右侧：英文比中文长得多（126 px vs 63 px），
+     实测（按译后文本）后夹回画布，否则英文态会顶出右边界。 */
+  const eTxt = "电子流向负载";
+  g.font = "bold 10.5px " + FONT;
+  const ex = Math.min(geo.xb + 44, W - 8 - g.measureText(T(eTxt)).width);
+  label(g, eTxt, ex, yT - 10, "#1976d2", 10.5, "left", true);
   /* −J 读数挂在负载右侧：实测宽度后夹回画布，否则末位（cm² 的上标）会被裁掉。 */
   const jTxt = "−J = " + s.jsc.toFixed(1) + " mA/cm²";
   g.font = "600 11px " + FONT;
@@ -1916,16 +1929,18 @@ function drawDef() {
   g.setTransform(v.dpr, 0, 0, v.dpr, 0, 0);
   const W = v.W, H = v.H;
   g.clearRect(0, 0, W, H);
-  const half = W / 2, pad = 14;
+  const half = W / 2, pad = 12;
   const panels = [
     { x: pad, w: half - pad * 1.5, t: "常规半导体（Si、GaAs）", cbTag: "反键（antibonding）", vbTag: "成键（bonding）", deep: true },
     { x: half + pad * 0.5, w: half - pad * 1.5, t: "铅卤钙钛矿", cbTag: "反键（antibonding）", vbTag: "反键（antibonding）", deep: false }
   ];
   for (const p of panels) {
     const cx = p.x + p.w / 2;
-    const hB = 46, gapH = 66;
-    const yc = 42, yv = yc + hB + gapH;
-    label(g, p.t, cx, 18, "#33465c", 12.5, "center", true);
+    /* 带隙区要同时放下「空位符号 + 说明」「缺陷能级线」「结论两行」三样，
+       垂直排开且彼此留白。此前 gapH 只有 66 px，圆、说明文字与能级线全压在一起。 */
+    const hB = 44, gapH = 110;
+    const yc = 40, yv = yc + hB + gapH;
+    label(g, p.t, cx, 16, "#33465c", 12.5, "center", true);
     /* 导带 / 价带 */
     g.fillStyle = "rgba(25,118,210,.13)";
     g.fillRect(p.x, yc, p.w, hB);
@@ -1935,35 +1950,43 @@ function drawDef() {
     g.fillRect(p.x, yv, p.w, hB);
     g.strokeStyle = "#d94a3d"; g.lineWidth = 2;
     g.beginPath(); g.moveTo(p.x, yv); g.lineTo(p.x + p.w, yv); g.stroke();
-    label(g, "E_C　" + p.cbTag, p.x + 6, yc + 16, "#1976d2", 11, "left", true);
-    if (!p.deep) label(g, "Pb 6p – I 5p 反键", p.x + 6, yc + 32, "#6b7a8c", 10.5, "left");
-    label(g, "E_V　" + p.vbTag, p.x + 6, yv + 16, "#b0392f", 11, "left", true);
-    label(g, p.deep ? "（成键态）" : "Pb 6s – I 5p 反键 ⇒ 也是反键", p.x + 6, yv + 32, "#6b7a8c", 10.5, "left");
-    /* 空位 */
-    const ymid = (yc + hB + yv) / 2;
+    label(g, "E_C　" + p.cbTag, p.x + 6, yc + 14, "#1976d2", 11, "left", true);
+    if (!p.deep) label(g, "Pb 6p – I 5p 反键", p.x + 6, yc + 30, "#6b7a8c", 10.5, "left");
+    label(g, "E_V　" + p.vbTag, p.x + 6, yv + 14, "#b0392f", 11, "left", true);
+    label(g, p.deep ? "（成键态）" : "Pb 6s – I 5p 反键 ⇒ 也是反键", p.x + 6, yv + 30, "#6b7a8c", 10.5, "left");
+    /* 空位：符号与说明左右并排（此前说明压在圆心上，还压住下面的能级线）。
+       两边用同一个符号——虚线圈 = 这里缺了一个原子。此前右边画的是绿色叉，
+       与左边不同形，学生容易误以为两边是两件不同的事；右边的「没有深能级」
+       由下面那行绿字表达，不需要再用一个叉重复说一遍。 */
+    const yVac = yc + hB + 28, yLv = yVac + 22;
     g.strokeStyle = "#8e5bd0"; g.lineWidth = 1.4; g.setLineDash([4, 3]);
-    g.beginPath(); g.arc(cx, ymid, 13, 0, 6.2832); g.stroke(); g.setLineDash([]);
-    label(g, "拿掉一个原子", cx, ymid, "#8e5bd0", 10.5, "center", true);
+    g.beginPath(); g.arc(cx - 34, yVac, 13, 0, 6.2832); g.stroke(); g.setLineDash([]);
+    label(g, "拿掉一个原子", cx - 15, yVac, "#8e5bd0", 10.5, "left", true);
     /* 缺陷能级落点 */
     if (p.deep) {
       g.strokeStyle = "#d94a3d"; g.lineWidth = 2.2; g.setLineDash([6, 4]);
-      g.beginPath(); g.moveTo(p.x + 12, ymid); g.lineTo(p.x + p.w - 12, ymid); g.stroke(); g.setLineDash([]);
-      label(g, "深能级落在禁带中央 ⇒ 有效复合中心", cx, ymid + 16, "#d94a3d", 11, "center", true);
+      g.beginPath(); g.moveTo(p.x + 12, yLv); g.lineTo(p.x + p.w - 12, yLv); g.stroke(); g.setLineDash([]);
+      label(g, "深能级落在禁带中央", cx, yLv + 17, "#d94a3d", 11, "center", true);
+      label(g, "⇒ 有效复合中心", cx, yLv + 33, "#d94a3d", 11, "center", true);
     } else {
-      crossMark(g, cx, ymid, 6, "#2e9e5b");
-      label(g, "禁带里没有深能级", cx, ymid + 15, "#2e9e5b", 11, "center", true);
+      label(g, "禁带里没有深能级", cx, yLv + 17, "#2e9e5b", 11, "center", true);
+      /* 浅能级这行：英文比中文长一倍多，居中会顶出右边界，故实测后夹回画布 */
+      const sSh = "缺陷态被推入能带或变浅能级";
+      g.font = "bold 10.5px " + FONT;
+      const wSh = g.measureText(T(sSh)).width;
+      label(g, sSh, clamp(cx, wSh / 2 + 4, Math.max(wSh / 2 + 4, W - 4 - wSh / 2)),
+        yLv + 33, "#2e9e5b", 10.5, "center", true);
       /* 缺陷态被推到能带边缘之外 */
       g.strokeStyle = "#2e9e5b"; g.lineWidth = 2; g.setLineDash([5, 3]);
-      g.beginPath(); g.moveTo(p.x + 14, yc + hB + 9); g.lineTo(p.x + p.w - 14, yc + hB + 9); g.stroke();
-      g.beginPath(); g.moveTo(p.x + 14, yv - 9); g.lineTo(p.x + p.w - 14, yv - 9); g.stroke();
+      g.beginPath(); g.moveTo(p.x + 14, yc + hB + 8); g.lineTo(p.x + p.w - 14, yc + hB + 8); g.stroke();
+      g.beginPath(); g.moveTo(p.x + 14, yv - 8); g.lineTo(p.x + p.w - 14, yv - 8); g.stroke();
       g.setLineDash([]);
-      label(g, "缺陷态被推入能带（浅能级 / 共振态）", cx, yc + hB + 24, "#2e9e5b", 10.5, "center", true);
     }
   }
-  /* 中间的分隔与结论 */
-  dashLine(g, half, 26, half, H - 34, "#dde4ec", 1, [4, 4]);
-  label(g, "同样的空位：一边压在带隙中央当复合中心，一边几乎没有深能级 —— 这就是溶液法也能高效的原因",
-    half, H - 16, "#6b7a8c", 11.5, "center", true);
+  /* 中间的分隔与结论：画布并排后宽度减半，原来那一整句放不下，拆成两行 */
+  dashLine(g, half, 26, half, H - 40, "#dde4ec", 1, [4, 4]);
+  label(g, "同样的空位：一边当复合中心，一边几乎没有深能级", half, H - 32, "#6b7a8c", 11.5, "center", true);
+  label(g, "—— 这就是溶液法也能高效的原因", half, H - 16, "#6b7a8c", 11.5, "center", true);
   g.setTransform(1, 0, 0, 1, 0, 0);
 }
 
@@ -2039,8 +2062,13 @@ function drawLat() {
   const depT = (d) => clamp((d - dmin) / (dmax - dmin), 0, 1);   /* 1 = 最近，0 = 最远 */
 
   /* --- 1. 棱：Pb–I 八面体键 + 立方框（按深度远 → 近） --- */
+  /* 立方体 8 个顶点：先 z = −1 面的 4 个（绕一圈），再 z = +1 面的 4 个（同序），
+     两面的第 i 个顶点只差一个 z，故竖棱就是 [i, i + 4]。 */
   const edge = [[-1, -1, -1], [1, -1, -1], [1, 1, -1], [-1, 1, -1], [-1, -1, 1], [1, -1, 1], [1, 1, 1], [-1, 1, 1]];
-  const CORN = [[0, 1], [1, 3], [3, 2], [2, 0], [4, 5], [5, 7], [7, 6], [6, 4], [0, 4], [1, 5], [2, 6], [3, 7]];
+  /* 12 条棱：每个面 4 条（首尾相接成环），再加 4 条竖棱。
+     ⚠️ 此前写成 [1,3] / [2,0] / [5,7] / [6,4]，两端点的 x 与 y 同时变化，
+     那是**面对角线**而非棱，立方框因此看起来像两个交叉的 X，不像立方体。 */
+  const CORN = [[0, 1], [1, 2], [2, 3], [3, 0], [4, 5], [5, 6], [6, 7], [7, 4], [0, 4], [1, 5], [2, 6], [3, 7]];
   const segs = [];
   for (const a of atoms) if (a.k === "X") segs.push({ p: a.p, q: [0, 0, 0], col: "#8e5bd0", w: 2.2, a0: 1, dash: null });
   for (const [i, j] of CORN) segs.push({ p: edge[i], q: edge[j], col: "#8c98a8", w: 1, a0: 0.55, dash: [4, 3] });
@@ -2119,17 +2147,24 @@ function drawLat() {
   }
 
   /* --- 3. 标注：远处随之淡化（与景深一致），但幅度要小——这是教学标注，必须始终读得清 --- */
+  /* 画布并排后宽度只剩原来的一半左右，右侧顶点的标注会顶出画布；
+     故先量宽：右边放不下就翻到顶点左侧，再夹一次保证绝对不出框。 */
   const putLabel = (s, P, dx, dy, col) => {
-    const x = P.x + dx, y = P.y + dy;
     g.save();
     g.font = "bold 11px " + FONT;
-    g.textAlign = "left"; g.textBaseline = "middle";
+    const wT = g.measureText(s).width;
+    let x = P.x + dx, al = "left";
+    if (x + wT > W - 4) { al = "right"; x = P.x - dx; }
+    x = al === "left" ? clamp(x, 4, Math.max(4, W - wT - 4))
+      : clamp(x, Math.min(wT + 4, W - 4), W - 4);
+    const y = P.y + dy;
+    g.textAlign = al; g.textBaseline = "middle";
     g.lineWidth = 3.2; g.lineJoin = "round";
     g.strokeStyle = "rgba(255,255,255,.9)";
     g.globalAlpha = 1;
     g.strokeText(s, x, y);                                       /* 白边包字：标注常压在球上 */
     g.globalAlpha = clamp(0.96 - 0.22 * (1 - depT(P.d)) * LT_DOF, 0.55, 1);
-    label(g, s, x, y, col, 11, "left", true);
+    label(g, s, x, y, col, 11, al, true);
     g.restore();
   };
   putLabel("Pb²⁺（决定能带）", SP([0, 0, 0]), 14, -10, "#5b6577");
@@ -2353,7 +2388,7 @@ function withOpt(o, fn) {
 }
 const CHAL = [
   {
-    q: "看模块四下方的晶胞：A 位阳离子坐在哪里？B 位与 X 位围成什么几何？把视角转一圈看看八面体是怎么连成骨架的——A 位的有机分子有没有出现在能带上？",
+    q: "看模块四右侧的晶胞：A 位阳离子坐在哪里？B 位与 X 位围成什么几何？把视角转一圈看看八面体是怎么连成骨架的——A 位的有机分子有没有出现在能带上？",
     a: () => {
       const s = S();
       return "<b>A 位坐在八个顶点围出的立方体空隙里</b>（体心位置，图里橙色的球）：" +
@@ -2382,7 +2417,7 @@ const CHAL = [
     }
   },
   {
-    q: "打开模块四上方的对比图：常规半导体的导带和价带分别是什么特征？钙钛矿呢？抽掉一个原子后，两边的缺陷能级分别落在哪里？这解释了钙钛矿的什么本事？",
+    q: "打开模块四左侧的对比图：常规半导体的导带和价带分别是什么特征？钙钛矿呢？抽掉一个原子后，两边的缺陷能级分别落在哪里？这解释了钙钛矿的什么本事？",
     a: () => "常规半导体的<b>导带是反键、价带是成键</b>：抽掉一个原子，剩下的悬挂键能级落在<b>带隙中央</b>附近，" +
       "正好处在复合最有效的位置（深能级是 Shockley–Read–Hall 复合的主力），所以缺陷多一点器件就废了。" +
       "铅卤钙钛矿不一样：价带顶（Pb 6s–I 5p 反键）和导带底（Pb 6p–I 5p 反键）<b>都是反键的</b>，" +
