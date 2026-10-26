@@ -82,6 +82,10 @@ This collection was developed with AI assistance.
 
 ## Quick start
 
+**Try it in your browser, no download:** [eit-toolkit.github.io/semiconductor/index_en.htm](https://eit-toolkit.github.io/semiconductor/index_en.htm)
+
+To keep a local copy:
+
 ```bash
 git clone https://github.com/eit-toolkit/semiconductor.git
 cd semiconductor
