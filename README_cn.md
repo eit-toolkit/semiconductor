@@ -12,7 +12,7 @@
 ![Dependencies: none](https://img.shields.io/badge/dependencies-none-brightgreen.svg)
 ![Tools: 35](https://img.shields.io/badge/tools-35-orange.svg)
 ![Build: not required](https://img.shields.io/badge/build-not%20required-lightgrey.svg)
-![Version: 0.10](https://img.shields.io/badge/version-0.10-blue.svg)
+![Version: 0.20](https://img.shields.io/badge/version-0.20-blue.svg)
 
 ---
 
