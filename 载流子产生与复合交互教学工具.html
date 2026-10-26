@@ -527,7 +527,7 @@ var I18N = {
   "③ 被顶到高能态，再逐步发": "③ The third carrier is kicked to a high-energy state and then emits ",
   "回落": " step by step to fall back",
   "本机制复合率": "Recombination rate of this mechanism",
-  "三种机制的事件频率（按真实复合率分配）": "Event frequencies of the three mechanisms (apportioned by the true recombination rates)",
+  "三种机制的事件频率（按真实复合率分配）": "Event frequencies (apportioned by the true rates)",
   "俄歇": "Auger",
   "当前主导：": "Dominant at present: ",
   "（两排粒子数 = 浓度的对数示意，非等比）": " (the two rows of particles are a logarithmic sketch of the concentrations, not to scale)",
@@ -2115,14 +2115,20 @@ function drawBal() {
   const r = rates(injNow()), dn = injNow(), lt = lifetime(r, dn), G = Gopt();
   const rnet = r.rTot - G;
   const mid = W / 2 + 20;
-  const x0 = 108, x1 = mid - 74, bw = Math.max(40, x1 - x0);
-
   const vals = [
     { lab: "直接复合 " + H_RB, v: r.rB, col: C_PHOTON },
     { lab: "间接 SRH " + H_R, v: r.rS, col: C_PHONON },
     { lab: "俄歇 " + H_RA, v: r.rA, col: C_THIRD },
     { lab: "光产生 " + H_GO, v: G, col: "#1976d2" }
   ];
+  /* ⚠️ 标签右对齐挂在条形左端外 8 px：中文只占三个字宽，英文能到它的一倍半，
+     写死的 x0 = 108 会把整排标签顶到画布左沿之外 ⇒ 先用 mMeasure 量出最宽的那条
+     标签（mMeasure 自带翻译，量到的就是当前语言下真正的宽度），再据它定条形起点。 */
+  const NETL = "净复合 " + H_R + H_MN + H_G;
+  let lw = mMeasure(g, TX(NETL), 10.5, true);
+  for (const v of vals) lw = Math.max(lw, mMeasure(g, TX(v.lab), 10.5, false));
+  const x0 = Math.round(Math.min(Math.max(12 + lw + 8, 108), W * 0.34));
+  const x1 = mid - 74, bw = Math.max(40, x1 - x0);
   let vmax = 1e-30;
   for (const v of vals) vmax = Math.max(vmax, v.v);
   for (const v of vals) vmax = Math.max(vmax, Math.abs(rnet));
@@ -2139,7 +2145,7 @@ function drawBal() {
     mtxt(g, v.v > 0 ? PSci(v.v, 1) : [{ s: "0" }], x0 + bw + 6, y + 7, v.col, 10, "left", false);
   });
   const ynet = 30 + 4 * 26 + 8;
-  mtxt(g, TX("净复合 " + H_R + H_MN + H_G), x0 - 8, ynet + 7, "#2c3e50", 10.5, "right", true);
+  mtxt(g, TX(NETL), x0 - 8, ynet + 7, "#2c3e50", 10.5, "right", true);
   g.fillStyle = "#eef2f7"; g.fillRect(x0, ynet, bw, 14);
   const netPos = rnet >= 0;
   g.fillStyle = netPos ? "#6b7a8c" : "#2e9e5b";

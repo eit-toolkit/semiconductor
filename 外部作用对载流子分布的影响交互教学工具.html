@@ -370,7 +370,7 @@ var I18N = {
   "左图只画": "the left panel draws only",
   "只有温度梯度：中心纹丝不动，但热侧台阶被抹平、冷侧依然陡峭；两侧的温差还驱动了热扩散电流（梯度 =": "Temperature gradient only: the center does not budge, but the step on the hot side is smeared out while the cold side stays steep; the temperature difference between the two ends also drives a thermal diffusion current (gradient =",
   "只有温度梯度：中心纹丝不动，但热侧台阶被抹平、冷侧依然陡峭；两侧的温差还驱动了热扩散电流（梯度": "Temperature gradient only: the center does not budge, but the step on the hot side is smeared out while the cold side stays steep; the temperature difference between the two ends also drives a thermal diffusion current (gradient",
-  "漂移电流 vs 热扩散电流（同一对数刻度，量程跨 8 个数量级；绝对值仅供标度对比）": "Drift current vs thermal diffusion current (the same logarithmic scale, spanning 8 orders of magnitude; the absolute values are for scale comparison only)",
+  "漂移电流 vs 热扩散电流（同一对数刻度，量程跨 8 个数量级；绝对值仅供标度对比）": "Drift current vs thermal diffusion current (same log scale, spanning 8 decades; absolute values are for scale comparison only)",
   "漂移电流": "Drift current",
   "热扩散电流（同一对数刻度，量程跨": "thermal diffusion current (the same logarithmic scale, spanning",
   "个数量级；绝对值仅供标度对比）": "orders of magnitude; the absolute values are for scale comparison only)",
@@ -418,7 +418,7 @@ var I18N = {
   "两侧等温 ⇒ 红蓝完全重合，没有过渡区之差": "Both sides at the same temperature ⇒ red and blue coincide exactly, with no difference in transition width",
   "红蓝完全重合，没有过渡区之差": "red and blue coincide exactly, with no difference in transition width",
   "引导探究（点击展开，先自己试一试再看答案）": "Guided inquiry (click to expand — try it yourself before reading the answer)",
-  "温度梯度：中心不动、台阶抹平（不加电场）": "Temperature gradient: center unmoved, step smeared out (no field applied)",
+  "温度梯度：中心不动、台阶抹平（不加电场）": "Temperature gradient: center unmoved, step smeared (no field)",
   "时，这个热电场会自动建立起来把热扩散电流": " , this thermoelectric field builds up by itself and cancels the thermal diffusion current",
   "未加电场 ⇒ 没有平移，也没有红蓝月牙": "No field applied ⇒ there is no shift, and no red/blue crescents either",
   "未加电场": "No field applied",
@@ -1899,15 +1899,23 @@ function drawKs() {
      否则两条都挂在同一条辐条的末端，环带一窄就贴在一起互相压字。 */
   const angC = -1.05, angH = -0.30;
   const px = (k, ang) => [c2x + k / kmax * Rp * Math.cos(ang), cy - k / kmax * Rp * Math.sin(ang)];
+  /* ⚠️ 过渡区标签挂在辐条末端外 8 px：中文只有半个词宽，英文能有它的一倍多，
+     写死的 8 px 在英文态会把文字捅出画布右沿 ⇒ 用 measureText 实测量该占多宽再回夹，
+     两端（中文没触及、英文被夹）都走同一行代码，不分支。 */
+  const edgeLbl = (s, x, y, col) => {
+    g.font = "10px " + FONT;
+    const w = g.measureText(s).width;
+    txt(g, s, Math.max(6, Math.min(x, W - 4 - w)), y, col, "10px " + FONT);
+  };
   const pL1 = px(d.k90L, angC), pL2 = px(d.k10L, angC);
   if (d.k10L > d.k90L + 0.02) {
     line(g, pL1[0], pL1[1], pL2[0], pL2[1], C_COLD, 3);
-    txt(g, "冷侧过渡区", pL2[0] + 8, pL2[1], C_COLD, "10px " + FONT);
+    edgeLbl("冷侧过渡区", pL2[0] + 8, pL2[1], C_COLD);
   }
   const pH1 = px(d.k90H, angH), pH2 = px(d.k10H, angH);
   if (d.k10H > d.k90H + 0.02) {
     line(g, pH1[0], pH1[1], pH2[0], pH2[1], C_HOT, 3);
-    txt(g, "热侧过渡区", pH2[0] + 8, pH2[1], C_HOT, "10px " + FONT);
+    edgeLbl("热侧过渡区", pH2[0] + 8, pH2[1], C_HOT);
     if (d.k90H <= 0.02) {
       /* 高温侧退化：f(0) < 0.9，f=0.9 等值线在数学上已不存在（缩到 k=0），
          补一个红色小虚线圆记号 + 一行说明，否则红虚线“凭空消失”像 bug */
