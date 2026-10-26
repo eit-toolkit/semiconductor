@@ -200,15 +200,12 @@
       <div class="hint" id="hintJv"></div>
     </div>
 
+    <!-- 模块四：两张参考图都不读 OPT（不随旋钮变化），故并为一卡 -->
     <div class="card">
-      <div class="sec-title"><span class="mtag">模块四</span>缺陷容忍：为什么溶液法做的钙钛矿也能高效</div>
+      <div class="sec-title"><span class="mtag">模块四</span>材料本征：缺陷容忍与 <span class="m"><i>ABX</i><sub>3</sub></span> 晶胞（两张参考图，不随旋钮变化）</div>
       <div class="chart-wrap"><canvas id="def" data-h="250" tabindex="0"></canvas></div>
       <div class="hint" id="hintDef"></div>
-    </div>
-
-    <div class="card">
-      <div class="sec-title"><span class="mtag">模块五</span><span class="m"><i>ABX</i><sub>3</sub></span> 晶胞：谁在撑结构，谁在定能带</div>
-      <div class="chart-wrap"><canvas id="lat" data-h="270" tabindex="0"></canvas></div>
+      <div class="chart-wrap" style="margin-top:9px;"><canvas id="lat" data-h="270" tabindex="0"></canvas></div>
       <div class="legend" id="legLat"></div>
       <div class="hint" id="hintLat"></div>
     </div>
@@ -364,7 +361,7 @@ function T(s) {
 }
 var I18N = {
   /* ---- 版面与通用 ---- */
-  "模块一": "Module 1", "模块二": "Module 2", "模块三": "Module 3", "模块四": "Module 4", "模块五": "Module 5",
+  "模块一": "Module 1", "模块二": "Module 2", "模块三": "Module 3", "模块四": "Module 4",
   "控制面板": "Control Panel",
   "读数面板": "Readout Panel",
   "挑战任务": "Challenges",
@@ -383,8 +380,8 @@ var I18N = {
   "器件结构与载流子的一生（层状三明治俯瞰）": "Device stack and the life of a carrier (a top-down view of the sandwich)",
   "能带对齐与选择性接触（能量零点＝真空能级）": "Band alignment and selective contacts (zero of energy = vacuum level)",
   "J–V 曲线与效率（AM1.5 总量 100 mW/cm²，画的是 −J）": "J–V curve and the efficiency (AM1.5 total 100 mW/cm²; the plot shows −J)",
-  "缺陷容忍：为什么溶液法做的钙钛矿也能高效": "Defect tolerance: why solution-processed perovskites can still be efficient",
-  " 晶胞：谁在撑结构，谁在定能带": " unit cell: who holds the structure up, who sets the bands",
+  "材料本征：缺陷容忍与": "Material fundamentals: defect tolerance and",
+  "晶胞（两张参考图，不随旋钮变化）": "unit cell (two reference panels, unaffected by the controls)",
 
   /* ---- 控件 ---- */
   "钙钛矿带隙": "Perovskite band gap",
@@ -543,7 +540,7 @@ var I18N = {
   "能带与抽取": "Bands and extraction",
   "接触电势上限": "Contact-potential ceiling",
   " V = ": " V = ",
-  "界面抽取速度 S": "Interface extraction velocity S",
+  "界面抽取速度 ": "Interface extraction velocity ",
   " cm/s（无势垒时取热速度量级 ": " cm/s (thermal-velocity scale when there is no barrier: ",
   "走到界面后的抽取率": "Extraction probability once at the interface",
   "载流子与吸收": "Carriers and absorption",
@@ -556,7 +553,7 @@ var I18N = {
   "kT 与激子结合能": "kT and the exciton binding energy",
   " eV，E_b/kT = ": " eV; E_b/kT = ",
   "（远小于 1 ⇒ 室温自发解离）": " (well below 1 ⇒ dissociation is spontaneous at room temperature)",
-  "若折算成 Br 含量 x": "Convert to a Br fraction x",
+  "若折算成 Br 含量 ": "Convert to a Br fraction ",
   "x ≈ ": "x ≈ ",
   "（MAPb(I₁₋ₓBrₓ)₃ 的线性估算）": " (linear estimate for MAPb(I₁₋ₓBrₓ)₃)",
   "低于 MAPbI₃ 的 1.55 eV，不在 I/Br 混晶的估算范围内": "below the 1.55 eV of MAPbI₃, outside the range of the I/Br mixed-crystal estimate",
@@ -635,7 +632,7 @@ var I18N = {
   "当前这一档 Δ": "the present setting, Δ",
 
   /* ---- 补：挑战一（ABX₃ 晶胞） ---- */
-  "1. 看模块五的晶胞：A 位阳离子坐在哪里？B 位与 X 位围成什么几何？把视角转一圈看看八面体是怎么连成骨架的——A 位的有机分子有没有出现在能带上？": "1. Look at the unit cell of Module 5: where does the A-site cation sit? What geometry do the B and X sites build? Rotate the view once around and watch how the octahedra link into a framework — does the organic molecule on the A site show up in the bands at all?",
+  "1. 看模块四下方的晶胞：A 位阳离子坐在哪里？B 位与 X 位围成什么几何？把视角转一圈看看八面体是怎么连成骨架的——A 位的有机分子有没有出现在能带上？": "1. Look at the unit cell in the lower part of Module 4: where does the A-site cation sit? What geometry do the B and X sites build? Rotate the view once around and watch how the octahedra link into a framework — does the organic molecule on the A site show up in the bands at all?",
   "A 位坐在八个顶点围出的立方体空隙里": "The A site sits in the cubic void enclosed by the eight corners",
   "（体心位置，图里橙色的球）：它是一价的 MA": " (the body center, the orange sphere in the figure): it is a monovalent MA",
   "，靠电荷平衡把骨架撑住，并决定八面体怎么倾斜；": ", it holds the framework up through charge balance and decides how the octahedra tilt; ",
@@ -669,7 +666,7 @@ var I18N = {
   "本档读数：": "Readouts for this setting: ",
 
   /* ---- 补：挑战三（缺陷容忍） ---- */
-  "3. 打开模块四的对比图：常规半导体的导带和价带分别是什么特征？钙钛矿呢？抽掉一个原子后，两边的缺陷能级分别落在哪里？这解释了钙钛矿的什么本事？": "3. Open the comparison of Module 4: what is the character of the conduction band and of the valence band in a conventional semiconductor? And in a perovskite? After removing one atom, where do the defect levels land in each case? What ability of the perovskite does that explain?",
+  "3. 打开模块四上方的对比图：常规半导体的导带和价带分别是什么特征？钙钛矿呢？抽掉一个原子后，两边的缺陷能级分别落在哪里？这解释了钙钛矿的什么本事？": "3. Open the comparison in the upper part of Module 4: what is the character of the conduction band and of the valence band in a conventional semiconductor? And in a perovskite? After removing one atom, where do the defect levels land in each case? What ability of the perovskite does that explain?",
   "常规半导体的": "In a conventional semiconductor the ",
   "导带是反键、价带是成键": "conduction band is antibonding and the valence band is bonding",
   "：抽掉一个原子，剩下的悬挂键能级落在": ": remove one atom and the dangling-bond level it leaves lands ",
@@ -708,7 +705,9 @@ var I18N = {
 
   /* ---- 补：关系式分散进各模块说明后的新文案 ---- */
   "短路电流是两级效率相乘：": "The short-circuit current is two efficiencies multiplied together: ",
-  "：吸收按 Beer 定律随深度 e^(−αz) 逐层衰减，收集由扩散方程在「界面抽取速度 S」这一边界条件下的解析解给出：": ": absorption falls off layer by layer with depth as e^(−αz) (Beer’s law), and collection comes from the analytic solution of the diffusion equation under the boundary condition of an interface extraction velocity S: ",
+  "：吸收按 Beer 定律随深度 e^(−αz) 逐层衰减，收集由扩散方程在「界面抽取速度 ": ": absorption falls off layer by layer with depth as e^(−αz) (Beer’s law), and collection comes from the analytic solution of the diffusion equation under the boundary condition of an interface extraction velocity ",
+  "」这一边界条件下的解析解给出：": ": ",
+  "收集由扩散方程在「界面抽取速度 ": "comes from the analytic solution of the diffusion equation under the boundary condition of an interface extraction velocity ",
   "开压取两者中的小者：": "The open-circuit voltage is the smaller of the two: ",
   " —— 前一项是二极管方程给出的值，后一项就是左边那条紫色竖线。": " — the first term is what the diode equation gives, the second is exactly the violet line on the left.",
   "曲线由单二极管方程隐式给出，": "The curve is given implicitly by the single-diode equation ",
@@ -1693,7 +1692,11 @@ function drawDev() {
   g.lineTo(xw, ym + 18); g.stroke();
   arw(g, geo.xb + 6, yT - 10, geo.xb + 40, yT - 10, "#1976d2", 1.4, 6);
   label(g, "电子流向负载", geo.xb + 44, yT - 10, "#1976d2", 10.5, "left", true);
-  label(g, "−J = " + s.jsc.toFixed(1) + " mA/cm²", xw + 12, ym + 26, "#33465c", 11, "left", true);
+  /* −J 读数挂在负载右侧：实测宽度后夹回画布，否则末位（cm² 的上标）会被裁掉。 */
+  const jTxt = "−J = " + s.jsc.toFixed(1) + " mA/cm²";
+  g.font = "600 11px " + FONT;
+  const jx = Math.min(xw + 12, W - 14 - g.measureText(jTxt).width);
+  label(g, jTxt, jx, ym + 26, "#33465c", 11, "left", true);
   /* 悬停信息 */
   if (DV.hover >= 0) {
     const L = LAYERS.find(o => o.key === geo.order[DV.hover]);
@@ -1797,7 +1800,14 @@ function drawBand() {
     g.beginPath(); g.moveTo(xv, yA); g.lineTo(xv, yB2); g.stroke();
     arw(g, xv, yA, xv, (yA + yB2) / 2, "#8e5bd0", 1.2, 5);
     arw(g, xv, yB2, xv, (yA + yB2) / 2, "#8e5bd0", 1.2, 5);
-    label(g, "≤ " + s.vContact.toFixed(2) + " V", xv - 4, (yA + yB2) / 2, "#8e5bd0", 11, "right", true);
+    /* 「≤ x.xx V」压在尺寸线中点、底下垫一层画布底色盖住线：
+       原先右对齐挂在线左侧，而线到画布左沿只剩 32 px，末位会被裁掉。 */
+    const capTxt = "≤ " + s.vContact.toFixed(2) + " V";
+    g.font = "600 11px " + FONT;
+    const cw = g.measureText(capTxt).width, cy2 = (yA + yB2) / 2;
+    g.fillStyle = "#ffffff";   /* = --panel，画布本身透明，垫色要和卡片同色 */
+    g.fillRect(xv - cw / 2 - 3, cy2 - 8, cw + 6, 16);
+    label(g, capTxt, xv, cy2, "#8e5bd0", 11, "center", true);
   }
   label(g, "电子能量 E（eV，真空为 0）", 6, top - 14, "#6b7a8c", 11.5, "left", true);
   label(g, "平带近似：这里不画能带弯曲，只看三层能级怎么对齐", xb, bot + 34, "#6b7a8c", 11, "right", false);
@@ -1958,7 +1968,7 @@ function drawDef() {
 }
 
 /* ==================================================================
-   7. 模块五：ABX₃ 晶胞（自研 Canvas 2D 透视投影 + 画家算法）
+   7. 模块四：ABX₃ 晶胞（自研 Canvas 2D 透视投影 + 画家算法）
    ================================================================== */
 const RADI = {
   A: { r: 0.16, col: "#ef8c1a", name: "A 位阳离子" },
@@ -2186,7 +2196,7 @@ function buildHints() {
     "浅色的阴阳小球是被拆开的电子–空穴对：<span class=\"m\">–</span> 往上走进 ETL、<span class=\"m\">+</span> 往下走进 HTL，" +
     "谁在半路被复合就用灰叉标记。两侧 ✗ 是选择性接触在挡人：ETL 不让空穴过，HTL 不让电子过。" +
     "<span class=\"eq\">短路电流是两级效率相乘：" + EQ_JSC + "：吸收按 Beer 定律随深度 e^(−αz) 逐层衰减，" +
-    "收集由扩散方程在「界面抽取速度 S」这一边界条件下的解析解给出：" + EQ_COLL + "</span>");
+    "收集由扩散方程在「界面抽取速度 <span class=\"m\"><i>S</i></span>」这一边界条件下的解析解给出：" + EQ_COLL + "</span>");
   set("hintBand", "三列的上下两条粗线分别是各自的 <span class=\"m\"><i>E</i></span><sub>C</sub> 与 " +
     "<span class=\"m\"><i>E</i></span><sub>V</sub>，能量读数是相对真空能级的电子能量。" +
     "左边紫色竖线是接触电势上限 <span class=\"m\"><i>E</i><sub>g</sub><span class=\"op\">−</span>Δ<i>E</i><sub>C</sub><span class=\"op\">−</span>Δ<i>E</i><sub>V</sub></span>：" +
@@ -2314,14 +2324,14 @@ function updatePanels() {
     ["能带与抽取"],
     [H_EC + " / " + H_EV, s.dEc.toFixed(2) + " / " + s.dEv.toFixed(2) + " eV"],
     ["接触电势上限", s.vContact.toFixed(3) + " V = " + H_EG + " − " + H_EC + " − " + H_EV],
-    ["界面抽取速度 S", PSciArr(s.S) + " cm/s（无势垒时取热速度量级 " + PSciArr(ESL) + "）"],
+    ["界面抽取速度 <span class=\"m\"><i>S</i></span>", PSciArr(s.S) + " cm/s（无势垒时取热速度量级 " + PSciArr(ESL) + "）"],
     ["走到界面后的抽取率", pct(s.fext)],
     ["载流子与吸收"],
     ["扩散系数 D = µkT/q", PSciArr(s.D) + " cm²/s，反推寿命 τ = " + fmtTau(s.tau)],
     [H_LD + " / d", (s.ld / s.d).toFixed(2) + "（越接近 1，越省着用扩散长度）"],
     ["1/α（代表性光子）", (1e7 / alphaRep(s.Eg)).toFixed(0) + " nm，层厚是它的 " + (OPT.d / (1e7 / alphaRep(s.Eg))).toFixed(1) + " 倍"],
     ["kT 与激子结合能", s.vt.toFixed(4) + " eV，E_b/kT = " + (EB / s.vt).toFixed(2) + "（远小于 1 ⇒ 室温自发解离）"],
-    ["若折算成 Br 含量 x", (s.Eg >= 1.55 ? "x ≈ " + ((s.Eg - 1.55) / 0.8).toFixed(2) + "（MAPb(I₁₋ₓBrₓ)₃ 的线性估算）" : "低于 MAPbI₃ 的 1.55 eV，不在 I/Br 混晶的估算范围内")],
+    ["若折算成 Br 含量 <span class=\"m\"><i>x</i></span>", (s.Eg >= 1.55 ? "x ≈ " + ((s.Eg - 1.55) / 0.8).toFixed(2) + "（MAPb(I₁₋ₓBrₓ)₃ 的线性估算）" : "低于 MAPbI₃ 的 1.55 eV，不在 I/Br 混晶的估算范围内")],
     ["损失拆分（占 SQ 极限的比例）"]
   ];
   for (const l of s.loss) more.push([l.k, (l.v * 100).toFixed(1) + " %"]);
@@ -2343,7 +2353,7 @@ function withOpt(o, fn) {
 }
 const CHAL = [
   {
-    q: "看模块五的晶胞：A 位阳离子坐在哪里？B 位与 X 位围成什么几何？把视角转一圈看看八面体是怎么连成骨架的——A 位的有机分子有没有出现在能带上？",
+    q: "看模块四下方的晶胞：A 位阳离子坐在哪里？B 位与 X 位围成什么几何？把视角转一圈看看八面体是怎么连成骨架的——A 位的有机分子有没有出现在能带上？",
     a: () => {
       const s = S();
       return "<b>A 位坐在八个顶点围出的立方体空隙里</b>（体心位置，图里橙色的球）：" +
@@ -2372,7 +2382,7 @@ const CHAL = [
     }
   },
   {
-    q: "打开模块四的对比图：常规半导体的导带和价带分别是什么特征？钙钛矿呢？抽掉一个原子后，两边的缺陷能级分别落在哪里？这解释了钙钛矿的什么本事？",
+    q: "打开模块四上方的对比图：常规半导体的导带和价带分别是什么特征？钙钛矿呢？抽掉一个原子后，两边的缺陷能级分别落在哪里？这解释了钙钛矿的什么本事？",
     a: () => "常规半导体的<b>导带是反键、价带是成键</b>：抽掉一个原子，剩下的悬挂键能级落在<b>带隙中央</b>附近，" +
       "正好处在复合最有效的位置（深能级是 Shockley–Read–Hall 复合的主力），所以缺陷多一点器件就废了。" +
       "铅卤钙钛矿不一样：价带顶（Pb 6s–I 5p 反键）和导带底（Pb 6p–I 5p 反键）<b>都是反键的</b>，" +

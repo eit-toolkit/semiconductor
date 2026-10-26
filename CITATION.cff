@@ -3,9 +3,8 @@ message: "If you use this software, please cite it as below."
 title: "EIT-SP: Educational Interactive Toolkit for Semiconductor Physics"
 abbreviation: "EIT-SP"
 abstract: >-
-  A growing series of single-file, zero-dependency interactive HTML tools for teaching and
-  learning semiconductor physics. Tools are added as they mature; those not yet ready are
-  not published, so the collection expands over time. It is organised according to the
+  A series of single-file, zero-dependency interactive HTML tools for teaching and
+  learning semiconductor physics. It is organised according to the
   chapter sequence of a standard
   Chinese semiconductor-physics textbook: crystal structure and energy bands,
   impurities and defects, carrier statistics, electrical conductivity,

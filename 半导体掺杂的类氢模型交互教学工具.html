@@ -1358,9 +1358,13 @@ function drawReal() {
   /* ---- 原子标号 +4 ---- */
   if (OPT.showLab && sp >= 24) {
     g.save(); g.font = "9.5px " + FONT; g.fillStyle = "#8a97a5"; g.textAlign = "center"; g.textBaseline = "middle";
+    const wLab = g.measureText("+4").width;
     for (let i = 0; i <= nCol; i++) for (let j = 0; j <= nRow; j++) {
       const x = gridX0 + i * sp, y = gridY0 + j * sp;
       if (Math.hypot(x - x0, y - y0) < Math.max(15, sp * 0.34)) continue;
+      /* 最外一列格点常压在画布边沿上（nCol 是 ceil(W/sp)+1），标号会被裁掉半个
+         ⇒ 放不下就不画，比画一半干净。 */
+      if (x - wLab / 2 < 2 || x + wLab / 2 > W - 2) continue;
       g.fillText("+4", x, y);
     }
     g.restore();

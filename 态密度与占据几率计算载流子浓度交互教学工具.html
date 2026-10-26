@@ -1690,7 +1690,8 @@ function drawZoom() {
     drawMath(c, P.title, P.x + pw / 2, top - 12, 12, "600", "center", "#2c3e50");
     drawMath(c, "乘积峰值 " + sci(pPk, 1), P.x + pw / 2, top + 28, 10, "", "center", "#0d47a1");
     drawMath(c, (P.kind === "c" ? lo - Ec() : lo).toFixed(2) + " eV", P.x, bot + 14, 10.5, "", "center", "#8a97a5");
-    drawMath(c, (P.kind === "c" ? hi - Ec() : hi).toFixed(2) + " eV", P.x + pw, bot + 14, 10.5, "", "center", "#8a97a5");
+    /* 右端刻度右对齐：原来居中，右半截会探出画布约 1 px */
+    drawMath(c, (P.kind === "c" ? hi - Ec() : hi).toFixed(2) + " eV", P.x + pw, bot + 14, 10.5, "", "right", "#8a97a5");
     drawMath(c, "E − E_" + (P.kind === "c" ? "c" : "v") + "（eV）", P.x + pw / 2, bot + 30, 11, "", "center", "#6b7a8c");
   }
 }

@@ -15,9 +15,7 @@
 
 ## What this is
 
-A growing series of **single-file** interactive teaching tools for semiconductor physics: crystal structure and energy bands, impurities and defects, carrier statistics, conductivity, non-equilibrium carriers, pn junctions, semiconductor surfaces and MIS structures, plus optical, thermoelectric and magnetic effects.
-
-The set grows one tool at a time: a tool is added when it is mature enough to be used, and one that is not ready is simply not published, so the list below changes over time.
+A series of **single-file** interactive teaching tools for semiconductor physics: crystal structure and energy bands, impurities and defects, carrier statistics, conductivity, non-equilibrium carriers, pn junctions, semiconductor surfaces and MIS structures, plus optical, thermoelectric and magnetic effects.
 
 Each tool is one `.html` file: **no build step, no npm, no CDN, no network requests**. Double-click and it runs. It works offline, fits on a USB stick, can be emailed to a student as an attachment, and will still open ten years from now.
 

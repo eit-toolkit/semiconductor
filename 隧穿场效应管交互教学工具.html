@@ -470,7 +470,7 @@ var I18N = {
   "，这正是 SS 能压到 60 mV/dec 以下的原因。": ", which is exactly why SS can be pushed below 60 mV/dec.",
   "切到「热发射」可以对照 MOSFET 的开门方式：那边是热尾翻势垒（电流谱是一条被 kT 锁死的斜线），这边是冷电子直接穿禁带。": "Switch to “Thermionic emission” to contrast with how a MOSFET opens the gate: there the thermal tail climbs over the barrier (the current spectrum is a straight line locked by kT), here cold electrons cross the gap directly.",
   "栅控与能带": "Gate control and bands",
-  "栅控效率 η": "Gate-control efficiency η",
+  "栅控效率 ": "Gate-control efficiency ",
   "源结内建电势 ": "Source junction built-in Vbi ",
   "/2q，掺杂决定）": "/2q, set by the doping)",
   "沟道电势 ψ": "Channel potential ψ",
@@ -2197,7 +2197,7 @@ function buildReadout() {
   const ro = $("readout");
   if (ro) ro.innerHTML = kvHTML([
     { hd: "栅控与能带" },
-    ["栅控效率 η", d.eta.toFixed(3)],
+    ["栅控效率 <span class=\"m\"><i>η</i></span>", d.eta.toFixed(3)],
     ["源结内建电势 V_bi（＝E_g/2q，掺杂决定）", d.Vbi.toFixed(3) + " V"],
     ["沟道电势 ψ", d.psi.toFixed(3) + " V"],
     ["能带弯曲 qψ", d.bend.toFixed(3) + " eV"],

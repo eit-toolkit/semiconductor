@@ -1698,7 +1698,8 @@ function drawBars() {
   const g = c.g, W = c.W, H = c.H, s = state();
   g.clearRect(0, 0, W, H);
   g.fillStyle = "#fff"; g.fillRect(0, 0, W, H);
-  const x0 = 96, x1 = W - 88, bw = x1 - x0;
+  /* 右留 100 px：条末要挂「1.22×10⁻⁵ C/cm²」这类读数，88 px 时上标 2 会被裁掉 */
+  const x0 = 96, x1 = W - 100, bw = x1 - x0;
   const lo = -10.2, hi = -4.2;                       // m，对数
   const fr = v => clamp((Math.log10(Math.max(v, 1e-12)) - lo) / (hi - lo), 0, 1);
   const rows = [

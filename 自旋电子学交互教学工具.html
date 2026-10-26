@@ -429,34 +429,34 @@ var I18N = {
   "顺着电流方向的面内场，可以降低 STT 的阈值。": "An in-plane field along the current lowers the STT threshold.",
   "SOT 单独只能把磁矩拉到面内；加上面内场才有确定的翻转方向。": "SOT alone only drags the moment in-plane; an assist field is needed for a deterministic direction.",
   "自旋翻转散射（Elliott–Yafet、Dyakonov–Perel 等）的快慢；注意 L_s 只对它取平方根。": "The rate of spin-flip scattering (Elliott–Yafet, Dyakonov–Perel, …); mind that L_s only takes the square root of it.",
-  "势垒平均高度 Φ": "Mean barrier height Φ",
-  "自由层厚度 / M_s": "Free-layer thickness / M_s",
-  "有效垂直各向异性 μ₀H_k": "Effective perpendicular anisotropy μ₀H_k",
-  "自旋霍尔角 θ_SH": "Spin Hall angle θ_SH",
-  "参考 RA₀（1 nm 平行态）": "Reference RA₀ (1 nm, parallel)",
-  "读出电压 V": "Read voltage V",
+  "势垒平均高度 ": "Mean barrier height ",
+  "自由层厚度 / ": "Free-layer thickness / ",
+  "有效垂直各向异性 ": "Effective perpendicular anisotropy ",
+  "自旋霍尔角 ": "Spin Hall angle ",
+  "参考值（1 nm 平行态）": "reference value (1 nm, parallel)",
+  "读出电压 ": "Read voltage ",
   "初始倾角 / 模拟时长": "Initial tilt / simulation span",
   "隧道结（模块一、二）": "Tunnel junction (Modules 1–2)",
   "自旋输运（模块三）": "Spin transport (Module 3)",
   "磁化动力学（模块四）": "Magnetization dynamics (Module 4)",
   "当前构型": "Current configuration",
-  "电导 G / G′": "Conductance G / G′",
+  "电导 ": "Conductance ",
   "TMR": "TMR",
-  "RA（当前构型）": "RA (current configuration)",
+  "（当前构型）": "(current configuration)",
   "读出电流密度": "Read current density",
-  "自旋扩散长度 L_s": "Spin diffusion length L_s",
-  "临界电流密度 J_c": "Critical current density J_c",
+  "自旋扩散长度 ": "Spin diffusion length ",
+  "临界电流密度 ": "Critical current density ",
   "J / J_c": "J / J_c",
   "是否翻转": "Switched?",
   "中间量": "Intermediate quantities",
   "模型边界": "Model limits",
   "参考层 D↑ / D↓": "Reference layer D↑ / D↓",
   "自由层 D↑ / D↓": "Free layer D↑ / D↓",
-  "衰减常数 κ": "Decay constant κ",
-  "WKB 透射因子 exp(−2κd)": "WKB transmission factor exp(−2κd)",
+  "衰减常数 ": "Decay constant ",
+  "WKB 透射因子 ": "WKB transmission factor ",
   "相对阻值（对 1 nm 平行态）": "Resistance relative to 1 nm parallel",
-  "进动频率 γH_k/2π": "Precession frequency γH_k/2π",
-  "Slonczewski 效率 η = P₁/2": "Slonczewski efficiency η = P₁/2",
+  "进动频率 ": "Precession frequency ",
+  "Slonczewski 效率 ": "Slonczewski efficiency ",
   "扩散通过沟道的时间": "Time to diffuse across the channel",
   "Jullière 模型": "Jullière model",
   "真实 MgO 隧道结": "Real MgO junction",
@@ -503,7 +503,6 @@ var I18N = {
   " 只按 α 现算，": " is computed from α alone; ",
   " 的作用请直接看轨迹曲线的翻转时间）。": " shows its effect directly in the switching time on the trajectory curve).",
   "自由层厚度 / ": "Free-layer thickness / ",
-  "有效垂直各向异性 μ": "Effective perpendicular anisotropy μ",
   "自旋霍尔角 ": "Spin Hall angle ",
   "（1 nm 平行态）": " (1 nm, parallel state)",
   "自旋扩散长度 ": "Spin diffusion length ",
@@ -511,7 +510,6 @@ var I18N = {
   "临界电流密度 ": "Critical current density ",
   "已翻转（−z）": "Switched (−z)",
   "翻转耗时": "Switching time",
-  "进动频率 γ": "Precession frequency γ",
   "Slonczewski 效率 η = P": "Slonczewski efficiency η = P",
   "拉平面内所需 ": "Damping-like field needed to pull it in-plane ",
   "对应电流 J（SOT）": "Corresponding current J (SOT)",
@@ -531,7 +529,9 @@ var I18N = {
   "沟道越长、寿命越短，到探测端剩下的就越少 —— 具体数字记在右侧读数面板。": "A longer channel or a shorter lifetime leaves less at the detector — the numbers are listed in the readout panel on the right.",
   "宏自旋近似下的 LLG：": "LLG in the macrospin approximation: ",
   "STT 的类阻尼力矩 ": "The STT damping-like torque ",
-  " 与矢量 m 共面，能把垂直磁矩一路推过赤道。": " is coplanar with the vector m, so it can push a perpendicular moment all the way across the equator.",
+  "与矢量 ": "is coplanar with the vector ",
+  " 共面，能把垂直磁矩一路推过赤道。": ", so it can push a perpendicular moment all the way across the equator.",
+  "对应电流 ": "Corresponding current ",
   " 是多少、有没有翻过去，都记在右侧读数面板。": " is, and whether it switched, are both listed in the readout panel on the right.",
   "参考层 FM": "Reference layer FM",
   "自由层 FM": "Free layer FM",
@@ -1756,20 +1756,30 @@ function drawMtj() {
   /* 下排：两种构型的总电导对比（整幅宽） */
   const yB = 300, x0 = padL + 74, bwTot = v.W - padL - padR - 74, hB = 24;
   const gMax = Math.max(d.gP, d.gA, 1e-6);
+  /* 条末端还要挂一个三位小数读数，先把它的宽度量出来从条长里扣掉：
+     平行态的 gP 恒为最大 ⇒ 条顶满整幅宽，读数会被推到画布外。 */
+  g.font = "600 11.5px " + FONT;
+  const wNum = Math.max(g.measureText(d.gP.toFixed(3)).width, g.measureText(d.gA.toFixed(3)).width);
+  const bwCond = bwTot - (wNum + 14);   /* 电导条可用长度（扣掉末端读数） */
   lbl(g, "总隧穿电导（相对单位）", x0, yB - 14, C_TXT, 11.5, "left", true);
   [["平行 P", d.gP, "#2e9e5b", !OPT.ap], ["反平行 AP", d.gA, "#8b97a6", OPT.ap]].forEach(function (q, i) {
-    const y = yB + i * (hB + 16), w = bwTot * q[1] / gMax;
+    const y = yB + i * (hB + 16), w = bwCond * q[1] / gMax;
     rrect(g, x0, y, Math.max(w, 3), hB, 4, q[2] + "", "rgba(0,0,0,0.10)");
     lbl(g, q[0], x0 - 6, y + hB / 2, C_TXT, 11.5, "right", true);
     lbl(g, q[1].toFixed(3), x0 + Math.max(w, 3) + 8, y + hB / 2, q[2], 11.5, "left", true);
-    if (q[3]) rrect(g, x0 - 2, y - 2, bwTot + 4, hB + 4, 5, null, "rgba(25,118,210,0.55)");
+    if (q[3]) rrect(g, x0 - 2, y - 2, bwCond + 4, hB + 4, 5, null, "rgba(25,118,210,0.55)");
   });
   /* TMR 标注：从 AP 条末端指向 P 条末端的增量 */
   const yP = yB, yA = yB + hB + 16;
-  const xP = x0 + bwTot * d.gP / gMax, xA = x0 + bwTot * d.gA / gMax;
+  const xP = x0 + bwCond * d.gP / gMax, xA = x0 + bwCond * d.gA / gMax;
   if (d.gP > d.gA) {
     arrow(g, xA + 46, yA + hB / 2, xP + 46, yP + hB / 2, C_UP, 1.6);
-    lblN(g, "TMR ", (d.tmr * 100).toFixed(0) + "%", (xA + xP) / 2 + 96, (yP + yA) / 2 + hB / 2,
+    /* 两个极化率都压得很低时 P 与 AP 几乎等长，(xA+xP)/2 会被推到画布外
+       ⇒ 实测半宽再夹（内存教训：clamp 的上下界必须用实测宽度，不能写死常数）。 */
+    g.font = "600 12px " + FONT;
+    const wHalf = (g.measureText("TMR ").width + g.measureText((d.tmr * 100).toFixed(0) + "%").width) / 2;
+    const xt = clamp((xA + xP) / 2 + 96, padL + wHalf, v.W - padR - wHalf);
+    lblN(g, "TMR ", (d.tmr * 100).toFixed(0) + "%", xt, (yP + yA) / 2 + hB / 2,
       C_UP, 12, "center", true);
   }
 
@@ -1803,7 +1813,11 @@ function drawMtj() {
   g.save();
   g.fillStyle = C_UP; g.beginPath(); g.arc(cxm, cym, 4.6, 0, 2 * Math.PI); g.fill();
   g.strokeStyle = "#fff"; g.lineWidth = 1.6; g.stroke(); g.restore();
-  lbl(g, "工作点", cxm + 9, cym - 13, C_UP, 11, "left", true);
+  /* 高极化率时工作点贴着右轴：标注放不下就翻到标记左侧，别掉出画布 */
+  g.font = "600 11px " + FONT;
+  const wWp = g.measureText("工作点").width;
+  if (cxm + 9 + wWp > v.W - padR) lbl(g, "工作点", cxm - 9, cym - 13, C_UP, 11, "right", true);
+  else lbl(g, "工作点", cxm + 9, cym - 13, C_UP, 11, "left", true);
   lblN(g, "TMR 随自由层极化率（P₁ = ", d.P1.toFixed(2) + "）", (tx0 + tx1) / 2, ty0 - 14, C_TXT, 12, "center", true);
   lbl(g, "自由层极化率 P₂", (tx0 + tx1) / 2, ty1 + 30, C_SUB, 11, "center");
 }
@@ -2044,7 +2058,7 @@ function buildHints() {
   if (h4) h4.innerHTML =
     "宏自旋近似下的 LLG：" + EQ_LLG +
     "<span class=\"eq\">" + (OPT.tq === "stt"
-      ? "STT 的类阻尼力矩 <span class=\"m\"><i>m</i><span class=\"op\">×</span><span class=\"op\">(</span><i>m</i><span class=\"op\">×</span><i>p</i><span class=\"op\">)</span></span> 与矢量 m 共面，能把垂直磁矩一路推过赤道。"
+      ? "STT 的类阻尼力矩 <span class=\"m\"><i>m</i><span class=\"op\">×</span><span class=\"op\">(</span><i>m</i><span class=\"op\">×</span><i>p</i><span class=\"op\">)</span></span> 与矢量 <span class=\"m\"><i>m</i></span> 共面，能把垂直磁矩一路推过赤道。"
       : "SOT 的 <span class=\"m\"><i>m</i><span class=\"op\">×</span><span class=\"op\">(</span><i>σ</i><span class=\"op\">×</span><i>m</i><span class=\"op\">)</span></span> 把磁矩拉向面内的 σ̂ —— 单靠它只能翻 90°，确定性翻转还要靠面内辅助场。") + "</span>" +
     (OPT.tq === "stt"
       ? "当前 J/J_c 是多少、有没有翻过去，都记在右侧读数面板。"
@@ -2068,34 +2082,34 @@ function buildReadout() {
   if (ro) ro.innerHTML = kvHTML([
     { hd: "隧道结（模块一）" },
     ["当前构型", OPT.ap ? "反平行 AP" : "平行 P"],
-    ["电导 G / G′", d.gP.toFixed(3) + " / " + d.gA.toFixed(3)],
+    ["电导 <span class=\"m\"><i>G</i> / <i>G</i>′</span>", d.gP.toFixed(3) + " / " + d.gA.toFixed(3)],
     ["TMR", (d.tmr * 100).toFixed(1) + " %"],
-    ["RA（当前构型）", d.raNow.toFixed(2) + " Ω·μm<sup>2</sup>"],
+    ["<span class=\"m\"><i>RA</i></span>（当前构型）", d.raNow.toFixed(2) + " Ω·μm<sup>2</sup>"],
     /* A/m² → MA/cm²：1 MA/cm² = 10⁶ A/cm² = 10¹⁰ A/m² */
     ["读出电流密度", (d.jReadNow / 1e10).toFixed(2) + " MA/cm<sup>2</sup>"],
     { hd: "磁矩动力学（模块二）" },
     isSTT
-      ? ["临界电流密度 J_c", d.JcSTT.toFixed(2) + " MA/cm<sup>2</sup>"]
-      : ["等效类阻尼场 B_DL", (d.Bdl * 1e3).toFixed(1) + " mT"],
+      ? ["临界电流密度 <span class=\"m\"><i>J</i><sub>c</sub></span>", d.JcSTT.toFixed(2) + " MA/cm<sup>2</sup>"]
+      : ["等效类阻尼场 <span class=\"m\"><i>B</i><sub>DL</sub></span>", (d.Bdl * 1e3).toFixed(1) + " mT"],
     isSTT
-      ? ["J / J_c", (OPT.j / d.JcSTT).toFixed(2)]
-      : ["B_DL / μ₀H_k", (d.Bdl / MU0HK).toFixed(3)],
+      ? ["<span class=\"m\"><i>J</i> / <i>J</i><sub>c</sub></span>", (OPT.j / d.JcSTT).toFixed(2)]
+      : ["<span class=\"m\"><i>B</i><sub>DL</sub> / <i>μ</i><sub>0</sub><i>H</i><sub>k</sub></span>", (d.Bdl / MU0HK).toFixed(3)],
     ["是否翻转", tr.mzEnd > 0 ? "未翻转（仍在 +z）" : "已翻转（−z）"],
     ["翻转耗时", tr.tsw > 0 ? (tr.tsw * 1e9).toFixed(2) + " ns" : "—"],
     { hd: "自旋注入与扩散（模块三）" },
-    ["自旋扩散长度 L_s", (d.Ls * 1e9).toFixed(0) + " nm"]
+    ["自旋扩散长度 <span class=\"m\"><i>L</i><sub>s</sub></span>", (d.Ls * 1e9).toFixed(0) + " nm"]
   ]);
   const rm = $("readoutMore");
   if (rm) rm.innerHTML = kvHTML([
     { hd: "中间量" },
     ["参考层 D↑ / D↓", (d.D1u * 100).toFixed(1) + " / " + (d.D1d * 100).toFixed(1) + " %"],
     ["自由层 D↑ / D↓", (d.D2u * 100).toFixed(1) + " / " + (d.D2d * 100).toFixed(1) + " %"],
-    ["衰减常数 κ", d.kapN.toFixed(3) + " nm<sup>−1</sup>"],
-    ["WKB 透射因子 exp(−2κd)", d.Tk.toExponential(2)],
-    ["进动频率 γH_k/2π", (d.f0 / 1e9).toFixed(2) + " GHz"],
-    ["Slonczewski 效率 η = P₁/2", d.eta.toFixed(3)],
-    ["拉平面内所需 B_DL", (MU0HK * 1e3 / 2).toFixed(0) + " mT (= μ₀H_k/2)"],
-    ["对应电流 J（SOT）", d.Jinplane.toFixed(0) + " MA/cm<sup>2</sup>"],
+    ["衰减常数 <span class=\"m\"><i>κ</i></span>", d.kapN.toFixed(3) + " nm<sup>−1</sup>"],
+    ["WKB 透射因子 <span class=\"m\">exp(<span class=\"op\">−</span>2<i>κ</i><i>d</i>)</span>", d.Tk.toExponential(2)],
+    ["进动频率 <span class=\"m\"><i>γ</i><i>H</i><sub>k</sub>/2π</span>", (d.f0 / 1e9).toFixed(2) + " GHz"],
+    ["Slonczewski 效率 <span class=\"m\"><i>η</i> <span class=\"op\">=</span> <i>P</i><sub>1</sub>/2</span>", d.eta.toFixed(3)],
+    ["拉平面内所需 <span class=\"m\"><i>B</i><sub>DL</sub></span>", (MU0HK * 1e3 / 2).toFixed(0) + " mT (= μ₀H_k/2)"],
+    ["对应电流 <span class=\"m\"><i>J</i></span>（SOT）", d.Jinplane.toFixed(0) + " MA/cm<sup>2</sup>"],
     { hd: "模型边界" },
     ["Jullière 模型", "只计自旋守恒隧穿，TMR 与势垒厚度无关"],
     ["真实 MgO 隧道结", "相干滤波使 TMR 远超本模型"],
@@ -2304,14 +2318,14 @@ function syncInputs() {
 
   const fv = $("fixVal");
   if (fv) fv.innerHTML = kvHTML([
-    ["势垒平均高度 Φ / 厚度 d", PHIB.toFixed(2) + " eV ／ " + OPT.d.toFixed(2) + " nm"],
-    ["自由层厚度 / M_s", (MST * 1e9).toFixed(1) + " nm ／ " + (MSS / 1e6).toFixed(2) + "×10<sup>6</sup> A/m"],
-    ["有效垂直各向异性 μ₀H_k", MU0HK.toFixed(2) + " T"],
-    ["自旋霍尔角 θ_SH", THETA_SH.toFixed(2)],
-    ["吉尔伯特阻尼 α", OPT.alp.toFixed(3)],
-    ["参考 RA₀（1 nm 平行态）", RA0 + " Ω·μm<sup>2</sup>"],
-    ["读出电压 V", VREAD.toFixed(2) + " V"],
-    ["自旋扩散系数 D_s", OPT.ds + " cm<sup>2</sup>/s"],
+    ["势垒平均高度 <span class=\"m\"><i>Φ</i></span> / <span class=\"m\"><i>d</i></span>", PHIB.toFixed(2) + " eV ／ " + OPT.d.toFixed(2) + " nm"],
+    ["自由层厚度 / <span class=\"m\"><i>M</i><sub>s</sub></span>", (MST * 1e9).toFixed(1) + " nm ／ " + (MSS / 1e6).toFixed(2) + "×10<sup>6</sup> A/m"],
+    ["有效垂直各向异性 <span class=\"m\"><i>μ</i><sub>0</sub><i>H</i><sub>k</sub></span>", MU0HK.toFixed(2) + " T"],
+    ["自旋霍尔角 <span class=\"m\"><i>θ</i><sub>SH</sub></span>", THETA_SH.toFixed(2)],
+    ["吉尔伯特阻尼 <span class=\"m\"><i>α</i></span>", OPT.alp.toFixed(3)],
+    ["<span class=\"m\"><i>RA</i><sub>0</sub></span> 参考值（1 nm 平行态）", RA0 + " Ω·μm<sup>2</sup>"],
+    ["读出电压 <span class=\"m\"><i>V</i></span>", VREAD.toFixed(2) + " V"],
+    ["自旋扩散系数 <span class=\"m\"><i>D</i><sub>s</sub></span>", OPT.ds + " cm<sup>2</sup>/s"],
     ["初始倾角 / 模拟时长", TILT0 + "° ／ " + (TMAX * 1e9).toFixed(0) + " ns"],
     /* 纯数字 + 单位，不含中文：双语时不必为运行时数字登记 key */
     ["动画播放", (TMAX * 1e9).toFixed(0) + " ns → " + (TMAX / PLAY_RATE).toFixed(0) + " s"]
