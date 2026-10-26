@@ -8,13 +8,17 @@
 #         GITEE_USER  = doctorwanghao
 #         GITEE_TOKEN = the token from the previous step
 #
-# Triggers: push to main; or "Run workflow" from the Actions tab.
+# Triggers: push to main; push/force-push of a "v*" tag; or "Run workflow" from the
+# Actions tab. The tag trigger is what keeps both sides aligned: "push: branches:
+# [main]" alone never fires for a tag push, which is exactly how Gitee's v0.20 got
+# stranded one release behind (2026-10-26).
 # Only the official actions/checkout plus plain git are used - no third-party actions.
 name: Mirror to Gitee
 
 on:
   push:
     branches: [main]
+    tags: ["v*"]
   workflow_dispatch:
 
 jobs:
@@ -26,6 +30,10 @@ jobs:
         uses: actions/checkout@v5
         with:
           fetch-depth: 0
+          # Tags are NOT fetched by default (actions/checkout defaults fetch-tags
+          # to false), and the tag sync below mirrors whatever this checkout can
+          # see. So ask for them explicitly.
+          fetch-tags: true
 
       - name: Push to Gitee
         env:
@@ -47,8 +55,32 @@ jobs:
           fi
           # No --mirror: it deletes refs that are missing on this side, and Gitee
           # rejects the whole push when its default branch would be deleted.
-          # Push main and tags explicitly. Gitee's default branch is set to main,
-          # so there is no master to keep in sync.
-          git push --force gitee refs/heads/main:refs/heads/main
-          git push --force --tags gitee
+          # Push main and the tags explicitly. Gitee's default branch is set to
+          # main, so there is no master to keep in sync.
+          #
+          # Tags are deliberately added/updated only, never pruned: historical
+          # release tags (v0.10 = the 32-tool snapshot) are meant to stay
+          # downloadable on both hosts.
+          #
+          # Guard first: every way of pushing tags mirrors what THIS checkout can
+          # see. If no tags were fetched, the tag push would be a silent no-op
+          # (and with --prune it would wipe every tag on Gitee), so refuse to run.
+          if [ -z "$(git tag --list)" ]; then
+            echo "::error::No tags found in this checkout - refusing to sync tags to Gitee"
+            exit 1
+          fi
+
+          # Branch sync only makes sense on a main-branch run: on a tag-triggered
+          # run this checkout has no refs/heads/main (checkout checks out the tag
+          # itself). NEVER substitute HEAD for it here - on a tag-triggered run
+          # HEAD is that tag's commit and pushing it would REWIND Gitee's branch
+          # to an older release.
+          if git rev-parse --verify --quiet refs/heads/main >/dev/null; then
+            git push --force gitee refs/heads/main:refs/heads/main
+          else
+            echo "::notice::No local main ref here (tag-triggered run); branch sync skipped"
+          fi
+
+          git push --force gitee 'refs/tags/*:refs/tags/*'
+          git ls-remote --tags gitee
           echo "mirror done"
