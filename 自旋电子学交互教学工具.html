@@ -168,15 +168,6 @@
   .ck-row label { display: inline-flex; align-items: center; gap: 5px; cursor: pointer; user-select: none; }
   .ck-row input { accent-color: var(--blue); margin: 0; }
   .kv .warn { color: var(--red); font-weight: 700; }
-  /* ---- 本工具专属：顶部跳转条（不做隐藏标签页，避免模块徽标不可见） ---- */
-  .jumpbar { display: flex; gap: 8px; max-width: 1500px; margin: 0 auto 12px; flex-wrap: wrap; }
-  .jumpbar button {
-    border: 1px solid var(--border); background: #fff; color: var(--text-sub);
-    padding: 6px 12px; border-radius: 8px; cursor: pointer;
-    font-size: 12.5px; font-weight: 600; font-family: inherit;
-  }
-  .jumpbar button:hover { border-color: var(--blue); color: var(--blue); }
-  .jumpbar button.sel { background: var(--blue); border-color: var(--blue); color: #fff; }
   /* ---- 本工具专属：控制面板分组标题 ---- */
   .grp {
     margin: 14px 0 2px; padding-top: 9px; border-top: 1px dashed var(--border);
@@ -192,28 +183,22 @@
   <div class="formula m"><i>P</i> <span class="op">=</span> <span class="frac"><span class="num"><i>N</i><sub>↑</sub><span class="op">−</span><i>N</i><sub>↓</sub></span><span class="den"><i>N</i><sub>↑</sub><span class="op">+</span><i>N</i><sub>↓</sub></span></span>　·　TMR <span class="op">=</span> <span class="frac"><span class="num">2<i>P</i><sub>1</sub><i>P</i><sub>2</sub></span><span class="den">1<span class="op">−</span><i>P</i><sub>1</sub><i>P</i><sub>2</sub></span></span>　·　<i>L</i><sub>s</sub> <span class="op">=</span> <span class="sqrt"><span class="rd">√</span><span class="rdc"><i>D</i><sub>s</sub><i>τ</i><sub>s</sub></span></span></div>
 </header>
 
-<div class="jumpbar" id="jumpbar">
-  <button class="sel" data-card="card1">① MTJ 与 TMR</button>
-  <button data-card="card2">② 标定曲线</button>
-  <button data-card="card3">③ 自旋注入</button>
-  <button data-card="card4">④ 电流写磁矩</button>
-</div>
-
 <div class="layout">
-  <!-- ============ 左侧：四个模块 ============ -->
+  <!-- ============ 左侧：三个模块 ============ -->
   <div class="viz">
 
     <div class="card" id="card1">
-      <div class="sec-title"><span class="mtag">模块一</span>磁性隧道结：两侧自旋态密度的匹配</div>
-      <div class="chart-wrap"><canvas id="mtj" data-h="400" tabindex="0"></canvas></div>
+      <div class="sec-title"><span class="mtag">模块一</span>磁性隧道结：两侧自旋态密度的匹配与 TMR</div>
+      <div class="chart-wrap"><canvas id="mtj" data-h="380" tabindex="0"></canvas></div>
       <div class="legend" id="legMtj"></div>
       <div class="hint" id="hintMtj"></div>
     </div>
 
     <div class="card" id="card2">
-      <div class="sec-title"><span class="mtag">模块二</span>TMR 随极化率、电阻随势垒厚度</div>
-      <div class="chart-wrap"><canvas id="tmr" data-h="290" tabindex="0"></canvas></div>
-      <div class="hint" id="hintTmr"></div>
+      <div class="sec-title"><span class="mtag">模块二</span>自旋转移矩 / 自旋轨道矩：LLG 动力学</div>
+      <div class="chart-wrap"><canvas id="dyn" data-h="360" tabindex="0"></canvas></div>
+      <div class="legend" id="legDyn"></div>
+      <div class="hint" id="hintDyn"></div>
     </div>
 
     <div class="card" id="card3">
@@ -223,13 +208,6 @@
       <div class="hint" id="hintInj"></div>
     </div>
 
-    <div class="card" id="card4">
-      <div class="sec-title"><span class="mtag">模块四</span>自旋转移矩 / 自旋轨道矩：LLG 动力学</div>
-      <div class="chart-wrap"><canvas id="dyn" data-h="360" tabindex="0"></canvas></div>
-      <div class="legend" id="legDyn"></div>
-      <div class="hint" id="hintDyn"></div>
-    </div>
-
   </div>
 
   <!-- ============ 右侧：控制面板与读数 ============ -->
@@ -237,7 +215,7 @@
     <div class="card">
       <div class="sec-title">控制面板</div>
 
-      <div class="grp">隧道结（模块一、模块二）</div>
+      <div class="grp">隧道结（模块一）</div>
 
       <div class="ctrl">
         <div class="ctrl-head"><span>自由层磁化取向</span><span class="val" id="cfgVal">平行</span></div>
@@ -257,33 +235,7 @@
         <div class="sub" id="p2Sub"></div>
       </div>
 
-      <div class="ctrl">
-        <div class="ctrl-head"><span>势垒厚度 <span class="m"><i>d</i></span></span><span class="val" id="dVal">1.00 nm</span></div>
-        <input type="range" id="dSlider" min="6" max="30" value="10" step="1">
-        <div class="sub" id="dSub"></div>
-      </div>
-
-      <div class="grp">自旋注入与扩散（模块三）</div>
-
-      <div class="ctrl">
-        <div class="ctrl-head"><span>自旋扩散系数 <span class="m"><i>D</i><sub>s</sub></span></span><span class="val" id="dsVal">20 cm<sup>2</sup>/s</span></div>
-        <input type="range" id="dsSlider" min="1" max="120" value="20" step="1">
-        <div class="sub" id="dsSub"></div>
-      </div>
-
-      <div class="ctrl">
-        <div class="ctrl-head"><span>自旋寿命 <span class="m"><i>τ</i><sub>s</sub></span></span><span class="val" id="tsVal">100 ps</span></div>
-        <input type="range" id="tsSlider" min="1" max="600" value="100" step="1">
-        <div class="sub" id="tsSub"></div>
-      </div>
-
-      <div class="ctrl">
-        <div class="ctrl-head"><span>沟道长度 <span class="m"><i>L</i></span></span><span class="val" id="lcVal">600 nm</span></div>
-        <input type="range" id="lcSlider" min="100" max="2000" value="600" step="20">
-        <div class="sub" id="lcSub"></div>
-      </div>
-
-      <div class="grp">磁矩动力学（模块四）</div>
+      <div class="grp">磁矩动力学（模块二）</div>
 
       <div class="ctrl">
         <div class="ctrl-head"><span>驱动方式</span><span class="val" id="tqVal">自旋转移矩</span></div>
@@ -298,15 +250,17 @@
       </div>
 
       <div class="ctrl">
-        <div class="ctrl-head"><span>吉尔伯特阻尼 <span class="m"><i>α</i></span></span><span class="val" id="alpVal">0.010</span></div>
-        <input type="range" id="alpSlider" min="4" max="60" value="10" step="1">
-        <div class="sub" id="alpSub"></div>
-      </div>
-
-      <div class="ctrl">
         <div class="ctrl-head"><span>面内辅助场 <span class="m"><i>H</i><sub>x</sub></span></span><span class="val" id="hxVal">0 mT</span></div>
         <input type="range" id="hxSlider" min="0" max="200" value="0" step="5">
         <div class="sub" id="hxSub"></div>
+      </div>
+
+      <div class="grp">自旋注入与扩散（模块三）</div>
+
+      <div class="ctrl">
+        <div class="ctrl-head"><span>自旋寿命 <span class="m"><i>τ</i><sub>s</sub></span></span><span class="val" id="tsVal">100 ps</span></div>
+        <input type="range" id="tsSlider" min="1" max="600" value="100" step="1">
+        <div class="sub" id="tsSub"></div>
       </div>
 
       <div class="ctrl">
@@ -770,6 +724,7 @@ var I18N = {
   "↑2P₁P₂/(1−P₁P₂)：两个极化率相乘": "↑2P₁P₂/(1−P₁P₂): the two polarizations multiply",
   "RA（Ω·μm²）随势垒厚度": "RA (Ω·μm²) versus barrier thickness",
   "σ̂（自旋霍尔积累，沿 y）": "σ̂ (spin Hall accumulation, along y)",
+  "σ̂（自旋霍尔积累，沿 −y）": "σ̂ (spin Hall accumulation, along −y)",
   "TMR 随极化率（P₁ =": "TMR versus polarization (P₁ = ",
   "从 0.70 拉到 0.35（": " from 0.70 down to 0.35 (",
   "。本工具 STT 的": ". The STT value used in this tool is ",
@@ -790,6 +745,110 @@ var I18N = {
   " 的代理量读。② 加上面内辅助场 ": " value. (ii) Add an in-plane assist field ",
   "等效类阻尼场 ": "Equivalent damping-like field ",
 
+  /* ---- 三模块重排（4→3）+ SOT 辅助方向改向 后新增，按 DOM 文本节点边界登记 ----
+     坑：AUTO() 会把 P₁ / P₂ / H_x / B_DL / m_z / σ 自动包成 .m 片段，
+     一个整句因此裂成多个文本节点，key 必须按裂开后的边界登记。 */
+  "① 磁性隧道结与 TMR": "① Magnetic tunnel junction and TMR",
+  "② 电流写磁矩": "② Writing the moment with current",
+  "③ 自旋注入与扩散": "③ Spin injection and diffusion",
+  "磁性隧道结：两侧自旋态密度的匹配与 TMR": "Magnetic tunnel junction: matching the two spin densities of states, and the TMR",
+  "隧道结（模块一）": "Tunnel junction (Module 1)",
+  "磁矩动力学（模块二）": "Magnetization dynamics (Module 2)",
+  "势垒平均高度 Φ / 厚度 d": "Mean barrier height Φ / thickness d",
+  "动画播放": "Animation playback",
+  "SOT 翻转": "SOT switching",
+  "TMR 随自由层极化率（P": "TMR vs. free-layer polarization (P",
+  /* 模块一提示行 */
+  "下方那条曲线是这条公式的全景：曲线只由 ": "The curve below is this formula in full: its shape is set only by ",
+  " 定形，工作点由 ": ", while the operating point is set by ",
+  " 决定 —— 只调一边收益有限，两边同时高才有量级差异。": " — tuning one side alone gains little; only both sides high together gives an order-of-magnitude difference.",
+  "势垒厚度固定为 ": "The barrier thickness is fixed at ",
+  "，它只改变绝对电阻，不改变 TMR —— 这是 Jullière 模型的直接结论。": "; it changes only the absolute resistance, not the TMR — a direct consequence of the Jullière model.",
+  /* 读数面板：面内辅助场缺失时 */
+  "SOT 只能拉到面内（90°），配合同向 ": "SOT alone pulls it only into the plane (90°); only together with a co-directed ",
+  " 才能翻过去": " can it tip over",
+  /* 模块二提示行（SOT 分支，默认状态不会渲染，_i18n_deep 才走得到） */
+  "SOT 不是反阻尼，它给的是一个": "SOT is not an antidamping torque; what it provides is an",
+  "的等效类阻尼场：": " equivalent damping-like field: ",
+  " mT。": " mT. ",
+  "不加面内辅助场时它最多把磁矩拉到面内（判据 ": "With no in-plane assist field it can at most pull the moment into the plane (the criterion is ",
+  " mT）—— 赤道就是这个力矩的吸引子，单靠它翻不过去。": " mT) — the equator is this torque’s attractor, so on its own it cannot switch over.",
+  "这里的 ": "Here, ",
+  " 的代理量读：单畴模型把阈值估高了一到两个数量级，": ": the single-domain model overestimates the threshold by one to two orders of magnitude, ",
+  "真实器件靠畴壁形核与推进，10～30 MA/cm": "real devices rely on domain-wall nucleation and propagation, and 10–30 MA/cm",
+  " 就能翻。": " is enough to switch.",
+  "本工具取 ": "This tool takes ",
+  " 沿 −y（相当于写电流反向），": " along −y (equivalent to reversing the write current), ",
+  "这样 ": " so that ",
+  " 正好落在": " lands exactly ",
+  "辅助方向": "on the assist axis",
+  "上。": ".",
+  "配上面内场才翻得过去：": "It only tips over once an in-plane field is added: ",
+  " 先把 ": " first pulls ",
+  " 拉向 +x̂，": " toward +x̂, ",
+  " 沿 ": ", whose component along ",
+  " 的分量为 ": " is ",
+  "拖一拖会看到": "Drag it and you will see ",
+  "：场太小拉不起 ": ": too small a field cannot lift ",
+  "，翻不动；场太大时横向场又把终态压回面内（": ", so it cannot switch; too large a field, and the transverse field pushes the final state back into the plane (",
+  " → 0）。": " → 0).",
+  "，指向 −z，磁矩于是越过赤道一路到 −z。": ", which points along −z, so the moment crosses the equator and runs all the way to −z.",
+  /* 模块二提示行（STT 分支） */
+  "同样是": "Likewise, ",
+  "够用就好": "just enough is best",
+  "：场太大终态会被横向压住，": ": too large a field pins the final state sideways, and ",
+  " 停在 0 附近而不是 −1。": " settles near 0 instead of −1.",
+  /* 挑战四（SOT 与 STT 对比）题干 */
+  "1. 自旋是内禀角动量，却从不出现在 Schr. 方程的非相对论形式里。看模块一上方两套自旋的态密度柱：它们为什么不等？如果把两个极化率都拉到 0.9，TMR 会变成多少？（彩蛋：The 720° Secret —— 转一圈回不来、转两圈才回来，指的是什么？）": "1. Spin is an intrinsic angular momentum, yet it never appears in the nonrelativistic Schrödinger equation. Look at the two sets of spin-resolved density-of-states bars at the top of Module 1: why are they unequal? If you pull both polarizations up to 0.9, what does the TMR become? (Easter egg: The 720° Secret — what is it that fails to come back after one turn and only returns after two?)",
+  "2. 在模块一下方那条曲线上把 ": "2. On the curve below Module 1, drag ",
+  "3. 把自旋寿命 ": "3. Cut the spin lifetime ",
+  "4. 在模块二把电流密度从 0 慢慢加上去：为什么非得到某个临界值 ": "4. In Module 2, raise the current density slowly from zero: why must it reach some critical value ",
+  " 才开始翻转？切到 SOT 再试一遍——不加面内辅助场时能翻吗？把 ": " before switching starts? Switch to SOT and try again — can it switch with no in-plane assist field? And raising ",
+  " 从 0 加上去会发生什么，是不是越大越好？": " from zero, what happens — is bigger always better?",
+  /* 挑战四答案 */
+  "SOT 换了一套逻辑：它的力矩 ": "SOT works on a different logic: its torque ",
+  " 等价于一个": " is equivalent to a",
+  "的等效场 ": " equivalent field ",
+  "不抵消阻尼": "does not cancel the damping",
+  "，于是赤道本身就成了一个吸引子 —— ": ", so the equator itself becomes an attractor — ",
+  " mT）而 ": " mT) while ",
+  " = 0 时，终态 ": " = 0, the final state ",
+  "，只被掰弯，翻不过去。": ", merely bent — it cannot switch over.",
+  "配上": "Only with",
+  "的面内场才翻得动：": " in-plane field does it tip over: ",
+  "，指向 −z，磁矩于是越过赤道一路到 −z。同一电流下把 ": ", which points along −z, so the moment crosses the equator and runs to −z. At the same current, raising ",
+  " 从 0 加上去：": " from 0 upward: ",
+  " → 终态 ": " → final state ",
+  "（还差一点，没翻）；": " (close, but not switched); ",
+  "（翻过去了）；": " (it switched); ",
+  "（翻是翻了，但横向场把终态压回面内附近）。": " (it did switch, but the transverse field pushed the final state back near the plane).",
+  "所以辅助场是够用就好，不是越大越好": "So the assist field should be just enough, not as large as possible",
+  " —— 这也解释了为什么 ": " — this also explains why ",
+  " 必须取在辅助方向上：若 ": " must lie along the assist direction: if ",
+  " 反个向，": " is reversed, ",
+  " 在 ": ", at ",
+  " = +z 时指向 −x̂，正好把 ": " = +z, points along −x̂ and exactly cancels ",
+  " 抵消掉，加多少场都只会把磁矩顶回 +1 侧。": ": however much field you add, the moment is only ever pushed back toward the +1 side.",
+  "）高一到两个数量级——真实翻转靠畴壁形核与推进，不需要整层磁矩一起硬顶各向异性场。② 本模型的 SOT 翻转在 ": ") — one to two orders of magnitude higher: real switching relies on domain-wall nucleation and propagation, not on the whole layer’s moment pushing hard against the anisotropy field. (ii) The SOT switching in this model completes on the ",
+  " 量级就完成（不到一个进动周期），这正对应 SOT 比 STT 快得多这一点；真实器件受畴壁形核限制，落在 ns 量级。": " scale (less than one precession period), which is exactly why SOT is much faster than STT; real devices are limited by domain-wall nucleation and land on the ns scale.",
+
+  /* ---- 沟道长度 L 固定 / 探测端删除后改写；挑战四引入「对称性破缺」 ---- */
+  "寿命越短，衰减长度 ": "The shorter the lifetime, the shorter the decay length ",
+  " 越短、曲线掉得越早 —— 具体数字记在右侧读数面板。": " and the earlier the curve falls — the numbers are in the readout panel on the right.",
+  " 会不会也缩到 1/4？衰减曲线为什么是「先陡后缓」而不是一条直线？这对自旋器件能挨多近意味着什么？": " shrink by a factor of four as well? Why is the decay curve “steep first, then shallow” rather than a straight line? What does that imply for how closely spintronic devices can be packed?",
+  " 才开始翻转？切到 SOT 再试一遍——不加面内辅助场时为什么翻不过去（+z 与 −z 明明是对称的）？把 ": " before switching starts? Now switch to SOT and try again — why does it fail to switch without an in-plane assist field (+z and −z are plainly symmetric)? And raising ",
+  "曲线先陡后缓，是因为衰减速率正比于": "The curve is steep first and shallow later because the decay rate is proportional to ",
+  "还剩下的那一份": "what is still left",
+  "：剩得越少，掉得越慢。所以走到 ": ": the less is left, the slower it falls. So at ",
+  " 还剩 ": " there is still ",
+  "，走到 ": " left, and at ",
+  " —— 尾巴拖得很长。": " — the tail is very long.",
+  "越长的距离代价增长得比线性更快": "The cost of a longer distance grows faster than linearly",
+  "根子不在推力不够，而在": "The root cause is not a lack of drive, but ",
+  "对称性": "symmetry",
+  "：没有面内场时单畴方程对 +z 与 −z 完全对称，赤道两侧一样好，磁矩没有任何理由选一边，只能停在赤道 —— 这就是": ": with no in-plane field the single-domain equation is exactly symmetric under +z ↔ −z, both sides of the equator are equally good, and the moment has no reason to pick one — it can only stop at the equator. This is exactly the absence of ",
+  "对称性破缺": "symmetry breaking",
+  "缺位：得有一样东西先把「上」和「下」区分开，翻转方向才唯一。": ", and something must first tell “up” from “down” before the switching direction is unique."
 };
 
 (function () {
@@ -1319,6 +1378,11 @@ const VREAD = 0.10;     /* 读出电压 V */
 const TILT0 = 5;        /* 初始倾角，度（真实器件由热涨落提供，这里给确定值） */
 const TSTEP = 5e-13;    /* LLG 积分步长 s */
 const TMAX = 20e-9;     /* LLG 模拟时长 s */
+/* 动画播放速率：每 1 秒真实时间推进多少秒模拟时间。
+   进动频率 γH_k/2π ≈ 5.6 GHz ⇒ 一个进动周期只有 0.18 ns。原先取 2.6 ns/s，
+   60 fps 下每帧要跨 87°，屏幕上就只剩一团乱跳；取 0.5 ns/s 后每帧约 17°
+   （一圈约 21 帧 ≈ 0.36 s），进动才看得出是个圈而不是折线。 */
+const PLAY_RATE = 0.5e-9;
 const P_CUT = 0.951;    /* 极化率上限保护：Jullière 在 P→1 时发散 */
 
 /* ---------------- 可调参量 ---------------- */
@@ -1329,7 +1393,6 @@ const OPT = {
   d: 1.00,        /* 势垒厚度 nm */
   ds: 20,         /* 自旋扩散系数 cm²/s */
   ts: 100,        /* 自旋寿命 ps */
-  lc: 600,        /* 自旋输运沟道长度 nm */
   tq: "stt",      /* 驱动方式：stt 自旋转移矩 / sot 自旋轨道矩 */
   j: 8.0,         /* 电流密度 MA/cm²（两种几何的量程不同，见 syncInputs） */
   alp: 0.010,     /* 吉尔伯特阻尼 */
@@ -1346,13 +1409,17 @@ const JRANGE = {
 };
 function jToSlider(j) { return Math.round(j / JRANGE[OPT.tq].k); }
 function sliderToJ(v) { return v * JRANGE[OPT.tq].k; }
-/* 两种驱动方式各记一个“看得出动静”的电流：切换时各自保留，
-   否则从 STT 切到 SOT 会停在 8 MA/cm²（B_DL 只有 2 mT，画面纹丝不动）。 */
+/* 两种驱动方式各记一组“看得出动静”的电流与辅助场：切换时各自保留，
+   否则从 STT 切到 SOT 会停在 8 MA/cm²（B_DL 只有 2 mT，画面纹丝不动）。
+   SOT 侧再默认给 100 mT 的 H_x —— 没有它 SOT 只能把磁矩拉到面内，永远看不到翻转。 */
 const JLAST = { stt: 8.0, sot: 500 };
+const HLAST = { stt: 0, sot: 100 };
 function switchTq() {
   JLAST[OPT.tq] = OPT.j;
+  HLAST[OPT.tq] = OPT.hx;
   OPT.tq = OPT.tq === "stt" ? "sot" : "stt";
   OPT.j = JLAST[OPT.tq];
+  OPT.hx = HLAST[OPT.tq];
 }
 
 let ST = null;     /* derived() 的缓存 */
@@ -1390,10 +1457,7 @@ function derived() {
   /* 自旋注入与扩散 */
   const Ds = OPT.ds * 1e-4;                            /* cm²/s → m²/s */
   const tau = OPT.ts * 1e-12;                          /* ps → s */
-  const Ls = Math.sqrt(Ds * tau);                      /* m */
-  const xd = OPT.lc * 1e-9;
-  const decay = Math.exp(-xd / Ls);                    /* 到达探测端的剩余极化份额 */
-  const tauTrans = xd * xd / Ds;                       /* 扩散穿过沟道所需的时间 */
+  const Ls = Math.sqrt(Ds * tau);                      /* m，唯一的衰减长度尺度 */
 
   /* LLG 磁化动力学 */
   const Hk = MU0HK / MU0;                              /* A/m */
@@ -1417,15 +1481,12 @@ function derived() {
     kapN: kapN, Tk: Tk, decayFac: decayFac,
     raP: raP, raA: raA, raNow: raNow,
     jReadNow: jReadNow,
-    Ds: Ds, tau: tau, Ls: Ls, xd: xd, decay: decay, tauTrans: tauTrans,
+    Ds: Ds, tau: tau, Ls: Ls,
     Hk: Hk, eta: eta, J: J, cSTT: cSTT, cSOT: cSOT,
     JcSTT: JcSTT, Bdl: Bdl, Jinplane: Jinplane, f0: f0
   };
 }
 function D() { if (!ST) ST = derived(); return ST; }
-/* 倍数格式化：1 ≤ v < 1000 直接写数字，再大才走科学记数法。
-   直接用 toExponential 在指数为 0 时会拖出一个“×10⁰”，与 PSci 的口径不一致。 */
-function timesFmt(v) { return v < 1000 ? v.toFixed(2) : v.toExponential(2); }
 
 /* ---------------- LLG：显式求解 Gilbert 方程后再 RK4 ----------------
    dm/dt = −γ m×H + α m×(dm/dt) + τ
@@ -1438,7 +1499,9 @@ function llgSim() {
   const alp = OPT.alp, Hk = d.Hk;
   const Hxs = OPT.hx * 1e-3 / MU0;                  /* mT → A/m */
   const c = OPT.tq === "stt" ? d.cSTT : d.cSOT;
-  const pSTT = [0, 0, 1], sSOT = [0, 1, 0];
+  /* σ̂ 沿 −y：与 H_x（沿 +x̂）配成“辅助方向”。若取 +y，等效类阻尼场
+     B_DL ∝ m×σ̂ 在 m = +z 时指向 −x̂，正好把 H_x 抵消掉，SOT 就永远翻不过去。 */
+  const pSTT = [0, 0, 1], sSOT = [0, -1, 0];
 
   function acc(m) {
     const h = [Hxs, 0, Hk * m[2]];
@@ -1485,11 +1548,11 @@ function withOpt(o) {
 }
 
 /* ---------------- 画布容器与通用绘制工具 ---------------- */
-const MTJV = { W: 600, H: 400, dpr: 1, g: null, canvas: null, t: 0 };
-const TMRV = { W: 600, H: 290, dpr: 1, g: null, canvas: null };
+/* 模块一画布要同时装下「隧道结剖面 + 电导条 + TMR–P₂ 曲线」，所以比另两张高 */
+const MTJV = { W: 600, H: 380, dpr: 1, g: null, canvas: null, t: 0 };
 const INJV = { W: 600, H: 340, dpr: 1, g: null, canvas: null };
 const DYNV = { W: 600, H: 360, dpr: 1, g: null, canvas: null, t: 0 };
-const VIEWS = [["mtj", MTJV], ["tmr", TMRV], ["inj", INJV], ["dyn", DYNV]];
+const VIEWS = [["mtj", MTJV], ["dyn", DYNV], ["inj", INJV]];
 
 const C_UP = "#d94a3d";    /* 自旋向上通道（多数自旋） */
 const C_DN = "#1976d2";    /* 自旋向下通道（少数自旋） */
@@ -1575,10 +1638,11 @@ function rrect(g, x, y, w, h, r, fill, stroke) {
   if (stroke) { g.strokeStyle = stroke; g.lineWidth = 1.2; g.stroke(); }
 }
 function upDown(g, x, y, up, r, col) {
-  /* 自旋小箭头：↑ / ↓，形状区分（不只靠颜色） */
+  /* 自旋小箭头：↑ / ↓，形状区分（不只靠颜色）。
+     canvas 的 y 轴向下，所以 up 要让箭尖落在更小的 y 上 ⇒ s = +1。 */
   g.save();
   g.fillStyle = col; g.strokeStyle = col; g.lineWidth = 1.6;
-  const s = up ? -1 : 1;
+  const s = up ? 1 : -1;
   g.beginPath();
   g.moveTo(x, y + s * r * 1.35); g.lineTo(x, y - s * r * 1.35); g.stroke();
   g.beginPath();
@@ -1590,39 +1654,59 @@ function upDown(g, x, y, up, r, col) {
 }
 
 /* ==================================================================
-   模块一：MTJ —— 两侧自旋态密度的匹配
+   模块一：MTJ —— 两侧自旋态密度的匹配，以及由此定出的 TMR
+   上排左右分栏：左＝结剖面＋两套自旋的态密度柱（机制），右＝TMR–P₂ 曲线（全景）；
+   下排整幅留给两种构型的电导条（结果）。坐标全部按 v.W 现算，窄屏也不会挤出去。
    ================================================================== */
+/* Jullière 比值，只用于画下方那条 TMR–P₂ 曲线（扫 P₂、P₁ 取当前值） */
+function tmrAt(p2, p1) {
+  const Du1 = (1 + p1) / 2, Dd1 = (1 - p1) / 2;
+  const Du2 = (1 + p2) / 2, Dd2 = (1 - p2) / 2;
+  const gP = Du1 * Du2 + Dd1 * Dd2, gA = Du1 * Dd2 + Dd1 * Du2;
+  return (gP - gA) / gA;
+}
+function niceMax(v) {
+  const p = Math.pow(10, Math.floor(Math.log10(v)));
+  const r = v / p;
+  return (r <= 1 ? 1 : r <= 2 ? 2 : r <= 5 ? 5 : 10) * p;
+}
 function drawMtj() {
   const v = MTJV, g = begin(v); if (!g) return;
   const d = D();
-  const cx = v.W / 2, yEF = 214, yTop = 52;
+  /* 左右分栏：画布实测约 830 px 宽，竖着堆三张图把两侧都浪费了 */
+  const padL = 28, padR = 20, gapMid = 22;
+  const colW = (v.W - padL - padR - gapMid) / 2;
+  const xR = padL + colW + gapMid;
+  const cx = padL + colW / 2, yEF = 190, yTop = 52;
   const bwid = 14 + OPT.d * 16;                  /* 势垒宽度随厚度变化 */
   const bx0 = cx - bwid / 2, bx1 = cx + bwid / 2;
   const xF1 = bx0 - 78, xF2 = bx1 + 78;          /* 两侧 DOS 柱的中心 */
 
   /* 铁磁层衬底 */
-  const layW = 96, layH = 210, layY = yTop + 8;
+  const layW = 96, layH = 180, layY = yTop + 8;
   rrect(g, xF1 - layW / 2, layY, layW, layH, 8, "rgba(25,118,210,0.06)", "rgba(25,118,210,0.22)");
   rrect(g, xF2 - layW / 2, layY, layW, layH, 8, "rgba(25,118,210,0.06)", "rgba(25,118,210,0.22)");
-  lbl(g, "参考层 FM₁（CoFeB）", xF1, layY + 14, "#1976d2", 11.5, "center", true);
-  lbl(g, "自由层 FM₂（CoFeB）", xF2, layY + 14, "#1976d2", 11.5, "center", true);
+  /* 三个层名同高（都贴在各层框的上沿之外）：原先压在框内，会和 M₁/M₂ 箭头、
+     态密度柱顶的自旋箭头挤在一起 */
+  lbl(g, "参考层 FM₁（CoFeB）", xF1, layY - 12, "#1976d2", 11.5, "center", true);
+  lbl(g, "自由层 FM₂（CoFeB）", xF2, layY - 12, "#1976d2", 11.5, "center", true);
   /* 势垒 */
   rrect(g, bx0, layY, bwid, layH, 4, "rgba(142,91,208,0.10)", "rgba(142,91,208,0.40)");
   lbl(g, "MgO", cx, layY - 12, C_HYB, 11, "center", true);
   lbl(g, OPT.d.toFixed(2) + " nm", cx, layY + layH + 14, C_HYB, 11, "center", true);
 
   /* 能量轴与费米面 */
-  arrow(g, 40, yEF + 62, 40, layY - 16, C_AX, 1.2);
-  lbl(g, "E", 40, layY - 26, C_AX, 11, "center", true);
-  line(g, 40, yEF, v.W - 40, yEF, C_AX, 1, [5, 4]);
-  lbl(g, "E_F", v.W - 40, yEF - 12, C_AX, 11, "right", true);
+  arrow(g, padL + 6, yEF + 62, padL + 6, layY - 16, C_AX, 1.2);
+  lbl(g, "E", padL + 6, layY - 26, C_AX, 11, "center", true);
+  line(g, padL + 6, yEF, padL + colW - 4, yEF, C_AX, 1, [5, 4]);
+  lbl(g, "E_F", padL + colW - 4, yEF - 12, C_AX, 11, "right", true);
 
   /* DOS 柱：高度 ∝ D(E_F)，两条通道并排 */
-  const bwBar = 24, gap = 10, hMax = 132;
-  function dosPair(xc, Du, Dd, flip, tag) {
+  const bwBar = 24, gap = 10, hMax = 94;   /* 柱高让出上沿：层名抬上去后不再压箭头 */
+  function dosPair(xc, Du, Dd, tag) {
     const hU = Du * hMax, hD = Dd * hMax;
-    const xu = flip ? xc + (bwBar + gap) / 2 : xc - (bwBar + gap) / 2;
-    const xd = flip ? xc - (bwBar + gap) / 2 : xc + (bwBar + gap) / 2;
+    /* 红（↑）恒在左、蓝（↓）恒在右：两张图同位置对比，反平行时一眼看出高低互换 */
+    const xu = xc - (bwBar + gap) / 2, xd = xc + (bwBar + gap) / 2;
     rrect(g, xu - bwBar / 2, yEF - hU, bwBar, hU, 3, C_UP + "33", C_UP);
     rrect(g, xd - bwBar / 2, yEF - hD, bwBar, hD, 3, C_DN + "33", C_DN);
     upDown(g, xu, yEF - hU - 11, true, 4.6, C_UP);
@@ -1631,8 +1715,11 @@ function drawMtj() {
     lbl(g, (Dd * 100).toFixed(0) + "%", xd, yEF - hD - 26, C_DN, 10.5, "center", true);
     lbl(g, tag, xc, yEF + 20, C_SUB, 10.5, "center", false);
   }
-  dosPair(xF1, d.D1u, d.D1d, false, "多数 / 少数");
-  dosPair(xF2, d.D2u, d.D2d, OPT.ap, OPT.ap ? "翻转后：↑ 成少数" : "同向");
+  /* 画的是实验室系：FM₂ 反平行时它自己的多数自旋是 ↓，
+     于是它那根 ↑ 柱必须换成 D₂↓——否则「↑ 成少数」这句标注会和柱子自相矛盾。 */
+  const d2u = OPT.ap ? d.D2d : d.D2u, d2d = OPT.ap ? d.D2u : d.D2d;
+  dosPair(xF1, d.D1u, d.D1d, "多数 / 少数");
+  dosPair(xF2, d2u, d2d, OPT.ap ? "翻转后：↑ 成少数" : "同向");
 
   /* 磁化方向：FM₂ 反平行时箭头向下 */
   arrow(g, xF1, layY + 30, xF1, layY + 30 - 26, C_UP, 3);
@@ -1662,12 +1749,12 @@ function drawMtj() {
     g.restore();
   }
   wavy(xF1 + bwBar / 2 + 4, yEF - d.D1u * hMax * 0.62, xF2 - bwBar / 2 - 4,
-    yEF - (OPT.ap ? d.D2d : d.D2u) * hMax * 0.62, C_UP, 6, 1.2 + 7.4 * cUp / cMax);
+    yEF - d2u * hMax * 0.62, C_UP, 6, 1.2 + 7.4 * cUp / cMax);
   wavy(xF1 + bwBar / 2 + 4, yEF - d.D1d * hMax * 0.62, xF2 - bwBar / 2 - 4,
-    yEF - (OPT.ap ? d.D2u : d.D2d) * hMax * 0.62, C_DN, 6, 1.2 + 7.4 * cDn / cMax);
+    yEF - d2d * hMax * 0.62, C_DN, 6, 1.2 + 7.4 * cDn / cMax);
 
-  /* 底部：两种构型的总电导对比 */
-  const yB = 292, x0 = 60, bwTot = v.W - 120, hB = 26;
+  /* 下排：两种构型的总电导对比（整幅宽） */
+  const yB = 300, x0 = padL + 74, bwTot = v.W - padL - padR - 74, hB = 24;
   const gMax = Math.max(d.gP, d.gA, 1e-6);
   lbl(g, "总隧穿电导（相对单位）", x0, yB - 14, C_TXT, 11.5, "left", true);
   [["平行 P", d.gP, "#2e9e5b", !OPT.ap], ["反平行 AP", d.gA, "#8b97a6", OPT.ap]].forEach(function (q, i) {
@@ -1685,113 +1772,40 @@ function drawMtj() {
     lblN(g, "TMR ", (d.tmr * 100).toFixed(0) + "%", (xA + xP) / 2 + 96, (yP + yA) / 2 + hB / 2,
       C_UP, 12, "center", true);
   }
-}
 
-/* ==================================================================
-   模块二：TMR 随极化率、电阻随势垒厚度
-   ================================================================== */
-function tmrAt(p2, p1) {
-  const Du1 = (1 + p1) / 2, Dd1 = (1 - p1) / 2;
-  const Du2 = (1 + p2) / 2, Dd2 = (1 - p2) / 2;
-  const gP = Du1 * Du2 + Dd1 * Dd2, gA = Du1 * Dd2 + Dd1 * Du2;
-  return (gP - gA) / gA;
-}
-function niceMax(v) {
-  const p = Math.pow(10, Math.floor(Math.log10(v)));
-  const r = v / p;
-  return (r <= 1 ? 1 : r <= 2 ? 2 : r <= 5 ? 5 : 10) * p;
-}
-function drawTmr() {
-  const v = TMRV, g = begin(v); if (!g) return;
-  const d = D();
-  const mid = 322;
-
-  /* ---- 左：TMR 对自由层极化率 ---- */
-  const x0 = 56, x1 = mid - 30, y0 = 44, y1 = v.H - 56;
+  /* ---- 上排右：TMR 随自由层极化率（与左边共用同一组 P₁ / P₂） ---- */
+  const tx0 = xR + 34, tx1 = v.W - padR, ty0 = yTop + 30, ty1 = yEF + 40;
   let mx = 0.001;
   for (let i = 0; i <= 60; i++) { const p = 0.05 + 0.9 * i / 60; mx = Math.max(mx, tmrAt(p, d.P1)); }
   const ymax = Math.max(1.2, niceMax(mx * 1.08));
-  const X = p => x0 + (p - 0.05) / 0.9 * (x1 - x0);
-  const Y = t => y1 - clamp(t / ymax, 0, 1) * (y1 - y0);
-  rrect(g, x0, y0, x1 - x0, y1 - y0, 4, "#ffffff", "#dde4ec");
+  const TX = p => tx0 + (p - 0.05) / 0.9 * (tx1 - tx0);
+  const TY = t => ty1 - clamp(t / ymax, 0, 1) * (ty1 - ty0);
+  rrect(g, tx0, ty0, tx1 - tx0, ty1 - ty0, 4, "#ffffff", "#dde4ec");
   for (let i = 0; i <= 4; i++) {
-    const t = ymax * i / 4, y = Y(t);
-    line(g, x0, y, x1, y, "#eef2f6", 1);
-    lbl(g, (t * 100).toFixed(0) + "%", x0 - 6, y, C_SUB, 10.5, "right");
+    const t = ymax * i / 4, y = TY(t);
+    line(g, tx0, y, tx1, y, "#eef2f6", 1);
+    lbl(g, (t * 100).toFixed(0) + "%", tx0 - 6, y, C_SUB, 10.5, "right");
   }
   for (let i = 0; i <= 4; i++) {
-    const p = 0.05 + 0.9 * i / 4, x = X(p);
-    line(g, x, y0, x, y1, "#eef2f6", 1);
-    lbl(g, p.toFixed(2), x, y1 + 14, C_SUB, 10.5, "center");
+    const p = 0.05 + 0.9 * i / 4, x = TX(p);
+    line(g, x, ty0, x, ty1, "#eef2f6", 1);
+    lbl(g, p.toFixed(2), x, ty1 + 14, C_SUB, 10.5, "center");
   }
   g.save();
   g.strokeStyle = "#1976d2"; g.lineWidth = 2.2; g.beginPath();
   for (let i = 0; i <= 120; i++) {
-    const p = 0.05 + 0.9 * i / 120, x = X(p), y = Y(tmrAt(p, d.P1));
+    const p = 0.05 + 0.9 * i / 120, x = TX(p), y = TY(tmrAt(p, d.P1));
     if (i === 0) g.moveTo(x, y); else g.lineTo(x, y);
   }
   g.stroke(); g.restore();
-  const cxm = X(OPT.p2), cym = Y(d.tmr);
-  line(g, cxm, y0, cxm, y1, C_UP, 1.2, [4, 3]);
+  const cxm = TX(OPT.p2), cym = TY(d.tmr);
+  line(g, cxm, ty0, cxm, ty1, C_UP, 1.2, [4, 3]);
   g.save();
   g.fillStyle = C_UP; g.beginPath(); g.arc(cxm, cym, 4.6, 0, 2 * Math.PI); g.fill();
   g.strokeStyle = "#fff"; g.lineWidth = 1.6; g.stroke(); g.restore();
   lbl(g, "工作点", cxm + 9, cym - 13, C_UP, 11, "left", true);
-  lblN(g, "TMR 随极化率（P₁ = ", d.P1.toFixed(2) + "）", (x0 + x1) / 2, y0 - 14, C_TXT, 12, "center", true);
-  lbl(g, "自由层极化率 P₂", (x0 + x1) / 2, y1 + 30, C_SUB, 11, "center");
-  lbl(g, "↑2P₁P₂/(1−P₁P₂)：两个极化率相乘", x0, v.H - 12, C_SUB, 10.5, "left");
-
-  /* ---- 右：RA 随势垒厚度（对数纵轴） ---- */
-  const rx0 = mid + 26, rx1 = v.W - 52;
-  const lo = Math.log10(0.5), hi = Math.log10(2e4);
-  const RX = t => rx0 + (t - 0.6) / (3 - 0.6) * (rx1 - rx0);
-  const RY = r => y1 - clamp((Math.log10(Math.max(r, 0.5)) - lo) / (hi - lo), 0, 1) * (y1 - y0);
-  rrect(g, rx0, y0, rx1 - rx0, y1 - y0, 4, "#ffffff", "#dde4ec");
-  for (let e = 0; e <= 4; e++) {
-    const r = Math.pow(10, e), y = RY(r);
-    line(g, rx0, y, rx1, y, "#eef2f6", 1);
-    lbl(g, r >= 1000 ? (r / 1000) + "k" : String(r), rx0 - 6, y, C_SUB, 10.5, "right");
-  }
-  for (let i = 0; i <= 4; i++) {
-    const t = 0.6 + (3 - 0.6) * i / 4, x = RX(t);
-    line(g, x, y0, x, y1, "#eef2f6", 1);
-    lbl(g, t.toFixed(1), x, y1 + 14, C_SUB, 10.5, "center");
-  }
-  /* 当前构型所在的那条分支加粗、另一条淡出 —— 否则 P/AP 开关在这张图上留不下任何痕迹。
-     （左侧的 TMR–P₂ 曲线本身与构型无关：TMR 是个比值，两态共用同一条。） */
-  const isAP = !!OPT.ap;
-  [["P", d.gP, "#2e9e5b"], ["AP", d.gA, "#8b97a6"]].forEach(function (q) {
-    const act = (q[0] === "AP") === isAP;
-    g.save();
-    g.globalAlpha = act ? 1 : 0.34;
-    g.strokeStyle = q[2]; g.lineWidth = act ? 3.0 : 1.4; g.beginPath();
-    for (let i = 0; i <= 100; i++) {
-      const t = 0.6 + (3 - 0.6) * i / 100;
-      const ra = RA0 * Math.exp(2 * d.kapN * (t - 1)) * (d.gP / q[1]);
-      const x = RX(t), y = RY(ra);
-      if (i === 0) g.moveTo(x, y); else g.lineTo(x, y);
-    }
-    g.stroke(); g.restore();
-  });
-  const rx = RX(OPT.d);
-  line(g, rx, y0, rx, y1, C_HYB, 1.2, [4, 3]);
-  [["P", d.raP, "#2e9e5b"], ["AP", d.raA, "#8b97a6"]].forEach(function (q) {
-    const act = (q[0] === "AP") === isAP;
-    g.save();
-    if (act) {
-      g.fillStyle = q[2]; g.beginPath(); g.arc(rx, RY(q[1]), 5.4, 0, 2 * Math.PI); g.fill();
-      g.strokeStyle = "#fff"; g.lineWidth = 1.8; g.stroke();
-    } else {
-      g.globalAlpha = 0.5; g.strokeStyle = q[2]; g.lineWidth = 1.4;
-      g.beginPath(); g.arc(rx, RY(q[1]), 4.2, 0, 2 * Math.PI); g.stroke();
-    }
-    g.restore();
-  });
-  lbl(g, isAP ? "当前：反平行 AP（高阻）" : "当前：平行 P（低阻）",
-    rx0 + 8, y0 + 13, isAP ? "#5f6b78" : "#2e9e5b", 11.5, "left", true);
-  lbl(g, "RA（Ω·μm²）随势垒厚度", (rx0 + rx1) / 2, y0 - 14, C_TXT, 12, "center", true);
-  lbl(g, "势垒厚度 d（nm）", (rx0 + rx1) / 2, y1 + 30, C_SUB, 11, "center");
-  lbl(g, "∝ exp(2κd)：每加厚一层，指数贵一倍", rx0, v.H - 12, C_SUB, 10.5, "left");
+  lblN(g, "TMR 随自由层极化率（P₁ = ", d.P1.toFixed(2) + "）", (tx0 + tx1) / 2, ty0 - 14, C_TXT, 12, "center", true);
+  lbl(g, "自由层极化率 P₂", (tx0 + tx1) / 2, ty1 + 30, C_SUB, 11, "center");
 }
 
 /* ==================================================================
@@ -1847,19 +1861,12 @@ function drawInj() {
     if (i === 0) g.moveTo(x, y); else g.lineTo(x, y);
   }
   g.stroke(); g.restore();
-  /* 探测端竖线贯穿上下两排，说明「位置」是同一件事 */
-  const xEnd = xOf(OPT.lc);
-  line(g, xEnd, yS, xEnd, yC + hC, C_TEAL, 1.6, [5, 3]);
-  lblN(g, "探测端 x = ", OPT.lc + " nm", xEnd, yS + hS + 14, C_TEAL, 10.5, "center", true);
+  /* 这一张只讲指数衰减本身：不再标「某个距离上还剩多少」，
+     长度尺度全部由 L_s 承担（竖线＋1/e 横线）。 */
   const xL = xOf(Lnm), yE1e = Yof(1 / Math.E);
   line(g, xL, yC, xL, yC + hC, C_HYB, 1.4, [4, 3]);
   line(g, x0, yE1e, x1, yE1e, C_HYB, 1, [2, 3]);
   lblN(g, "L_s（降到 1/e）= ", Lnm.toFixed(0) + " nm", xL + 6, yC + 16, C_HYB, 11, "left", true);
-  const xdDot = xOf(OPT.lc), ydDot = Yof(d.decay);
-  g.save();
-  g.fillStyle = C_TEAL; g.beginPath(); g.arc(xdDot, ydDot, 4.6, 0, 2 * Math.PI); g.fill();
-  g.strokeStyle = "#fff"; g.lineWidth = 1.6; g.stroke(); g.restore();
-  lblN(g, "剩余 ", (d.decay * 100).toFixed(1) + "%", xdDot + 8, ydDot - 13, C_TEAL, 11, "left", true);
   lbl(g, "归一化自旋极化 Δn(x)/Δn(0)", (x0 + x1) / 2, yC - 12, C_TXT, 12, "center", true);
   lbl(g, "距注入界面的距离 x（nm）", (x0 + x1) / 2, yC + hC + 30, C_SUB, 11, "center");
 }
@@ -1899,16 +1906,21 @@ function drawDyn() {
   if (OPT.tq === "stt") {
     lbl(g, "p̂（参考层极化，沿 z）", cx + 10, PY([0, 0, 1.0]) + 14, C_UP, 10.5, "left", true);
   } else {
-    const sy = PY([0, 1, 0]), sx = PX([0, 1, 0]);
+    const sy = PY([0, -1, 0]), sx = PX([0, -1, 0]);
     arrow(g, cx, cy, sx, sy, C_UP, 1.8);
-    lbl(g, "σ̂（自旋霍尔积累，沿 y）", sx + 8, sy - 8, C_UP, 10.5, "left", true);
+    lbl(g, "σ̂（自旋霍尔积累，沿 −y）", sx + 8, sy - 8, C_UP, 10.5, "left", true);
   }
+
+  /* 抽稀步长按进动周期定，不按总点数定：总点数固定 900 时一个进动周期只摊到
+     8 个点，画出来是八边形而不是圆（m_z 曲线更惨，只有 6 点/圈）。 */
+  const perCycle = 1 / Math.max(d.f0 * TSTEP, 1e-12);
+  const stride = Math.max(1, Math.floor(perCycle / 24));
 
   /* 轨迹 */
   if ($("ckTrail") && $("ckTrail").checked) {
     g.save();
     g.strokeStyle = "rgba(217,74,61,0.55)"; g.lineWidth = 1.6; g.beginPath();
-    const N = tr.tr.length, step = Math.max(1, Math.floor(N / 900));
+    const N = tr.tr.length, step = stride;
     for (let i = 0; i < N; i += step) {
       const x = PX(tr.tr[i]), y = PY(tr.tr[i]);
       if (i === 0) g.moveTo(x, y); else g.lineTo(x, y);
@@ -1944,7 +1956,7 @@ function drawDyn() {
   const XY = i => [px0 + (px1 - px0) * (i * tr.dt / TMAX), py0 + (py1 - py0) * (1 - tr.tr[i][2]) / 2];
   g.save();
   g.strokeStyle = "#1976d2"; g.lineWidth = 2; g.beginPath();
-  const N2 = tr.tr.length, stp = Math.max(1, Math.floor(N2 / 700));
+  const N2 = tr.tr.length, stp = stride;
   for (let i = 0; i < N2; i += stp) { const q = XY(i); if (i === 0) g.moveTo(q[0], q[1]); else g.lineTo(q[0], q[1]); }
   g.stroke(); g.restore();
   if (tr.tsw > 0) {
@@ -1983,6 +1995,7 @@ const EQ_JUL = "<span class=\"m\">TMR<span class=\"op\">=</span><span class=\"fr
 const EQ_WKB = "<span class=\"m\"><i>G</i><span class=\"op\">∝</span>exp<span class=\"op\">(</span><span class=\"op\">−</span>2<i>κd</i><span class=\"op\">)</span><span class=\"op\">,</span><i>κ</i><span class=\"op\">=</span><span class=\"sqrt\"><span class=\"rd\">√</span><span class=\"rdc\">2<i>m</i>Φ</span></span>/<i>ħ</i></span>";
 const EQ_DIF = "<span class=\"m\">Δ<i>n</i>(<i>x</i>)<span class=\"op\">=</span>Δ<i>n</i>(0)exp<span class=\"op\">(</span><span class=\"op\">−</span><i>x</i>/<i>L</i><sub>s</sub><span class=\"op\">)</span><span class=\"op\">,</span><i>L</i><sub>s</sub><span class=\"op\">=</span><span class=\"sqrt\"><span class=\"rd\">√</span><span class=\"rdc\"><i>D</i><sub>s</sub><i>τ</i><sub>s</sub></span></span></span>";
 const EQ_LLG = "<span class=\"m\">d<i>m</i>/d<i>t</i><span class=\"op\">=</span><span class=\"op\">−</span><i>γ</i><i>m</i><span class=\"op\">×</span><i>H</i><span class=\"op\">+</span><i>α</i><i>m</i><span class=\"op\">×</span>d<i>m</i>/d<i>t</i><span class=\"op\">+</span><i>τ</i></span>";
+const EQ_BDL = "<span class=\"m\"><i>B</i><sub>DL</sub><span class=\"op\">=</span><i>ħθ</i><sub>SH</sub><i>J</i><span class=\"op\">/</span>2<i>eM</i><sub>s</sub><i>t</i></span>";
 
 function buildLegend() {
   const l1 = $("legMtj");
@@ -1996,8 +2009,7 @@ function buildLegend() {
   const l3 = $("legInj");
   if (l3) l3.innerHTML = [
     swatch(C_UP, "sq") + "剩余自旋极化深浅",
-    swatch(C_HYB, "dash") + "自旋扩散长度 L_s",
-    swatch(C_TEAL, "dash") + "探测端位置"
+    swatch(C_HYB, "dash") + "自旋扩散长度 L_s"
   ].map(t => "<span>" + t + "</span>").join("");
   const l4 = $("legDyn");
   if (l4) l4.innerHTML = [
@@ -2014,11 +2026,11 @@ function buildHints() {
     "<span class=\"eq\">" + EQ_JUL + "：同自旋通道的态密度乘积之和才是隧穿电导。</span>" +
     (OPT.ap
       ? "反平行时两边「多数」错位配对，两条通道一起变差 ⇒ 总电导掉到最低（数值见读数面板）。"
-      : "平行时 ↑ 对 ↑、↓ 对 ↓，匹配最好 ⇒ 总电导最高（数值见读数面板）。");
-  const h2 = $("hintTmr");
-  if (h2) h2.innerHTML =
-    "左图是两个极化率相乘的结果：" + EQ_JUL + "，所以只调一边收益有限，两边同时高才有量级差异。" +
-    "<span class=\"eq\">" + EQ_WKB + "：厚度只改变绝对电阻，不改变 TMR —— 这是 Jullière 模型的直接结论。</span>" +
+      : "平行时 ↑ 对 ↑、↓ 对 ↓，匹配最好 ⇒ 总电导最高（数值见读数面板）。") +
+    "<span class=\"eq\">下方那条曲线是这条公式的全景：曲线只由 <span class=\"m\"><i>P</i><sub>1</sub></span> 定形，"
+    + "工作点由 <span class=\"m\"><i>P</i><sub>2</sub></span> 决定 —— 只调一边收益有限，两边同时高才有量级差异。</span>" +
+    "<span class=\"eq\">势垒厚度固定为 <b>" + OPT.d.toFixed(2) + "</b> nm：" + EQ_WKB
+    + "，它只改变绝对电阻，不改变 TMR —— 这是 Jullière 模型的直接结论。</span>" +
     "实际 MgO 单晶势垒靠相干滤波能把 TMR 做到远超本模型的水平，属于模型边界之外。" +
     "<span class=\"eq\">TMR 的用处就在这一步：同样的读出电压下，两个构型给出不同的电流 —— "
     + "这就是磁存储器判 0 / 判 1 的窗口。反过来写入要求 <span class=\"m\"><i>j</i></span> &gt; <span class=\"m\"><i>J</i><sub>c</sub></span>，"
@@ -2027,7 +2039,7 @@ function buildHints() {
   if (h3) h3.innerHTML =
     "注入的非平衡自旋一边扩散一边弛豫 ⇒ " + EQ_DIF +
     "<span class=\"eq\">注意是平方根：τ_s 缩短到 1/4，L_s 只缩短一半。</span>" +
-    "沟道越长、寿命越短，到探测端剩下的就越少 —— 具体数字记在右侧读数面板。";
+    "寿命越短，衰减长度 L_s 越短、曲线掉得越早 —— 具体数字记在右侧读数面板。";
   const h4 = $("hintDyn");
   if (h4) h4.innerHTML =
     "宏自旋近似下的 LLG：" + EQ_LLG +
@@ -2054,17 +2066,14 @@ function buildReadout() {
   const isSTT = OPT.tq === "stt";
   const ro = $("readout");
   if (ro) ro.innerHTML = kvHTML([
-    { hd: "隧道结（模块一、二）" },
+    { hd: "隧道结（模块一）" },
     ["当前构型", OPT.ap ? "反平行 AP" : "平行 P"],
     ["电导 G / G′", d.gP.toFixed(3) + " / " + d.gA.toFixed(3)],
     ["TMR", (d.tmr * 100).toFixed(1) + " %"],
     ["RA（当前构型）", d.raNow.toFixed(2) + " Ω·μm<sup>2</sup>"],
     /* A/m² → MA/cm²：1 MA/cm² = 10⁶ A/cm² = 10¹⁰ A/m² */
     ["读出电流密度", (d.jReadNow / 1e10).toFixed(2) + " MA/cm<sup>2</sup>"],
-    { hd: "自旋输运（模块三）" },
-    ["自旋扩散长度 L_s", (d.Ls * 1e9).toFixed(0) + " nm"],
-    ["走 L 后剩余", (d.decay * 100).toFixed(1) + " % (L = " + OPT.lc + " nm)"],
-    { hd: "磁化动力学（模块四）" },
+    { hd: "磁矩动力学（模块二）" },
     isSTT
       ? ["临界电流密度 J_c", d.JcSTT.toFixed(2) + " MA/cm<sup>2</sup>"]
       : ["等效类阻尼场 B_DL", (d.Bdl * 1e3).toFixed(1) + " mT"],
@@ -2072,7 +2081,9 @@ function buildReadout() {
       ? ["J / J_c", (OPT.j / d.JcSTT).toFixed(2)]
       : ["B_DL / μ₀H_k", (d.Bdl / MU0HK).toFixed(3)],
     ["是否翻转", tr.mzEnd > 0 ? "未翻转（仍在 +z）" : "已翻转（−z）"],
-    ["翻转耗时", tr.tsw > 0 ? (tr.tsw * 1e9).toFixed(2) + " ns" : "—"]
+    ["翻转耗时", tr.tsw > 0 ? (tr.tsw * 1e9).toFixed(2) + " ns" : "—"],
+    { hd: "自旋注入与扩散（模块三）" },
+    ["自旋扩散长度 L_s", (d.Ls * 1e9).toFixed(0) + " nm"]
   ]);
   const rm = $("readoutMore");
   if (rm) rm.innerHTML = kvHTML([
@@ -2081,16 +2092,14 @@ function buildReadout() {
     ["自由层 D↑ / D↓", (d.D2u * 100).toFixed(1) + " / " + (d.D2d * 100).toFixed(1) + " %"],
     ["衰减常数 κ", d.kapN.toFixed(3) + " nm<sup>−1</sup>"],
     ["WKB 透射因子 exp(−2κd)", d.Tk.toExponential(2)],
-    ["相对阻值（对 1 nm 平行态）", timesFmt(d.decayFac) + " 倍"],
     ["进动频率 γH_k/2π", (d.f0 / 1e9).toFixed(2) + " GHz"],
     ["Slonczewski 效率 η = P₁/2", d.eta.toFixed(3)],
     ["拉平面内所需 B_DL", (MU0HK * 1e3 / 2).toFixed(0) + " mT (= μ₀H_k/2)"],
     ["对应电流 J（SOT）", d.Jinplane.toFixed(0) + " MA/cm<sup>2</sup>"],
-    ["扩散通过沟道的时间", (d.tauTrans * 1e12).toFixed(1) + " ps"],
     { hd: "模型边界" },
     ["Jullière 模型", "只计自旋守恒隧穿，TMR 与势垒厚度无关"],
     ["真实 MgO 隧道结", "相干滤波使 TMR 远超本模型"],
-    ["面内辅助场缺失时", "SOT 只能拉到面内（90°）"]
+    ["面内辅助场缺失时", "SOT 只能拉到面内（90°），配合同向 H_x 才能翻过去"]
   ]);
 }
 
@@ -2099,11 +2108,13 @@ function buildReadout() {
    ================================================================== */
 const CFGS = [["平行 P", false], ["反平行 AP", true]];
 const TQS = [["STT", "stt"], ["SOT", "sot"]];
+/* d / D_s / α 已固定，预设不再碰它们 —— 否则「固定参量」区会跟着预设变，等于没固定。 */
 const PRES = [
-  ["典型 MgO 结", { ap: false, p1: 0.70, p2: 0.70, d: 1.00 }],
-  ["低极化金属结", { ap: false, p1: 0.40, p2: 0.40, d: 1.00 }],
-  ["写入操作", { tq: "stt", j: 6.0, alp: 0.010, hx: 0 }],
-  ["长寿命沟道", { ds: 20, ts: 500, lc: 600 }]
+  ["典型 MgO 结", { ap: false, p1: 0.70, p2: 0.70 }],
+  ["低极化金属结", { ap: false, p1: 0.40, p2: 0.40 }],
+  ["写入操作", { tq: "stt", j: 6.0, hx: 0 }],
+  ["SOT 翻转", { tq: "sot", j: 300, hx: 100 }],
+  ["长寿命沟道", { ts: 500 }]
 ];
 function buildBtns() {
   const cb = $("cfgBtns");
@@ -2121,7 +2132,7 @@ function buildBtns() {
 let ANS_EL = [];
 const CHAL = [
   {
-    q: "自旋是内禀角动量，却从不出现在 Schr. 方程的非相对论形式里。看模块一左侧两套自旋的态密度柱：它们为什么不等？如果把两个极化率都拉到 0.9，TMR 会变成多少？（彩蛋：The 720° Secret —— 转一圈回不来、转两圈才回来，指的是什么？）",
+    q: "自旋是内禀角动量，却从不出现在 Schr. 方程的非相对论形式里。看模块一上方两套自旋的态密度柱：它们为什么不等？如果把两个极化率都拉到 0.9，TMR 会变成多少？（彩蛋：The 720° Secret —— 转一圈回不来、转两圈才回来，指的是什么？）",
     a: function () {
       const hi = withOpt({ p1: 0.90, p2: 0.90 }).d;
       const lo = withOpt({ p1: 0.40, p2: 0.40 }).d;
@@ -2135,7 +2146,7 @@ const CHAL = [
     }
   },
   {
-    q: "在模块二把 <span class=\"m\"><i>P</i><sub>2</sub></span> 从 0.70 拉到 0.35（<span class=\"m\"><i>P</i><sub>1</sub></span> 不动）。TMR 降为原来的几分之几？为什么 TMR 里是 <span class=\"m\"><i>P</i><sub>1</sub><i>P</i><sub>2</sub></span> 的乘积，而不是两者相加？",
+    q: "在模块一下方那条曲线上把 <span class=\"m\"><i>P</i><sub>2</sub></span> 从 0.70 拉到 0.35（<span class=\"m\"><i>P</i><sub>1</sub></span> 不动）。TMR 降为原来的几分之几？为什么 TMR 里是 <span class=\"m\"><i>P</i><sub>1</sub><i>P</i><sub>2</sub></span> 的乘积，而不是两者相加？",
     a: function () {
       const a = withOpt({ p1: 0.70, p2: 0.70 }).d;
       const b = withOpt({ p1: 0.70, p2: 0.35 }).d;
@@ -2147,60 +2158,59 @@ const CHAL = [
     }
   },
   {
-    q: "把势垒厚度从 1.0 nm 加到 2.0 nm：RA 变成多少倍？TMR 变了吗？如果变了，动一动课本上的模型；如果没变，说明这个模型忽略了什么。",
+    q: "把自旋寿命 τ_s 从 100 ps 降到 25 ps（缩到 1/4），L_s 会不会也缩到 1/4？衰减曲线为什么是「先陡后缓」而不是一条直线？这对自旋器件能挨多近意味着什么？",
     a: function () {
-      const a = withOpt({ d: 1.00 }).d;
-      const b = withOpt({ d: 2.00 }).d;
-      return "RA 从 " + a.raP.toFixed(2) + " 涨到 <b>" + b.raP.toExponential(2) + " Ω·μm<sup>2</sup></b>，" +
-        "约 <b>" + (b.raP / a.raP).toExponential(2) + " 倍</b>；而 TMR 恒定为 <b>" + (b.tmr * 100).toFixed(1) + " %</b>，一动没动。<br>" +
-        "TMR 不变是因为 <span class=\"m\"><i>κ</i></span> 对两条自旋通道是同一个值，exp(−2<span class=\"m\"><i>κ</i><i>d</i></span>) 在比值里整整约掉 —— " +
-        "Jullière 模型只问「有多少态可穿」，不问「穿得多快」，势垒的职责只是给绝对值打个折扣。这也正是它的盲区：" +
-        "真实 MgO 单晶势垒里不同对称性的波函数衰减快慢不同（相干滤波），有效衰减小的一类被筛选出来，" +
-        "厚度上去反而会把 TMR 抬高，这就超出本模型了。";
-    }
-  },
-  {
-    q: "把自旋寿命 τ_s 从 100 ps 降到 25 ps（缩到 1/4），L_s 会不会也缩到 1/4？在沟道长度 600 nm 下，到达探测端的自旋还剩多少？这对自旋器件的集成度意味着什么？",
-    a: function () {
-      const a = withOpt({ ts: 100, lc: 600 }).d;
-      const b = withOpt({ ts: 25, lc: 600 }).d;
+      const a = withOpt({ ts: 100 }).d;
+      const b = withOpt({ ts: 25 }).d;
       return "不会。<span class=\"m\"><i>L</i><sub>s</sub></span> = √(<span class=\"m\"><i>D</i><sub>s</sub><i>τ</i><sub>s</sub></span>) 是<b>平方根</b>关系：" +
         "τ_s 缩到 1/4，<span class=\"m\"><i>L</i><sub>s</sub></span> 从 " + (a.Ls * 1e9).toFixed(0) + " nm 缩到 <b>" + (b.Ls * 1e9).toFixed(0) +
         " nm</b>，只掉一半。<br>" +
-        "相应的剩余极化从 <b>" + (a.decay * 100).toFixed(1) + " %</b> 降到 <b>" + (b.decay * 100).toFixed(1) + " %</b>。<br>" +
-        "含义：自旋信息在传播途中被弛豫吃掉，且<b>越长的沟道代价增长得比线性更快</b>（e<small>−</small><span class=\"m\"><i>x</i>/<i>L</i><sub>s</sub></span> 是头重脚轻的衰减）。" +
+        "曲线先陡后缓，是因为衰减速率正比于<b>还剩下的那一份</b>：剩得越少，掉得越慢。" +
+        "所以走到 <span class=\"m\">2<i>L</i><sub>s</sub></span> 还剩 <b>" + (Math.exp(-2) * 100).toFixed(1) + " %</b>，" +
+        "走到 <span class=\"m\">3<i>L</i><sub>s</sub></span> 还剩 <b>" + (Math.exp(-3) * 100).toFixed(1) + " %</b> —— 尾巴拖得很长。<br>" +
+        "含义：自旋信息在传播途中被弛豫吃掉，且<b>越长的距离代价增长得比线性更快</b>（e<small>−</small><span class=\"m\"><i>x</i>/<i>L</i><sub>s</sub></span> 是头重脚轻的衰减）。" +
         "所以自旋器件之间的间距必须短于 <span class=\"m\"><i>L</i><sub>s</sub></span>，这一条直接锁死了它的集成度上限；" +
         "反过来说，提高 <span class=\"m\"><i>L</i><sub>s</sub></span> 的收益也是平方根打折的 —— 想把传递距离翻倍，得把 τ_s 提高四倍。";
     }
   },
   {
-    q: "在模块四把电流密度从 0 慢慢加上去：为什么非得到某个临界值 J_c 才开始翻转？把 SOT 与 STT 对比着看，各自的力矩几何差在哪，工程上为什么 SOT 更省？",
+    q: "在模块二把电流密度从 0 慢慢加上去：为什么非得到某个临界值 J_c 才开始翻转？切到 SOT 再试一遍——不加面内辅助场时为什么翻不过去（+z 与 −z 明明是对称的）？把 H_x 从 0 加上去会发生什么，是不是越大越好？",
     a: function () {
       const stt = withOpt({ tq: "stt", j: 4.0, hx: 0 });
       const sttLo = withOpt({ tq: "stt", j: 1.0, hx: 0 });
       const sttHi = withOpt({ tq: "stt", j: 8.0, hx: 0 });
-      const sot = withOpt({ tq: "sot", j: 500, hx: 0 });
-      const sotLo = withOpt({ tq: "sot", j: 200, hx: 0 });
+      const sot0 = withOpt({ tq: "sot", j: 100, hx: 0 });
+      const sotA = withOpt({ tq: "sot", j: 100, hx: 60 });
+      const sotB = withOpt({ tq: "sot", j: 100, hx: 80 });
+      const sotC = withOpt({ tq: "sot", j: 100, hx: 200 });
       return "LLG 里阻尼 <span class=\"m\"><i>α</i></span> 一直在把磁矩拽回易轴，自旋力矩要<b>先抵消掉这份阻尼</b>才能让进动幅度发散，" +
         "这个“收支相抵”的电流就是 <span class=\"m\"><i>J</i><sub>c</sub></span>。本工具 STT 的 <span class=\"m\"><i>J</i><sub>c</sub></span> = <b>" +
         stt.d.JcSTT.toFixed(2) + " MA/cm<sup>2</sup></b>：<span class=\"m\"><i>J</i></span> = 1.0 时终态 <span class=\"m\"><i>m</i><sub>z</sub></span> = <b>" + sttLo.tr.mzEnd.toFixed(2) +
         "</b>（没翻），<span class=\"m\"><i>J</i></span> = 8.0 时终态 <span class=\"m\"><i>m</i><sub>z</sub></span> = <b>" + sttHi.tr.mzEnd.toFixed(2) + "</b>（翻了，用了 " +
         (sttHi.tr.tsw > 0 ? (sttHi.tr.tsw * 1e9).toFixed(2) : "—") + " ns）。<br>" +
-        "几何差别：STT 的类阻尼力矩 <span class=\"m\"><i>m</i>×(<i>m</i>×<i>p</i>)</span> 与 p̂ 共面，一路顶着阻尼把磁矩推过赤道，" +
-        "所以只要 <span class=\"m\"><i>J</i></span> 过了阈值就一定翻；SOT 的 <span class=\"m\"><i>m</i>×(<i>σ</i>×<i>m</i>)</span> 等价的场是 <span class=\"m\"><i>m</i>×<i>σ</i></span>，" +
-        "它<b>横着</b>推，只能把磁矩拉到面内——本模型里推平的判据是 <span class=\"m\"><i>B</i><sub>DL</sub></span> ≥ μ₀<span class=\"m\"><i>H</i><sub>k</sub></span>/2 = " +
-        (MU0HK * 1e3 / 2).toFixed(0) + " mT：<span class=\"m\"><i>J</i></span> = 200 时 <span class=\"m\"><i>B</i><sub>DL</sub></span> 只有 " +
-        (sotLo.d.Bdl * 1e3).toFixed(0) + " mT，<span class=\"m\"><i>m</i><sub>z</sub></span> 仅仅降到 <b>" + sotLo.tr.mzEnd.toFixed(2) +
-        "</b>（被掰弯，没拉平）；<span class=\"m\"><i>J</i></span> = 500（<span class=\"m\"><i>B</i><sub>DL</sub></span> = " + (sot.d.Bdl * 1e3).toFixed(0) +
-        " mT）时 <span class=\"m\"><i>m</i><sub>z</sub></span> = <b>" + sot.tr.mzEnd.toFixed(2) +
-        "</b>，是“停在赤道”，不是“翻过去”。<br>" +
+        "SOT 换了一套逻辑：它的力矩 <span class=\"m\"><i>m</i>×(<i>σ</i>×<i>m</i>)</span> 等价于一个<b>横着推</b>的等效场 " +
+        "<span class=\"m\"><i>B</i><sub>DL</sub></span> ∝ <span class=\"m\"><i>m</i>×<i>σ</i></span>，" +
+        "它<b>不抵消阻尼</b>，于是赤道本身就成了一个吸引子 —— <span class=\"m\"><i>J</i></span> = 100（<span class=\"m\"><i>B</i><sub>DL</sub></span> = <b>" +
+        (sot0.d.Bdl * 1e3).toFixed(0) + "</b> mT）而 <span class=\"m\"><i>H</i><sub>x</sub></span> = 0 时，终态 <span class=\"m\"><i>m</i><sub>z</sub></span> = <b>" +
+        sot0.tr.mzEnd.toFixed(2) + "</b>，只被掰弯，翻不过去。<br>" +
+        "根子不在推力不够，而在<b>对称性</b>：没有面内场时单畴方程对 +z 与 −z 完全对称，" +
+        "赤道两侧一样好，磁矩没有任何理由选一边，只能停在赤道 —— 这就是<b>对称性破缺</b>缺位：" +
+        "得有一样东西先把「上」和「下」区分开，翻转方向才唯一。<br>" +
+        "配上<b>同向</b>的面内场才翻得动：<span class=\"m\"><i>H</i><sub>x</sub></span> 先把 <span class=\"m\"><i>m</i></span> 拉向 +x̂，" +
+        "<span class=\"m\"><i>B</i><sub>DL</sub></span> 沿 <span class=\"m\"><i>z</i></span> 的分量为 <span class=\"m\"><span class=\"op\">−</span><i>B</i><sub>DL</sub><i>m</i><sub>x</sub></span>，指向 −z，" +
+        "磁矩于是越过赤道一路到 −z。同一电流下把 <span class=\"m\"><i>H</i><sub>x</sub></span> 从 0 加上去：<b>60 mT</b> → 终态 <b>" +
+        sotA.tr.mzEnd.toFixed(2) + "</b>（还差一点，没翻）；<b>80 mT</b> → <b>" + sotB.tr.mzEnd.toFixed(2) +
+        "</b>（翻过去了）；<b>200 mT</b> → <b>" + sotC.tr.mzEnd.toFixed(2) +
+        "</b>（翻是翻了，但横向场把终态压回面内附近）。<br>" +
+        "<b>所以辅助场是够用就好，不是越大越好</b> —— 这也解释了为什么 <span class=\"m\"><i>σ</i></span> 必须取在辅助方向上：" +
+        "若 <span class=\"m\"><i>σ</i></span> 反个向，<span class=\"m\"><i>B</i><sub>DL</sub></span> 在 <span class=\"m\"><i>m</i></span> = +z 时指向 −x̂，" +
+        "正好把 <span class=\"m\"><i>H</i><sub>x</sub></span> 抵消掉，加多少场都只会把磁矩顶回 +1 侧。<br>" +
         "工程上的好处：写电流走的是重金属层的横向路径，不必穿过隧道结本身，" +
         "读写两条路分开 ⇒ 势垒不再被写电流反复冲击，可靠性与速度不再互相牺牲。" +
         "<span class=\"eq\">两条量级提醒：① 这里的几百 MA/cm<sup>2</sup> 是<b>单畴（宏自旋）</b>模型算出来的，" +
         "比真实 SOT 器件（10～30 MA/cm<sup>2</sup>）高一到两个数量级——真实翻转靠畴壁形核与推进，" +
-        "不需要整层磁矩一起硬顶各向异性场。② 拖一拖面内辅助场 <span class=\"m\"><i>H</i><sub>x</sub></span> 会发现 " +
-        "<span class=\"m\"><i>m</i><sub>z</sub></span> 反而被顶回 +1 侧：确定性翻转在单畴方程里根本给不出来，" +
-        "本工具仍取宏自旋口径，SOT 分支请读作「电流能把磁矩掰到什么程度」。</span>";
+        "不需要整层磁矩一起硬顶各向异性场。② 本模型的 SOT 翻转在 <b>0.1 ns</b> 量级就完成（不到一个进动周期），" +
+        "这正对应 SOT 比 STT 快得多这一点；真实器件受畴壁形核限制，落在 ns 量级。</span>";
     }
   }
 ];
@@ -2241,10 +2251,7 @@ function syncInputs() {
   const sv = (id, v) => { const e = $(id); if (e) e.value = v; };
   sv("p1Slider", Math.round(OPT.p1 * 100));
   sv("p2Slider", Math.round(OPT.p2 * 100));
-  sv("dSlider", Math.round(OPT.d * 10));
-  sv("dsSlider", OPT.ds);
   sv("tsSlider", OPT.ts);
-  sv("lcSlider", OPT.lc);
   /* 电流滑块：两种驱动方式量程不同，切换时连 max/step 一起换，
      否则 STT 的 12 MA/cm² 上限会把 SOT 死死卡在“看不见动静”的区间。 */
   const js = $("jSlider");
@@ -2252,20 +2259,16 @@ function syncInputs() {
     js.max = JRANGE[OPT.tq].max; js.step = JRANGE[OPT.tq].step;
     js.value = jToSlider(OPT.j);
   }
-  sv("alpSlider", Math.round(OPT.alp * 1000));
   sv("hxSlider", OPT.hx);
   const d = D();
-  const sv2 = (id, t) => { const e = $(id); if (e) e.textContent = t; };
+  /* 必须 innerHTML：电流值带 cm² 的 <sup> 上标，textContent 会把标签当字面量显示出来 */
+  const sv2 = (id, t) => { const e = $(id); if (e) e.innerHTML = t; };
   sv2("cfgVal", OPT.ap ? "反平行" : "平行");
   sv2("p1Val", OPT.p1.toFixed(2));
   sv2("p2Val", OPT.p2.toFixed(2));
-  sv2("dVal", OPT.d.toFixed(2) + " nm");
-  sv2("dsVal", OPT.ds + " cm<sup>2</sup>/s");
   sv2("tsVal", OPT.ts + " ps");
-  sv2("lcVal", OPT.lc + " nm");
   sv2("tqVal", OPT.tq === "stt" ? "自旋转移矩" : "自旋轨道矩");
   sv2("jVal", OPT.j.toFixed(1) + " MA/cm<sup>2</sup>" + (OPT.tq === "sot" ? "（B_DL " + (d.Bdl * 1e3).toFixed(0) + " mT）" : ""));
-  sv2("alpVal", OPT.alp.toFixed(3));
   sv2("hxVal", OPT.hx + " mT");
 
   const s_cfg = $("cfgSub"); if (s_cfg) s_cfg.innerHTML = OPT.ap
@@ -2275,56 +2278,53 @@ function syncInputs() {
     "费米面占据由极化率直接定出，两条通道之和归一化为 1（数值见读数面板）。";
   const s_p2 = $("p2Sub"); if (s_p2) s_p2.innerHTML =
     "两条通道的份额同样由极化率定出，之和归一化为 1（数值见读数面板）。";
-  const s_d = $("dSub"); if (s_d) s_d.innerHTML =
-    "κ 由势垒高度定；电阻随厚度指数放大，放大倍数记在读数面板。";
-  const s_ds = $("dsSub"); if (s_ds) s_ds.innerHTML =
-    "与迁移率的爱因斯坦关系同型：<span class=\"m\"><i>D</i><sub>s</sub></span> = <span class=\"m\"><i>μkT</i>/<i>q</i></span>，越大走得越远。";
   const s_ts = $("tsSub"); if (s_ts) s_ts.innerHTML =
     "自旋翻转散射（Elliott–Yafet、Dyakonov–Perel 等）的快慢；注意 L_s 只对它取平方根。";
-  const s_lc = $("lcSub"); if (s_lc) s_lc.innerHTML =
-    "到探测端还剩多少、扩散穿越要多久，都记在读数面板。";
   const s_tq = $("tqSub"); if (s_tq) s_tq.innerHTML = OPT.tq === "stt"
     ? "极化电流穿过参考层后把横向角动量交给自由层。"
-    : "重金属中的面内电流经自旋霍尔效应在界面堆出自旋，再从侧面注入自由层。";
+    : "重金属中的面内电流经自旋霍尔效应在界面堆出自旋，再从侧面注入自由层。"
+      + "本工具取 <span class=\"m\"><i>σ</i></span> 沿 −y（相当于写电流反向），"
+      + "这样 <span class=\"m\"><i>H</i><sub>x</sub></span> 正好落在<b>辅助方向</b>上。";
   const s_j = $("jSub"); if (s_j) s_j.innerHTML = OPT.tq === "stt"
     ? "阈值与当前倍数记在读数面板；低于阈值时只能看到进动被“拖慢”（临界慢化），"
       + "把电流继续加上去才会真的翻过去。"
-    : "SOT 不是反阻尼，它给的是一个<b>横着推</b>的等效类阻尼场：当前 B_DL = <b>" + (d.Bdl * 1e3).toFixed(1)
-      + "</b> mT，推平到面内的判据是 B_DL ≥ μ₀H_k / 2 = <b>" + (MU0HK * 1e3 / 2).toFixed(0) + "</b> mT。"
-      + "<span class=\"eq\">两条量级提醒：① 单畴（宏自旋）模型把 SOT 阈值估高了约一个数量级 —— "
-      + "真实器件靠畴壁形核与推进，10～30 MA/cm<sup>2</sup> 就能翻，这里的 <span class=\"m\"><i>J</i></span> 请当作 B_DL 的代理量读。"
-      + "② 加上面内辅助场 <span class=\"m\"><i>H</i><sub>x</sub></span> 后，本模型的 <span class=\"m\"><i>m</i><sub>z</sub></span> 反而被顶回 +1 侧而不是翻过去 —— "
-      + "这正是宏自旋近似的边界：真实 SOT 的确定性翻转靠畴壁成核，单畴方程给不出来。"
-      + "本工具仍取宏自旋口径，请把 SOT 分支读作「电流能把磁矩掰到什么程度」。</span>";
-  const s_alp = $("alpSub"); if (s_alp) s_alp.innerHTML =
-    "阻尼越大越“黏”，进动越容易收敛，代价是阈值线性抬高。";
+    : "SOT 不是反阻尼，它给的是一个<b>横着推</b>的等效类阻尼场：" + EQ_BDL + " = <b>" + (d.Bdl * 1e3).toFixed(1)
+      + "</b> mT。<span class=\"eq\">不加面内辅助场时它最多把磁矩拉到面内（判据 <span class=\"m\"><i>B</i><sub>DL</sub></span> ≥ μ₀<span class=\"m\"><i>H</i><sub>k</sub></span>/2 = <b>"
+      + (MU0HK * 1e3 / 2).toFixed(0) + "</b> mT）—— 赤道就是这个力矩的吸引子，单靠它翻不过去。"
+      + "这里的 <span class=\"m\"><i>J</i></span> 请当作 <span class=\"m\"><i>B</i><sub>DL</sub></span> 的代理量读：单畴模型把阈值估高了一到两个数量级，"
+      + "真实器件靠畴壁形核与推进，10～30 MA/cm<sup>2</sup> 就能翻。</span>";
   const s_hx = $("hxSub"); if (s_hx) s_hx.innerHTML = OPT.tq === "sot"
-    ? "宏自旋模型里 <span class=\"m\"><i>H</i><sub>x</sub></span> 只会把磁矩往 +z 侧顶回来，并不产生确定性翻转 —— "
-      + "拖一拖它，看到的就是这条近似的边界本身。"
+      ? "配上面内场才翻得过去：<span class=\"m\"><i>H</i><sub>x</sub></span> 先把 <span class=\"m\"><i>m</i></span> 拉向 +x̂，"
+      + "<span class=\"m\"><i>B</i><sub>DL</sub></span> 沿 <span class=\"m\"><i>z</i></span> 的分量为 <span class=\"m\"><span class=\"op\">−</span><i>B</i><sub>DL</sub><i>m</i><sub>x</sub></span>，指向 −z，"
+      + "磁矩于是越过赤道一路到 −z。<span class=\"eq\">拖一拖会看到<b>够用就好</b>：场太小拉不起 <span class=\"m\"><i>m</i><sub>x</sub></span>，翻不动；"
+      + "场太大时横向场又把终态压回面内（<span class=\"m\"><i>m</i><sub>z</sub></span> → 0）。</span>"
     : "面内场把磁矩掰离易轴、势垒变浅，STT 的阈值随之下降（本工具里 <span class=\"m\"><i>J</i><sub>c</sub></span> 只按 α 现算，"
-      + "<span class=\"m\"><i>H</i><sub>x</sub></span> 的作用请直接看轨迹曲线的翻转时间）。";
+      + "<span class=\"m\"><i>H</i><sub>x</sub></span> 的作用请直接看轨迹曲线的翻转时间）。"
+      + "<span class=\"eq\">同样是<b>够用就好</b>：场太大终态会被横向压住，<span class=\"m\"><i>m</i><sub>z</sub></span> 停在 0 附近而不是 −1。</span>";
 
   const fv = $("fixVal");
   if (fv) fv.innerHTML = kvHTML([
-    ["势垒平均高度 Φ", PHIB.toFixed(2) + " eV"],
+    ["势垒平均高度 Φ / 厚度 d", PHIB.toFixed(2) + " eV ／ " + OPT.d.toFixed(2) + " nm"],
     ["自由层厚度 / M_s", (MST * 1e9).toFixed(1) + " nm ／ " + (MSS / 1e6).toFixed(2) + "×10<sup>6</sup> A/m"],
     ["有效垂直各向异性 μ₀H_k", MU0HK.toFixed(2) + " T"],
     ["自旋霍尔角 θ_SH", THETA_SH.toFixed(2)],
+    ["吉尔伯特阻尼 α", OPT.alp.toFixed(3)],
     ["参考 RA₀（1 nm 平行态）", RA0 + " Ω·μm<sup>2</sup>"],
     ["读出电压 V", VREAD.toFixed(2) + " V"],
-    ["初始倾角 / 模拟时长", TILT0 + "° ／ " + (TMAX * 1e9).toFixed(0) + " ns"]
+    ["自旋扩散系数 D_s", OPT.ds + " cm<sup>2</sup>/s"],
+    ["初始倾角 / 模拟时长", TILT0 + "° ／ " + (TMAX * 1e9).toFixed(0) + " ns"],
+    /* 纯数字 + 单位，不含中文：双语时不必为运行时数字登记 key */
+    ["动画播放", (TMAX * 1e9).toFixed(0) + " ns → " + (TMAX / PLAY_RATE).toFixed(0) + " s"]
   ]);
 }
 function bindAll() {
   const sl = (id, set) => { const e = $(id); if (e) e.oninput = () => { set(+e.value); changed(); }; };
   sl("p1Slider", v => { OPT.p1 = v / 100; });
   sl("p2Slider", v => { OPT.p2 = v / 100; });
-  sl("dSlider", v => { OPT.d = v / 10; });
-  sl("dsSlider", v => { OPT.ds = v; });
   sl("tsSlider", v => { OPT.ts = v; });
-  sl("lcSlider", v => { OPT.lc = v; });
+  /* 沟道长度 L 已固定（见 fixVal）：拖它对主输出的贡献与 τ_s 重合，
+     而 τ_s 才是「平方根」这条物理主线，留一个就够。 */
   sl("jSlider", v => { OPT.j = sliderToJ(v); });
-  sl("alpSlider", v => { OPT.alp = v / 1000; });
   sl("hxSlider", v => { OPT.hx = v; });
 
   const cb = $("cfgBtns");
@@ -2353,15 +2353,6 @@ function bindAll() {
   const ct = $("ckTrail");
   if (ct) ct.onchange = () => render();
 
-  const jb = $("jumpbar");
-  if (jb) jb.onclick = e => {
-    const b = e.target.closest ? e.target.closest("button") : null;
-    if (!b) return;
-    const t = $(b.getAttribute("data-card"));
-    if (t) t.scrollIntoView({ behavior: "smooth", block: "start" });
-    Array.prototype.forEach.call(jb.querySelectorAll("button"), x => x.classList.remove("sel"));
-    b.classList.add("sel");
-  };
   document.addEventListener("click", e => {
     const h = e.target.closest ? e.target.closest(".fold-head") : null;
     if (h) h.parentNode.classList.toggle("open");
@@ -2370,7 +2361,7 @@ function bindAll() {
 }
 function render() {
   try {
-    drawMtj(); drawTmr(); drawInj(); drawDyn();
+    drawMtj(); drawDyn(); drawInj();
     buildLegend(); buildHints(); buildReadout(); refreshAnswers();
   } catch (err) {
     if (typeof console !== "undefined") console.error("[渲染]", err);
@@ -2380,10 +2371,11 @@ function startAnim() {
   let last = 0;
   function step(ts) {
     if (!last) last = ts;
-    const dt = (ts - last) / 1000; last = ts;
+    /* 限幅：掉帧时别让 t 一步跨掉大半个进动周期，否则又变回“跳跃” */
+    const dt = Math.min((ts - last) / 1000, 0.05); last = ts;
     const ck = $("ckAnim");
     if (ck && ck.checked && $("dyn")) {
-      DYNV.t = (DYNV.t + dt * 2.6e-9) % TMAX;
+      DYNV.t = (DYNV.t + dt * PLAY_RATE) % TMAX;
       MTJV.t = MTJV.t === undefined ? 0 : MTJV.t + dt;
       drawDyn(); drawMtj();
     }
@@ -2394,8 +2386,7 @@ function startAnim() {
 function init() {
   try {
     buildLegend(); buildBtns(); buildChal();
-    fitCanvas(MTJV, "mtj"); fitCanvas(TMRV, "tmr"); fitCanvas(INJV, "inj");
-    fitCanvas(DYNV, "dyn");
+    fitCanvas(MTJV, "mtj"); fitCanvas(DYNV, "dyn"); fitCanvas(INJV, "inj");
     bindAll(); syncInputs();
   } catch (err) {
     if (typeof console !== "undefined") console.error("[初始化]", err);

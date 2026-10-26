@@ -1,0 +1,2553 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<!-- SPDX-License-Identifier: MIT -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>隧穿场效应管交互教学工具</title>
+<style>
+  :root {
+    --bg: #f7f9fb;
+    --panel: #ffffff;
+    --border: #dde4ec;
+    --text: #2c3e50;
+    --text-sub: #6b7a8c;
+    --blue: #1976d2;
+    --blue-light: #e3f0fb;
+    --orange: #ef8c1a;
+    --red: #d94a3d;
+    --teal: #0f9b8e;
+    --green: #2e9e5b;
+    --purple: #8e5bd0;
+    --gray-ref: #9aa5b1;
+    --probe: #f5c518;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Microsoft YaHei", "PingFang SC", "Segoe UI", sans-serif;
+    background: var(--bg); color: var(--text); padding: 14px;
+  }
+  header { position: relative;
+    display: flex; align-items: baseline; justify-content: center;
+    gap: 14px; flex-wrap: wrap; text-align: center; margin-bottom: 12px;
+  }
+  .lang-btn { position: absolute; right: 0; top: 0; border: 1px solid var(--border); background: #fff;
+    color: var(--text-sub); padding: 3px 10px; border-radius: 7px; cursor: pointer; font-size: 12px; font-weight: 600; }
+  .lang-btn:hover { border-color: var(--blue); color: var(--blue); }
+  header h1 { font-size: 20px; }
+  .layout { display: flex; gap: 14px; align-items: flex-start; max-width: 1500px; margin: 0 auto; }
+  .viz { flex: 0 0 64%; min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+  .side { flex: 1; min-width: 300px; display: flex; flex-direction: column; gap: 12px; }
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; }
+  canvas { display: block; width: 100%; border-radius: 6px; touch-action: none; }
+  .chart-wrap { position: relative; }
+  .hint { font-size: 12px; color: var(--text-sub); margin-top: 6px; line-height: 1.6; }
+  .sec-title { font-size: 13.5px; font-weight: 700; margin: 2px 0 6px; }
+  /* 模块编号徽标：只有教学内容模块才带编号；控制面板等辅助面板不是模块，不加 */
+  .sec-title .mtag {
+    display: inline-block; background: var(--blue); color: #fff;
+    font-size: 11px; font-weight: 700; padding: 1.5px 7px;
+    border-radius: 5px; margin-right: 6px; vertical-align: 1.5px; letter-spacing: .3px;
+  }
+  .ctrl { margin-bottom: 12px; }
+  .ctrl:last-child { margin-bottom: 0; }
+  .ctrl-head { display: flex; justify-content: space-between; align-items: baseline; font-size: 13.5px; font-weight: 600; margin-bottom: 4px; }
+  .ctrl-head .val { color: var(--blue); font-variant-numeric: tabular-nums; font-weight: 700; }
+  .ctrl input[type=range] { width: 100%; accent-color: var(--blue); }
+  .ctrl .sub { font-size: 12px; color: var(--text-sub); margin-top: 2px; line-height: 1.55; }
+  .btn-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+  .btn-row button {
+    border: 1px solid var(--border); background: #fff; color: var(--text);
+    padding: 5px 11px; border-radius: 7px; cursor: pointer; font-size: 12.5px;
+  }
+  .btn-row button:hover { border-color: var(--blue); color: var(--blue); }
+  .btn-row button.primary { background: var(--blue-light); border-color: var(--blue); color: var(--blue); font-weight: 600; }
+  .btn-row button.sel { background: var(--blue); border-color: var(--blue); color: #fff; font-weight: 600; }
+  .btn-row button:disabled { opacity: .45; cursor: not-allowed; }
+  .btn-row.tight button { padding: 4px 9px; font-size: 12px; }
+  .btn-row button .etlv { font-weight: 500; opacity: .72; font-variant-numeric: tabular-nums; }
+  .legend { display: flex; gap: 6px 14px; flex-wrap: wrap; align-items: center; font-size: 12px; color: var(--text-sub); margin-top: 6px; }
+  .legend > span { display: inline-block; }
+  .swatch {
+    display: inline-block; vertical-align: middle; width: 20px; height: 0;
+    border-top: 3px solid currentColor; border-radius: 2px; margin-right: 6px;
+  }
+  .swatch.dash { border-top-style: dashed; }
+  .swatch.dot { width: 11px; height: 11px; border: none; border-radius: 50%; }
+  .swatch.sq { width: 11px; height: 11px; border: none; border-radius: 3px; }
+  .mini { font-size: 11.5px; color: var(--text-sub); line-height: 1.6; }
+  .empty { font-size: 12px; color: var(--text-sub); padding: 6px 2px; }
+  .kv { display: grid; grid-template-columns: auto 1fr; gap: 3px 10px; font-size: 12.5px; align-items: baseline; }
+  .kv .hd { grid-column: 1 / -1; font-weight: 700; color: var(--text); font-size: 12px; margin: 6px 0 2px; }
+  .kv .k { color: var(--text-sub); white-space: nowrap; }
+  .kv .v { color: var(--text); font-variant-numeric: tabular-nums; }
+  /* 公式直接写在模块说明里：沿用 .m 的数学排版，但说明行窄，允许换行 */
+  .hint .m { white-space: normal; }
+  .hint .eq { display: block; margin-top: 4px; color: var(--text); }
+  /* 挑战任务卡片 */
+  .chal-wrap { max-width: 1500px; margin: 14px auto 0; }
+  .chal-grid { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+  .chal { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 8px 12px; }
+  .chal-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; cursor: pointer; }
+  .chal-head b { font-size: 13.5px; }
+  .chal-head .chev { color: var(--text-sub); font-size: 12px; transition: transform .15s; }
+  .chal.open .chal-head .chev { transform: rotate(90deg); display: inline-block; }
+  .chal-body { display: none; margin-top: 6px; font-size: 12.5px; color: var(--text-sub); line-height: 1.75; }
+  .chal.open { border-color: var(--blue); }
+  .chal.open .chal-body { display: block; }
+  .chal-body .ans { display: none; margin-top: 6px; padding: 7px 10px; background: var(--blue-light); border-radius: 6px; color: var(--text); }
+  .chal-body .ans.show { display: block; }
+  .chal-body .ans b { color: var(--blue); }
+  .chal .q { color: var(--text); }
+  /* ============ 数学公式排版（纯 CSS，零依赖，离线可用） ============ */
+  .frac {
+    display: inline-block; vertical-align: -0.50em; text-align: center;
+    margin: 0 .18em; font-size: .92em; line-height: 1.25;
+  }
+  .frac > .num { display: block; padding: 0 .32em; border-bottom: 1px solid currentColor; }
+  .frac > .den { display: block; padding: 0 .32em; }
+  header .formula { font-size: 15px; color: var(--text-sub); }
+  header .formula.m { font-size: 14px; }   /* .m 的 1.05em 会把页首公式顶出一行 */
+
+  @media (max-width: 980px) {
+    .layout { flex-direction: column; }
+    .viz { flex: 1 1 auto; width: 100%; }
+  }
+  /* ---- 折叠区（.fold）：读数与控制的「更多」专用 ----
+     独立组件，类名一律 .fold：❌ 不许复用 .chal-head / .chev，
+     否则会被挑战区回归脚本按「挑战题」计数，也会污染挑战区视觉基线。 */
+  .fold { margin-top: 7px; border-top: 1px dotted var(--border); padding-top: 5px; }
+  .fold-head { display: flex; align-items: center; gap: 6px; cursor: pointer;
+    font-size: 12px; font-weight: 600; color: var(--text-sub); user-select: none; flex-wrap: wrap; }
+  .fold-head:hover { color: var(--blue); }
+  .fold-head .chev { font-size: 11px; transition: transform .15s; display: inline-block; }
+  .fold.open .fold-head .chev { transform: rotate(90deg); }
+  .fold-body { display: none; margin-top: 4px; }
+  .fold.open .fold-body { display: block; }
+  .fold-val { font-weight: 400; color: var(--text-sub); font-size: 11px; margin-left: auto; }
+  .fold-sub { font-size: 11.5px; color: var(--text-sub); line-height: 1.55; margin: 2px 0 5px; }
+  .kv .hd:first-child { margin-top: 0; }
+  /* ---- 课程页脚 ---- */
+  .site-foot { max-width: 1500px; margin: 18px auto 0; padding: 12px 16px 24px;
+    border-top: 1px solid var(--border); color: var(--text-sub);
+    font-size: 12.5px; line-height: 1.8; text-align: center; }
+  .site-foot a { color: var(--blue, #1976d2); text-decoration: none; }
+  .site-foot a:hover { text-decoration: underline; }
+
+  .m { font-family: "Cambria Math", "STIX Two Math", "Latin Modern Math", "Times New Roman", Times, serif;
+       font-size: 1.05em; font-style: normal; white-space: nowrap; letter-spacing: .01em; }
+  .m i, .m var { font-style: italic; }
+  .m .rm { font-style: normal; }
+  .m sub, .m sup { font-size: .70em; font-style: normal; line-height: 1; }
+  .m sub { vertical-align: -.28em; }
+  .m sup { vertical-align: .50em; }
+.m .m { font-size: 1em; }   /* 嵌套容器（TEXH 下标转换叠加）不再放大字号 */
+  .m .op { font-style: normal; padding: 0 .24em; }
+  .m .sl { font-style: normal; padding: 0 .05em; }
+  .m .un { font-style: normal; padding-left: .16em; }
+  .op, .rm, .un { font-style: normal; }
+  .frac { display: inline-flex; flex-direction: column; vertical-align: -.45em; text-align: center; margin: 0 .18em; }
+  .frac .num { border-bottom: 1px solid currentColor; padding: 0 .22em; line-height: 1.16; }
+  .frac .den { padding: 0 .22em; line-height: 1.16; }
+  .sqrt { display: inline-flex; align-items: stretch; }
+  .sqrt .rd { position: relative; padding-left: .30em; padding-top: .10em; }
+  .sqrt .rdc { border-top: 1px solid currentColor; }
+  .sqrt > .rdc, .sqrt .rdc { display: inline-block; position: static; font-size: 1em;
+             border-top: .055em solid currentColor; padding: .06em .12em 0 .10em; margin: 0; line-height: 1; }
+
+  /* 公式排版：分式 / 根式 —— 全站统一为「回旋共振 v06」写法（置于末尾，覆盖本文件早期变体） */
+  .frac { display: inline-block; vertical-align: -0.52em; text-align: center; font-size: .78em; margin: 0 .12em; }
+  .frac > .num, .frac .num { display: block; padding: 0 .22em; border-bottom: .055em solid currentColor; line-height: inherit; }
+  .frac > .den, .frac .den { display: block; padding: 0 .22em; line-height: inherit; }
+  .sqrt { display: inline-block; white-space: nowrap; vertical-align: baseline; margin: 0; font-size: 1em; }
+  .sqrt > .rd, .sqrt .rd { display: inline-block; position: static; font-size: 1em; line-height: inherit; padding: 0 .02em 0 0; margin: 0; }
+  .sqrt > .rdc, .sqrt .rdc { display: inline-block; position: static; font-size: 1em;
+             border-top: .055em solid currentColor; padding: .06em .12em 0 .10em; margin: 0; line-height: 1; }
+  .sqrt .rdc:has(sup) { padding-top: .18em; }
+  .ck-row { display: flex; flex-wrap: wrap; gap: 5px 16px; margin-top: 6px; font-size: 12.5px; color: var(--text-sub); }
+  .ck-row label { display: inline-flex; align-items: center; gap: 5px; cursor: pointer; user-select: none; }
+  .ck-row input { accent-color: var(--blue); margin: 0; }
+  .kv .warn { color: var(--red); font-weight: 700; }
+  /* ---- 本工具专属：控制面板分组标题 ---- */
+  .grp {
+    margin: 14px 0 2px; padding-top: 9px; border-top: 1px dashed var(--border);
+    font-size: 12px; font-weight: 700; color: var(--blue); letter-spacing: .3px;
+  }
+  .grp:first-of-type { margin-top: 2px; border-top: 0; padding-top: 0; }
+</style>
+<body>
+
+<header>
+  <button id="langBtn" class="lang-btn" data-noi18n title="中文 / English">EN</button>
+  <h1>隧穿场效应管交互教学工具</h1>
+  <div class="formula m">SS<span class="op">=</span><span class="frac"><span class="num"><i>kT</i></span><span class="den"><i>q</i></span></span>ln 10　<span class="op">·</span>　<i>T</i><sub>WKB</sub><span class="op">≈</span>exp<span class="op">(</span><span class="op">−</span><span class="frac"><span class="num">4<span class="sqrt"><span class="rd">√</span><span class="rdc">2<i>m</i><sup>*</sup></span></span><i>E</i><sub>g</sub><sup>3/2</sup></span><span class="den">3<i>q</i><i>ħE</i></span></span><span class="op">)</span>　<span class="op">·</span>　<i>W</i><sub>t</sub><span class="op">=</span><span class="frac"><span class="num"><i>E</i><sub>g</sub></span><span class="den"><i>qE</i></span></span></div>
+</header>
+
+<div class="layout">
+  <!-- ============ 左侧：两个模块 ============ -->
+  <div class="viz">
+
+    <div class="card" id="card1">
+      <div class="sec-title"><span class="mtag">模块一</span>器件剖面与隧穿窗口（左）· 转移特性（右）</div>
+      <div class="chart-wrap"><canvas id="dev" data-h="424" tabindex="0"></canvas></div>
+      <div class="legend" id="legDev"></div>
+      <div class="hint" id="hintDev"></div>
+    </div>
+
+    <div class="card" id="card2">
+      <div class="sec-title"><span class="mtag">模块二</span>能带图：带间隧穿与热发射</div>
+      <div class="chart-wrap"><canvas id="band" data-h="380" tabindex="0"></canvas></div>
+      <div class="legend" id="legBand"></div>
+      <div class="hint" id="hintBand"></div>
+    </div>
+
+  </div>
+
+  <!-- ============ 右侧：控制面板与读数 ============ -->
+  <div class="side">
+    <div class="card">
+      <div class="sec-title">控制面板</div>
+
+      <div class="grp">材料与带隙</div>
+
+      <div class="ctrl">
+        <div class="ctrl-head"><span>材料</span><span class="val" id="matVal">Si</span></div>
+        <div class="btn-row tight" id="matBtns" style="margin-top:0;"></div>
+        <div class="sub" id="matSub"></div>
+      </div>
+
+      <div class="ctrl">
+        <div class="ctrl-head"><span>材料带隙 <span class="m"><i>E</i><sub>g</sub></span></span><span class="val" id="egVal">1.12 eV</span></div>
+        <input type="range" id="egSlider" min="30" max="120" value="112" step="1">
+        <div class="sub" id="egSub"></div>
+      </div>
+
+      <div class="grp">偏压与栅叠层</div>
+
+      <div class="ctrl">
+        <div class="ctrl-head"><span>栅压 <span class="m"><i>V</i><sub>GS</sub></span></span><span class="val" id="vgVal">1.10 V</span></div>
+        <input type="range" id="vgSlider" min="0" max="120" value="110" step="1">
+        <div class="sub" id="vgSub"></div>
+      </div>
+
+      <div class="ctrl">
+        <div class="ctrl-head"><span>漏压 <span class="m"><i>V</i><sub>DS</sub></span></span><span class="val" id="vdVal">0.50 V</span></div>
+        <input type="range" id="vdSlider" min="5" max="100" value="50" step="5">
+        <div class="sub" id="vdSub"></div>
+      </div>
+
+      <div class="ctrl">
+        <div class="ctrl-head"><span>栅叠层</span><span class="val" id="oxVal">SiO₂ 1.0 nm</span></div>
+        <div class="btn-row tight" id="oxBtns" style="margin-top:0;"></div>
+        <div class="sub" id="oxSub"></div>
+      </div>
+
+      <div class="grp">视图与预设</div>
+
+      <div class="ctrl">
+        <div class="ctrl-head"><span>模块二视图</span><span class="val" id="viewVal">带间隧穿</span></div>
+        <div class="btn-row tight" id="viewBtns" style="margin-top:0;"></div>
+        <div class="sub" id="viewSub"></div>
+      </div>
+
+      <div class="ctrl">
+        <div class="ctrl-head"><span>显示项目</span></div>
+        <div class="ck-row" id="ckRow">
+          <label><input type="checkbox" id="ckAnim" checked>电子隧穿动画</label>
+          <label><input type="checkbox" id="ckField" checked>电场强度热图</label>
+          <label><input type="checkbox" id="ckRef" checked>60 mV/dec 参考线</label>
+        </div>
+      </div>
+
+      <div class="ctrl">
+        <div class="ctrl-head"><span>预设</span></div>
+        <div class="btn-row tight" id="preBtns" style="margin-top:0;"></div>
+      </div>
+
+      <div class="ctrl">
+        <div class="ctrl-head"><span>固定参量</span></div>
+        <div class="sub" id="fixVal"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="sec-title">读数面板</div>
+      <div class="kv" id="readout"></div>
+      <div class="fold" id="foldRo">
+        <div class="fold-head"><span class="chev">▶</span><span>更多读数（中间量与模型边界）</span></div>
+        <div class="fold-body"><div class="kv" id="readoutMore"></div></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ============ 底部：引导探究 ============ -->
+<div class="chal-wrap">
+  <div class="card">
+    <div style="display:flex; justify-content:space-between; align-items:baseline; gap:10px;">
+      <b style="font-size:14.5px;">引导探究（点击展开，先自己试一试再看答案）</b>
+      <span style="font-size:12px; color:var(--text-sub);">挑战任务</span>
+    </div>
+    <div class="chal-grid" id="chalGrid"></div>
+  </div>
+</div>
+<script>
+/* ==================================================================
+   i18n（C1 单文件双语：物理代码仍然只有一份）
+   LANG 取值优先级：URL ?lang=en / ?lang=zh  >  localStorage('opl_lang')  >  默认中文。
+   不做 location 跳转——保住「单文件拷走也能用」。
+   三个注入点，**业务字符串一个都不改**：
+     ① partsOf()   画布 token：带 i/sub/sup/un 标记的是物理量、下标与单位，跳过
+     ② fillText/measureText 原型挂钩：兜住直接写进画布的中文串
+     ③ DOM 文本节点：静态 HTML 与 JS 写进来的 innerHTML，用 MutationObserver 兜住新增节点
+   T() 先查整句词典，未命中再按「最长优先」做短语替换，因此拼接串也能翻。
+   漏翻会被记进 window.__MISS，可导出核对。 */
+var LANG = (function () {
+  var m = /[?&]lang=([a-zA-Z]+)/.exec(location.search);
+  var q = m ? m[1].toLowerCase() : "";
+  if (q === "en" || q === "zh") return q;
+  var s = "";
+  try { s = localStorage.getItem("opl_lang") || ""; } catch (e) { }
+  return (s === "en" || s === "zh") ? s : "zh";
+})();
+var ORIG_TITLE = document.title;
+var __MISS = [];
+try { window.__MISS = __MISS; } catch (e) { }
+function noteMiss(s) { if (__MISS.indexOf(s) < 0) __MISS.push(s); }
+function TSoft(s) {
+  if (!T._K) T._K = Object.keys(I18N).sort(function (a, b) { return b.length - a.length; });
+  var out = s, i, k, orig = s;
+  /* 两遍：第一遍只吃长度 ≥ 2 的短语；第二遍的单字 key 只在「传进来的串
+     恰好就是这一个字」时才上场——画布逐字排版会拿单字去 measureText，那一
+     路必须翻。反过来，绝不让单字 key 去切更长的句子：否则「导」「子」「原」
+     会把「半导体」「电子数」「泡利原理」切成半 conduction 体、电 quantum 数、
+     泡利 origin 理这类中英混排。同一条理由也适用于「下」：整句不该被切碎。 */
+  for (var pass = 0; pass < 2; pass++) {
+    for (i = 0; i < T._K.length; i++) {
+      k = T._K[i];
+      if (k.length < 2 && (pass === 0 || orig !== k)) continue;
+      if (out.indexOf(k) >= 0) out = out.split(k).join(I18N[k]);
+    }
+  }
+  return out;
+}
+/* 同一句被 DOM 切成好几个文本节点时，首尾空格会随机落在 data 里；
+   所以除了「整句命中」，再试一次「去空格后命中」并原样补回首尾空白。 */
+function trimMap() {
+  if (T._TM) return T._TM;
+  var m = {};
+  for (var k in I18N) if (Object.prototype.hasOwnProperty.call(I18N, k)) {
+    var t = k.replace(/^\s+|\s+$/g, "");
+    if (t && m[t] === undefined) m[t] = I18N[k];
+  }
+  T._TM = m;
+  return m;
+}
+/* eslint-disable no-use-before-define */
+function T(s) {
+  if (LANG !== "en" || typeof s !== "string" || !s) return s;
+  if (!/[一-鿿]/.test(s)) return s;
+  if (Object.prototype.hasOwnProperty.call(I18N, s)) return I18N[s];
+  var tm = trimMap(), core = s.replace(/^\s+|\s+$/g, "");
+  if (core && tm[core] !== undefined) {
+    var lead = s.slice(0, s.length - s.replace(/^\s+/, "").length);
+    var tail = s.slice(s.replace(/\s+$/, "").length);
+    return lead + tm[core] + tail;
+  }
+  var v = TSoft(s);
+  /* 译完还剩汉字也算漏翻：只翻掉一半的「半吊子译文」曾经让 __MISS 恒为 0。 */
+  if (v === s || /[\u3400-\u9FFF]/.test(v)) noteMiss(s);
+  return v;
+}
+
+var I18N = {
+  /* ---- 词典：中文原文 → 英文。key 禁含运行时数字（换个参数就漏），数字前后要拆开 ---- */
+  "隧穿场效应管交互教学工具": "Tunnel FET — Interactive Toolkit",
+  "模块一": "Module 1",
+  "器件剖面与隧穿窗口（左）· 转移特性（右）": "Device cross section and tunneling window (left) · Transfer characteristics (right)",
+  "模块二": "Module 2",
+  "能带图：带间隧穿与热发射": "Band diagram: band-to-band tunneling and thermionic emission",
+  "控制面板": "Control Panel",
+  "材料与带隙": "Material and band gap",
+  "材料": "Material",
+  "材料带隙 ": "Material band gap ",
+  "偏压与栅叠层": "Bias and gate stack",
+  "栅压 ": "Gate voltage ",
+  "漏压 ": "Drain voltage ",
+  "栅叠层": "Gate stack",
+  "视图与预设": "View and presets",
+  "模块二视图": "Module 2 view",
+  "带间隧穿": "Band-to-band tunneling",
+  "显示项目": "Display",
+  "电子隧穿动画": "Electron tunneling animation",
+  "电场强度热图": "Electric field heat map",
+  "60 mV/dec 参考线": "60 mV/dec reference line",
+  "预设": "Presets",
+  "固定参量": "Fixed parameters",
+  "读数面板": "Readout Panel",
+  "更多读数（中间量与模型边界）": "More readouts (intermediate quantities and model limits)",
+  "引导探究（点击展开，先自己试一试再看答案）": "Guided exploration (click to expand — try it yourself before reading the answer)",
+  "挑战任务": "Challenges",
+  "禁带宽度；它同时出现在隧穿指数里（": "Band gap; it enters the tunneling exponent (",
+  "）和开启条件里（": ") and the turn-on condition (",
+  "）。当前开启栅压 ": "). Current turn-on gate voltage ",
+  "材料一次给定": "Choosing a material fixes",
+  "带隙": "band gap",
+  "与": " and",
+  "隧穿有效质量": "tunneling effective mass",
+  "：两者都是材料属性，绑在一起才自洽，所以不给 ": ": both are material properties and only make sense when tied together, so there is no separate slider for ",
+  " 单开滑块（它只出现在 ": " (it enters only through ",
+  " 上，影响有限）。当前 ": " , and its effect is limited). Currently ",
+  "；之后单独拖带隙滑块时，": "; if you later drag the band-gap slider alone,",
+  " 保持这个值不变，读数面板如实披露。": " keeps this value, and the readout panel says so explicitly.",
+  "主控量。先按栅控效率 η = ": "The main control. The gate-control efficiency η = ",
+  " 折算成沟道电势 ψ = ": " converts the gate voltage into the channel potential ψ = ",
+  " V，再决定场强与窗口。": " V, and that is what sets the field and the window.",
+  "漏压从两头起作用：定出漏端能带位置，并且把隧穿窗口封顶在 ": "The drain voltage acts at both ends: it fixes the band position at the drain and caps the tunneling window at ",
+  " —— 漏压太低时窗口填不满，这就是 TFET 的": " — when the drain voltage is too low the window cannot fill up, which is the TFET’s",
+  "超线性开启": "superlinear onset",
+  "。当前窗口 ": ". Current window ",
+  "栅叠层一次给定介质与厚度：": "The gate stack fixes dielectric and thickness together: the thicker",
+  " 越厚、": " and the smaller",
+  " 越小，栅压被沟道分走的越多，栅控效率 η 越低 ⇒ 同样的栅压换来的场强越小、隧穿越难。它同时决定栅特征长度 ": " , the more of the gate voltage is stolen by the channel and the lower the gate-control efficiency η ⇒ the weaker the field for the same gate voltage and the harder the tunneling. It also sets the gate characteristic length ",
+  " ⇒ 也决定隧穿面积。当前 ": " ⇒ and hence the tunneling area. Currently ",
+  "带间隧穿：冷电子直接穿禁带，斜率不由 ": "Band-to-band tunneling: cold electrons cross the forbidden gap directly, and the slope is not set by ",
+  " 决定。": " .",
+  "温度 / kT/q": "Temperature / kT/q",
+  "理想亚阈值摆幅 SS": "Ideal subthreshold swing SS",
+  "平带电压 ": "Flat-band voltage ",
+  "源区掺杂 ": "Source doping ",
+  "沟道介电常数 / 体厚": "Channel dielectric constant / body thickness",
+  "电场参考 ": "Field reference ",
+  "电流前因子 ": "Current prefactor ",
+  "关态漏电地板 ": "Off-state leakage floor ",
+  "参考 MOSFET 开态": "Reference MOSFET on-state",
+  "沟道长度（画图）": "Channel length (drawing only)",
+  " 源区": " source region",
+  "I 本征沟道": "I intrinsic channel",
+  " 漏区": " drain region",
+  "隧穿窗口（绿）": "Tunneling window (green)",
+  "导带底 ": "Conduction band edge ",
+  "价带顶 ": "Valence band edge ",
+  "右栏：TFET 转移曲线": "Right panel: TFET transfer curve",
+  "右栏：MOSFET 60 mV/dec": "Right panel: MOSFET 60 mV/dec",
+  "右栏：当前工作点": "Right panel: current operating point",
+  "（实线）": "(solid)",
+  "（虚线）": "(dashed)",
+  "源 / 漏费米能级": "Source / drain Fermi level",
+  "隧穿窗口与隧穿路径": "Tunneling window and tunneling path",
+  "右栏：源价带占据（硬边）": "Right panel: source valence-band occupancy (hard edge)",
+  "右栏：": "Right panel:",
+  "（窗口内处处相同）": "(the same everywhere inside the window)",
+  "右栏：电流谱平顶（供给 × 透射）": "Right panel: flat top of the current spectrum (supply × transmission)",
+  "栅压先被栅氧与沟道分掉一份，剩下的把沟道能带整体压低：": "The gate voltage is first split between the gate oxide and the channel; what is left pushes the whole channel band down:",
+  "。绿色的那一段就是沟道导带已经压到源端价带之下的地方 —— 禁带在这里被“对上了”，价带电子可以直接穿过去。": ". The green stretch is where the channel conduction band has been pushed below the source valence band — here the gap is “lined up” and valence electrons can go straight through.",
+  "注意栅压为零时沟道也不是平的：P": "Note that the channel is not flat even at zero gate voltage: P",
+  " 源区与本征沟道的掺杂差先给出内建电势 ": " source and intrinsic channel differ in doping, which first gives a built-in potential of ",
+  " V，所以源区能带本来就比沟道高出半个带隙 —— 栅压只需再补上另外半个 ": " V, so the source bands already sit half a band gap above the channel — the gate voltage only has to add the other half of ",
+  " 就把窗口顶开了。": " to push the window open.",
+  "绿色区域的横向长度由 ": "The lateral length of the green region is set by ",
+  " 定，纵向深度 ": " , and its vertical depth ",
+  " 决定它是「点」还是「线」—— 两者都记在读数面板。": " decides whether it is a “point” or a “line” — both are recorded in the readout panel.",
+  "最下面那条是能带轮廓，只为了跟正上方的电场热图逐点对齐（读「场最陡处能带最陡」）；带能量刻度、费米能级与 ": "The bottom strip is the band profile, drawn only to line up point by point with the field heat map right above it (read it as “where the field is steepest, the band is steepest”); the full band diagram with energy scale, Fermi level and the ",
+  " 尺寸线的完整能带图在模块二。": " dimension line lives in Module 2.",
+  "右栏两条曲线共用同一个关态漏电地板，所以比的是斜率与高度本身：斜率钉死在 ": "Both curves in the right panel share the same off-state leakage floor, so what is compared is slope and height themselves: the slope is pinned at ",
+  " mV/dec，再怎么缩尺寸也动不了；绿色实线刚开启时斜率可以远陡于它，但电流往上走一段就迅速变缓 —— TFET 陡是陡在「刚开的那一段」，不是整条曲线。": " mV/dec and no amount of scaling can move it; the green solid line can be far steeper right at turn-on, but once the current climbs a bit it quickly flattens — the TFET is steep only over “the stretch just after turn-on”, not over the whole curve.",
+  "势垒按三角势垒近似（场取耗尽近似给出的峰值并视为常量），它正是 ": "The barrier is treated as a triangular barrier (the field is taken as the depletion-approximation peak value and held constant), which is exactly the shape behind ",
+  " 所对应的那个形状。": " .",
+  "于是 ": "So ",
+  " 与 ": " and ",
+  " 之间在任何能量上的水平距离都是同一个值 ": " the horizontal distance between them at any energy is the same value ",
+  "，图上用双箭头标了出来。": ", marked in the figure with a double arrow.",
+  "窗口上沿卡在源端价带顶（能量 0），下沿是沟道导带底，高度就是读数里的 ΔE。": "The upper edge of the window sits at the source valence-band top (energy 0), the lower edge is the channel conduction-band bottom, and its height is the ΔE in the readouts.",
+  "右栏是同一个能量轴上的电流谱：供给函数（源价带占据）在能量 0 以下恒为 1，是一道": "The right panel is the current spectrum on the same energy axis: the supply function (source valence-band occupancy) is 1 everywhere below energy 0, so it is a",
+  "硬边": "hard edge",
+  "；乘上处处相同的 ": "; multiplied by the everywhere-identical ",
+  " 之后，窗口内就是一条": " , inside the window it becomes a",
+  "平顶": "flat top",
+  " —— 高度由场强定、宽度由栅压定，两处都不含 ": " — its height is set by the field and its width by the gate voltage, and neither contains ",
+  "，这正是 SS 能压到 60 mV/dec 以下的原因。": ", which is exactly why SS can be pushed below 60 mV/dec.",
+  "切到「热发射」可以对照 MOSFET 的开门方式：那边是热尾翻势垒（电流谱是一条被 kT 锁死的斜线），这边是冷电子直接穿禁带。": "Switch to “Thermionic emission” to contrast with how a MOSFET opens the gate: there the thermal tail climbs over the barrier (the current spectrum is a straight line locked by kT), here cold electrons cross the gap directly.",
+  "栅控与能带": "Gate control and bands",
+  "栅控效率 η": "Gate-control efficiency η",
+  "源结内建电势 ": "Source junction built-in Vbi ",
+  "/2q，掺杂决定）": "/2q, set by the doping)",
+  "沟道电势 ψ": "Channel potential ψ",
+  "能带弯曲 qψ": "Band bending qψ",
+  "隧穿窗口 ΔE": "Tunneling window ΔE",
+  "隧穿": "Tunneling",
+  " 有效质量": " effective mass",
+  "源结峰值电场 ": "Source junction peak field ",
+  "隧穿宽度 ": "Tunneling width ",
+  "WKB 指数 / 透射率": "WKB exponent / transmission",
+  "隧穿长度 ": "Tunneling length ",
+  "隧穿类型": "Tunneling type",
+  "点隧穿 PTBT": "Point tunneling PTBT",
+  "器件": "Device",
+  "漏极电流 ": "Drain current ",
+  "同栅压 MOSFET ": "MOSFET at same gate voltage ",
+  "亚阈值摆幅 SS（本点）": "Subthreshold swing SS (this point)",
+  "中间量": "Intermediate quantities",
+  " 与理想 SS": " and ideal SS",
+  "开启栅压 ": "Turn-on gate voltage ",
+  "（窗口刚开）": "(window just open)",
+  "栅特征长度 ": "Gate characteristic length ",
+  "结区宽度 ": "Junction region width ",
+  "漏结电场 ": "Drain junction field ",
+  "（来自 ": "(from ",
+  "本模型最陡 SS": "Steepest SS in this model",
+  " mV/dec（峰值栅压 ": " mV/dec (peak gate voltage ",
+  "开关比 ": "On/off ratio ",
+  "模型边界": "Model limits",
+  "电流幅值": "Current magnitude",
+  "，前因子按 Si 参考点标定到实测 Si TFET 量级；绝对量只看量级，看趋势": ", prefactor calibrated at the Si reference point to the measured Si TFET level; read absolute values as order of magnitude only, look at the trend",
+  "结区静电": "Junction electrostatics",
+  "势垒按三角势垒近似（场取耗尽近似峰值并视为常量）": "Barrier treated as triangular (field taken as the depletion-approximation peak value and held constant)",
+  "介电常数": "Dielectric constant",
+  "换材料时沟道介电常数仍取 Si 的 11.7": "When the material changes, the channel dielectric constant is still taken as Si’s 11.7",
+  "源区掺杂": "Source doping",
+  "按简并极限处理（": "Treated in the degenerate limit (",
+  " 贴住价带顶），沟道按本征处理（": " pinned to the valence-band top), the channel treated as intrinsic (",
+  " 在禁带中央）⇒ ": " in mid-gap) ⇒ ",
+  "栅压量程内 ψ 恒 > 0": "ψ stays > 0 over the whole gate-voltage range",
+  "三种材料 × 三档栅叠层下 ψ 最小值仍为正，模型不进入积累区": "For the three materials × three gate stacks the minimum of ψ is still positive, so the model never enters accumulation",
+  "栅叠层取值": "Gate stack values",
+  "（三档离散）": "(three discrete options)",
+  "温度": "Temperature",
+  "一律 300 K；不展开变温与双极性漏电": "Always 300 K; variable temperature and ambipolar leakage are not covered",
+  "器件剖面与隧穿窗口": "Device cross section and tunneling window",
+  "转移特性 ": "Transfer characteristics ",
+  "栅极 G": "Gate G",
+  "栅氧": "Gate oxide",
+  "I 沟道": "I channel",
+  "电场强度 |E(x)|": "Field strength |E(x)|",
+  "能带轮廓": "Band profile",
+  "沿沟道方向 x": "Position x along the channel",
+  "斜率参考（每十进位）：灰 ": "Slope reference (per decade): gray ",
+  " ／ 绿 ": " / green ",
+  "MOSFET（理想 60 mV/dec）": "MOSFET (ideal 60 mV/dec)",
+  "源 ": "Source ",
+  "漏 ": "Drain ",
+  "源结（隧穿结）": "Source junction (tunnel junction)",
+  " 源": " source",
+  " 漏": " drain",
+  "（点隧穿）": "(point tunneling)",
+  "电流谱：供给 × 透射（横轴对数）": "Current spectrum: supply × transmission (log horizontal axis)",
+  "← 每格一个十进位 →": "← one decade per division →",
+  "源价带占据（硬边）": "Source valence-band occupancy (hard edge)",
+  "热尾（这边用不上）": "Thermal tail (not used here)",
+  "电流谱（平顶）": "Current spectrum (flat top)",
+  "窗口 ΔE = ": "Window ΔE = ",
+  "供给是硬边不是热尾 ⇒ 没有 60 mV/dec 这道墙": "The supply is a hard edge, not a thermal tail ⇒ there is no 60 mV/dec wall",
+  "本工具是 EIT-SP（半导体物理交互式教学工具箱）的一部分（武汉大学物理学院《半导体物理》智慧课程），以 MIT 协议开源，可自由使用与二次开发；转载请保留出处。反馈意见 ": "This tool is part of EIT-SP (Interactive Toolkit for Semiconductor Physics), a smart-course resource of the School of Physics and Technology, Wuhan University (Semiconductor Physics). It is open source under the MIT license and free to use and modify; please keep the attribution when redistributing. Feedback ",
+  "热发射": "Thermionic emission",
+  "Si 参考点": "Si reference point",
+  "Ge 窄带隙": "Ge narrow gap",
+  "InAs 强隧穿": "InAs strong tunneling",
+  "刚开启": "Just turned on",
+  "低漏压": "Low drain voltage",
+  "1. 切到模块二的「热发射」视图，盯住源端那支玻尔兹曼热尾：为什么电流随栅压指数增长？60 mV/dec 这个数字到底由哪些物理常数决定，和材料、和器件尺寸有没有关系？": "1. Switch to the “Thermionic emission” view in Module 2 and watch the Boltzmann tail at the source: why does the current grow exponentially with gate voltage? Which physical constants actually determine the number 60 mV/dec, and does it depend on the material or on the device size?",
+  "看看答案": "Show answer",
+  "2. 回到模块二的「带间隧穿」视图，把栅压从 0 慢慢加上去：能带什么时候开始重叠？绿色窗口刚出现的那一瞬间，电流是多少、SS 是多少？栅压继续往上加，SS 会一直这么陡吗？": "2. Back in the “Band-to-band tunneling” view of Module 2, raise the gate voltage slowly from 0: when do the bands start to overlap? At the instant the green window first appears, what are the current and SS? Keep raising the gate voltage — does SS stay that steep?",
+  "3. 固定栅压不变，把材料从 Si（1.12 eV）换成 Ge（0.66 eV）、InAs（0.35 eV）。WKB 指数和透射率各变了多少倍？为什么窄带隙能换来大得多的开态电流，代价又是什么？": "3. Hold the gate voltage fixed and change the material from Si (1.12 eV) to Ge (0.66 eV) and InAs (0.35 eV). By what factor do the WKB exponent and the transmission change? Why does a narrow gap buy so much more on-state current, and what is the price?",
+  "4. 在模块一盯住结面那条绿色的隧穿线：栅压较低时它是「点」还是「线」？把栅压加上去呢？隧穿面积变大为什么能把开态电流顶上去，却救不了亚阈值摆幅？": "4. In Module 1, watch the green tunneling line at the junction: at low gate voltage is it a “point” or a “line”? What happens when you raise the gate voltage? Why does a larger tunneling area push the on-state current up yet cannot rescue the subthreshold swing?",
+  "5. 看模块一右栏的两条转移曲线：TFET 更陡，但最高电流低得多。如果让你设计下一代低功耗芯片，你会怎么在「低漏电」和「大电流」之间取舍？": "5. Look at the two transfer curves in the right panel of Module 1: the TFET is steeper, but its peak current is much lower. If you were designing the next generation of low-power chips, how would you trade “low leakage” against “high current”?",
+  "电流来自热尾里": "Of the electrons in the thermal tail, the current comes from",
+  "能量高过势垒的那一小撮": "the handful whose energy clears the barrier",
+  "电子，它占比 ": "; their share is ",
+  "。栅压每加 Δ": ". Every time the gate voltage rises by Δ",
+  "，势垒降 ": ", the barrier drops by ",
+  "，这一小撮就放大 ": ", and this handful is magnified by ",
+  " 倍 —— 指数增长就是这么来的。": " — that is where the exponential growth comes from.",
+  "换一个十进位要 ": "One more decade needs ",
+  "，即 ": ", i.e. ",
+  "式子里只有 ": "The expression contains only ",
+  "与材料、与几何一概无关": "independent of material and geometry altogether",
+  "，所以它是硬性的热力学极限，缩尺寸动不了它。真要把温度降到 100 K，": ", so it is a hard thermodynamic limit that no scaling can move. If you really cool the device to 100 K,",
+  " 变成 ": " becomes ",
+  " mV/dec —— 但芯片不能靠泡液氮工作。": " mV/dec — but chips cannot run immersed in liquid nitrogen.",
+  "真实 MOSFET 还要再乘一个体因子 ": "A real MOSFET picks up one more body factor ",
+  "，所以实测往往是 70～90 mV/dec；本工具画的是理想栅控下的那条极限线。": ", so measurements typically land at 70–90 mV/dec; this tool draws the limit line for ideal gate control.",
+  "窗口开启的条件是沟道电势把导带压到源端价带之下：": "The window opens when the channel potential pushes the conduction band below the source valence band:",
+  "，换算成栅压是 ": ", which in gate voltage is ",
+  " V（本工具当前栅控效率 η = ": " V (current gate-control efficiency η = ",
+  "刚过阈值 0.02 V 处：Δ": "Just 0.02 V past threshold: Δ",
+  " 只有 ": " is only ",
+  " eV，电流 ": " eV, current ",
+  " mV/dec —— 确实比 60 陡。": " mV/dec — genuinely steeper than 60.",
+  "但再往上加 0.30 V：SS 变成 ": "But push another 0.30 V and SS becomes ",
+  " mV/dec。原因是刚开启时 Δ": " mV/dec. The reason is that right at turn-on Δ",
+  " 与隧穿长度 ": " and the tunneling length ",
+  " 都从 0 起步，对数增长极快；窗口一宽，这两个因子的对数导数就塌下来，只剩 WKB 指数在撑，斜率于是迅速变缓。": " both start from zero and grow logarithmically very fast; once the window widens, the log derivatives of these two factors collapse and only the WKB exponent is left to carry it, so the slope quickly flattens.",
+  "所以 TFET 的“陡”是有电流区间的": "So the TFET’s “steepness” belongs to a current range",
+  "：陡在刚开启的头一两个十进位，不是整条转移曲线。这也正是文献里 TFET 的 SS 必须标明「在哪一段电流上测」的原因。": ": it is steep over the first one or two decades after turn-on, not over the whole transfer curve. That is why the literature always has to state over which current range the TFET’s SS was measured.",
+  "三个材料的 WKB 指数（越小越容易穿）：Si ": "WKB exponents of the three materials (smaller means easier to cross): Si ",
+  "；透射率 ": "; transmission ",
+  "，即从 Si 到 InAs 放大约 ": ", i.e. from Si to InAs it grows by about ",
+  " 倍。": " times.",
+  "关键在于指数里是 ": "The key point is that the exponent contains ",
+  " 而不是 ": " rather than ",
+  "：带隙减半，指数里的分子降到 ": ": halving the gap drops the numerator inside the exponent to ",
+  " ≈ 0.35，而指数外面是负号 ⇒ 透射率是": " ≈ 0.35, and the sign in front of the exponent is negative ⇒ the transmission climbs",
+  "指数级的指数": "as an exponential of an exponential",
+  "级上涨。再叠上窄带隙材料通常更小 ": ". On top of that, narrow-gap materials usually have a smaller ",
+  "（InAs 0.023 对 Si 0.20），收益还要再乘一道。": "(InAs 0.023 versus Si 0.20), so the gain is multiplied once more.",
+  "同一栅压下三个材料的电流：": "Currents of the three materials at the same gate voltage:",
+  "代价：带隙窄 ⇒ 关态下的带间隧穿压不住、双极性漏电上来，器件": "The price: a narrow gap ⇒ band-to-band tunneling cannot be held back in the off state, ambipolar leakage rises, and the device",
+  "关不断": "cannot be turned off",
+  "；而且窄带隙材料往往界面缺陷多、栅控更差。所以「窄带隙换大电流」不是免费的 —— 漏电与 ": "; narrow-gap materials also tend to have more interface defects and worse gate control. So “trading gap for current” is not free — leakage and ",
+  " 是同一枚硬币的两面。": " are two sides of the same coin.",
+  "本工具里隧穿线的长度按栅控向体内的指数衰减算出：": "In this tool the length of the tunneling line is computed from the exponential decay of gate control into the body:",
+  "，最多铺满整个体厚。": ", at most filling the whole body thickness.",
+  "刚开启 ": "Just above threshold (+ ",
+  " 时：": " ):",
+  " nm（点隧穿），电流 ": " nm (point tunneling), current ",
+  " µA/µm；再加 ": " µA/µm; raise by another (+ ",
+  " nm（线隧穿），电流 ": " nm (line tunneling), current ",
+  "面积确实把电流顶上去了，但注意它是": "The area does push the current up, but note that it grows",
+  "对数": "logarithmically",
+  "增长：栅压翻几倍，": ": multiply the gate voltage several-fold and",
+  " 只从零点几 nm 长到几个 nm。而 SS 的分子是 ": " only grows from a few tenths of a nm to a few nm. The numerator of SS is ",
+  "、分母是 ": " and its denominator is ",
+  "，对数项对斜率的贡献 ": ", and the logarithmic term’s contribution to the slope, ",
+  " 会随 ": " , is quickly diluted as ",
+  " 增大而迅速摊薄。": " grows.",
+  "结论：面积救 ": "Conclusion: area saves ",
+  "，指数救 SS": ", the exponent saves SS",
+  "，两者不是同一个因子。真想在结构上放大面积，得让隧穿方向顺着栅场走（栅与源交叠的线隧穿结构），那样面积由几何一次给出，不必靠加大栅压慢慢长出来。": " — they are not the same factor. To really enlarge the area structurally, the tunneling direction has to follow the gate field (a line-tunneling structure where gate and source overlap); then the area is set by geometry in one step instead of growing slowly with gate voltage.",
+  "本工具当前参数下：TFET 在 ": "With the current parameters of this tool: the TFET at ",
+  " 时 ": " gives ",
+  " µA/µm，参考 MOSFET 是 ": " µA/µm, while the reference MOSFET gives ",
+  " µA/µm —— 差 ": " µA/µm — a factor of ",
+  " 倍，这是 TFET 的短板。": " lower, which is the TFET’s weak point.",
+  "在两条曲线都够得到的 10": "Over the 10",
+  " µA/µm（超低功耗真正用得上的电流区）上比斜率：MOSFET 恒为 ": " µA/µm that both curves can reach (the current region that really matters for ultra-low power), compare the slopes: the MOSFET stays at ",
+  " mV/dec，TFET 是 ": " mV/dec, the TFET is ",
+  " mV/dec（它最陡还到过 ": " mV/dec (its steepest point even reaches ",
+  " mV/dec）—— 这是 TFET 的长项。": " mV/dec) — this is the TFET’s strength.",
+  "但“陡”不等于“省电压”。": "But “steep” does not mean “lower supply voltage”.",
+  "爬到同一个 10": "Climbing to the same 10",
+  " µA/µm，MOSFET 用 ": " µA/µm, the MOSFET needs ",
+  " V，TFET 反而要 ": " V, while the TFET needs ",
+  " V：因为它的开启电压更高（": " V: because its turn-on voltage is higher (",
+  " 高达 ": " is as high as ",
+  "，栅压要先补上内建电势之外的半个 ": ", the gate voltage must first make up the half of ",
+  "）。真要降 ": " beyond the built-in potential). To really cut ",
+  "，得把阈值一起压下来 —— 光有陡的斜率不够。": ", the threshold has to come down as well — a steep slope alone is not enough.",
+  "取舍因此是分场景的：": "The trade-off is therefore scenario-dependent:",
+  "动态功耗 ∝ ": "Dynamic power ∝ ",
+  "，电压降下来是平方级收益；而漏电按关态电流×时间算，斜率陡的器件能在更低的关态下保住同样的开关比。": ", so lowering the voltage pays off quadratically; leakage goes as off-state current × time, so a steeper device can hold the same on/off ratio at a lower off-state current.",
+  "代价是速度。": "The price is speed.",
+  "驱动电流小 ⇒ 给负载电容充电慢，频率上不去。所以：": "A small drive current ⇒ slow charging of the load capacitance, so the frequency cannot go up. Hence:",
+  "· 物联网传感器、可穿戴、常开常听的模块 —— 大部分时间待机、只偶尔算一下 ⇒ ": "· IoT sensors, wearables, always-on listening modules — standing by most of the time and computing only occasionally ⇒ ",
+  "TFET 更合适": "the TFET fits better",
+  "· 服务器 CPU、GPU 这类一直在满载跑的算力核心 ⇒ 还是 ": "· Server CPUs, GPUs and other compute cores that run at full load all the time ⇒ still ",
+  "工程上常见的折中是": "The common engineering compromise is",
+  "异质集成": "heterogeneous integration",
+  "：同一块芯片上，算力核用 MOSFET，常开的电源管理与传感前端用 TFET。": ": on the same chip, compute cores use MOSFETs while the always-on power management and sensing front ends use TFETs.",
+  "还有一条别忘：本模型里 TFET 只在最初一两个十进位上陡，做电路设计时必须按「哪一段电流」来用，而不是拿一个 SS 数字当全部。": "One more thing not to forget: in this model the TFET is steep only over the first one or two decades, so circuit design has to use it per “which current range”, rather than taking a single SS number as the whole story.",
+  "线隧穿 LTBT": "Line tunneling LTBT",
+  "（线隧穿）": "(line tunneling)",
+  "已被漏端填满": "Already filled by the drain",
+  "自定义": "Custom",
+  "导带还在价带之上 ⇒ 隧穿窗口未开": "Conduction band still above the valence band ⇒ tunneling window not open",
+  "栅压还不够：导带底仍在源端价带顶之上，禁带里没有可对上的空态": "The gate voltage is still too low: the conduction-band edge is still above the source valence-band top, and there is no state inside the gap to line up with",
+  "把栅压加到 ": "Raise the gate voltage to ",
+  " V 以上才会开窗口": " V or more to open the window",
+  "窗口未开 ⇒ 没有可对上的空态，电流谱为零": "Window not open ⇒ no state to line up with, so the current spectrum is zero",
+  "还没到 ": "Still below ",
+  " V，窗口是关的。": " V — the window is closed.",
+  "。现在导带底还压在源端价带顶之上，禁带里没有能对上的空态 ⇒ 没有隧穿窗口。": ". Right now the conduction-band edge is still sitting above the source valence-band top, so there is no state in the gap to line up with ⇒ no tunneling window.",
+  "窗口还没开：把栅压加到 ": "Window not open yet: raise the gate voltage to ",
+  " V 以上，导带底才会落到源端价带顶之下。": " V or more before the conduction-band edge falls below the source valence-band top.",
+  "0（未开启）": "0 (not open)",
+  "关断（无窗口）": "Off (no window)",
+  "—（未开启）": "— (not turned on)",
+  "源端电子分布（横轴对数）": "Source electron distribution (log horizontal axis)",
+  "玻尔兹曼热尾": "Boltzmann tail",
+  "每 59.5 mV 掉一个十进位 ⇒ 高过势垒的只剩 10": "Every 59.5 mV buys one decade ⇒ those clearing the barrier are only 10",
+  "掉一个十进位": "buys one decade",
+  "高过势垒的只剩": "clearing the barrier are only",
+  "势垒已被栅压压平：器件进入开态": "Barrier already flattened by the gate voltage: the device is in its on state",
+  "沟道（势垒）": "Channel (barrier)",
+  "热发射：靠玻尔兹曼热尾翻势垒，斜率被 ": "Thermionic emission: the Boltzmann tail climbs over the barrier, and the slope is pinned by ",
+  " 钉死。（当前栅压已经把势垒压平了 —— 把栅压调到 ": " . (The present gate voltage has already flattened the barrier — set the gate voltage to ",
+  " V 以下才看得见势垒。）": " V or lower to see the barrier again.)",
+  "源端玻尔兹曼热尾": "Source Boltzmann tail",
+  "沟道热发射势垒 ": "Channel thermionic barrier ",
+  "MOSFET 靠热发射：源端电子要翻过沟道势垒，只有玻尔兹曼热尾里能量够高的那一小撮过得去，于是 ": "A MOSFET works by thermionic emission: source electrons have to climb over the channel barrier, and only the handful in the Boltzmann tail with enough energy gets across, so ",
+  "，电流就乘 ": ", and the current is multiplied by ",
+  "换一个十进位所需的栅压因此恒为 ": "The gate voltage needed for one more decade is therefore always ",
+  " mV/dec，只由温度与 ": " mV/dec, set only by the temperature and ",
+  " 决定，与材料、几何一概无关。": ", and independent of material and geometry altogether.",
+  "切回「带间隧穿」看 TFET 怎么绕开这条热尾。": "Switch back to “Band-to-band tunneling” to see how the TFET bypasses this thermal tail.",
+  "势垒顶": "Barrier top",
+  "热发射：翻过去": "Thermionic emission: climbing over",
+  " 钉死。": " .",
+};
+(function () {
+  if (typeof CanvasRenderingContext2D === "undefined") return;
+  var ft = CanvasRenderingContext2D.prototype.fillText;
+  CanvasRenderingContext2D.prototype.fillText = function (s, x, y) {
+    if (typeof s === "string") arguments[0] = T(s);
+    return ft.apply(this, arguments);
+  };
+  /* 描边文字（白边包字）走 strokeText，同样要过 T()，否则画布标签漏翻 */
+  var stx = CanvasRenderingContext2D.prototype.strokeText;
+  CanvasRenderingContext2D.prototype.strokeText = function (s, x, y) {
+    if (typeof s === "string") arguments[0] = T(s);
+    return stx.apply(this, arguments);
+  };
+  var mt = CanvasRenderingContext2D.prototype.measureText;
+  CanvasRenderingContext2D.prototype.measureText = function (s) {
+    return mt.call(this, typeof s === "string" ? T(s) : s);
+  };
+})();
+
+/* 注入点④：逐字绘制的画布串。drawMath 一类把中文按单字拆成 token 再逐个 fillText，
+   T() 每次只见到一个汉字 ⇒ 整句词条永远命中不了。这里在整串进入分词之前先整体翻译，
+   于是画布标注也走「整句优先」，与 DOM 同一个口径。没有这些函数的工具自动跳过。
+   ⚠️ 签名坑：drawMath / measureMath 的第一个参数是 canvas context（对象），文本在第
+   二位；早期版本照着 arguments[0] 翻，等于把 context 送去 T()，补丁全程空转。
+   这里改为「找到第一个含中文的字符串参数」再翻，既躲开 context，也不会误伤
+   align / weight 之类以英文字符串传的选项。 */
+(function () {
+  ["drawMath", "drawMathHalo", "measureMath"].forEach(function (n) {
+    var f = window[n];
+    if (typeof f !== "function") return;
+    window[n] = function () {
+      for (var i = 0; i < arguments.length; i++) {
+        if (typeof arguments[i] === "string" && /[\u3400-\u9FFF]/.test(arguments[i])) {
+          arguments[i] = T(arguments[i]);
+          break;
+        }
+      }
+      return f.apply(this, arguments);
+    };
+  });
+})();
+
+
+/* ---- DOM 文本节点 ---- */
+function i18nNode(n) {
+  var el = n.parentElement;
+  if (!el) return;
+  var tag = el.tagName;
+  if (tag === "SCRIPT" || tag === "STYLE") return;
+  if (el.closest && el.closest("[data-noi18n]")) return;
+  var cur = n.nodeValue;
+  if (n.__orig === undefined || (cur !== n.__last && cur !== n.__orig)) n.__orig = cur;
+  var want = LANG === "en" ? T(n.__orig) : n.__orig;
+  if (want !== cur) n.nodeValue = want;
+  n.__last = want;
+}
+/* 属性（title / placeholder / optgroup label …）不是文本节点，MutationObserver 覆盖不到，
+   必须单独过一遍：否则悬停提示、下拉分组名会残留中文。原文缓存在元素 expando 上，
+   切回中文时原样写回。改属性不会触发 childList/characterData 观察器，不会递归。 */
+var I18N_ATTRS = ["title", "placeholder", "aria-label", "alt", "label"];
+function i18nAttrs(root) {
+  var els = [root], i, j;
+  if (root.querySelectorAll) els = els.concat(Array.prototype.slice.call(root.querySelectorAll("*")));
+  for (i = 0; i < els.length; i++) {
+    var el = els[i];
+    if (!el.getAttribute) continue;
+    if (el.closest && el.closest("[data-noi18n]")) continue;
+    for (j = 0; j < I18N_ATTRS.length; j++) {
+      var a = I18N_ATTRS[j];
+      if (!el.hasAttribute(a)) continue;
+      var key = "__a_" + a;
+      if (el[key] === undefined) el[key] = el.getAttribute(a);
+      var want = LANG === "en" ? T(el[key]) : el[key];
+      if (want !== el.getAttribute(a)) el.setAttribute(a, want);
+    }
+  }
+}
+function i18nWalk(root) {
+  var w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null, false), n, c = 0;
+  while ((n = w.nextNode())) { i18nNode(n); c++; }
+  i18nAttrs(root);
+  return c;
+}
+var _i18nBusy = false;
+function i18nWatch() {
+  if (typeof MutationObserver === "undefined") return;
+  var mo = new MutationObserver(function (ms) {
+    if (_i18nBusy) return;
+    _i18nBusy = true;
+    try {
+      for (var i = 0; i < ms.length; i++) {
+        var m = ms[i];
+        if (m.type === "childList") {
+          for (var j = 0; j < m.addedNodes.length; j++) {
+            var nd = m.addedNodes[j];
+            if (nd.nodeType === 3) i18nNode(nd);
+            else if (nd.nodeType === 1) i18nWalk(nd);
+          }
+        } else if (m.type === "characterData") i18nNode(m.target);
+      }
+    } finally { _i18nBusy = false; }
+  });
+  mo.observe(document.body, { childList: true, subtree: true, characterData: true });
+}
+function setLang(l) {
+  LANG = l;
+  try { localStorage.setItem("opl_lang", l); } catch (e) { }
+  document.documentElement.lang = l === "en" ? "en" : "zh-CN";
+  var btn = document.getElementById("langBtn");
+  if (btn) btn.textContent = l === "en" ? "中文" : "EN";
+  document.title = l === "en" ? T(ORIG_TITLE) : ORIG_TITLE;
+  i18nWalk(document.body);
+  if (typeof syncInputs === "function") syncInputs();
+  if (typeof render === "function") render();
+}
+
+/* ---------------- HTML 侧自动 LaTeX 排版 ----------------
+   读数 / 说明 / 按钮名里由 JS 拼出来的 cm⁻³、E_c、2.5e+8，
+   在写进 innerHTML 之前转成真 <sup>/<sub>；标签与属性原样放过（title 不会被塞进尖括号）。
+   与画布侧 AUTO() 对偶，保证网页和画布按同一套规则排版。 */
+const AUTOH_SUP = { "⁰": "0", "¹": "1", "²": "2", "³": "3", "⁴": "4", "⁵": "5", "⁶": "6",
+  "⁷": "7", "⁸": "8", "⁹": "9", "⁺": "+", "⁻": "−", "⁼": "=", "⁽": "(", "⁾": ")", "ⁿ": "n", "ⁱ": "i" };
+const AUTOH_SUB = { "₀": "0", "₁": "1", "₂": "2", "₃": "3", "₄": "4", "₅": "5", "₆": "6",
+  "₇": "7", "₈": "8", "₉": "9", "₊": "+", "₋": "−", "₌": "=", "₍": "(", "₎": ")",
+  "ₐ": "a", "ₑ": "e", "ₒ": "o", "ₓ": "x", "ₔ": "ə", "ₕ": "h", "ₖ": "k", "ₗ": "l",
+  "ₘ": "m", "ₙ": "n", "ₚ": "p", "ₛ": "s", "ₜ": "t", "ᵣ": "r", "ᵤ": "u", "ᵥ": "v" };
+const TEXH_NEED = /[\u2070-\u209C\u00B2\u00B3\u00B9]|_\{?[A-Za-z0-9\u0370-\u03ff]|\^\{?[\d(\-]|\d(\.\d+)?[eE][+\-]\d|\u221A/;
+/* 从 i 处（必须是 '<'）扫出一个"完整元素"的结束下标（含嵌套），失败返回 -1 */
+function TEXH_elemEnd(h, i) {
+  if (h.charAt(i) !== "<") return -1;
+  let depth = 0, j = i, guard = 0;
+  while (j < h.length && guard++ < 4000) {
+    if (h.charAt(j) !== "<") { j++; continue; }
+    const e = TEXH_tagEnd(h, j);
+    if (e < 0) return -1;
+    const isClose = h.charAt(j + 1) === "/";
+    const selfClose = h.charAt(e - 2) === "/";
+    if (isClose) { depth--; j = e; if (depth <= 0) return j; }
+    else if (selfClose) { j = e; if (depth === 0) return j; }
+    else { depth++; j = e; }
+  }
+  return -1;
+}
+/* √ 后面直接跟一个元素：√<i>E</i> → √‾E（前两条规则只吃 √(A) 与 √字母串） */
+function TEXHsqrtElem(s) {
+  let out = "", i = 0, guard = 0;
+  while (guard++ < 400) {
+    const k = s.indexOf("\u221A", i);
+    if (k < 0) break;
+    out += s.slice(i, k);
+    /* 守卫：√ 后面已是闭标签 ⇒ 该 √ 已排版过（对整段 HTML 重复跑 TEXH 会把 </span> 当成被开方式，
+       层层包出空壳根号，视觉上变成 √−3 / √−E），原样输出不再包裹 */
+    if (s.charAt(k + 1) === "<" && s.charAt(k + 2) === "/") { out += "\u221A"; i = k + 1; continue; }
+    let rad = null, end = k + 1;
+    if (s.charAt(k + 1) === "(") {
+      /* √(…) ：被开方式里常有标签，括号本身不在同一个文本片段里，必须整串扫 */
+      let depth = 0, p = k + 1;
+      while (p < s.length) {
+        const c = s.charAt(p);
+        if (c === "(") depth++;
+        else if (c === ")") { depth--; if (depth === 0) { rad = s.slice(k + 2, p); end = p + 1; break; } }
+        p++;
+      }
+    } else {
+      const e = TEXH_elemEnd(s, k + 1);
+      if (e > 0 && e - k < 500) { rad = s.slice(k + 1, e); end = e; }
+    }
+    if (rad !== null && rad.length) {
+      out += "<span class=\"sqrt\"><span class=\"rd\">\u221A</span><span class=\"rdc\">" + rad + "</span></span>";
+      i = end;
+    } else { out += "\u221A"; i = k + 1; }
+  }
+  return out + s.slice(i);
+}
+function TEXHpart(t) {
+  let s = t;
+  /* 根号：√ 或 √(A) → <span class="sqrt">√<span class="rd"><span class="rdc">A</span></span></span>（A 内不含嵌套括号） */
+  s = s.replace(/<span class="(?:op|rm|fn|v|u)">\u221A<\/span>/g, "\u221A");
+  s = s.replace(/\u221A<span class="(?:op|rm)">\(<\/span>([^()]{1,120}?)<span class="(?:op|rm)">\)<\/span>/g, function (m, a) {
+    return "<span class=\"sqrt\"><span class=\"rd\">\u221A</span><span class=\"rdc\">" + a + "</span></span>";
+  });
+  s = s.replace(/\u221A\(([^()]{1,120})\)/g, function (m, a) {
+    return "<span class=\"sqrt\"><span class=\"rd\">\u221A</span><span class=\"rdc\">" + a + "</span></span>";
+  });
+  s = s.replace(/\u221A([A-Za-z0-9\u0370-\u03ff]{1,6})/g, function (m, a) {
+    return "<span class=\"sqrt\"><span class=\"rd\">\u221A</span><span class=\"rdc\">" + a + "</span></span>";
+  });
+  s = s.replace(/(\d(?:\.\d+)?)e([+-])(\d+)/g, function (m, a, sg, e) {
+    return a + "\u00d710<sup>" + (sg === "-" ? "\u2212" : "") + e + "</sup>";
+  });
+  s = s.replace(/([A-Za-z\u0370-\u03ff)\]])\^\{([^{}]{1,12})\}/g, "$1<sup>$2</sup>");
+  s = s.replace(/([A-Za-z\u0370-\u03ff)\]])\^(\d+(?:\.\d+)?)/g, "$1<sup>$2</sup>");
+  s = s.replace(/([A-Za-z\u0370-\u03ff])_\{([A-Za-z0-9\u0370-\u03ff+\-]{1,8})\}/g, "<span class='m'><i>$1</i><sub>$2</sub></span>");
+  s = s.replace(/([A-Za-z\u0370-\u03ff])_([A-Za-z0-9\u0370-\u03ff]{1,6})(?![A-Za-z0-9])/g, "<span class='m'><i>$1</i><sub>$2</sub></span>");
+  if (/[\u2070-\u209C\u00B2\u00B3\u00B9]/.test(s)) {
+    let out = "", i = 0;
+    while (i < s.length) {
+      const ch = s[i];
+      if (AUTOH_SUP[ch] !== undefined || AUTOH_SUB[ch] !== undefined) {
+        const isSup = AUTOH_SUP[ch] !== undefined, tab = isSup ? AUTOH_SUP : AUTOH_SUB;
+        let j = i, buf = "";
+        while (j < s.length && (isSup ? AUTOH_SUP[s[j]] !== undefined : AUTOH_SUB[s[j]] !== undefined)) {
+          buf += tab[s[j]]; j++;
+        }
+        out += "<" + (isSup ? "sup" : "sub") + ">" + buf + "</" + (isSup ? "sup" : "sub") + ">";
+        i = j;
+      } else { out += ch; i++; }
+    }
+    s = out;
+  }
+  return s.indexOf("\u221A") >= 0 ? TEXHsqrtElem(s) : s;
+}
+/* 只有真正的标签才整段跳过：正文里裸写的 '<'（如 "t₂ < 0"）必须当普通字符，
+   否则 indexOf('>') 会一路吞掉后面整段，E₂⁰ 这类记法就漏排了。 */
+function TEXH_tagEnd(h, i) {
+  if (h.charAt(i) !== "<") return -1;
+  const c = h.charAt(i + 1);
+  if (c === "!" || c === "/") { const j = h.indexOf(">", i); return (j >= 0 && j - i < 300) ? j + 1 : -1; }
+  if (!/[A-Za-z]/.test(c)) return -1;
+  let j = i + 1;
+  while (j < h.length && /[A-Za-z0-9]/.test(h.charAt(j))) j++;
+  if (j === i + 1) return -1;
+  if (h.charAt(j) === ">") return j + 1;
+  if (h.charAt(j) !== " " && h.charAt(j) !== "\n" && h.charAt(j) !== "\t") return -1;
+  const g = h.indexOf(">", j), nx = h.indexOf("<", j);
+  if (g < 0 || g - i > 300) return -1;
+  if (nx >= 0 && nx < g) return -1;
+  return g + 1;
+}
+function TEXH(h) {
+  if (typeof h !== "string" || !TEXH_NEED.test(h)) return h;
+  if (h.indexOf("\u221A") >= 0) h = h.replace(/<span class="(?:op|rm|fn|v|u)">\u221A<\/span>/g, "\u221A");
+  if (h.indexOf("<") < 0) return TEXHpart(h);
+  let out = "", i = 0, n = h.length, guard = 0;
+  while (i < n && guard++ < 40000) {
+    const e = TEXH_tagEnd(h, i);
+    if (e > 0) { out += h.slice(i, e); i = e; continue; }
+    let j = i;
+    while (j < n && TEXH_tagEnd(h, j) <= 0) j++;
+    out += TEXHpart(h.slice(i, j)); i = j;
+  }
+  const r = out + h.slice(i);
+  return r.indexOf("\u221A") >= 0 ? TEXHsqrtElem(r) : r;
+}
+(function hookHTML() {
+  if (window.__TEXH_HOOK) return; window.__TEXH_HOOK = 1;
+  const d = Object.getOwnPropertyDescriptor(Element.prototype, "innerHTML");
+  if (!d || !d.set) return;
+  Object.defineProperty(Element.prototype, "innerHTML", {
+    configurable: true, get: d.get,
+    set: function (v) { d.set.call(this, typeof v === "string" ? TEXH(v) : v); }
+  });
+  /* insertAdjacentHTML 也会被用到 */
+  const ia = Element.prototype.insertAdjacentHTML;
+  Element.prototype.insertAdjacentHTML = function (pos, v) {
+    return ia.call(this, pos, typeof v === "string" ? TEXH(v) : v);
+  };
+})();
+
+/* ---------------- 画布自动 LaTeX 排版（原型挂钩版） ----------------
+   这些老工具直接调用 g.fillText()，这里统一在绘制前把
+     cm⁻³ / ω₀      → 真上/下标（单位与描述符保持正体）
+     E_c / v_th / k → 主符号斜体 + 正体下标
+     X^{−3}          → 真上标
+     2.5e+8          → 2.5×10⁸
+   拆成分段绘制；measureText 同步返回分段宽度，白底标签框长度自动跟着变。 */
+const AUTO_SUP = { "⁰": "0", "¹": "1", "²": "2", "³": "3", "⁴": "4", "⁵": "5", "⁶": "6",
+  "⁷": "7", "⁸": "8", "⁹": "9", "⁺": "+", "⁻": "−", "⁼": "=", "⁽": "(", "⁾": ")", "ⁿ": "n", "ⁱ": "i" };
+const AUTO_SUB = { "₀": "0", "₁": "1", "₂": "2", "₃": "3", "₄": "4", "₅": "5", "₆": "6",
+  "₇": "7", "₈": "8", "₉": "9", "₊": "+", "₋": "−", "₌": "=", "₍": "(", "₎": ")",
+  "ₐ": "a", "ₑ": "e", "ₒ": "o", "ₓ": "x", "ₔ": "ə", "ₕ": "h", "ₖ": "k", "ₗ": "l",
+  "ₘ": "m", "ₙ": "n", "ₚ": "p", "ₛ": "s", "ₜ": "t", "ᵣ": "r", "ᵤ": "u", "ᵥ": "v" };
+const NEED_MATH = /[\u2070-\u209C\u00B2\u00B3\u00B9]|_\{?[A-Za-z0-9\u0370-\u03ff]|\^\{?[\d(\-]|\d(\.\d+)?[eE][+\-]\d/;
+function AUTO(s) {
+  const out = []; let buf = "", mode = 0;
+  const emit = (t, kind) => {
+    if (!t) return;
+    if (kind === 1) out.push({ s: t, sup: true });
+    else if (kind === -1) out.push({ s: t, sub: true });
+    else out.push({ s: t });
+  };
+  let i = 0;
+  while (i < s.length) {
+    const ch = s[i];
+    if (AUTO_SUP[ch] !== undefined) { if (mode !== 1) { emit(buf, mode); buf = ""; mode = 1; } buf += AUTO_SUP[ch]; i++; continue; }
+    if (AUTO_SUB[ch] !== undefined) { if (mode !== -1) { emit(buf, mode); buf = ""; mode = -1; } buf += AUTO_SUB[ch]; i++; continue; }
+    if (mode) { emit(buf, mode); buf = ""; mode = 0; }
+    const rest = s.slice(i);
+    const sc = /^\d(\.\d+)?[eE][+\-]\d{1,3}/.exec(rest);
+    if (sc) {
+      const pp = sc[0].split(/[eE]/);
+      emit(pp[0] + "\u00d710", 0); emit(String(+pp[1]).replace("-", "\u2212"), 1);
+      i += sc[0].length; continue;
+    }
+    if (/[A-Za-z\u0370-\u03ff]/.test(ch) && i + 1 < s.length && (s[i + 1] === "_" || s[i + 1] === "^")) {
+      const sup = s[i + 1] === "^";
+      let j = i + 2, grp = "";
+      if (s[j] === "{") { const e = s.indexOf("}", j); if (e > 0) { grp = s.slice(j + 1, e); j = e + 1; } }
+      else {
+        const RCJK = /[\u2E80-\u9FFF]/, RASC = /[A-Za-z0-9\u0370-\u03ff+\-]/;
+        if (RCJK.test(s[j])) { while (j < s.length && RCJK.test(s[j]) && j - i < 8) j++; }   /* 中文描述性下标：τ_直接、E_声子 */
+        else { while (j < s.length && RASC.test(s[j])) j++; }
+        grp = s.slice(i + 2, j);
+      }
+      if (grp) {
+        /* 先把累积的前缀 flush 出去。漏了这行，含「前缀 + X_y」的串（ΔE_sp、
+           E=(E_s+3E_p)/4 之类）会把前缀甩到段尾，渲染成「E_spΔ」。 */
+        emit(buf, 0); buf = "";
+        emit(ch, 0); out[out.length - 1].i = true;
+        emit(sup ? grp.replace(/-/g, "\u2212") : grp, sup ? 1 : -1);
+        i = j; continue;
+      }
+    }
+    buf += ch; i++;
+  }
+  emit(buf, mode);
+  return out;
+}
+function mathSegs(g, s) {
+  const f = String(g.font || "");
+  const size = (function () { const m = /(\d+(?:\.\d+)?)px/.exec(f); return m ? parseFloat(m[1]) : 12; })();
+  const family = f.replace(/^(?:\s*(?:italic|oblique|bold|[1-9]00)\s*)*\d+(?:\.\d+)?px\s*/, "");
+  const style = /italic|oblique/.test(f) ? "italic " : (/bold|[6-9]00/.test(f) ? "bold " : "");
+  const parts = AUTO(s), laid = [];
+  let w = 0;
+  for (const p of parts) {
+    const small = !!(p.sup || p.sub);
+    const fs = style + (small ? (size * 0.74).toFixed(2) : size.toFixed(2)) + "px " + family;
+    g.font = fs;
+    const tw = g.measureText(p.s).width;
+    laid.push({ s: p.s, w: tw, fs: fs, dy: small ? (p.sup ? -size * 0.40 : size * 0.22) : 0 });
+    w += tw;
+  }
+  return { laid, w, family, style, size };
+}
+(function hookMath() {
+  if (window.__MATH_HOOK) return; window.__MATH_HOOK = 1;
+  const P = CanvasRenderingContext2D.prototype;
+  const _fill = P.fillText, _stroke = P.strokeText, _measure = P.measureText;
+  function draw(drawRaw, g, s, x, y, rest) {
+    const info = mathSegs(g, s);
+    const al = g.textAlign, bl = g.textBaseline;
+    const cx = al === "right" ? x - info.w : (al === "center" ? x - info.w / 2 : x);
+    g.textAlign = "left"; g.textBaseline = bl || "middle";
+    let px = cx;
+    for (const L of info.laid) {
+      g.font = L.fs;
+      drawRaw.call(g, L.s, px, y + L.dy, ...rest);
+      px += L.w;
+    }
+    g.textAlign = al; g.textBaseline = bl;
+    g.font = info.style + info.size.toFixed(2) + "px " + info.family;
+    return info;
+  }
+  P.fillText = function (s, x, y) {
+    if (typeof s !== "string" || !NEED_MATH.test(s)) return _fill.apply(this, arguments);
+    draw(_fill, this, s, x, y, Array.prototype.slice.call(arguments, 3));
+  };
+  P.strokeText = function (s, x, y) {
+    if (typeof s !== "string" || !NEED_MATH.test(s)) return _stroke.apply(this, arguments);
+    draw(_stroke, this, s, x, y, Array.prototype.slice.call(arguments, 3));
+  };
+  P.measureText = function (s) {
+    if (typeof s !== "string" || !NEED_MATH.test(s)) return _measure.call(this, s);
+    const save = this.font;
+    const info = mathSegs(this, s);
+    this.font = save;
+    return { width: info.w, get actualBoundingBoxLeft() { return 0; }, get actualBoundingBoxRight() { return info.w; } };
+  };
+})();
+
+const FONT = '"Segoe UI","Microsoft YaHei",sans-serif';
+
+const FONTM = '"Cambria Math","STIX Two Math","Times New Roman",Times,serif';
+
+
+/* ---------------- 画布 LaTeX 排版层（零依赖；物理量斜体、下标/单位正体、幂次真上标） ---------------- */
+const SUBR = 0.74, SUBDY = 0.22, SUPDY = 0.40;
+function isCJKch(ch) {
+  const c = ch.codePointAt(0);
+  return (c >= 0x2E80 && c <= 0x9FFF) || (c >= 0xF900 && c <= 0xFAFF) ||
+    (c >= 0xFF00 && c <= 0xFF60) || c === 0x2014 || c === 0x2015 || c === 0x2026;
+}
+function segRuns(s) {
+  const out = []; let cur = "", curC = null;
+  for (const ch of s) {
+    const c = isCJKch(ch);
+    if (curC === null) { cur = ch; curC = c; }
+    else if (c === curC) cur += ch;
+    else { out.push({ s: cur, cjk: curC }); cur = ch; curC = c; }
+  }
+  if (cur) out.push({ s: cur, cjk: curC });
+  return out;
+}
+function pFont(q, fp, bd, cjk) {
+  const sz = fp * ((q.sub || q.sup) ? SUBR : 1);
+  return (bd ? "bold " : "") + (!cjk && q.i ? "italic " : "") + sz.toFixed(2) + "px " + (cjk ? FONT : FONTM);
+}
+/* i18n 注入点①：画布 token。带 i / sub / sup / un 标记的是物理量、下标与单位，一律不动；
+   没有这些标记的 token 才是自然语言，交给 T() —— 所以这里的判断只看标记，不看内容。 */
+const partsOf = p => p.map(q => {
+  const o = (typeof q === "string" ? { s: q } : q);
+  const natural = !(o.i || o.sub || o.sup || o.un);
+  if (LANG === "en" && natural && typeof o.s === "string" && /[\u4E00-\u9FFF]/.test(o.s)) {
+    const t = T(o.s);
+    return t === o.s ? o : Object.assign({}, o, { s: t });
+  }
+  return o;
+});
+function mMeasure(g, parts, fp, bd) {
+  let w = 0;
+  for (const q of partsOf(parts))
+    for (const sg of segRuns(q.s)) { g.font = pFont(q, fp, bd, sg.cjk); w += g.measureText(sg.s).width; }
+  return w;
+}
+function mRun(g, parts, x, y, fp, bd, align, stroke) {
+  const ps = partsOf(parts), w = mMeasure(g, ps, fp, bd);
+  let cx = align === "right" ? x - w : (align === "center" ? x - w / 2 : x);
+  g.textAlign = "left"; g.textBaseline = "middle"; g.lineJoin = "round";
+  for (const q of ps) {
+    const dy = q.sub ? fp * SUBDY : (q.sup ? -fp * SUPDY : 0);
+    for (const sg of segRuns(q.s)) {
+      g.font = pFont(q, fp, bd, sg.cjk);
+      if (stroke) { g.lineWidth = (q.sub || q.sup) ? 2.4 : 3.2; g.strokeText(sg.s, cx, y + dy); }
+      else g.fillText(sg.s, cx, y + dy);
+      cx += g.measureText(sg.s).width;
+    }
+  }
+}
+function mtxt(g, parts, x, y, col, fp, align, bd) {
+  g.fillStyle = col; mRun(g, parts, x, y, fp, bd || false, align, false);
+}
+function mtxtHalo(g, parts, x, y, col, fp, align, bd) {
+  g.strokeStyle = "rgba(255,255,255,0.94)";
+  mRun(g, parts, x, y, fp, bd || false, align, true);
+  mtxt(g, parts, x, y, col, fp, align, bd);
+}
+
+
+/* ---------------- HTML 字符串 → 画布零件（网页与画布共用同一份排版） ----------------
+   mtxt(g, TX(H_NA), x, y, col, fp) —— H_* 常量本来就在喂 innerHTML，
+   再喂给 TX() 就不会出现「网页斜体、画布正体」的两边不一致。
+   <i> 斜体、<sub> 下标、<sup> 上标；<span class="op|un|rm|sqrt|frac"> 只剥标签（保持正体）。 */
+const catA = (...a) => [].concat(...a);
+function TX(h) {
+  const t = String(h == null ? "" : h)
+    .replace(/<span\b[^>]*>/g, "").replace(/<\/span>/g, "")
+    .replace(/<i\b[^>]*>/g, "<i>").replace(/<b\b[^>]*>/g, "").replace(/<\/b>/g, "")
+    .replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&").replace(/&nbsp;/g, " ");
+  const out = [], re = /<i>([\s\S]*?)<\/i>|<sub>([\s\S]*?)<\/sub>|<sup>([\s\S]*?)<\/sup>|([^<]+)/g;
+  let m;
+  while ((m = re.exec(t))) {
+    const raw = s => s == null ? null : s.replace(/<[^>]*>/g, "");
+    if (m[1] != null) out.push({ s: raw(m[1]), i: true });
+    else if (m[2] != null) out.push({ s: raw(m[2]), sub: true });
+    else if (m[3] != null) out.push({ s: raw(m[3]), sup: true });
+    else if (m[4]) out.push({ s: m[4] });
+  }
+  return out;
+}
+function TXof(...a) { return catA(...a.map(TX)); }
+
+
+function PSci(v, n) {
+  if (!isFinite(v) || v === 0) return [{ s: "0" }];
+  const e = Math.floor(Math.log10(Math.abs(v)));
+  const m = (v / Math.pow(10, e)).toFixed(n === undefined ? 1 : n);
+  /* 1 ≦ |v| < 10 时直接写尾数，不再拖一个 ×10⁰（与 sciH 一致） */
+  if (e === 0) return [{ s: m }];
+  /* 指数负号用 U+2212 */
+  return [{ s: m + "×10" },
+          { s: String(e).replace("-", "−"), sup: true }];
+}
+
+/* ---------------- 通用工具 ---------------- */
+const $ = (id) => document.getElementById(id);
+const clamp = (v, a, b) => v < a ? a : (v > b ? b : v);
+const RAD = Math.PI / 180;
+const dot3 = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+const sub3 = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
+const add3 = (a, b) => [a[0] + b[0], a[1] + b[1], a[2] + b[2]];
+const mul3 = (a, s) => [a[0] * s, a[1] * s, a[2] * s];
+const len3 = (a) => Math.sqrt(dot3(a, a));
+const cross3 = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+const norm3 = (a) => { const L = len3(a) || 1; return [a[0] / L, a[1] / L, a[2] / L]; };
+const fmt = (v, n) => (Math.abs(v) < 5e-3 ? 0 : v).toFixed(n === undefined ? 2 : n);
+function parseCol(c) {
+  const m = c.charAt(0) === "#"
+    ? [parseInt(c.slice(1, 3), 16), parseInt(c.slice(3, 5), 16), parseInt(c.slice(5, 7), 16)]
+    : (c.match(/[\d.]+/g) || []).map(Number);
+  return [m[0] || 0, m[1] || 0, m[2] || 0];
+}
+function mixHex(a, b, t) {
+  const A = parseCol(a), B = parseCol(b);
+  return "rgb(" + Math.round(A[0] + (B[0] - A[0]) * t) + "," +
+                  Math.round(A[1] + (B[1] - A[1]) * t) + "," +
+                  Math.round(A[2] + (B[2] - A[2]) * t) + ")";
+}
+
+/* ==================================================================
+   隧穿场效应管交互教学工具
+   —— 零依赖单文件；Canvas 2D 绘制
+   —— 物理链：MOSFET 的玻尔兹曼热尾 → 60 mV/dec 热极限
+               → 三角势垒 WKB 带间隧穿 → P⁺-I-N⁺ 能带弯曲与隧穿窗口
+               → 点隧穿 / 线隧穿 → I_D–V_GS 上的「陡」与「小」的妥协
+   —— 所有数字全部由本文件的函数现算，没有一处写死
+   ================================================================== */
+
+/* ---------------- 物理常数 ---------------- */
+const QQ = 1.602176634e-19;        /* 元电荷 C */
+const HBAR = 1.054571817e-34;      /* 约化普朗克常数 J·s */
+const ME = 9.1093837015e-31;       /* 自由电子质量 kg */
+const KB = 1.380649e-23;           /* 玻尔兹曼常数 J/K */
+const EVJ = 1.602176634e-19;       /* 1 eV 折合的焦耳数 */
+const EPS0 = 8.8541878128e-12;     /* 真空介电常数 F/m */
+const TEMP = 300;                  /* 温度 K */
+
+/* ---------------- 固定参量（不是旋钮，全部在「固定参量」区披露） ---------------- */
+const VFB = 0.15;      /* 栅控起点（平带电压）V */
+const NA = 1e26;       /* 源区 P⁺ 受主浓度 m⁻³，等于 1×10²⁰ cm⁻³ */
+const ESR = 11.7;      /* 沟道相对介电常数，一律取 Si 值（换材料不改它） */
+const TS = 10e-9;      /* 沟道体厚度 m */
+const EREF = 1e8;      /* 电场参考值 V/m，即 1 MV/cm */
+/* 电流标定前因子 µA/µm：取成让「Si 参考点」（1 nm SiO₂、栅压轴顶端 V_GS = 1.20 V）落在
+   Si TFET 在该过驱动下的实测量级（≈0.03 µA/µm，比同尺寸 MOSFET 低四个数量级 ——
+   这是 TFET 的真实处境，不是标定偷懒）。它是唯一的整体缩放，不影响任何斜率、比值与趋势。 */
+const IREF = 0.80;
+const ILEAK = 1e-7;    /* 关态漏电地板 µA/µm，两条曲线共用 ⇒ 同一个 I_OFF */
+const IONM = 500;      /* 参考 MOSFET 的开态饱和电流 µA/µm */
+const VONM = 0.60;     /* 参考 MOSFET 达到半开态的栅压 V */
+const PTBT = 1e-9;     /* 点隧穿 / 线隧穿判据：隧穿长度短于 1 nm 记为点隧穿 */
+const VSS = 0.01;      /* SS 数值微分用的栅压步长 V */
+const VMAXG = 1.2;     /* 栅压轴上限 V —— 与栅压滑块量程一致：再往上只是一条越拖越平的开态尾巴，
+                          教学上要看的「陡不陡」全在 1.2 V 以内 */
+
+/* 器件横向坐标（nm）：源 0–9，源结在 9，沟道 9–21，漏结在 21，漏 21–30。
+   尺度刻意压到 30 nm：源结耗尽宽度只有 ~2 nm，画在 100 nm 上只占 2%，
+   能带图会退化成两条平线加一个折点；压到 30 nm 后隧穿窗口与 W_t 才量得出来。 */
+const XJ = 9, XD = 21, XNM = 30, WDD = 3;
+
+/* ---------------- 可调参量 ---------------- */
+const OPT = {
+  eg: 1.12,       /* 材料带隙 eV */
+  ms: 0.20,       /* 隧穿有效质量，以自由电子质量为单位 */
+  vg: 1.10,       /* 栅压 V（量程 0–1.20，默认落在 Si 刚开过阈值、最陡的那一段附近） */
+  vd: 0.50,       /* 漏压 V */
+  tox: 1.0,       /* 栅氧厚度 nm */
+  eox: 3.9,       /* 栅介质相对介电常数 */
+  view: "btbt"    /* 模块二视图：btbt 带间隧穿 / therm 热发射 */
+};
+
+/* 材料＝带隙 + 隧穿有效质量。m* 是材料属性，与 E_g 一起给定才自洽，
+   所以不给它单独开滑块：换材料时两个一起走，之后 E_g 仍可用滑块单独微调
+   （那时 m* 保持上次材料的值，读数面板如实披露）。 */
+const MATS = [["Si", 1.12, 0.20], ["Ge", 0.66, 0.10], ["InAs", 0.35, 0.023]];
+/* 栅叠层＝介质 + 厚度，合成三档。t_ox 决定栅控效率 η，是主链路上的量，
+   硬固定会丢掉「栅控强弱」这条主线，所以改成离散档位而不是直接钉死。 */
+const OXIDS = [["SiO₂ 1 nm", 3.9, 1.0], ["SiO₂ 2 nm", 3.9, 2.0], ["HfO₂ 3 nm", 25, 3.0]];
+const VIEWS2 = [["带间隧穿", "btbt"], ["热发射", "therm"]];
+function oxName() {
+  for (const q of OXIDS) if (Math.abs(q[1] - OPT.eox) < 1e-6 && Math.abs(q[2] - OPT.tox) < 1e-6) return q[0];
+  return "自定义";
+}
+function matName() {
+  for (const q of MATS) if (Math.abs(q[1] - OPT.eg) < 5e-3 && Math.abs(q[2] - OPT.ms) < 3e-3) return q[0];
+  return "自定义";
+}
+/* 「刚开启」要按当前带隙与栅控效率现算，不能写死栅压 —— 写死就等于换个材料预设就失效 */
+const PRES = [
+  ["Si 参考点", { eg: 1.12, ms: 0.20, vg: 1.10, vd: 0.50 }],
+  ["Ge 窄带隙", { eg: 0.66, ms: 0.10, vg: 1.00, vd: 0.50 }],
+  ["InAs 强隧穿", { eg: 0.35, ms: 0.023, vg: 0.80, vd: 0.50 }],
+  ["刚开启", { vg: -1 }],
+  ["低漏压", { vd: 0.10 }]
+];
+
+let ST = null;   /* derived() 的缓存 */
+let SSB = null;  /* ssBest() 的缓存 */
+
+/* ---------------- 派生量：一切数字的唯一来源 ----------------
+   ov 是可选的参数覆盖（挑战答案里要用别的工作点算数，就用它）。
+   ov 里出现 vg 时会走 withOpt，不进 ST 缓存。 */
+function derived(ov) {
+  const O = ov ? Object.assign({}, OPT, ov) : OPT;
+  const EgV = O.eg;                       /* eV；对单个电子，eV 的数值就等于伏特数 */
+  const EgJ = O.eg * EVJ;
+  const epsS = ESR * EPS0, epsOx = O.eox * EPS0;
+  const toxM = O.tox * 1e-9;
+
+  /* 栅控效率：栅压先被「栅氧–沟道」电容分压，剩下的才真正落到沟道上 */
+  const eta = 1 / (1 + (epsS / epsOx) * (toxM / TS));
+  /* 源结内建电势：源区 P⁺ 简并（E_F 贴在价带顶，E_F−E_V ≈ 0）与本征沟道（E_F 在禁带
+     中央，E_F−E_V = E_g/2）的掺杂差 ⇒ V_bi = E_g/2q。它是纯掺杂量，与栅压无关，
+     所以栅压为零时沟道能带就已经比源区低了 E_g/2 —— 这也正是「栅压要再补上另外
+     半个 E_g 才开得起来」的原因。 */
+  const Vbi = EgV / 2;
+  const psi = Vbi + eta * (O.vg - VFB);               /* 沟道电势 V，相对源区价带顶 */
+  /* 漏区电势 = 内建电势 + 外加漏压（两侧都是简并掺杂，内建电势就是 E_g/q） */
+  const psiD = EgV + O.vd;
+
+  /* 源结电场峰值：单侧突变结耗尽近似 E = √(2qN_A ψ/ε_s) */
+  const Emax = psi > 0 ? Math.sqrt(2 * QQ * NA * psi / epsS) : 0;   /* V/m */
+  const EmaxNm = Emax * 1e-9;                                       /* V/nm */
+  /* 漏结电场：由 V_DS 与内建电势撑起来，与栅压无关。源结只靠内建电势时结区还窄、
+     场还没起来，这时全器件最强的场落在漏结 —— 「最强场在源结」要等栅压把源结拉开才成立。 */
+  const Ed = Math.abs(psiD - psi) / (WDD * 1e-9);                   /* V/m */
+
+  /* 能带弯曲量 qψ（eV）与隧穿窗口（eV） */
+  const bend = psi;
+  const winOpen = bend - EgV;                     /* > 0 才说明导带已经压到源价带之下 */
+  /* 窗口上沿还受漏压封顶：低于 −qV_DS 的沟道态已被填满，隧穿不进去 —— 这就是低漏压下的超线性开启 */
+  const win = Math.max(0, Math.min(winOpen, O.vd));
+
+  /* WKB：三角势垒 T ≈ exp(−4√(2m*)·E_g^{3/2} / 3qħE) */
+  const B = 4 * Math.sqrt(2 * O.ms * ME) * Math.pow(EgJ, 1.5) / (3 * QQ * HBAR);
+  const X = Emax > 0 ? B / Emax : Infinity;
+  const Twkb = X === Infinity ? 0 : Math.exp(-X);
+
+  /* 三角势垒的等效隧穿宽度 W_t = E_g/(qE)：把 E_g 的电势差摊在峰值电场上 */
+  const Wt = Emax > 0 ? EgV / Emax : Infinity;                 /* m */
+  const WtNm = isFinite(Wt) ? Wt / 1e-9 : Infinity;            /* nm */
+  /* 结区宽度：势垒按三角近似（场恒为峰值），爬完 ψ 需要 W_d = ψ/E */
+  const WdNm = EmaxNm > 0 ? psi / EmaxNm : Infinity;
+  /* 隧穿发生在「沟道导带已低于源价带」的那一段：从 x_T0 一直到结面 XJ */
+  const xT0 = EmaxNm > 0 ? XJ - (WdNm - WtNm) : XJ;
+
+  /* 点隧穿 → 线隧穿：栅控沿结面向体内按特征长度 λ_g 指数衰减，
+     能满足 qψ·exp(−y/λ_g) > E_g 的深度就是隧穿线的长度，最多铺满整个体厚。 */
+  const lamG = Math.sqrt((epsS / epsOx) * toxM * TS);          /* m */
+  const At = winOpen > 0 ? Math.min(TS, lamG * Math.log(bend / EgV)) : 0;
+  const AtNm = At / 1e-9;
+
+  /* 电流：Kane 型唯象式 I ∝ 隧穿面积 × 能量窗口 × E² × T_WKB */
+  const Ibtbt = (At > 0 && win > 0 && isFinite(Twkb))
+    ? IREF * AtNm * win * Math.pow(Emax / EREF, 2) * Twkb : 0;
+  const Id = ILEAK + Ibtbt;
+
+  /* 热极限：kT/q 与理想亚阈值摆幅 */
+  const ktq = KB * TEMP / QQ;
+  const SSmos = ktq * Math.LN10;
+  /* 参考 MOSFET：亚阈值一段严格 60 mV/dec，开态平滑饱和 */
+  const tmo = Math.pow(10, (O.vg - VONM) / SSmos);
+  const Imos = ILEAK + IONM * tmo / (1 + tmo);
+
+  return {
+    O: O, EgV: EgV, EgJ: EgJ, epsS: epsS, epsOx: epsOx, toxM: toxM,
+    eta: eta, Vbi: Vbi, psi: psi, psiD: psiD, Emax: Emax, EmaxNm: EmaxNm, Ed: Ed,
+    bend: bend, winOpen: winOpen, win: win,
+    B: B, X: X, Twkb: Twkb,
+    Wt: Wt, WtNm: WtNm, WdNm: WdNm, xT0: xT0,
+    lamG: lamG, At: At, AtNm: AtNm,
+    Ibtbt: Ibtbt, Id: Id, Imos: Imos, ktq: ktq, SSmos: SSmos,
+    open: winOpen > 0 && win > 0,
+    type: winOpen <= 0 ? 0 : (At < PTBT ? 1 : 2)   /* 0 关断 / 1 点隧穿 / 2 线隧穿 */
+  };
+}
+function D() { if (!ST) ST = derived(); return ST; }
+function withOpt(ov) { return derived(ov); }
+
+/* 参考 MOSFET 的势垒高度（eV）：理想栅控（体因子取 1）下，栅压每加 1 V 势垒就降 q·1 V。
+   这是势垒高度的唯一来源 —— 模块二的热发射视图、视图说明、预设判断都从这里取。 */
+function phiOf() { return Math.max(0, VONM - Math.max(0, OPT.vg - VFB)); }
+/* 参考 MOSFET 在同一栅压下的电流（模块三的灰色曲线） */
+function mosAt(v) {
+  const ktq = KB * TEMP / QQ, ss = ktq * Math.LN10;
+  const t = Math.pow(10, (v - VONM) / ss);
+  return ILEAK + IONM * t / (1 + t);
+}
+/* 开启栅压：沟道电势要从内建的 V_bi = E_g/2q 再被栅压推到 E_g/q，
+   也就是栅压只需补上另外半个 E_g —— 内建的那半个是掺杂白送的。 */
+function vthOf(d) { return VFB + (d.EgV - d.Vbi) / d.eta; }
+
+/* 亚阈值摆幅：对 ln I 做中心差分。还埋在漏电地板里时给 Infinity（读数显示「未开启」） */
+function ssOf(vg) {
+  const h = VSS, lo = Math.max(0, vg - h), hi = vg + h;
+  const a = Math.log(withOpt({ vg: lo }).Id), b = Math.log(withOpt({ vg: hi }).Id);
+  const s = (b - a) / (hi - lo);
+  return s > 1e-9 ? Math.LN10 / s : Infinity;
+}
+/* 整条曲线上的最陡 SS：只统计已经爬出漏电地板的那一段 */
+function ssBest() {
+  const key = [OPT.eg, OPT.ms, OPT.vd, OPT.tox, OPT.eox].join("|");
+  if (SSB && SSB.key === key) return SSB;
+  let best = Infinity, at = 0;
+  for (let v = 0.02; v <= VMAXG + 1e-9; v += 0.02) {
+    if (withOpt({ vg: v }).Ibtbt < ILEAK) continue;
+    const s = ssOf(v);
+    if (s < best) { best = s; at = v; }
+  }
+  SSB = { key: key, ss: best, vg: at };
+  return SSB;
+}
+
+/* 沿沟道的电势 ψ(x)（V）：源区 0 → 结区线性爬升（场恒为峰值）→ 沟道平台 → 漏结 → 漏区。
+   ⚠️ 一旦 ψ 退化到 0（源结完全没有耗尽区，W_d 发散），
+   必须把结区宽度当作 0 而不是整段跳过 —— 否则沟道会被误画成漏区电势，
+   1.6 V 的漏端压降会整个落错位置，落到源结上去。 */
+function psiAt(x, d) {
+  const wd = isFinite(d.WdNm) ? d.WdNm : 0;
+  if (x <= XJ - wd) return 0;
+  if (x <= XJ) return d.EmaxNm * (x - (XJ - wd));
+  if (x <= XD - WDD) return d.psi;
+  if (x <= XD) return d.psi + (d.psiD - d.psi) * (x - (XD - WDD)) / WDD;
+  return d.psiD;
+}
+function fieldAt(x, d) {
+  if (isFinite(d.WdNm) && x > XJ - d.WdNm && x <= XJ) return d.Emax;
+  if (x > XD - WDD && x <= XD) return Math.abs(d.psiD - d.psi) / (WDD * 1e-9);
+  return 0;
+}
+
+/* ---------------- 画布容器与通用绘制工具 ---------------- */
+const DEVV = { W: 600, H: 400, dpr: 1, g: null, canvas: null, t: 0 };
+const BANDV = { W: 600, H: 380, dpr: 1, g: null, canvas: null };
+const VIEWS = [["dev", DEVV], ["band", BANDV]];
+
+const C_P = "#d94a3d";      /* P⁺ 源区 */
+const C_N = "#1976d2";      /* N⁺ 漏区 */
+const C_TUN = "#2e9e5b";    /* 隧穿窗口与 TFET 曲线 */
+const C_MOS = "#8b97a6";    /* 参考 MOSFET */
+const C_HEAT = "#ef8c1a";   /* 电场热图 */
+const C_HYB = "#8e5bd0";    /* 栅与势垒 */
+const C_AX = "#9aa5b1";
+const C_TXT = "#2c3e50";
+const C_SUB = "#6b7a8c";
+const C_EC = "#1976d2";
+const C_EV = "#d94a3d";
+
+function fitCanvas(v, id) {
+  const c = document.getElementById(id);
+  if (!c) return;
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  const w = c.clientWidth || 600, h = +c.dataset.h;
+  c.style.height = h + "px";
+  c.width = Math.round(w * dpr); c.height = Math.round(h * dpr);
+  v.W = w; v.H = h; v.dpr = dpr; v.g = c.getContext("2d"); v.canvas = c;
+}
+function fitAll() { VIEWS.forEach(function (p) { fitCanvas(p[1], p[0]); }); }
+function begin(v) {
+  const g = v.g; if (!g) return null;
+  g.setTransform(1, 0, 0, 1, 0, 0);
+  g.clearRect(0, 0, v.canvas.width, v.canvas.height);
+  g.setTransform(v.dpr, 0, 0, v.dpr, 0, 0);
+  g.fillStyle = "#fbfcfe"; g.fillRect(0, 0, v.W, v.H);
+  g.lineJoin = "round";
+  return g;
+}
+function lbl(g, s, x, y, col, fp, align, bd) {
+  g.fillStyle = col || C_SUB;
+  g.font = (bd ? "600 " : "") + (fp || 11) + "px " + FONT;
+  g.textAlign = align || "left"; g.textBaseline = "middle";
+  g.fillText(s, x, y);
+}
+/* 「文字 + 运行时数字」拆两次 fillText：合成一个串的话 T() 会因为串里混着
+   随参数变化的数字而整条漏翻（词典 key 禁含运行时数字）。 */
+function lblN(g, s, num, x, y, col, fp, align, bd) {
+  g.font = (bd ? "600 " : "") + (fp || 11) + "px " + FONT;
+  const ws = g.measureText(s).width, wn = g.measureText(num).width;
+  if (align === "right") {
+    lbl(g, num, x, y, col, fp, "right", bd);
+    lbl(g, s, x - wn, y, col, fp, "right", bd);
+  } else if (align === "center") {
+    const x0 = x - (ws + wn) / 2;
+    lbl(g, s, x0, y, col, fp, "left", bd);
+    lbl(g, num, x0 + ws, y, col, fp, "left", bd);
+  } else {
+    lbl(g, s, x, y, col, fp, "left", bd);
+    lbl(g, num, x + ws, y, col, fp, "left", bd);
+  }
+}
+/* 三个以上片段（文字 / 数字 / 文字）拼成一行、右端对齐 xEnd。
+   同样是「数字不进 key」的考虑：只要有一个片段是运行时数字，合成串就永远匹配不上。 */
+function lblSeq(g, parts, x, y, col, fp, bd, align) {
+  g.font = (bd ? "600 " : "") + (fp || 11) + "px " + FONT;
+  let tot = 0, i;
+  for (i = 0; i < parts.length; i++) tot += g.measureText(parts[i]).width;
+  let x0 = align === "center" ? x - tot / 2 : x - tot;
+  for (i = 0; i < parts.length; i++) {
+    lbl(g, parts[i], x0, y, col, fp, "left", bd);
+    x0 += g.measureText(parts[i]).width;
+  }
+}
+function line(g, x0, y0, x1, y1, col, w, dash) {
+  g.save();
+  g.strokeStyle = col; g.lineWidth = w || 1;
+  if (dash) g.setLineDash(dash);
+  g.beginPath(); g.moveTo(x0, y0); g.lineTo(x1, y1); g.stroke();
+  g.restore();
+}
+function arrow(g, x0, y0, x1, y1, col, w) {
+  g.save();
+  g.strokeStyle = col; g.fillStyle = col; g.lineWidth = w || 2;
+  g.beginPath(); g.moveTo(x0, y0); g.lineTo(x1, y1); g.stroke();
+  const a = Math.atan2(y1 - y0, x1 - x0), s = 6 + (w || 2);
+  g.beginPath();
+  g.moveTo(x1, y1);
+  g.lineTo(x1 - s * Math.cos(a - 0.42), y1 - s * Math.sin(a - 0.42));
+  g.lineTo(x1 - s * Math.cos(a + 0.42), y1 - s * Math.sin(a + 0.42));
+  g.closePath(); g.fill();
+  g.restore();
+}
+/* 双箭头尺寸线（标隧穿宽度用） */
+function dimArrow(g, x0, x1, y, col) {
+  g.save();
+  g.strokeStyle = col; g.fillStyle = col; g.lineWidth = 1.2;
+  g.beginPath(); g.moveTo(x0, y); g.lineTo(x1, y); g.stroke();
+  [x0, x1].forEach(function (x, i) {
+    const s = i === 0 ? 1 : -1;
+    g.beginPath();
+    g.moveTo(x, y);
+    g.lineTo(x + s * 5, y - 3);
+    g.lineTo(x + s * 5, y + 3);
+    g.closePath(); g.fill();
+  });
+  g.restore();
+}
+function rrect(g, x, y, w, h, r, fill, stroke) {
+  g.beginPath();
+  const rr = Math.min(r, Math.abs(w) / 2, Math.abs(h) / 2);
+  g.moveTo(x + rr, y);
+  g.lineTo(x + w - rr, y); g.quadraticCurveTo(x + w, y, x + w, y + rr);
+  g.lineTo(x + w, y + h - rr); g.quadraticCurveTo(x + w, y + h, x + w - rr, y + h);
+  g.lineTo(x + rr, y + h); g.quadraticCurveTo(x, y + h, x, y + h - rr);
+  g.lineTo(x, y + rr); g.quadraticCurveTo(x, y, x + rr, y);
+  g.closePath();
+  if (fill) { g.fillStyle = fill; g.fill(); }
+  if (stroke) { g.strokeStyle = stroke; g.lineWidth = 1.2; g.stroke(); }
+}
+function poly(g, pts, fill, stroke, w, dash) {
+  g.save();
+  if (dash) g.setLineDash(dash);
+  g.beginPath();
+  pts.forEach(function (p, i) { i ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1]); });
+  g.closePath();
+  if (fill) { g.fillStyle = fill; g.fill(); }
+  if (stroke) { g.strokeStyle = stroke; g.lineWidth = w || 1.4; g.stroke(); }
+  g.restore();
+}
+function niceMax(v) {
+  const p = Math.pow(10, Math.floor(Math.log10(v)));
+  const r = v / p;
+  return (r <= 1 ? 1 : r <= 2 ? 2 : r <= 5 ? 5 : 10) * p;
+}
+
+/* ==================================================================
+   模块一（左右分栏）：左＝器件剖面，右＝转移特性
+   左栏上带＝器件剖面（栅 / 栅氧 / P⁺-I-N⁺，绿色那段就是隧穿线）；
+   左栏中带＝电场强度热图；左栏下带＝E_C、E_V 沿 x 的弯曲与绿色隧穿窗口；
+   右栏＝I_D–V_GS 双对数转移曲线，与理想 MOSFET 对照。
+   ================================================================== */
+function drawDev() {
+  const v = DEVV, g = begin(v); if (!g) return;
+  const d = D();
+  const pad = 4, gap = 18, yTop = 22;
+  const avail = v.W - pad * 2 - gap;
+  const rW = Math.max(200, Math.min(330, avail * 0.40));
+  const lW = avail - rW;
+  const pH = v.H - yTop;
+  const xr = pad + lW + gap;
+
+  lbl(g, "器件剖面与隧穿窗口", pad + 2, 11, C_SUB, 11.5, "left", true);
+  lbl(g, "转移特性 I_D–V_GS", xr + 2, 11, C_SUB, 11.5, "left", true);
+
+  g.save();
+  g.translate(pad, yTop);
+  g.beginPath(); g.rect(0, -yTop, lW + 4, v.H); g.clip();
+  drawDevL(g, d, lW, pH, v.t);
+  g.restore();
+
+  line(g, pad + lW + gap / 2 + 2, yTop - 4, pad + lW + gap / 2 + 2, v.H - 10,
+    "rgba(155,165,177,0.35)", 1, [4, 4]);
+
+  g.save();
+  g.translate(xr, yTop);
+  g.beginPath(); g.rect(-3, -yTop, rW + 8, v.H); g.clip();
+  drawIVPane(g, d, rW, pH);
+  g.restore();
+}
+
+function drawDevL(g, d, W, H, t) {
+  const padL = 34, padR = 18, x0 = padL, x1 = W - padR, uw = x1 - x0;
+  const xOf = (nm) => x0 + nm / XNM * uw;
+
+  /* ---- 器件剖面 ---- */
+  const yG0 = 12, hG = 20, yOx = yG0 + hG, hOx = 12, yS0 = yOx + hOx, hS = 56;
+  rrect(g, x0, yG0, uw, hG, 4, "#c9d2dc", "#8b97a6");
+  rrect(g, x0, yOx, uw, hOx, 3, "#f6e2b8", "#d9b96a");
+  /* 三个区：P⁺ / I / N⁺ */
+  rrect(g, xOf(0), yS0, xOf(XJ) - xOf(0), hS, 3, "rgba(217,74,61,0.14)", "rgba(217,74,61,0.45)");
+  rrect(g, xOf(XJ), yS0, xOf(XD) - xOf(XJ), hS, 3, "rgba(25,118,210,0.06)", "rgba(25,118,210,0.22)");
+  rrect(g, xOf(XD), yS0, xOf(XNM) - xOf(XD), hS, 3, "rgba(25,118,210,0.14)", "rgba(25,118,210,0.45)");
+  lbl(g, "栅极 G", x0 + 8, yG0 + hG / 2, "#5c6b7a", 11.5, "left", true);
+  lbl(g, "栅氧", x0 + 8, yOx + hOx / 2, "#8a6d30", 10.5);
+  lbl(g, "P⁺ 源区", (xOf(0) + xOf(XJ)) / 2, yS0 + hS / 2, C_P, 12, "center", true);
+  lbl(g, "I 沟道", (xOf(XJ) + xOf(XD)) / 2, yS0 + hS / 2, "#5c6b7a", 12, "center", true);
+  lbl(g, "N⁺ 漏区", (xOf(XD) + xOf(XNM)) / 2, yS0 + hS / 2, C_N, 12, "center", true);
+
+  /* 隧穿线：只有沟道导带已经压到源价带之下的那一小段才亮，深度就是 A_t */
+  if (d.open) {
+    const gx0 = xOf(d.xT0), gx1 = xOf(XJ);
+    const dep = Math.max(3, Math.min(hS, hS * d.AtNm / (TS / 1e-9)));
+    g.save();
+    g.globalAlpha = 0.30; g.fillStyle = C_TUN;
+    g.fillRect(gx0, yS0, Math.max(2, gx1 - gx0), dep);
+    g.restore();
+    line(g, gx0, yS0, gx0, yS0 + dep, C_TUN, 2);
+    line(g, gx1, yS0, gx1, yS0 + dep, C_TUN, 2);
+    line(g, gx0, yS0 + dep, gx1, yS0 + dep, C_TUN, 2);
+    lbl(g, d.type === 2 ? "线隧穿 LTBT" : "点隧穿 PTBT",
+      (gx0 + gx1) / 2, yS0 + dep + 9, C_TUN, 10.5, "center", true);
+  } else {
+    lbl(g, "导带还在价带之上 ⇒ 隧穿窗口未开", xOf(XJ), yS0 + hS + 9, C_SUB, 10.5, "center");
+  }
+
+  /* ---- 电场强度热图 ---- */
+  const yF0 = yS0 + hS + 20, hF = 30;
+  const eRef = Math.max(d.Emax, 1e6);
+  if (fieldOn()) {
+    for (let i = 0; i < uw; i++) {
+      const nm = i / uw * XNM, f = fieldAt(nm, d) / eRef;
+      g.fillStyle = mixHex("#f3f6f9", C_HEAT, Math.pow(Math.min(1, f), 0.55));
+      g.fillRect(x0 + i, yF0, 1, hF);
+    }
+  } else {
+    g.fillStyle = "#f3f6f9"; g.fillRect(x0, yF0, uw, hF);
+  }
+  rrect(g, x0, yF0, uw, hF, 3, null, "rgba(155,165,177,0.5)");
+  lbl(g, "电场强度 |E(x)|", x0 + 6, yF0 + hF / 2, "#5c3d10", 11, "left", true);
+
+  /* ---- 能带轮廓 ----
+     模块二已经有带能量刻度、费米能级、W_t 尺寸线的完整能带图；这里那条能带只承担
+     模块二承担不了的一件事：与正上方的电场热图逐点对齐，读「场最陡的地方能带最陡」。
+     所以这里刻意不标数值，只留曲线、绿色窗口与电子动画，避免和模块二整段重复。 */
+  const yB0 = yF0 + hF + 18, yB1 = H - 34, hB = yB1 - yB0;
+  const Elo = -Math.max(d.psiD, 0.5) - 0.35, Ehi = d.EgV + 0.35;
+  const yOf = (E) => yB1 - (E - Elo) / (Ehi - Elo) * hB;
+  const N = 200, ec = [], ev = [];
+  for (let i = 0; i <= N; i++) {
+    const nm = i / N * XNM, ps = psiAt(nm, d);
+    ec.push([xOf(nm), yOf(d.EgV - ps)]);
+    ev.push([xOf(nm), yOf(-ps)]);
+  }
+  /* 窗口：E_V(x) 与 E_C(x) 之间、能量落在 [E_C,ch, E_V,源] 内的那块平行四边形 */
+  if (d.open) {
+    const eTop = 0, eBot = d.EgV - d.psi;
+    const pts = [
+      [xOf(XJ - d.WdNm), yOf(eTop)],
+      [xOf(XJ - d.WdNm + d.WtNm), yOf(eTop)],
+      [xOf(XJ), yOf(eBot)],
+      [xOf(XJ - (d.WdNm - d.WtNm) - d.WtNm), yOf(eBot)]
+    ];
+    poly(g, pts, "rgba(46,158,91,0.22)", "rgba(46,158,91,0.75)", 1.2);
+  }
+  g.save();
+  g.strokeStyle = C_EC; g.lineWidth = 2; g.beginPath();
+  ec.forEach(function (p, i) { i ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1]); });
+  g.stroke();
+  g.setLineDash([5, 4]); g.strokeStyle = C_EV; g.beginPath();
+  ev.forEach(function (p, i) { i ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1]); });
+  g.stroke();
+  g.restore();
+  lbl(g, "能带轮廓", x0, yB0 - 9, C_SUB, 10, "left", true);
+  mtxt(g, TX(H_EC), xOf(XNM) - 4, yOf(d.EgV - d.psiD) - 12, C_EC, 12, "right", true);
+  mtxt(g, TX(H_EV), xOf(XNM) - 4, yOf(-d.psiD) + 12, C_EV, 12, "right", true);
+
+  /* 隧穿电子动画：从源端价带一路穿到沟道导带 */
+  if (d.open && animOn()) {
+    const nE = 3;
+    for (let k = 0; k < nE; k++) {
+      const fr = ((t * 0.55 + k / nE) % 1);
+      const eE = eBotOf(d) + (0 - eBotOf(d)) * ((k + 0.5) / nE);
+      const xs = xOf(XJ - d.WdNm + (0 - eE) / d.EmaxNm);
+      const xe = xs + xOf(d.WtNm) - x0;
+      const px = xs + (xe - xs) * fr, py = yOf(eE);
+      g.save();
+      g.globalAlpha = 0.85 - 0.5 * Math.abs(fr - 0.5);
+      g.fillStyle = C_TUN;
+      g.beginPath(); g.arc(px, py, 13 - 7 * Math.abs(fr - 0.5), 0, 6.2832);
+      g.globalAlpha = 0.18; g.fill();
+      g.globalAlpha = 0.95; g.fillStyle = "#0f6b38";
+      g.beginPath(); g.arc(px, py, 3.2, 0, 6.2832); g.fill();
+      g.restore();
+    }
+  }
+  /* ΔE 与 W_t 都不在这里标：读数面板和模块二各有一份，这里再标一遍是纯重复 */
+
+  /* ---- x 轴 ---- */
+  line(g, x0, yB1, x1, yB1, C_AX, 1);
+  /* 刻度、单位、轴标题各占一行：挤在同一行会把「30」和「nm」叠成乱码 */
+  const yT = yB1 + 12, yU = yB1 + 24;
+  [0, XJ, XD, XNM].forEach(function (nm) {
+    line(g, xOf(nm), yB1, xOf(nm), yB1 + 4, C_AX, 1);
+    lbl(g, nm + "", xOf(nm), yT, C_SUB, 10.5, "center");
+  });
+  lbl(g, "nm", xOf(XNM), yU, C_SUB, 10.5, "center");
+  lbl(g, "沿沟道方向 x", (x0 + x1) / 2, yU, C_SUB, 11, "center", true);
+}
+function eBotOf(d) { return d.EgV - d.psi; }
+function animOn() { const c = $("ckAnim"); return !c || c.checked; }
+function fieldOn() { const c = $("ckField"); return !c || c.checked; }
+function refOn() { const c = $("ckRef"); return !c || c.checked; }
+
+/* ==================================================================
+   模块二：能带图 —— 带间隧穿（TFET）与热发射（MOSFET）两种开门方式
+   ================================================================== */
+function drawBand() {
+  const v = BANDV, g = begin(v); if (!g) return;
+  const d = D();
+  const padL = 46, padR = 16, padT = 26, padB = 48;
+  const x0 = padL, x1 = v.W - padR, y0 = padT, y1 = v.H - padB;
+  const xOf = (nm) => x0 + nm / XNM * (x1 - x0);
+
+  if (OPT.view === "therm") drawTherm(v, g, d, x0, x1, y0, y1, xOf);
+  else drawBtbt(v, g, d, x0, x1, y0, y1, xOf);
+}
+
+/* ---- 带间隧穿的能带图（左 68%）+ 电流谱面板（右，与热发射视图的热尾面板同位）---- */
+function drawBtbt(v, g, d, x0, x1, y0, y1, xOf) {
+  const Elo = -Math.max(d.psiD, 0.5) - 0.35, Ehi = d.EgV + 0.35;
+  const yOf = (E) => y1 - (E - Elo) / (Ehi - Elo) * (y1 - y0);
+  /* 能带图只占左边 68%，右边留给电流谱面板 —— 与热发射视图的「热尾面板」占的是同一块地，
+     两张图可以逐格对着看：那边是一条斜线（热尾被 kT 锁死），这边是一条平顶（硬边 × T_WKB）。 */
+  const xMid = x0 + (x1 - x0) * 0.68;
+  const BX = (nm) => x0 + nm / XNM * (xMid - x0);
+
+  /* 能量轴 */
+  line(g, x0, y0, x0, y1, C_AX, 1);
+  const eStep = (Ehi - Elo) > 3 ? 1 : 0.5;
+  for (let e = Math.ceil(Elo / eStep) * eStep; e <= Ehi; e += eStep) {
+    line(g, x0 - 4, yOf(e), x0, yOf(e), C_AX, 1);
+    lbl(g, (Math.abs(e) < 1e-9 ? "0" : e.toFixed(1)), x0 - 7, yOf(e), C_SUB, 10.5, "right");
+  }
+  mtxt(g, TX("<span class=\"m\"><i>E</i> (eV)</span>"), x0 - 7, y0 - 12, C_SUB, 11, "right", true);
+
+  /* 源 / 漏 的费米能级 */
+  line(g, x0, yOf(0), xMid, yOf(0), "rgba(140,150,160,0.55)", 1, [6, 4]);
+  lbl(g, "源 E_F", x0 + 4, yOf(0) - 9, C_SUB, 10.5);
+  line(g, BX(XD), yOf(-d.O.vd), xMid, yOf(-d.O.vd), "rgba(140,150,160,0.55)", 1, [6, 4]);
+  lbl(g, "漏 E_F", xMid - 4, yOf(-d.O.vd) + 10, C_SUB, 10.5, "right");
+
+  /* E_C / E_V */
+  const N = 240, ec = [], ev = [];
+  for (let i = 0; i <= N; i++) {
+    const nm = i / N * XNM, ps = psiAt(nm, d);
+    ec.push([BX(nm), yOf(d.EgV - ps)]);
+    ev.push([BX(nm), yOf(-ps)]);
+  }
+  /* 价带里的填充阴影 */
+  g.save();
+  g.beginPath();
+  ev.forEach(function (p, i) { i ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1]); });
+  g.lineTo(xMid, y1); g.lineTo(x0, y1); g.closePath();
+  g.fillStyle = "rgba(217,74,61,0.08)"; g.fill();
+  g.restore();
+
+  /* 隧穿窗口：以 E_C(x) 与 E_V(x) 为左右边界、能量落在窗口内的那块平行四边形 */
+  const eBot = d.EgV - d.psi;
+  if (d.open) {
+    const pts = [
+      [BX(XJ - d.WdNm), yOf(0)],
+      [BX(XJ - d.WdNm + d.WtNm), yOf(0)],
+      [BX(XJ), yOf(eBot)],
+      [BX(XJ - d.WdNm), yOf(eBot)]
+    ];
+    poly(g, pts, "rgba(46,158,91,0.24)", "rgba(46,158,91,0.8)", 1.3);
+  }
+  g.save();
+  g.strokeStyle = C_EC; g.lineWidth = 2.2; g.beginPath();
+  ec.forEach(function (p, i) { i ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1]); });
+  g.stroke();
+  g.setLineDash([6, 4]); g.strokeStyle = C_EV; g.lineWidth = 2.2; g.beginPath();
+  ev.forEach(function (p, i) { i ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1]); });
+  g.stroke();
+  g.restore();
+  mtxt(g, TX(H_EC), BX(2), yOf(d.EgV) - 11, C_EC, 12.5, "left", true);
+  mtxt(g, TX(H_EV), BX(2), yOf(0) + 12, C_EV, 12.5, "left", true);
+
+  /* 结面与分区 */
+  line(g, BX(XJ), y0, BX(XJ), y1, "rgba(155,165,177,0.6)", 1, [4, 4]);
+  lbl(g, "源结（隧穿结）", BX(XJ) + 5, y0 + 8, C_TUN, 11, "left", true);
+  lbl(g, "P⁺ 源", (x0 + BX(XJ)) / 2, y1 + 13, C_SUB, 11, "center");
+  lbl(g, "I 沟道", (BX(XJ) + BX(XD)) / 2, y1 + 13, C_SUB, 11, "center");
+  lbl(g, "N⁺ 漏", (BX(XD) + xMid) / 2, y1 + 13, C_SUB, 11, "center");
+
+  if (d.open) {
+    /* 隧穿路径：同一能量上，从价带边到导带边 */
+    const eM = eBot * 0.45;
+    const xa = BX(XJ - d.WdNm + (-eM) / d.EmaxNm);
+    const xb = xa + (BX(d.WtNm) - x0);
+    arrow(g, xa, yOf(eM), xb, yOf(eM), C_TUN, 1.8);
+    /* 宽度尺寸线 */
+    const yDim = yOf(eBot) + 14;
+    dimArrow(g, xa, xb, yDim, C_TUN);
+    lblN(g, "W_t = ", d.WtNm.toFixed(2) + " nm", (xa + xb) / 2, yDim + 12, C_TUN, 11, "center", true);
+    lblSeq(g, ["隧穿长度 A_t = ", d.AtNm.toFixed(2) + " nm",
+      "（" + (d.type === 2 ? "线隧穿" : "点隧穿") + "）"],
+      xMid - 4, y0 + 8, C_TUN, 11, true);
+  } else {
+    lbl(g, "栅压还不够：导带底仍在源端价带顶之上，禁带里没有可对上的空态",
+      (x0 + xMid) / 2, y0 + 10, C_SUB, 11.5, "center", true);
+    lblSeq(g, ["把栅压加到 ", vthOf(d).toFixed(2), " V 以上才会开窗口"],
+      (x0 + xMid) / 2, y0 + 28, C_TXT, 11.5, true, "center");
+  }
+  /* x 轴刻度 */
+  [0, XJ, XD, XNM].forEach(function (nm) {
+    line(g, BX(nm), y1, BX(nm), y1 + 4, C_AX, 1);
+    lbl(g, nm + "", BX(nm), y1 + 27, C_SUB, 10.5, "center");
+  });
+  lbl(g, "nm", BX(XNM), y1 + 41, C_SUB, 10.5, "center");
+
+  /* 右：电流谱面板 */
+  drawSpec(g, d, xMid, x1, y0, y1, yOf);
+}
+
+/* ---- 右：电流谱（横轴对数）—— 与热发射视图的热尾面板同一块地、同一套画法 ----
+   热发射的电流谱就是那条 exp(−E/kT) 斜线：能用的一段被 kT 锁死在「每 59.5 mV 一个十进位」，
+   于是 SS ≥ 60 mV/dec。带间隧穿的供给函数是源价带顶的**硬边**（E ≤ 0 处 f ≈ 1，与温度无关），
+   再乘一个与能量无关的 T_WKB —— 因为禁带在任何能量上的水平宽度都是同一个 W_t = E_g/qE_max
+   ⇒ 窗口内是一条**平顶**：高度由 E_max 定、宽度 ΔE 由栅压定，两处都没有 kT。
+   这就是「TFET 的 SS 能压到 60 mV/dec 以下」这句话的物理来源。 */
+function drawSpec(g, d, xMid, x1, y0, y1, yOf) {
+  const ktq = d.ktq, ssDec = ktq * Math.LN10;
+  const Twkb = d.Twkb, win = d.win, winOpen = d.winOpen;
+  const XPL = xMid + 52, XPR = x1 - 8, PW = XPR - XPL;
+  /* 横轴（概率）量程：既要装得下 T_WKB（Si 约 1e−2，窄带隙材料能到 1e−1），
+     又要留够十进位把上面那条热尾画出来 ⇒ 至少 4 个十进位 */
+  const DECA = Math.max(4, Math.min(14, Twkb > 0 ? -Math.log10(Twkb) + 1.5 : 0));
+  const xDec = (k) => XPR - k / DECA * PW;                        /* 第 k 个十进位 */
+  const xP = (p) => p <= 0 ? XPL : Math.max(XPL, XPR + Math.log10(p) / DECA * PW);
+  const xN = (E) => Math.max(XPL, XPR - Math.max(0, E) / ssDec / DECA * PW);  /* exp(−E/kT) */
+  rrect(g, XPL - 34, y0 - 2, x1 - XPL + 36, y1 - y0 + 4, 4, "#ffffff", null);
+  line(g, xMid + 16, y0, xMid + 16, y1, "rgba(155,165,177,0.35)", 1, [4, 4]);
+  lbl(g, "电流谱：供给 × 透射（横轴对数）", XPL - 34, y0 - 9, C_TUN, 11, "left", true);
+  for (let k = 1; k < DECA; k++) line(g, xDec(k), y0, xDec(k), y1, "rgba(155,165,177,0.28)", 1, [3, 3]);
+  lbl(g, "← 每格一个十进位 →", (XPL + XPR) / 2, y0 + 10, C_SUB, 10, "center");
+  line(g, XPL, y1, XPR, y1, C_AX, 1);
+  lbl(g, "1", XPR + 2, y1 + 4, C_SUB, 10, "left");
+  mtxt(g, TX("10<sup><span class=\"op\">−</span>" + DECA.toFixed(0) + "</sup>"),
+    XPL - 6, y1 + 4, C_SUB, 10, "right", true);
+
+  /* ① 源价带占据 f(E)：E ≤ 0 恒为 1（硬边），E > 0 才接上那条 exp(−E/kT) 尾巴 */
+  g.save();
+  g.strokeStyle = C_EV; g.lineWidth = 2;
+  g.beginPath(); g.moveTo(XPR, y1); g.lineTo(XPR, yOf(0));
+  for (let e = 0.02; e <= 2.4; e += 0.02) { const xx = xN(e); g.lineTo(xx, yOf(e)); if (xx <= XPL) break; }
+  g.stroke();
+  g.setLineDash([4, 3]); g.lineWidth = 1.4;
+  g.beginPath(); g.moveTo(XPR, yOf(0));
+  for (let e = 0.02; e <= 2.4; e += 0.02) { const xx = xN(e); g.lineTo(xx, yOf(e)); if (xx <= XPL) break; }
+  g.stroke();
+  g.restore();
+  lbl(g, "源价带占据（硬边）", XPR - 6, yOf(0) - 26, C_EV, 10.5, "right", true);
+  lbl(g, "热尾（这边用不上）", XPL + 4, yOf(0) - 26, C_SUB, 10, "left");
+
+  /* ② T_WKB：窗口内处处相同 */
+  const xT = xP(Twkb);
+  if (Twkb > 0) {
+    line(g, xT, y0, xT, y1, C_HYB, 1.4, [6, 4]);
+    lblN(g, "T_WKB = ", Twkb.toExponential(1), xT - 4, y0 + 24, C_HYB, 10.5, "right", true);
+  }
+  /* ③ 电流谱 = f × T_WKB：窗口内是一条平顶 */
+  if (d.open) {
+    const yTop = yOf(0), yBot = yOf(-win);
+    poly(g, [[XPL, yTop], [xT, yTop], [xT, yBot], [XPL, yBot]], "rgba(46,158,91,0.22)", null, 0);
+    line(g, xT, yTop, xT, yBot, C_TUN, 2.6);
+    line(g, XPL, yTop, xT, yTop, C_TUN, 1.6);
+    line(g, XPL, yBot, xT, yBot, C_TUN, 1.6);
+    lbl(g, "电流谱（平顶）", XPL + 4, (yTop + yBot) / 2 - 7, C_TUN, 10.5, "left", true);
+    /* 被漏端封掉的那一段：能量低于 −qV_DS 的沟道态已被填满 ⇒ 对上了也没有空位可去 */
+    if (winOpen > win + 1e-6) {
+      const yB2 = yOf(-winOpen);
+      poly(g, [[XPL, yBot], [xT, yBot], [xT, yB2], [XPL, yB2]], "rgba(155,165,177,0.16)", null, 0);
+      lbl(g, "已被漏端填满", XPL + 4, (yBot + yB2) / 2, C_SUB, 10, "left", true);
+    }
+  } else {
+    lbl(g, "窗口未开 ⇒ 没有可对上的空态，电流谱为零",
+      XPL - 30, yOf(0) - 26, C_SUB, 10.5, "left", true);
+  }
+  /* ④ 脚注：一串能记的数字 */
+  lblN(g, "窗口 ΔE = ", win.toFixed(2) + " eV ≈ " + (win / ktq).toFixed(0) + " kT",
+    XPL - 32, y1 + 15, C_TUN, 10.5, "left", true);
+  lbl(g, "供给是硬边不是热尾 ⇒ 没有 60 mV/dec 这道墙", XPL - 32, y1 + 29, C_TUN, 10.5, "left", true);
+}
+
+/* ---- 热发射的能带图（MOSFET 对比视图） ---- */
+/* 竖向尺寸线：Φ_B 是能量差，只能竖着量；dimArrow 只会画横向的 */
+function dimArrowV(g, x, ya, yb, col) {
+  g.save();
+  g.strokeStyle = col; g.fillStyle = col; g.lineWidth = 1.2;
+  g.beginPath(); g.moveTo(x, ya); g.lineTo(x, yb); g.stroke();
+  [ya, yb].forEach(function (y, i) {
+    const s = i === 0 ? -1 : 1;
+    g.beginPath(); g.moveTo(x, y);
+    g.lineTo(x - 3, y + s * 5);
+    g.lineTo(x + 3, y + s * 5);
+    g.closePath(); g.fill();
+  });
+  g.restore();
+}
+function drawTherm(v, g, d, x0, x1, y0, y1, xOf) {
+  const ktq = d.ktq, EgV = d.EgV, vd = d.O.vd;
+  const phi = phiOf();
+  /* 能量窗要同时装下导带（源 0 ／ 势垒 φ ／ 漏 −V_DS）与价带（再低一个 E_g）。
+     原来写死 −0.6…0.9 装不下价带，价带被裁在画外，看起来就像「只画了一半」。 */
+  const Elo = -(EgV + vd) - 0.22, Ehi = 0.88;
+  const yOf = (E) => y1 - (E - Elo) / (Ehi - Elo) * (y1 - y0);
+  const xS = 0.30, xDn = 0.70, w = 0.10;
+  /* 能带图只占左边 68%，右边留给热尾放大面板 —— 热尾的尺度是 kT（26 meV），
+     塞进能带图那种 2.7 eV 的能量窗里只有 3 px，根本看不出形状。 */
+  const xMid = x0 + (x1 - x0) * 0.68;
+  const SX = (u) => x0 + u * (xMid - x0);
+  /* 沟道势垒：源端 0 → 势垒顶 φ → 漏端 −V_DS，两端各用半个余弦做单调过渡。
+     ⚠️ 过渡的相位必须是 π 而不是 2π：用 2π 时余弦会先爬到顶再回落，
+     势垒就变成「上去—掉下来—跳上去—再掉下来」的锯齿，正是那堆莫名的升升降降。 */
+  function ecAt(u) {
+    if (u < xS - w) return 0;
+    if (u < xS + w) return phi * 0.5 * (1 - Math.cos((u - (xS - w)) / (2 * w) * Math.PI));
+    if (u < xDn - w) return phi;
+    if (u < xDn + w) return phi + (-vd - phi) * 0.5 * (1 - Math.cos((u - (xDn - w)) / (2 * w) * Math.PI));
+    return -vd;
+  }
+  line(g, x0, y0, x0, y1, C_AX, 1);
+  for (let e = Math.ceil(Elo / 0.5) * 0.5; e <= Ehi + 1e-9; e += 0.5) {
+    line(g, x0 - 4, yOf(e), x0, yOf(e), C_AX, 1);
+    lbl(g, (Math.abs(e) < 1e-9 ? "0" : e.toFixed(1)), x0 - 7, yOf(e), C_SUB, 10.5, "right");
+  }
+  mtxt(g, TX("<span class=\"m\"><i>E</i> (eV)</span>"), x0 - 7, y0 - 12, C_SUB, 11, "right", true);
+
+  /* 玻尔兹曼热尾：源端导带底（n⁺ 简并，E_F 几乎贴着它）之上按 exp(−E/kT) 迅速变稀 */
+  const N = 200, ec = [], ev = [];
+  for (let i = 0; i <= N; i++) {
+    const u = i / N;
+    ec.push([SX(u), yOf(ecAt(u))]);
+    ev.push([SX(u), yOf(ecAt(u) - EgV)]);
+  }
+  g.save();
+  g.beginPath();
+  ev.forEach(function (p, i) { i ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1]); });
+  g.lineTo(xMid, y1); g.lineTo(x0, y1); g.closePath();
+  g.fillStyle = "rgba(25,118,210,0.07)"; g.fill();
+  g.restore();
+
+  /* ---- 右：源端电子分布（横轴对数）----
+     占据数 ∝ exp(−E/kT)，画在对数横轴上正好是一条直线，斜率就是「每 59.5 mV 一个十进位」。
+     ⚠️ 横轴必须是对数：kT 只有 26 meV，而势垒动辄 0.5 eV（≈20 kT），
+     线性横轴下 exp(−20) 是零宽度，尾巴只能占住面板底部一小条。 */
+  const XPL = xMid + 52, XPR = x1 - 8, PW = XPR - XPL;
+  const ssDec = ktq * Math.LN10;                       /* 掉一个十进位所需的能量 V */
+  const DECA = Math.max(2, Math.min(14, phi / ssDec + 1.2));
+  const Etop = DECA * ssDec;                           /* 纵轴量程与横轴同步 ⇒ 分布线恰好对角 */
+  const yE = (E) => y1 - (E / Etop) * (y1 - y0);
+  const xN = (E) => XPR - (E / ssDec / DECA) * PW;
+  rrect(g, XPL - 34, y0 - 2, x1 - XPL + 36, y1 - y0 + 4, 4, "#ffffff", null);
+  line(g, xMid + 16, y0, xMid + 16, y1, "rgba(155,165,177,0.35)", 1, [4, 4]);
+  lbl(g, "源端电子分布（横轴对数）", XPL - 34, y0 - 9, "#b06a10", 11, "left", true);
+  /* 十进位栅格 */
+  for (let k = 1; k < DECA; k++) line(g, xN(k * ssDec), y0, xN(k * ssDec), y1, "rgba(155,165,177,0.28)", 1, [3, 3]);
+  lbl(g, "← 每格一个十进位 →", (XPL + XPR) / 2, y0 + 10, C_SUB, 10, "center");
+  line(g, XPL, y1, XPR, y1, C_AX, 1);
+  lbl(g, "1", XPR + 2, y1 + 4, C_SUB, 10, "left");
+  mtxt(g, TX("10<sup><span class=\"op\">−</span>" + DECA.toFixed(0) + "</sup>"),
+    XPL - 6, y1 + 4, C_SUB, 10, "right", true);
+  /* kT 参照：让「热尾只有 kT 量级」这件事量得出来 */
+  line(g, XPL, yE(ktq), XPR, yE(ktq), "rgba(239,140,26,0.5)", 1, [5, 4]);
+  lbl(g, "kT", XPL - 6, yE(ktq), "#b06a10", 10, "right", true);
+  /* 高过势垒的那一小撮：就是势垒线以上、分布线左边的那个三角形 */
+  if (phi > 0.02) {
+    poly(g, [[XPL, y0], [xN(phi), yE(phi)], [XPL, yE(phi)]], "rgba(239,140,26,0.55)", null, 0);
+    line(g, XPL, yE(phi), XPR, yE(phi), C_HYB, 1.8, [6, 4]);
+    lbl(g, "势垒顶", XPR - 4, yE(phi) - 9, C_HYB, 10.5, "right", true);
+  }
+  g.save();
+  g.strokeStyle = C_HEAT; g.lineWidth = 2.4;
+  g.beginPath(); g.moveTo(XPR, y1); g.lineTo(xN(Etop), yE(Etop)); g.stroke();
+  g.restore();
+  lbl(g, "玻尔兹曼热尾", xN(Etop * 0.55) - 4, yE(Etop * 0.55) - 10, "#b06a10", 11, "right", true);
+  mtxt(g, TX("每 " + (ssDec * 1e3).toFixed(1) + " mV 掉一个十进位 ⇒ 高过势垒的只剩 "
+    + "<span class=\"m\">10<sup><span class=\"op\">−</span>" + (phi / ssDec).toFixed(1) + "</sup></span>"),
+    XPL - 32, y1 + 15, "#b06a10", 10.5, "left", true);
+
+  g.save();
+  g.strokeStyle = C_EC; g.lineWidth = 2.2; g.beginPath();
+  ec.forEach(function (p, i) { i ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1]); });
+  g.stroke();
+  g.setLineDash([6, 4]); g.strokeStyle = C_EV; g.lineWidth = 2.2; g.beginPath();
+  ev.forEach(function (p, i) { i ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1]); });
+  g.stroke();
+  g.restore();
+  mtxt(g, TX(H_EC), SX(0.02), yOf(0) - 11, C_EC, 12.5, "left", true);
+  mtxt(g, TX(H_EV), SX(0.02), yOf(-EgV) + 12, C_EV, 12.5, "left", true);
+  /* n⁺ 简并：E_F 就贴在导带底上，所以不再另画一条会被导带盖住的 E_F 虚线 */
+  lbl(g, "源 E_F ≈ E_C", x0 + 6, yOf(0) + 14, C_SUB, 10.5, "left", true);
+  lbl(g, "漏 E_F ≈ E_C", xMid - 6, yOf(-vd) + 14, C_SUB, 10.5, "right", true);
+
+  /* 翻越势垒的箭头 + Φ_B 竖向尺寸线 */
+  if (phi > 0.02) {
+    const yb = yOf(phi) - 6;
+    arrow(g, SX(xS - 0.10), yb - 16, SX(0.5), yb - 16, C_HYB, 1.8);
+    lbl(g, "热发射：翻过去", SX(0.42), yb - 28, C_HYB, 10.5, "center", true);
+    dimArrowV(g, SX(0.62), yOf(0), yOf(phi), C_HYB);
+    lblN(g, "Φ_B = ", phi.toFixed(3) + " eV", SX(0.62) + 8, yOf(phi / 2), C_HYB, 11, "left", true);
+  } else {
+    lbl(g, "势垒已被栅压压平：器件进入开态", SX(0.5), yOf(phi) - 26, C_HYB, 11.5, "center", true);
+  }
+  lbl(g, "源 n⁺", SX(0.08), y1 + 14, C_SUB, 11, "center");
+  lbl(g, "沟道（势垒）", SX(0.5), y1 + 14, C_SUB, 11, "center");
+  lbl(g, "漏 n⁺", SX(0.92), y1 + 14, C_SUB, 11, "center");
+}
+
+/* ==================================================================
+   模块一右栏：转移特性 —— 陡的那条更矮，高的那条不那么陡
+   ================================================================== */
+const IV_LO = -8, IV_HI = 3;    /* log10(I / µA·µm⁻¹) 的显示范围 */
+/* 整条曲线只由 (E_g, m*, V_DS, t_ox, ε_ox) 决定，与当前栅压无关 ⇒ 缓存复用，
+   免得电子动画每帧把几百个工作点重算一遍。 */
+let IVC = null;
+function ivCurve() {
+  const key = [OPT.eg, OPT.ms, OPT.vd, OPT.tox, OPT.eox].join("|");
+  if (IVC && IVC.key === key) return IVC;
+  const pts = [];
+  for (let i = 0; i <= 240; i++) {
+    const V = i / 240 * VMAXG;
+    pts.push([V, withOpt({ vg: V }).Id]);
+  }
+  IVC = { key: key, pts: pts };
+  return IVC;
+}
+function drawIVPane(g, d, W, H) {
+  const padL = 46, padR = 14, padT = 24, padB = 40;
+  const x0 = padL, x1 = W - padR, y0 = padT, y1 = H - padB;
+  const xOf = (V) => x0 + V / VMAXG * (x1 - x0);
+  const yOf = (lg) => y1 - (lg - IV_LO) / (IV_HI - IV_LO) * (y1 - y0);
+
+  /* 网格与十进位刻度 */
+  for (let e = IV_LO; e <= IV_HI; e++) {
+    line(g, x0, yOf(e), x1, yOf(e), e === IV_LO ? C_AX : "rgba(155,165,177,0.28)", e === IV_LO ? 1 : 1);
+    mtxt(g, [{ s: "10" }, { s: String(e).replace("-", "−"), sup: true }],
+      x0 - 8, yOf(e), C_SUB, 11, "right");
+  }
+  for (let V = 0; V <= VMAXG + 1e-9; V += 0.3) {
+    line(g, xOf(V), y0, xOf(V), y1, "rgba(155,165,177,0.20)", 1);
+    lbl(g, V.toFixed(1), xOf(V), y1 + 14, C_SUB, 10.5, "center");
+  }
+  line(g, x0, y0, x0, y1, C_AX, 1);
+  mtxt(g, TX("<span class=\"m\"><i>I</i><sub>D</sub> (µA/µm)</span>"), x0 - 8, y0 - 12, C_SUB, 11, "right", true);
+  lbl(g, "栅压 V_GS（V）", (x0 + x1) / 2, y1 + 30, C_SUB, 11, "center", true);
+
+  const clampLg = (I) => Math.max(IV_LO - 0.5, Math.min(IV_HI + 0.5, Math.log10(Math.max(I, 1e-30))));
+
+  /* 参考 MOSFET：亚阈值一段严格 60 mV/dec，之后平滑饱和 */
+  const mm = [];
+  for (let i = 0; i <= 300; i++) {
+    const V = i / 300 * VMAXG;
+    mm.push([xOf(V), yOf(clampLg(mosAt(V)))]);
+  }
+  g.save();
+  g.setLineDash([6, 4]); g.strokeStyle = C_MOS; g.lineWidth = 2; g.beginPath();
+  mm.forEach(function (p, i) { i ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1]); });
+  g.stroke(); g.restore();
+
+  /* TFET */
+  const tt = ivCurve().pts.map(p => [xOf(p[0]), yOf(clampLg(p[1]))]);
+  g.save();
+  g.strokeStyle = C_TUN; g.lineWidth = 2.4; g.beginPath();
+  tt.forEach(function (p, i) { i ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1]); });
+  g.stroke(); g.restore();
+
+  /* 工作点与两条斜率参考线（各跨一个 decade） */
+  const lgNow = clampLg(d.Id), px = xOf(OPT.vg), py = yOf(lgNow);
+  line(g, px, y0, px, y1, "rgba(46,158,91,0.45)", 1, [4, 4]);
+  g.save(); g.fillStyle = C_TUN;
+  g.beginPath(); g.arc(px, py, 4.5, 0, 6.2832); g.fill();
+  g.strokeStyle = "#fff"; g.lineWidth = 1.6; g.stroke(); g.restore();
+
+  if (refOn()) {
+    const dV60 = d.SSmos;                          /* 换一个 decade 需要的栅压（理想 MOSFET） */
+    const dVnow = isFinite(ssOf(OPT.vg)) ? ssOf(OPT.vg) : dV60;
+    const DYW = (y1 - y0) / (IV_HI - IV_LO);       /* 一个十进位在纵向上占的像素 */
+    /* 灰段挂在 MOSFET 自己的曲线上、绿段挂在工作点上：窄栏里两条斜率参考各归各的位置才不挤成一团 */
+    const ym = yOf(clampLg(mosAt(OPT.vg)));
+    g.save(); g.setLineDash([5, 4]);
+    g.strokeStyle = C_MOS; g.lineWidth = 1.8;
+    g.beginPath(); g.moveTo(px, ym); g.lineTo(xOf(Math.max(0, OPT.vg - dV60)), Math.min(y1, ym + DYW)); g.stroke();
+    g.strokeStyle = C_TUN; g.lineWidth = 2;
+    g.beginPath(); g.moveTo(px, py); g.lineTo(xOf(Math.max(0, OPT.vg - Math.min(dVnow, 2))), Math.min(y1, py + DYW)); g.stroke();
+    g.restore();
+    /* 两条段的说明合成一行放在顶部，省得在窄栏里跟曲线叠在一起 */
+    lblSeq(g, ["斜率参考（每十进位）：灰 ", (dV60 * 1e3).toFixed(0), " ／ 绿 ",
+      (isFinite(dVnow) ? (dVnow * 1e3).toFixed(0) : "—"), " mV/dec"],
+      x1, y0 - 11, C_SUB, 10.5, true);
+  }
+  lbl(g, "TFET", x1 - 6, yOf(clampLg(withOpt({ vg: VMAXG }).Id)) + 14, C_TUN, 11.5, "right", true);
+  lbl(g, "MOSFET（理想 60 mV/dec）", x1 - 6, y1 - 10, C_MOS, 11, "right", true);
+}
+
+/* ==================================================================
+   图例、提示、读数
+   ================================================================== */
+function swatch(col, cls) { return "<span class=\"swatch " + (cls || "") + "\" style=\"color:" + col + "\"></span>"; }
+
+const H_EG = "<span class=\"m\"><i>E</i><sub>g</sub></span>";
+const H_VG = "<span class=\"m\"><i>V</i><sub>GS</sub></span>";
+const H_VD = "<span class=\"m\"><i>V</i><sub>DS</sub></span>";
+const H_EM = "<span class=\"m\"><i>E</i><sub>max</sub></span>";
+const H_WT = "<span class=\"m\"><i>W</i><sub>t</sub></span>";
+const H_AT = "<span class=\"m\"><i>A</i><sub>t</sub></span>";
+const H_TW = "<span class=\"m\"><i>T</i><sub>WKB</sub></span>";
+const H_EC = "<span class=\"m\"><i>E</i><sub>C</sub></span>";
+const H_EV = "<span class=\"m\"><i>E</i><sub>V</sub></span>";
+const H_ID = "<span class=\"m\"><i>I</i><sub>D</sub></span>";
+const H_MS = "<span class=\"m\"><i>m</i><sup>*</sup></span>";
+const H_KT = "<span class=\"m\"><i>kT</i>/<i>q</i></span>";
+const H_EOX = "<span class=\"m\"><i>ε</i><sub>ox</sub></span>";
+const H_TOX = "<span class=\"m\"><i>t</i><sub>ox</sub></span>";
+const H_GB = "<span class=\"m\"><i>G</i><sub>BTBT</sub></span>";
+
+const EQ_SS = "<span class=\"m\">SS<span class=\"op\">=</span><span class=\"frac\"><span class=\"num\"><i>kT</i></span><span class=\"den\"><i>q</i></span></span>ln 10</span>";
+const EQ_WKB = "<span class=\"m\"><i>T</i><sub>WKB</sub><span class=\"op\">≈</span>exp<span class=\"op\">(</span><span class=\"op\">−</span><span class=\"frac\"><span class=\"num\">4<span class=\"sqrt\"><span class=\"rd\">√</span><span class=\"rdc\">2<i>m</i><sup>*</sup></span></span><i>E</i><sub>g</sub><sup>3/2</sup></span><span class=\"den\">3<i>q</i><i>ħE</i></span></span><span class=\"op\">)</span></span>";
+const EQ_WT = "<span class=\"m\"><i>W</i><sub>t</sub><span class=\"op\">=</span><span class=\"frac\"><span class=\"num\"><i>E</i><sub>g</sub></span><span class=\"den\"><i>qE</i><sub>max</sub></span></span></span>";
+const EQ_GEN = "<span class=\"m\"><i>G</i><sub>BTBT</sub><span class=\"op\">∝</span><i>E</i><sub>max</sub><sup>2</sup>exp<span class=\"op\">(</span><span class=\"op\">−</span><span class=\"frac\"><span class=\"num\"><i>BE</i><sub>g</sub><sup>3/2</sup></span><span class=\"den\"><i>E</i><sub>max</sub></span></span><span class=\"op\">)</span></span>";
+const EQ_MOS = "<span class=\"m\"><i>I</i><span class=\"op\">∝</span>exp<span class=\"op\">(</span><span class=\"op\">−</span><i>Φ</i><sub>B</sub>/<i>kT</i><span class=\"op\">)</span><span class=\"op\">,</span><i>Φ</i><sub>B</sub><span class=\"op\">=</span><i>Φ</i><sub>0</sub><span class=\"op\">−</span><i>qV</i><sub>GS</sub></span>";
+const EQ_CUR = "<span class=\"m\"><i>I</i><sub>D</sub><span class=\"op\">∝</span><i>A</i><sub>t</sub><span class=\"op\">·</span>Δ<i>E</i><span class=\"op\">·</span><i>E</i><sub>max</sub><sup>2</sup><span class=\"op\">·</span><i>T</i><sub>WKB</sub></span>";
+const EQ_AT = "<span class=\"m\"><i>A</i><sub>t</sub><span class=\"op\">=</span><i>λ</i><sub>g</sub>ln<span class=\"op\">(</span><i>qψ</i>/<i>E</i><sub>g</sub><span class=\"op\">)</span></span>";
+
+function buildLegend() {
+  const a = $("legDev");
+  if (a) a.innerHTML = [
+    swatch(C_P, "sq") + "P⁺ 源区",
+    swatch("#7f97ad", "sq") + "I 本征沟道",
+    swatch(C_N, "sq") + "N⁺ 漏区",
+    swatch(C_TUN, "sq") + "隧穿窗口（绿）",
+    swatch("#1976d2", "dash") + "导带底 E_C",
+    swatch("#d94a3d", "dash") + "价带顶 E_V",
+    swatch(C_HEAT, "sq") + "电场强度热图",
+    swatch(C_TUN, "dash") + "右栏：TFET 转移曲线",
+    swatch(C_MOS, "dash") + "右栏：MOSFET 60 mV/dec",
+    swatch(C_TUN, "dot") + "右栏：当前工作点"
+  ].map(t => "<span>" + t + "</span>").join("");
+  const b = $("legBand");
+  if (b) b.innerHTML = OPT.view === "btbt" ? [
+    swatch("#1976d2", "dash") + "导带底 E_C（实线）",
+    swatch("#d94a3d", "dash") + "价带顶 E_V（虚线）",
+    swatch("#8b97a6", "dash") + "源 / 漏费米能级",
+    swatch(C_TUN, "sq") + "隧穿窗口与隧穿路径",
+    swatch(C_EV, "sq") + "右栏：源价带占据（硬边）",
+    swatch(C_HYB, "dash") + "右栏：T_WKB（窗口内处处相同）",
+    swatch(C_TUN, "sq") + "右栏：电流谱平顶（供给 × 透射）"
+  ].map(t => "<span>" + t + "</span>").join("") : [
+    swatch("#1976d2", "dash") + "导带底 E_C（实线）",
+    swatch("#d94a3d", "dash") + "价带顶 E_V（虚线）",
+    swatch(C_HEAT, "sq") + "源端玻尔兹曼热尾",
+    swatch(C_HYB, "sq") + "沟道热发射势垒 Φ_B"
+  ].map(t => "<span>" + t + "</span>").join("");
+}
+
+function buildHints() {
+  const d = D();
+  const h1 = $("hintDev");
+  if (h1) h1.innerHTML =
+    "栅压先被栅氧与沟道分掉一份，剩下的把沟道能带整体压低：" + H_EC + "<span class=\"m\"><span class=\"op\">=</span><i>E</i><sub>g</sub><span class=\"op\">−</span><i>qψ</i></span>、"
+    + H_EV + "<span class=\"m\"><span class=\"op\">=</span><span class=\"op\">−</span><i>qψ</i></span>。"
+    + (d.open
+      ? "绿色的那一段就是沟道导带已经压到源端价带之下的地方 —— 禁带在这里被“对上了”，价带电子可以直接穿过去。"
+      : "现在导带底还压在源端价带顶之上，禁带里没有能对上的空态 ⇒ 没有隧穿窗口。")
+    + "<span class=\"eq\">注意栅压为零时沟道也不是平的：P⁺ 源区与本征沟道的掺杂差先给出内建电势 "
+      + "<span class=\"m\"><i>V</i><sub>bi</sub> = <i>E</i><sub>g</sub>/2<i>q</i></span> = <b>" + d.Vbi.toFixed(2) + "</b> V，"
+      + "所以源区能带本来就比沟道高出半个带隙 —— 栅压只需再补上另外半个 E_g 就把窗口顶开了。</span>" +
+    /* 「最强场在源结」要等栅压把源结拉开才成立；栅压低时源结只剩内建电势那一半，
+       结区窄、场弱，全器件最强的场落在漏结（由 V_DS 与内建电势撑着）。两支各说各的。 */
+    + (d.Emax > d.Ed
+      ? "<span class=\"eq\">中间那条热图是电场：源结一旦被栅压拉开，最强场就落在源结 —— 电势要在最短距离内爬完 ψ；"
+        + "漏结那一个小峰来自 <span class=\"m\"><i>V</i><sub>DS</sub></span>，与栅压无关。</span>"
+      : "<span class=\"eq\">栅压还低，源结只靠内建电势撑着（ψ ≈ <b>" + d.Vbi.toFixed(2) + "</b> V），结区窄、场还没起来；"
+        + "热图上现在最强的是漏结那个峰，它由 <span class=\"m\"><i>V</i><sub>DS</sub></span> 与内建电势撑起来，与栅压无关。</span>") +
+    "<span class=\"eq\">绿色区域的横向长度由 <span class=\"m\"><i>W</i><sub>t</sub></span> 定，纵向深度 <span class=\"m\"><i>A</i><sub>t</sub></span> 决定它是「点」还是「线」—— 两者都记在读数面板。</span>" +
+    "<span class=\"eq\">最下面那条是能带轮廓，只为了跟正上方的电场热图逐点对齐（读「场最陡处能带最陡」）；"
+    + "带能量刻度、费米能级与 <span class=\"m\"><i>W</i><sub>t</sub></span> 尺寸线的完整能带图在模块二。</span>" +
+    "<span class=\"eq\">右栏两条曲线共用同一个关态漏电地板，所以比的是斜率与高度本身：斜率钉死在 <b>"
+    + (d.SSmos * 1e3).toFixed(1) + "</b> mV/dec，再怎么缩尺寸也动不了；绿色实线刚开启时斜率可以远陡于它，"
+    + "但电流往上走一段就迅速变缓 —— TFET 陡是陡在「刚开的那一段」，不是整条曲线。</span>";
+  const h2 = $("hintBand");
+  if (h2) h2.innerHTML = OPT.view === "btbt"
+    ? "势垒按三角势垒近似（场取耗尽近似给出的峰值并视为常量），它正是 " + EQ_WKB + " 所对应的那个形状。"
+      + "<span class=\"eq\">于是 <span class=\"m\"><i>E</i><sub>C</sub></span> 与 <span class=\"m\"><i>E</i><sub>V</sub></span> 之间在任何能量上的水平距离都是同一个值 " + EQ_WT
+      + "，图上用双箭头标了出来。</span>"
+      + (d.open
+        ? "窗口上沿卡在源端价带顶（能量 0），下沿是沟道导带底，高度就是读数里的 ΔE。"
+        : "窗口还没开：把栅压加到 <b>" + vthOf(d).toFixed(2) + "</b> V 以上，导带底才会落到源端价带顶之下。")
+      + "<span class=\"eq\">右栏是同一个能量轴上的电流谱：供给函数（源价带占据）在能量 0 以下恒为 1，是一道<b>硬边</b>；"
+        + "乘上处处相同的 <span class=\"m\"><i>T</i><sub>WKB</sub></span> 之后，窗口内就是一条<b>平顶</b> —— 高度由场强定、宽度由栅压定，"
+        + "两处都不含 <span class=\"m\"><i>kT</i></span>，这正是 SS 能压到 60 mV/dec 以下的原因。</span>"
+      + "<span class=\"eq\">切到「热发射」可以对照 MOSFET 的开门方式：那边是热尾翻势垒（电流谱是一条被 kT 锁死的斜线），这边是冷电子直接穿禁带。</span>"
+    : "MOSFET 靠热发射：源端电子要翻过沟道势垒，只有玻尔兹曼热尾里能量够高的那一小撮过得去，"
+      + "于是 " + EQ_MOS + "。栅压每加 Δ<span class=\"m\"><i>V</i></span>，势垒降 <span class=\"m\"><i>q</i>Δ<i>V</i></span>，电流就乘 <span class=\"m\">exp(<i>q</i>Δ<i>V</i>/<i>kT</i>)</span>。"
+      + "<span class=\"eq\">换一个十进位所需的栅压因此恒为 " + EQ_SS + " = <b>" + (d.SSmos * 1e3).toFixed(1) + "</b> mV/dec，只由温度与 <span class=\"m\"><i>k</i></span>、<span class=\"m\"><i>q</i></span> 决定，与材料、几何一概无关。</span>"
+      + "<span class=\"eq\">切回「带间隧穿」看 TFET 怎么绕开这条热尾。</span>";
+}
+
+function kvHTML(rows) {
+  return rows.map(function (q) {
+    return q.hd ? "<span class=\"hd\">" + q.hd + "</span>"
+      : "<span class=\"k\">" + q[0] + "</span><span class=\"v\">" + q[1] + "</span>";
+  }).join("");
+}
+function typeName(d) { return d.type === 0 ? "关断（无窗口）" : (d.type === 1 ? "点隧穿 PTBT" : "线隧穿 LTBT"); }
+function buildReadout() {
+  const d = D(), sb = ssBest();
+  const ssNow = d.open ? ssOf(OPT.vg) : Infinity;
+  const ro = $("readout");
+  if (ro) ro.innerHTML = kvHTML([
+    { hd: "栅控与能带" },
+    ["栅控效率 η", d.eta.toFixed(3)],
+    ["源结内建电势 V_bi（＝E_g/2q，掺杂决定）", d.Vbi.toFixed(3) + " V"],
+    ["沟道电势 ψ", d.psi.toFixed(3) + " V"],
+    ["能带弯曲 qψ", d.bend.toFixed(3) + " eV"],
+    ["隧穿窗口 ΔE", d.open ? d.win.toFixed(3) + " eV" : "0（未开启）"],
+    { hd: "隧穿" },
+    [H_MS + " 有效质量", OPT.ms.toFixed(3) + " m<sub>0</sub>"],
+    ["源结峰值电场 E_max", (d.Emax / 1e8).toFixed(2) + " MV/cm"],
+    ["隧穿宽度 W_t", isFinite(d.WtNm) ? d.WtNm.toFixed(2) + " nm" : "—"],
+    ["WKB 指数 / 透射率", isFinite(d.X) ? d.X.toFixed(2) + " ／ " + d.Twkb.toExponential(2) : "—"],
+    ["隧穿长度 A_t", d.open ? d.AtNm.toFixed(2) + " nm" : "0 nm"],
+    ["隧穿类型", typeName(d)],
+    { hd: "器件" },
+    ["漏极电流 I_D", d.Id > 1e-3 ? d.Id.toFixed(3) + " µA/µm" : d.Id.toExponential(2) + " µA/µm"],
+    ["同栅压 MOSFET I_D", d.Imos > 1e-3 ? d.Imos.toFixed(1) + " µA/µm" : d.Imos.toExponential(2) + " µA/µm"],
+    ["亚阈值摆幅 SS（本点）", isFinite(ssNow) ? (ssNow * 1e3).toFixed(1) + " mV/dec" : "—（未开启）"]
+  ]);
+  const rm = $("readoutMore");
+  if (rm) rm.innerHTML = kvHTML([
+    { hd: "中间量" },
+    [H_KT + " 与理想 SS", (d.ktq * 1e3).toFixed(2) + " mV ／ " + (d.SSmos * 1e3).toFixed(1) + " mV/dec"],
+    ["开启栅压 V_th（窗口刚开）", vthOf(d).toFixed(2) + " V"],
+    ["栅特征长度 λ_g", (d.lamG / 1e-9).toFixed(2) + " nm"],
+    ["结区宽度 W_d", isFinite(d.WdNm) ? d.WdNm.toFixed(2) + " nm" : "—"],
+    ["漏结电场 E_d（来自 V_DS）", (d.Ed / 1e8).toFixed(2) + " MV/cm"],
+    ["本模型最陡 SS", isFinite(sb.ss) ? "<b>" + (sb.ss * 1e3).toFixed(1) + "</b> mV/dec（峰值栅压 <b>" + sb.vg.toFixed(2) + "</b> V）" : "—（全程未开启）"],
+    ["开关比 I_D(V_GS) / I_D(0)", (d.Id / withOpt({ vg: 0 }).Id).toExponential(2)],
+    { hd: "模型边界" },
+    ["电流幅值", "I ∝ A_t·ΔE·E²·T_WKB，前因子按 Si 参考点标定到实测 Si TFET 量级；绝对量只看量级，看趋势"],
+    ["结区静电", "势垒按三角势垒近似（场取耗尽近似峰值并视为常量）"],
+    ["介电常数", "换材料时沟道介电常数仍取 Si 的 11.7"],
+    ["源区掺杂", "按简并极限处理（E_F 贴住价带顶），沟道按本征处理（E_F 在禁带中央）⇒ V_bi = E_g/2q"],
+    ["栅压量程内 ψ 恒 > 0", "三种材料 × 三档栅叠层下 ψ 最小值仍为正，模型不进入积累区"],
+    ["栅叠层取值", H_TOX + " = " + OPT.tox.toFixed(1) + " nm ／ " + H_EOX + " = <b>" + OPT.eox + "</b>（三档离散）"],
+    ["温度", "一律 300 K；不展开变温与双极性漏电"]
+  ]);
+}
+
+/* ==================================================================
+   挑战与预设
+   ================================================================== */
+let ANS_EL = [];
+const CHAL = [
+  {
+    q: "切到模块二的「热发射」视图，盯住源端那支玻尔兹曼热尾：为什么电流随栅压指数增长？60 mV/dec 这个数字到底由哪些物理常数决定，和材料、和器件尺寸有没有关系？",
+    a: function () {
+      const d = D();
+      const k100 = KB * 100 / QQ, ss100 = k100 * Math.LN10;
+      return "电流来自热尾里<b>能量高过势垒的那一小撮</b>电子，它占比 <span class=\"m\">exp(<span class=\"op\">−</span><i>Φ</i><sub>B</sub>/<i>kT</i>)</span>。"
+        + "栅压每加 Δ<span class=\"m\"><i>V</i></span>，势垒降 <span class=\"m\"><i>q</i>Δ<i>V</i></span>，这一小撮就放大 <span class=\"m\">exp(<i>q</i>Δ<i>V</i>/<i>kT</i>)</span> 倍 —— 指数增长就是这么来的。<br>"
+        + "换一个十进位要 <span class=\"m\">exp(<i>q</i>Δ<i>V</i>/<i>kT</i>) = 10</span>，即 " + EQ_SS + " = <b>" + (d.SSmos * 1e3).toFixed(1) + "</b> mV/dec（300 K）。<br>"
+        + "式子里只有 <span class=\"m\"><i>k</i></span>、<span class=\"m\"><i>T</i></span>、<span class=\"m\"><i>q</i></span>：<b>与材料、与几何一概无关</b>，"
+        + "所以它是硬性的热力学极限，缩尺寸动不了它。真要把温度降到 100 K，<span class=\"m\"><i>kT</i>/<i>q</i></span> 变成 "
+        + "<b>" + (k100 * 1e3).toFixed(2) + " mV</b>，SS = <b>" + (ss100 * 1e3).toFixed(1) + "</b> mV/dec —— 但芯片不能靠泡液氮工作。"
+        + "<span class=\"eq\">真实 MOSFET 还要再乘一个体因子 <span class=\"m\">1 + <i>C</i><sub>s</sub>/<i>C</i><sub>ox</sub></span>，所以实测往往是 70～90 mV/dec；"
+        + "本工具画的是理想栅控下的那条极限线。</span>";
+    }
+  },
+  {
+    q: "回到模块二的「带间隧穿」视图，把栅压从 0 慢慢加上去：能带什么时候开始重叠？绿色窗口刚出现的那一瞬间，电流是多少、SS 是多少？栅压继续往上加，SS 会一直这么陡吗？",
+    a: function () {
+      const d = D(), vt = vthOf(d);
+      const a = withOpt({ vg: vt + 0.02 }), b = withOpt({ vg: vt + 0.30 });
+      const sa = a.open ? ssOf(vt + 0.02) : Infinity, sb2 = b.open ? ssOf(vt + 0.30) : Infinity;
+      return "窗口开启的条件是沟道电势把导带压到源端价带之下：<span class=\"m\"><i>qψ</i> &gt; <i>E</i><sub>g</sub></span>，"
+        + "换算成栅压是 <b>" + vt.toFixed(2) + "</b> V（本工具当前栅控效率 η = <b>" + d.eta.toFixed(3) + "</b>）。<br>"
+        + "刚过阈值 0.02 V 处：Δ<span class=\"m\"><i>E</i></span> 只有 <b>" + a.win.toFixed(3) + "</b> eV，"
+        + "电流 <b>" + a.Id.toExponential(2) + "</b> µA/µm，SS = <b>" + (isFinite(sa) ? (sa * 1e3).toFixed(1) : "—") + "</b> mV/dec —— 确实比 60 陡。<br>"
+        + "但再往上加 0.30 V：SS 变成 <b>" + (isFinite(sb2) ? (sb2 * 1e3).toFixed(1) : "—") + "</b> mV/dec。"
+        + "原因是刚开启时 Δ<span class=\"m\"><i>E</i></span> 与隧穿长度 <span class=\"m\"><i>A</i><sub>t</sub></span> 都从 0 起步，对数增长极快；"
+        + "窗口一宽，这两个因子的对数导数就塌下来，只剩 WKB 指数在撑，斜率于是迅速变缓。<br>"
+        + "<b>所以 TFET 的“陡”是有电流区间的</b>：陡在刚开启的头一两个十进位，不是整条转移曲线。"
+        + "这也正是文献里 TFET 的 SS 必须标明「在哪一段电流上测」的原因。";
+    }
+  },
+  {
+    q: "固定栅压不变，把材料从 Si（1.12 eV）换成 Ge（0.66 eV）、InAs（0.35 eV）。WKB 指数和透射率各变了多少倍？为什么窄带隙能换来大得多的开态电流，代价又是什么？",
+    a: function () {
+      const s = withOpt({ eg: 1.12, ms: 0.20 });
+      const g = withOpt({ eg: 0.66, ms: 0.10 });
+      const i = withOpt({ eg: 0.35, ms: 0.023 });
+      const f = (x) => x === 0 ? "—" : x.toExponential(2);
+      const r = (a, b) => (b === 0 ? "—" : (a / b).toExponential(2));
+      return "三个材料的 WKB 指数（越小越容易穿）：Si <b>" + s.X.toFixed(2) + "</b>、Ge <b>" + g.X.toFixed(2) + "</b>、InAs <b>" + i.X.toFixed(2) + "</b>；"
+        + "透射率 <b>" + f(s.Twkb) + "</b> → <b>" + f(g.Twkb) + "</b> → <b>" + f(i.Twkb) + "</b>，即从 Si 到 InAs 放大约 <b>" + r(i.Twkb, s.Twkb) + "</b> 倍。<br>"
+        + "关键在于指数里是 <span class=\"m\"><i>E</i><sub>g</sub><sup>3/2</sup></span> 而不是 <span class=\"m\"><i>E</i><sub>g</sub></span>：带隙减半，"
+        + "指数里的分子降到 <span class=\"m\">2<sup><span class=\"op\">−</span>3/2</sup></span> ≈ 0.35，而指数外面是负号 ⇒ 透射率是<b>指数级的指数</b>级上涨。"
+        + "再叠上窄带隙材料通常更小 <span class=\"m\"><i>m</i><sup>*</sup></span>（InAs 0.023 对 Si 0.20），收益还要再乘一道。<br>"
+        + "同一栅压下三个材料的电流：<b>" + f(s.Id) + "</b> → <b>" + f(g.Id) + "</b> → <b>" + f(i.Id) + "</b> µA/µm。<br>"
+        + "代价：带隙窄 ⇒ 关态下的带间隧穿压不住、双极性漏电上来，器件<b>关不断</b>；"
+        + "而且窄带隙材料往往界面缺陷多、栅控更差。所以「窄带隙换大电流」不是免费的 —— 漏电与 I_ON 是同一枚硬币的两面。";
+    }
+  },
+  {
+    q: "在模块一盯住结面那条绿色的隧穿线：栅压较低时它是「点」还是「线」？把栅压加上去呢？隧穿面积变大为什么能把开态电流顶上去，却救不了亚阈值摆幅？",
+    a: function () {
+      const d = D(), vt = vthOf(d);
+      const dLo = 0.10, dHi = Math.max(0, Math.min(VMAXG - vt, 0.80));
+      const lo = withOpt({ vg: vt + dLo }), hi = withOpt({ vg: vt + dHi });
+      return "本工具里隧穿线的长度按栅控向体内的指数衰减算出：" + EQ_AT + "，最多铺满整个体厚。<br>"
+        + "刚开启 <b>" + dLo.toFixed(2) + " V</b> 时：<span class=\"m\"><i>A</i><sub>t</sub></span> = <b>" + lo.AtNm.toFixed(2) + "</b> nm（"
+        + (lo.type === 2 ? "线" : "点") + "隧穿），电流 <b>" + lo.Id.toExponential(2) + "</b> µA/µm；"
+        + "再加 <b>" + dHi.toFixed(2) + " V</b> 时：<span class=\"m\"><i>A</i><sub>t</sub></span> = <b>" + hi.AtNm.toFixed(2) + "</b> nm（"
+        + (hi.type === 2 ? "线" : "点") + "隧穿），电流 <b>" + hi.Id.toExponential(2) + "</b> µA/µm。<br>"
+        + "面积确实把电流顶上去了，但注意它是<b>对数</b>增长：栅压翻几倍，<span class=\"m\"><i>A</i><sub>t</sub></span> 只从零点几 nm 长到几个 nm。"
+        + "而 SS 的分子是 <span class=\"m\">ln 10</span>、分母是 <span class=\"m\">d ln<i>I</i><sub>D</sub>/d<i>V</i><sub>GS</sub></span>，"
+        + "对数项对斜率的贡献 <span class=\"m\">1/<i>A</i><sub>t</sub> · d<i>A</i><sub>t</sub>/d<i>V</i></span> 会随 <span class=\"m\"><i>A</i><sub>t</sub></span> 增大而迅速摊薄。<br>"
+        + "<b>结论：面积救 I_ON，指数救 SS</b>，两者不是同一个因子。真想在结构上放大面积，得让隧穿方向顺着栅场走"
+        + "（栅与源交叠的线隧穿结构），那样面积由几何一次给出，不必靠加大栅压慢慢长出来。";
+    }
+  },
+  {
+    q: "看模块一右栏的两条转移曲线：TFET 更陡，但最高电流低得多。如果让你设计下一代低功耗芯片，你会怎么在「低漏电」和「大电流」之间取舍？",
+    a: function () {
+      const d = D();
+      const iT = withOpt({ vg: VMAXG }).Id, iM = mosAt(VMAXG);
+      const sb = ssBest();
+      /* 只比「同一电流上各自的 SS」：这是唯一公平的比较。
+         ⚠️ 别去比「爬到某个目标电流谁用的栅压小」—— 本模型 TFET 的开启电压更高
+         （V_th ≈ 0.88 V 对 MOSFET 的 ~0.6 V），那样比会得出相反的结论，把人带偏。 */
+      /* 基准取 10⁻⁵ µA/µm（10 pA/µm）：这是超低功耗真正关心的电流区，
+         也是 TFET 的斜率确实还陡过 60 mV/dec 的那一段。
+         ⚠️ 不能拿 0.01 µA/µm 那种开态附近的电流当基准 —— 那里 TFET 的斜率已经塌到
+         比 MOSFET 还差，拿来比会得出「TFET 并不陡」的错误印象。 */
+      const TGT = 1e-5, TGTS = "10<sup>−5</sup>";
+      const vAt = (fn) => {
+        for (let V = 0.02; V <= VMAXG + 1e-9; V += 0.005) if (fn(V) >= TGT) return V;
+        return NaN;
+      };
+      const vT = vAt(v => withOpt({ vg: v }).Id), vM = vAt(v => mosAt(v));
+      const ssT = isFinite(vT) && vT > 0.06 ? ssOf(vT) : Infinity;
+      return "本工具当前参数下：TFET 在 <span class=\"m\"><i>V</i><sub>GS</sub></span> = <b>" + VMAXG.toFixed(1) + " V</b> 时 <b>" + iT.toExponential(2) + "</b> µA/µm，"
+        + "参考 MOSFET 是 <b>" + iM.toFixed(0) + "</b> µA/µm —— 差 <b>" + (iM / iT).toFixed(0) + "</b> 倍，这是 TFET 的短板。<br>"
+        + "在两条曲线都够得到的 " + TGTS + " µA/µm（超低功耗真正用得上的电流区）上比斜率："
+        + "MOSFET 恒为 <b>" + (d.SSmos * 1e3).toFixed(1) + "</b> mV/dec，"
+        + "TFET 是 <b>" + (isFinite(ssT) ? (ssT * 1e3).toFixed(1) : "—") + "</b> mV/dec（它最陡还到过 <b>"
+        + (isFinite(sb.ss) ? (sb.ss * 1e3).toFixed(1) : "—") + "</b> mV/dec）—— 这是 TFET 的长项。<br>"
+        + "<b>但“陡”不等于“省电压”。</b>爬到同一个 " + TGTS + " µA/µm，MOSFET 用 <b>" + (isFinite(vM) ? vM.toFixed(2) : "—") + "</b> V，"
+        + "TFET 反而要 <b>" + (isFinite(vT) ? vT.toFixed(2) : "＞" + VMAXG.toFixed(1)) + "</b> V："
+        + "因为它的开启电压更高（<span class=\"m\"><i>V</i><sub>th</sub></span> 高达 <b>" + vthOf(d).toFixed(2) + " V</b>，栅压要先补上内建电势之外的半个 <span class=\"m\"><i>E</i><sub>g</sub></span>）。"
+        + "真要降 <span class=\"m\"><i>V</i><sub>DD</sub></span>，得把阈值一起压下来 —— 光有陡的斜率不够。<br>"
+        + "<b>取舍因此是分场景的：</b>动态功耗 ∝ <span class=\"m\"><i>V</i><sub>DD</sub><sup>2</sup></span>，"
+        + "电压降下来是平方级收益；而漏电按关态电流×时间算，斜率陡的器件能在更低的关态下保住同样的开关比。<br>"
+        + "<b>代价是速度。</b>驱动电流小 ⇒ 给负载电容充电慢，频率上不去。所以：<br>"
+        + "· 物联网传感器、可穿戴、常开常听的模块 —— 大部分时间待机、只偶尔算一下 ⇒ <b>TFET 更合适</b>；<br>"
+        + "· 服务器 CPU、GPU 这类一直在满载跑的算力核心 ⇒ 还是 <b>MOSFET</b>。<br>"
+        + "工程上常见的折中是<b>异质集成</b>：同一块芯片上，算力核用 MOSFET，常开的电源管理与传感前端用 TFET。"
+        + "<span class=\"eq\">还有一条别忘：本模型里 TFET 只在最初一两个十进位上陡，做电路设计时必须按「哪一段电流」来用，而不是拿一个 SS 数字当全部。</span>";
+    }
+  }
+];
+function buildChal() {
+  const grid = $("chalGrid");
+  if (!grid) return;
+  grid.innerHTML = ""; ANS_EL = [];
+  CHAL.forEach(function (c, i) {
+    const d = document.createElement("div");
+    d.className = "chal";
+    d.innerHTML = "<div class=\"chal-head\"><b>" + (i + 1) + ". " + c.q + "</b><span class=\"chev\">▶</span></div>" +
+      "<div class=\"chal-body\"><div class=\"ans\"></div><div class=\"btn-row\"><button>看看答案</button></div></div>";
+    grid.appendChild(d);
+    d.querySelector(".chal-head").onclick = () => d.classList.toggle("open");
+    const ans = d.querySelector(".ans");
+    ANS_EL.push(ans);
+    d.querySelector(".btn-row button").onclick = e => {
+      e.stopPropagation();
+      if (!ans.innerHTML) ans.innerHTML = CHAL[i].a();
+      ans.classList.toggle("show");
+    };
+  });
+}
+function refreshAnswers() {
+  ANS_EL.forEach(function (el, i) { if (el.innerHTML) el.innerHTML = CHAL[i].a(); });
+}
+
+/* ==================================================================
+   控件同步、渲染、动画、初始化
+   ================================================================== */
+function changed() {
+  ST = null;
+  buildBtns(); syncInputs(); render();
+}
+function buildBtns() {
+  const mb = $("matBtns");
+  if (mb) mb.innerHTML = MATS.map(function (q) {
+    const on = Math.abs(OPT.eg - q[1]) < 5e-3 && Math.abs(OPT.ms - q[2]) < 3e-3;
+    return "<button" + (on ? " class=\"sel\"" : "") + " data-mat=\"" + q[0] + "\">" + q[0]
+      + " <span class=\"etlv\">" + q[1].toFixed(2) + " eV</span></button>";
+  }).join("");
+  const ob = $("oxBtns");
+  if (ob) ob.innerHTML = OXIDS.map(function (q) {
+    const on = Math.abs(OPT.eox - q[1]) < 1e-6 && Math.abs(OPT.tox - q[2]) < 1e-6;
+    return "<button" + (on ? " class=\"sel\"" : "") + " data-eox=\"" + q[1] + "\" data-tox=\"" + q[2] + "\">" + q[0]
+      + " <span class=\"etlv\">ε " + q[1] + "</span></button>";
+  }).join("");
+  const vb = $("viewBtns");
+  if (vb) vb.innerHTML = VIEWS2.map(function (q) {
+    return "<button" + (OPT.view === q[1] ? " class=\"sel\"" : "") + " data-view=\"" + q[1] + "\">" + q[0] + "</button>";
+  }).join("");
+  const pb = $("preBtns");
+  if (pb) pb.innerHTML = PRES.map(function (q) { return "<button>" + q[0] + "</button>"; }).join("");
+}
+function syncInputs() {
+  const d = D();
+  const sv = (id, v) => { const e = $(id); if (e) e.value = v; };
+  /* 带 <sup> 的值必须走 innerHTML：textContent 会把标签当字面量打印出来 */
+  const sv2 = (id, t) => { const e = $(id); if (e) e.innerHTML = t; };
+  sv("egSlider", Math.round(OPT.eg * 100));
+  sv("vgSlider", Math.round(OPT.vg * 100));
+  sv("vdSlider", Math.round(OPT.vd * 100));
+  sv2("egVal", OPT.eg.toFixed(2) + " eV");
+  sv2("vgVal", OPT.vg.toFixed(2) + " V");
+  sv2("vdVal", OPT.vd.toFixed(2) + " V");
+  sv2("viewVal", OPT.view === "btbt" ? "带间隧穿" : "热发射");
+  sv2("matVal", matName());
+  sv2("oxVal", oxName());
+
+  const s_eg = $("egSub"); if (s_eg) s_eg.innerHTML =
+    "禁带宽度；它同时出现在隧穿指数里（<span class=\"m\"><i>E</i><sub>g</sub><sup>3/2</sup></span>）和开启条件里（<span class=\"m\"><i>qψ</i> &gt; <i>E</i><sub>g</sub></span>）。"
+    + "当前开启栅压 <b>" + vthOf(d).toFixed(2) + "</b> V。";
+  const s_mat = $("matSub"); if (s_mat) s_mat.innerHTML =
+    "材料一次给定<b>带隙</b>与<b>隧穿有效质量</b> " + H_MS + "：两者都是材料属性，绑在一起才自洽，"
+    + "所以不给 " + H_MS + " 单开滑块（它只出现在 <span class=\"m\">√<i>m</i><sup>*</sup></span> 上，影响有限）。"
+    + "当前 " + H_MS + " = <b>" + OPT.ms.toFixed(3) + "</b> m<sub>0</sub>；"
+    + "之后单独拖带隙滑块时，" + H_MS + " 保持这个值不变，读数面板如实披露。";
+  const s_vg = $("vgSub"); if (s_vg) s_vg.innerHTML =
+    "主控量。先按栅控效率 η = <b>" + d.eta.toFixed(3) + "</b> 折算成沟道电势 ψ = <b>" + d.psi.toFixed(3) + "</b> V，再决定场强与窗口。"
+    + (d.open ? "" : " <span class=\"eq\">还没到 <b>" + vthOf(d).toFixed(2) + "</b> V，窗口是关的。</span>");
+  const s_vd = $("vdSub"); if (s_vd) s_vd.innerHTML =
+    "漏压从两头起作用：定出漏端能带位置，并且把隧穿窗口封顶在 <span class=\"m\"><i>qV</i><sub>DS</sub></span> —— "
+    + "漏压太低时窗口填不满，这就是 TFET 的<b>超线性开启</b>。当前窗口 <b>" + (d.open ? d.win.toFixed(3) + " eV" : "0") + "</b>。";
+  const s_ox = $("oxSub"); if (s_ox) s_ox.innerHTML =
+    "栅叠层一次给定介质与厚度：" + H_TOX + " 越厚、" + H_EOX + " 越小，栅压被沟道分走的越多，"
+    + "栅控效率 η 越低 ⇒ 同样的栅压换来的场强越小、隧穿越难。它同时决定栅特征长度 λ_g ⇒ 也决定隧穿面积。"
+    + "当前 " + H_TOX + " = " + OPT.tox.toFixed(1) + " nm、" + H_EOX + " = " + OPT.eox
+    + "，η = <b>" + d.eta.toFixed(3) + "</b>，λ_g = " + (d.lamG / 1e-9).toFixed(2) + " nm。";
+  const s_view = $("viewSub"); if (s_view) s_view.innerHTML = OPT.view === "btbt"
+    ? "带间隧穿：冷电子直接穿禁带，斜率不由 <span class=\"m\"><i>kT</i></span> 决定。"
+    : "热发射：靠玻尔兹曼热尾翻势垒，斜率被 <span class=\"m\"><i>kT</i>/<i>q</i></span> 钉死。"
+      + (phiOf() > 0.02 ? "" : "（当前栅压已经把势垒压平了 —— 把栅压调到 <b>" + (VONM + VFB).toFixed(2) + "</b> V 以下才看得见势垒。）");
+
+  const fv = $("fixVal");
+  if (fv) fv.innerHTML = kvHTML([
+    ["温度 / kT/q", TEMP + " K ／ " + (d.ktq * 1e3).toFixed(2) + " mV"],
+    ["理想亚阈值摆幅 SS", (d.SSmos * 1e3).toFixed(1) + " mV/dec"],
+    ["平带电压 V_FB", VFB.toFixed(2) + " V"],
+    ["源区掺杂 N_A", "1×10<sup>20</sup> cm<sup>−3</sup>"],
+    ["沟道介电常数 / 体厚", ESR + " ／ " + (TS / 1e-9).toFixed(0) + " nm"],
+    ["电场参考 E_ref", "1 MV/cm"],
+    ["电流前因子 I_ref", IREF + " µA/µm"],
+    ["关态漏电地板 I_OFF", ILEAK.toExponential(0) + " µA/µm"],
+    ["参考 MOSFET 开态", IONM + " µA/µm ／ " + VONM.toFixed(2) + " V"],
+    ["沟道长度（画图）", (XD - XJ) + " nm"]
+  ]);
+}
+function bindAll() {
+  const sl = (id, set) => { const e = $(id); if (e) e.oninput = () => { set(+e.value); changed(); }; };
+  sl("egSlider", v => { OPT.eg = v / 100; });
+  sl("vgSlider", v => { OPT.vg = v / 100; });
+  sl("vdSlider", v => { OPT.vd = v / 100; });
+
+  const mb = $("matBtns");
+  if (mb) mb.onclick = e => {
+    const b = e.target.closest ? e.target.closest("button") : null;
+    if (!b) return;
+    const nm = b.getAttribute("data-mat");
+    const m = MATS.filter(q => q[0] === nm)[0];
+    if (m) { OPT.eg = m[1]; OPT.ms = m[2]; changed(); }
+  };
+  const ob = $("oxBtns");
+  if (ob) ob.onclick = e => {
+    const b = e.target.closest ? e.target.closest("button") : null;
+    if (!b) return;
+    OPT.eox = +b.getAttribute("data-eox");
+    OPT.tox = +b.getAttribute("data-tox");
+    changed();
+  };
+  const vb = $("viewBtns");
+  if (vb) vb.onclick = e => {
+    const b = e.target.closest ? e.target.closest("button") : null;
+    if (!b) return;
+    OPT.view = b.getAttribute("data-view"); changed();
+  };
+  const pb = $("preBtns");
+  if (pb) pb.onclick = e => {
+    const bs = pb.querySelectorAll("button");
+    const i = Array.prototype.indexOf.call(bs, e.target);
+    if (i < 0) return;
+    const d0 = D();
+    for (const k in PRES[i][1]) {
+      let val = PRES[i][1][k];
+      /* 哨兵值 −1：这个预设的栅压要按当前带隙与栅控效率现算，不能写死 */
+      if (k === "vg" && val < 0) val = Math.round((vthOf(d0) + 0.08) * 100) / 100;
+      OPT[k] = val;
+    }
+    changed();
+  };
+  ["ckAnim", "ckField", "ckRef"].forEach(function (id) {
+    const c = $(id); if (c) c.onchange = () => render();
+  });
+  document.addEventListener("click", e => {
+    const h = e.target.closest ? e.target.closest(".fold-head") : null;
+    if (h) h.parentNode.classList.toggle("open");
+  });
+  window.addEventListener("resize", () => fitAll());
+}
+function render() {
+  try {
+    drawDev(); drawBand();
+    buildLegend(); buildHints(); buildReadout(); refreshAnswers();
+  } catch (err) {
+    if (typeof console !== "undefined") console.error("[渲染]", err);
+  }
+}
+function startAnim() {
+  let last = 0;
+  function step(ts) {
+    if (!last) last = ts;
+    const dt = Math.min((ts - last) / 1000, 0.05); last = ts;
+    if (animOn()) { DEVV.t += dt; drawDev(); }
+    requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+function init() {
+  try {
+    buildLegend(); buildBtns(); buildChal();
+    fitCanvas(DEVV, "dev"); fitCanvas(BANDV, "band");
+    bindAll(); syncInputs();
+  } catch (err) {
+    if (typeof console !== "undefined") console.error("[初始化]", err);
+  }
+  render(); startAnim();
+}
+if (typeof document !== "undefined" && document.getElementById) {
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
+  else init();
+}
+
+/* i18n 启动必须在 init() 之后：setLang() 会重跑 render()，
+   放到 init() 之前会在 fitAll() 之前触发绘制，一旦抛异常整个 init() 就跑不到。 */
+(function () {
+  try {
+    i18nWatch();
+    ORIG_TITLE = ORIG_TITLE || document.title;
+    var btn = document.getElementById("langBtn");
+    if (btn) btn.onclick = function () { setLang(LANG === "en" ? "zh" : "en"); };
+    if (LANG === "en") setLang("en"); else { document.title = ORIG_TITLE; i18nWalk(document.body); }
+  } catch (e) { }
+})();
+</script>
+<div class="site-foot">本工具是 EIT-SP（半导体物理交互式教学工具箱）的一部分（武汉大学物理学院《半导体物理》智慧课程），以 MIT 协议开源，可自由使用与二次开发；转载请保留出处。反馈意见 <a href="mailto:doctorwanghao@qq.com">doctorwanghao@qq.com</a></div>
+</body>
+</html>

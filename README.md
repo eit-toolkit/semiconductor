@@ -7,7 +7,7 @@
 
 ![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)
 ![Dependencies: none](https://img.shields.io/badge/dependencies-none-brightgreen.svg)
-![Tools: 34](https://img.shields.io/badge/tools-34-orange.svg)
+![Tools: 35](https://img.shields.io/badge/tools-35-orange.svg)
 ![Build: not required](https://img.shields.io/badge/build-not%20required-lightgrey.svg)
 ![Version: 0.10](https://img.shields.io/badge/version-0.10-blue.svg)
 
@@ -69,6 +69,7 @@ This collection was developed with AI assistance.
 | Expansions | Graphene: sp² Hybridization and the π Bond — Dawn of 2D | [sp2杂化与π键形成交互教学工具.html](./sp2杂化与π键形成交互教学工具.html) |
 | Expansions | Perovskite Solar Cells — Light of the World | [钙钛矿太阳能电池交互教学工具.html](./钙钛矿太阳能电池交互教学工具.html) |
 | Expansions | Spintronics — Hidden in Plain Sight | [自旋电子学交互教学工具.html](./自旋电子学交互教学工具.html) |
+| Expansions | Tunnel FET: Band-to-Band Tunneling — The Forbidden Shortcut | [隧穿场效应管交互教学工具.html](./隧穿场效应管交互教学工具.html) |
 
 ## Design principles
 
