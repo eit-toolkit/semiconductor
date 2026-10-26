@@ -518,7 +518,7 @@ var I18N = {
   "I⁻（六配位，八面体共顶点）": "I⁻ (six-fold, corner-sharing octahedra)",
   "MA⁺ / FA⁺（只撑结构，不进能带）": "MA⁺ / FA⁺ (holds the structure up, absent from the bands)",
   "拖动旋转": "Drag to rotate",
-  "八面体共顶点连成三维骨架（B 位 Pb²⁺ 居中、X 位 I⁻ 在六个面心），A 位的一价阳离子坐在八个顶点围出的空隙里：": "Corner-sharing octahedra build the three-dimensional framework (Pb²⁺ at the center, I⁻ at the six face centers), and the monovalent A-site cation sits in the void enclosed by the eight corners: ",
+  "八面体共顶点连成三维骨架（B 位 Pb²⁺ 居中、X 位 I⁻ 在六个面心），A 位的一价阳离子坐在晶胞的八个顶点上（换个角度看，就是 8 个八面体围出的空腔中心）：": "Corner-sharing octahedra build the three-dimensional framework (Pb²⁺ at the center, I⁻ at the six face centers), and the monovalent A-site cation sits on the eight corners of the unit cell (seen the other way round, the center of the cavity enclosed by 8 octahedra): ",
   "它不参与前线轨道，只在电荷平衡和结构稳定性上出力 —— 也就是": "it takes no part in the frontier orbitals and contributes only to charge balance and structural stability — which is why ",
   " 主要由 Pb–X 骨架决定。拖动可旋转。": " is set mainly by the Pb–X framework. Drag to rotate.",
 
@@ -586,7 +586,7 @@ var I18N = {
   "的 （Pb 6s–I 5p 反键给出价带顶，Pb 6p–I 5p 反键给出导带底），缺陷态被推到带边之外或变成浅能级，于是「缺陷多」不等于「复合快」。": " (Pb 6s–I 5p antibonding gives the valence-band top, Pb 6p–I 5p antibonding the conduction-band bottom), so the defect states are pushed beyond the band edges or become shallow: “many defects” no longer means “fast recombination”.",
   "八面体共顶点连成三维骨架（B 位 Pb": "Corner-sharing octahedra build the three-dimensional framework (B-site Pb",
   " 居中、X 位 I": " at the center, X-site I",
-  " 在六个面心），A 位的一价阳离子坐在八个顶点围出的空隙里：它不参与前线轨道，只在电荷平衡和结构稳定性上出力 —— 也就是": " at the six face centers), and the monovalent A-site cation sits in the void enclosed by the eight corners: it takes no part in the frontier orbitals and contributes only to charge balance and structural stability — which is why ",
+  " 在六个面心），A 位的一价阳离子坐在晶胞的八个顶点上（换个角度看，就是 8 个八面体围出的空腔中心）：它不参与前线轨道，只在电荷平衡和结构稳定性上出力 —— 也就是": " at the six face centers), and the monovalent A-site cation sits on the eight corners of the unit cell (seen the other way round, the center of the cavity enclosed by 8 octahedra): it takes no part in the frontier orbitals and contributes only to charge balance and structural stability — which is why ",
   "（剩余强度随深度指数衰减，层里的黄色深浅就是它）。": " (the surviving intensity decays exponentially with depth — that is exactly the shading inside the layer).",
   "/(V·s) · 激子结合能 ": "/(V·s) · exciton binding energy ",
   " meV · 外辐射效率 ": " meV · external radiative efficiency ",
@@ -641,8 +641,8 @@ var I18N = {
 
   /* ---- 补：挑战一（ABX₃ 晶胞） ---- */
   "1. 看模块四右侧的晶胞：A 位阳离子坐在哪里？B 位与 X 位围成什么几何？把视角转一圈看看八面体是怎么连成骨架的——A 位的有机分子有没有出现在能带上？": "1. Look at the unit cell on the right of Module 4: where does the A-site cation sit? What geometry do the B and X sites build? Rotate the view once around and watch how the octahedra link into a framework — does the organic molecule on the A site show up in the bands at all?",
-  "A 位坐在八个顶点围出的立方体空隙里": "The A site sits in the cubic void enclosed by the eight corners",
-  "（体心位置，图里橙色的球）：它是一价的 MA": " (the body center, the orange sphere in the figure): it is a monovalent MA",
+  "A 位坐在晶胞的八个顶点上": "The A site sits on the eight corners of the unit cell",
+  "（换个角度看，就是 8 个八面体围出的空腔中心，图里橙色的球）：它是一价的 MA": " (seen the other way round, the center of the cavity enclosed by 8 octahedra — the orange sphere in the figure): it is a monovalent MA",
   "，靠电荷平衡把骨架撑住，并决定八面体怎么倾斜；": ", it holds the framework up through charge balance and decides how the octahedra tilt; ",
   "前线轨道上没有它": "it is absent from the frontier orbitals",
   "——价带顶是 I 5p（掺一点 Pb 6s），导带底主要是 Pb 6p。": "— the valence-band top is I 5p (with a little Pb 6s mixed in), the conduction-band bottom mainly Pb 6p.",
@@ -2247,7 +2247,7 @@ function buildHints() {
     "悬键能级落在带隙中央，成为高效的复合中心；铅卤钙钛矿的价带顶与导带底<b>都是反键</b>的 " +
     "（Pb 6s–I 5p 反键给出价带顶，Pb 6p–I 5p 反键给出导带底），缺陷态被推到带边之外或变成浅能级，" +
     "于是「缺陷多」不等于「复合快」。");
-  set("hintLat", "八面体共顶点连成三维骨架（B 位 Pb²⁺ 居中、X 位 I⁻ 在六个面心），A 位的一价阳离子坐在八个顶点围出的空隙里：" +
+  set("hintLat", "八面体共顶点连成三维骨架（B 位 Pb²⁺ 居中、X 位 I⁻ 在六个面心），A 位的一价阳离子坐在晶胞的八个顶点上（换个角度看，就是 8 个八面体围出的空腔中心）：" +
     "它不参与前线轨道，只在电荷平衡和结构稳定性上出力 —— " +
     "也就是<span class=\"m\"><i>E</i><sub>g</sub></span> 主要由 Pb–X 骨架决定。拖动可旋转。");
 }
@@ -2391,7 +2391,7 @@ const CHAL = [
     q: "看模块四右侧的晶胞：A 位阳离子坐在哪里？B 位与 X 位围成什么几何？把视角转一圈看看八面体是怎么连成骨架的——A 位的有机分子有没有出现在能带上？",
     a: () => {
       const s = S();
-      return "<b>A 位坐在八个顶点围出的立方体空隙里</b>（体心位置，图里橙色的球）：" +
+      return "<b>A 位坐在晶胞的八个顶点上</b>（换个角度看，就是 8 个八面体围出的空腔中心，图里橙色的球）：" +
         "它是一价的 MA⁺ / FA⁺ / Cs⁺，靠电荷平衡把骨架撑住，并决定八面体怎么倾斜；" +
         "<b>前线轨道上没有它</b>——价带顶是 I 5p（掺一点 Pb 6s），导带底主要是 Pb 6p。" +
         "<b>B 位 Pb²⁺ 居中，六个 X 位 I⁻ 在六个面心</b>，围成 [PbI₆]⁴⁻ 正八面体；" +
