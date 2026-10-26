@@ -85,7 +85,7 @@
 
 ## 快速开始
 
-**先在浏览器里试一下（无需下载）：** [eit-toolkit.github.io/semiconductor/index_cn.htm](https://eit-toolkit.github.io/semiconductor/index_cn.htm)（英文入口为 `index_en.htm`）
+**在浏览器里试一下：** [eit-toolkit.github.io/semiconductor/index_cn.htm](https://eit-toolkit.github.io/semiconductor/index_cn.htm)（英文入口为 `index_en.htm`）
 
 需要离线使用或整站部署时再下载：
 
