@@ -67,7 +67,7 @@
 | 后续：光学 | 光生电导效应 | Photoconductivity | [打开](./光生电导效应交互教学工具.html) |
 | 后续：热电 | 塞贝克效应 | Seebeck Effect | [打开](./塞贝克效应交互教学工具.html) |
 | 后续：磁学 | 霍尔效应 | Hall Effect | [打开](./霍尔效应交互教学工具.html) |
-| 扩展包 | 石墨烯：sp² 杂化与 π 键——二维黎明 | Graphene: sp² Hybridization and the π Bond — Dawn of 2D | [打开](./sp2杂化与π键形成交互教学工具.html) |
+| 扩展包 | 石墨烯：sp² 杂化与 π 键——二维黎明 | Graphene: sp² Hybridization and the π Bond — Dawn of 2D | [打开](./sp2杂化与pi键形成交互教学工具.html) |
 | 扩展包 | 钙钛矿太阳能电池——世界之光 | Perovskite Solar Cells — Light of the World | [打开](./钙钛矿太阳能电池交互教学工具.html) |
 | 扩展包 | 自旋电子学——闹市隐者 | Spintronics — Hidden in Plain Sight | [打开](./自旋电子学交互教学工具.html) |
 | 扩展包 | 隧穿场效应管：带间隧穿——禁地捷径 | Tunnel FET: Band-to-Band Tunneling — The Forbidden Shortcut | [打开](./隧穿场效应管交互教学工具.html) |

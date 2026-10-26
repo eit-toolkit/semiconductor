@@ -64,7 +64,7 @@ This collection was developed with AI assistance.
 | Beyond: optics | Photoconductivity | [光生电导效应交互教学工具.html](./光生电导效应交互教学工具.html) |
 | Beyond: thermoelectric | Seebeck Effect | [塞贝克效应交互教学工具.html](./塞贝克效应交互教学工具.html) |
 | Beyond: magnetic | Hall Effect | [霍尔效应交互教学工具.html](./霍尔效应交互教学工具.html) |
-| Expansions | Graphene: sp² Hybridization and the π Bond — Dawn of 2D | [sp2杂化与π键形成交互教学工具.html](./sp2杂化与π键形成交互教学工具.html) |
+| Expansions | Graphene: sp² Hybridization and the π Bond — Dawn of 2D | [sp2杂化与pi键形成交互教学工具.html](./sp2杂化与pi键形成交互教学工具.html) |
 | Expansions | Perovskite Solar Cells — Light of the World | [钙钛矿太阳能电池交互教学工具.html](./钙钛矿太阳能电池交互教学工具.html) |
 | Expansions | Spintronics — Hidden in Plain Sight | [自旋电子学交互教学工具.html](./自旋电子学交互教学工具.html) |
 | Expansions | Tunnel FET: Band-to-Band Tunneling — The Forbidden Shortcut | [隧穿场效应管交互教学工具.html](./隧穿场效应管交互教学工具.html) |

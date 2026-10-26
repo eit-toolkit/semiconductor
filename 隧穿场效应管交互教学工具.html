@@ -447,6 +447,11 @@ var I18N = {
   " 源区与本征沟道的掺杂差先给出内建电势 ": " source and intrinsic channel differ in doping, which first gives a built-in potential of ",
   " V，所以源区能带本来就比沟道高出半个带隙 —— 栅压只需再补上另外半个 ": " V, so the source bands already sit half a band gap above the channel — the gate voltage only has to add the other half of ",
   " 就把窗口顶开了。": " to push the window open.",
+  "中间那条热图是电场：源结一旦被栅压拉开，最强场就落在源结 —— 电势要在最短距离内爬完 ψ；漏结那一个小峰来自 ": "The heat map in the middle is the electric field: once the gate voltage pulls the source junction open, the strongest field lands at the source junction — the potential has to climb all the way through ψ within the shortest distance; the small peak at the drain junction comes from ",
+  "，与栅压无关。": ", independent of the gate voltage.",
+  "栅压还低，源结只靠内建电势撑着（ψ ≈ ": "The gate voltage is still low, so the source junction is held up by the built-in potential alone (ψ ≈ ",
+  " V），结区窄、场还没起来；热图上现在最强的是漏结那个峰，它由 ": " V), the junction is narrow and the field has not built up yet; the strongest thing on the heat map right now is the peak at the drain junction, held up by ",
+  " 与内建电势撑起来，与栅压无关。": " together with the built-in potential, independent of the gate voltage.",
   "绿色区域的横向长度由 ": "The lateral length of the green region is set by ",
   " 定，纵向深度 ": " , and its vertical depth ",
   " 决定它是「点」还是「线」—— 两者都记在读数面板。": " decides whether it is a “point” or a “line” — both are recorded in the readout panel.",
@@ -2152,7 +2157,7 @@ function buildHints() {
       : "现在导带底还压在源端价带顶之上，禁带里没有能对上的空态 ⇒ 没有隧穿窗口。")
     + "<span class=\"eq\">注意栅压为零时沟道也不是平的：P⁺ 源区与本征沟道的掺杂差先给出内建电势 "
       + "<span class=\"m\"><i>V</i><sub>bi</sub> = <i>E</i><sub>g</sub>/2<i>q</i></span> = <b>" + d.Vbi.toFixed(2) + "</b> V，"
-      + "所以源区能带本来就比沟道高出半个带隙 —— 栅压只需再补上另外半个 E_g 就把窗口顶开了。</span>" +
+      + "所以源区能带本来就比沟道高出半个带隙 —— 栅压只需再补上另外半个 E_g 就把窗口顶开了。</span>"
     /* 「最强场在源结」要等栅压把源结拉开才成立；栅压低时源结只剩内建电势那一半，
        结区窄、场弱，全器件最强的场落在漏结（由 V_DS 与内建电势撑着）。两支各说各的。 */
     + (d.Emax > d.Ed
