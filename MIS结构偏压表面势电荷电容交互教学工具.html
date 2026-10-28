@@ -203,7 +203,7 @@
       <div class="sec-title"><span class="mtag">模块二</span>C–V 特性曲线：低频 vs 高频</div>
       <div class="chart-wrap"><canvas id="cv" data-h="280" tabindex="0"></canvas></div>
       <div class="legend" id="legCv"></div>
-      <div class="hint">纵轴是 <span class="m"><i>C</i><span class="sl">/</span><i>C</i><sub>ox</sub></span>。三条规律：<b>积累区</b>电容就是氧化层电容 <span class="m"><i>C</i><sub>ox</sub></span>（电荷直接堆在表面，半导体侧没有厚度）；<b>耗尽区</b>电容是 <span class="m"><i>C</i><sub>ox</sub></span> 与耗尽层电容 <span class="m"><i>ε</i><sub>s</sub><span class="sl">/</span><i>W</i></span> <b>串联</b>，随 <span class="m"><i>W</i></span> 变宽而下降；<b>强反型区</b>，<span class="m"><i>W</i></span> 饱和在 <span class="m"><i>W</i><sub>max</sub></span>，于是高频曲线停在那条 <span class="m"><i>C</i><sub>min</sub></span> 水平线上 —— 因为反型层里的少子要靠<b>产生–复合</b>慢慢补充，<b>跟不上</b>高频信号；低频下它们跟得上，电荷又直接堆在表面，电容便重新回到 <span class="m"><i>C</i><sub>ox</sub></span>。</div>
+      <div class="hint">纵轴是 <span class="m"><i>C</i><span class="sl">/</span><i>C</i><sub>ox</sub></span>。三条规律：<b>积累区</b>电容就是氧化层电容 <span class="m"><i>C</i><sub>ox</sub></span>（电荷直接堆在表面，半导体侧没有厚度）；<b>耗尽区</b>电容是 <span class="m"><i>C</i><sub>ox</sub></span> 与耗尽层电容 <span class="m"><i>ε</i><sub>s</sub><span class="sl">/</span><i>W</i></span> <b>串联</b>，随 <span class="m"><i>W</i></span> 变宽而下降；<b>强反型区</b>，<span class="m"><i>W</i></span> 饱和在 <span class="m"><i>W</i><sub>max</sub></span>，于是高频曲线停在那条 <span class="m"><i>C</i><sub>min</sub></span> 水平线上 —— 因为反型层里的少子要靠<b>产生–复合</b>慢慢补充，<b>跟不上</b>高频信号。</div>
     </div>
   </div>
 
@@ -259,7 +259,7 @@
       <div class="sec-title">读数面板</div>
       <div class="kv" id="readout"></div>
       <div class="fold" id="foldRo">
-        <div class="fold-head"><span class="chev">▶</span><span>更多读数（结构参数、电荷分解与对账、表面载流子）</span></div>
+        <div class="fold-head"><span class="chev">▶</span><span>更多读数（固定结构、电荷分解、表面载流子）</span></div>
         <div class="fold-body">
           <div class="kv" id="readoutMore"></div>
         </div>
@@ -932,6 +932,42 @@ var I18N = {
   "（固定）": " (fixed)",
   "（正）": " (positive)",
   "（耗尽层内）": " (inside the depletion layer)",
+  "高频信号。": " the high-frequency signal.",
+  "」）。三种状态分别朝哪边弯？": "” button). In which direction do the bands bend in each of the three states?",
+  " 什么时候是零？截面里的电荷符号怎么跟着变？": " is equal to zero? And how do the charge symbols in the cross section change along with it?",
+  "4. 一步一步加大栅压（看读数里的 ": "4. Increase the gate voltage step by step (watch ",
+  "浓度之比是多少？为什么偏偏是 ": "? And why is it ",
+  "（平带电压，本工具取理想 MIS：": " (the flat-band voltage; this tool assumes an ideal MIS: ",
+  " = 0、无氧化层电荷 ⇒ ": " = 0 and no oxide charge, so ",
+  " = 0），此时半导体里一点空间电荷都没有。（当前是哪一种状态、弯了多少，读数面板里逐行有。）第一行的符号": " = 0), and at that point there is no space charge at all inside the semiconductor. (Which state you are in and how far the bands bend are listed row by row in the readout panel.) The symbols in the first row",
+  "（两个占比读数面板里逐行有）。关键在于 ": " (the two fractions are listed row by row in the readout panel). The key point is ",
+  " 线）。把 ": " line). Move ",
+  "，读数面板里 ": ", in the readout panel ",
+  " 与 ": " and ",
+  " 拖到 ": " up to ",
+  " 会当场相等，表面少子与体内多子之比也会恰好等于 1。。注意：": " become equal right before your eyes, and the ratio of surface minority carriers to bulk majority carriers becomes exactly 1. Note that ",
+  "（当前值与是否饱和见读数面板）。多出来的电荷不再来自更深的耗尽层，而是变成": " (the present value and whether it has saturated are given in the readout panel). The extra charge no longer comes from a deeper depletion layer; instead it becomes ",
+  "（两个电荷量的对账见更多读数）。。反型层厚度只有几个 ": " (the reconciliation of the two charge amounts is given in the additional readouts). Yet the inversion layer is only a few ",
+  "上的起点 —— 此刻反型层的面电荷还不到耗尽层的 2%，能导电的沟道要再往上加栅压才出现（点「强反型」预设，看符号多几枚）。": " — at this moment the inversion-layer sheet charge is still under 2% of the depletion charge; a conducting channel appears only at higher gate voltage (click the strong-inversion preset and count how many extra symbols appear).",
+  "（平带电压），此时半导体里一点空间电荷都没有。（当前是哪一种状态、弯了多少，读数面板里逐行有。）第一行的符号：": " (the flat-band voltage), and at that point there is no space charge at all inside the semiconductor. (Which state you are in and how far the bands bend are listed row by row in the readout panel.) The symbols in the first row:",
+  " 厚（模块一里那一薄条），却装得下比耗尽层多几十倍的电荷 —— 这就是 MOSFET 里那层": " thick (the thin sliver in module 1), yet it holds several tens of times more charge than the depletion layer — this is the ",
+  "。这正是 MOSFET 里「栅压增加只增加沟道电荷、不增加耗尽层厚度」的原因。": ". This is exactly why in a MOSFET a larger gate voltage only adds channel charge and does not increase the depletion-layer thickness.",
+  "（当前值见读数面板）。多出来的电荷不再来自更深的耗尽层，而是变成": " (the present value is given in the readout panel). The extra charge no longer comes from a deeper depletion layer; instead it becomes",
+  "：低频下反型层电荷随交流信号增减 ⇒ 半导体侧没有厚度 ⇒ ": ": at low frequency the inversion-layer charge rises and falls with the AC signal ⇒ the semiconductor side adds no thickness ⇒ ",
+  "（两个电荷量的对账见更多读数）。反型层只有几个 ": " (the reconciliation of the two charge amounts is given in the additional readouts). Yet the inversion layer is only a few ",
+  "（p 型往下、n 型往上）。（能带图里：表面 ": " (downward for p-type, upward for n-type). (In the band diagram: the surface ",
+  "（那里响应的是多子，随时跟得上），分歧只出现在": " (there the majority carriers respond and always keep up); the divergence appears only in",
+  " 相等、两者之比也等于 1。注意：": " become equal, and so does their ratio: 1. Note that ",
+  "则这些数值不动，但 ": " these numbers do not change, but ",
+  " 时数一数。": ", just count them.",
+  "。）拖到 ": ".) Drag to ",
+  " 决定：": ": ",
+  "更多读数（固定结构、电荷分解、表面载流子）": "More readouts (fixed structure, charge breakdown, surface carriers)",
+  "衬底": "Substrate",
+  "电荷分解": "Charge breakdown",
+  "多子电荷 ": "Majority charge ",
+  "少子电荷 ": "Minority charge ",
+  "表面载流子": "Surface carriers",
 };
 
 /* 注入点②：画布直写字符串。老工具直接调 g.fillText()（描边文字走 g.strokeText()），这里在原型上兜住。
@@ -1396,7 +1432,7 @@ const P_VGH = MM("<i>V</i><sub>G</sub>"), P_VOXH = MM("<i>V</i><sub>ox</sub>"), 
   P_CMINH = MM("<i>C</i><sub>min</sub>"), P_CDMH = MM("<i>C</i><sub>dm</sub>"), P_CH = MM("<i>C</i>"),
   P_ECH = MM("<i>E</i><sub>c</sub>"), P_EVH2 = MM("<i>E</i><sub>v</sub>"), P_EIH = MM("<i>E</i><sub>i</sub>"),
   P_EFH = MM("<i>E</i><sub>F</sub>"), P_EFMH = MM("<i>E</i><sub>F,M</sub>"), P_EGH = MM("<i>E</i><sub>g</sub>"),
-  P_RHOQH = MM("|<i>ρ</i>|<span class='sl'>/</span><i>q</i>"), P_XH = MM("<i>x</i>"), P_LDH = MM("<i>L</i><sub>D</sub>"),
+  P_RHOQH = MM("|<i>ρ</i>|<span class='sl'>/</span><i>q</i>"), P_XH = MM("<i>x</i>"),
   P_NDOPH = MM("<i>N</i><sub>A</sub><span class='op'>/</span><i>N</i><sub>D</sub>");
 
 /* ---------------- 3. 画布与画布内排版 ---------------- */
@@ -2531,8 +2567,8 @@ function buildLegends() {
 /* ---------------- 11. 引导探究 ---------------- */
 const CHAL = [
   {
-    q: "把<b>栅压 " + P_VGH + "</b> 从最负慢慢拖到最正（或点「自动扫描 " + P_VGH + "」），盯住模块一<b>第四行的能带</b>。三种状态分别朝哪边弯？" +
-      P_PSIH + " 什么时候是零？模块一第一行截面里的电荷符号怎么跟着变？",
+    q: "把<b>栅压 " + P_VGH + "</b> 从最负慢慢拖到最正（或点「自动扫描 " + P_VGH + "」）。三种状态分别朝哪边弯？" +
+      P_PSIH + " 什么时候是零？截面里的电荷符号怎么跟着变？",
     a: () => {
       const d = der();
       const dir = d.psi < -1e-4 ? "向上弯（表面电子能量升高）" : (d.psi > 1e-4 ? "向下弯（表面电子能量降低）" : "完全不弯（平带）");
@@ -2540,14 +2576,13 @@ const CHAL = [
         MM("<i>ψ</i><sub>s</sub><span class='op'>&gt;</span>0") + " 时表面电子能量被压低 ⇒ 能带<b>向下</b>弯；" +
         MM("<i>ψ</i><sub>s</sub><span class='op'>&lt;</span>0") + " 时<b>向上</b>弯。对 " +
         (d.dop === 0 ? "p 型" : "n 型") + "硅：<b>" + (d.dop === 0 ? "负" : "正") + "栅压</b>把多子（" + (d.dop === 0 ? "空穴" : "电子") +
-        "）吸到表面 ⇒ <b>积累</b>（能带朝一边弯，表面一层极薄的高浓度同号电荷）；<b>" + (d.dop === 0 ? "正" : "负") +
+        "）吸到表面 ⇒ <b>积累</b>；<b>" + (d.dop === 0 ? "正" : "负") +
         "栅压</b>把多子赶走，露出固定的电离杂质 ⇒ <b>耗尽</b>，继续加大就进入<b>反型</b>。" +
         MM("<i>ψ</i><sub>s</sub><span class='op'>=</span>0") + " 的那个点就是 " +
         MM("<i>V</i><sub>G</sub><span class='op'>=</span><i>V</i><sub>FB</sub><span class='op'>=</span>" + fmt(d.VFB, 3) + U_VH) +
-        "（平带电压），此时半导体里一点空间电荷都没有。当前 " + MM("<i>V</i><sub>G</sub><span class='op'>=</span>" + fmt(d.VG, 3) + U_VH) +
-        " ⇒ " + MM("<i>ψ</i><sub>s</sub><span class='op'>=</span>" + fmt(d.psi, 3) + U_VH) + "，能带<b>" + dir +
-        "</b>，状态是<b>" + d.reg + "</b>。第一行的符号<b>带定额</b>（一枚 ⊕/⊖ = " + MM(sciH(symDQ(d), 1) + U_CM2H) + "）：" +
-        "<b>栅上画几枚，半导体里（耗尽层 ＋ 表面层）就是几枚</b> —— 拖 " + P_VGH + " 时数一数，看到的就是电荷量怎么被栅压调出来。";
+        "（平带电压），此时半导体里一点空间电荷都没有。" +
+        "（当前是哪一种状态、弯了多少，读数面板里逐行有。）" +
+        "第一行的符号：<b>栅上画几枚，半导体里（耗尽层 ＋ 表面层）就是几枚</b> —— 拖 " + P_VGH + " 时数一数。";
     }
   },
   {
@@ -2557,21 +2592,16 @@ const CHAL = [
       const tot = Math.abs(d.VG - d.VFB);
       const frac = tot > 1e-6 ? Math.abs(d.psi) / tot : 0.5;
       return "栅压只有两个去处：" + MM("<i>V</i><sub>G</sub><span class='op'>−</span><i>V</i><sub>FB</sub><span class='op'>=</span><i>ψ</i><sub>s</sub><span class='op'>+</span><i>V</i><sub>ox</sub>") +
-        "。当前 " + MM("<i>V</i><sub>G</sub><span class='op'>−</span><i>V</i><sub>FB</sub><span class='op'>=</span>" + fmt(d.VG - d.VFB, 3) + U_VH) +
-        "，其中半导体拿走 " + MM("<i>ψ</i><sub>s</sub><span class='op'>=</span>" + fmt(d.psi, 3) + U_VH) +
-        "（<b>" + fmt(frac * 100, 1) + "%</b>），氧化层拿走 " + MM("<i>V</i><sub>ox</sub><span class='op'>=</span>" + fmt(d.Vox, 3) + U_VH) +
-        "（<b>" + fmt((1 - frac) * 100, 1) + "%</b>）—— 占比就写在读数面板这两行里。关键在于 " + MM("<i>V</i><sub>ox</sub><span class='op'>=</span><span class='op'>−</span><i>Q</i><sub>s</sub><span class='sl'>/</span><i>C</i><sub>ox</sub>") +
+        "（两个占比读数面板里逐行有）。关键在于 " + MM("<i>V</i><sub>ox</sub><span class='op'>=</span><span class='op'>−</span><i>Q</i><sub>s</sub><span class='sl'>/</span><i>C</i><sub>ox</sub>") +
         "：强反型之后，反型层电荷随 " + MM("<span class='rm'>e</span><sup><i>qψ</i><sub>s</sub><span class='sl'>/</span>2<i>kT</i></sup>") +
         " 指数暴涨，只要 " + P_PSIH + " 再抬高一两个 " + MM("<i>kT</i><span class='sl'>/</span><i>q</i>") +
         "，电荷就够吸掉<b>任意多</b>的额外栅压 ⇒ <b>" + P_PSIH + " 被钳在 2" + P_PHIH + " 附近（≈ " + MM(fmt(2 * d.phiF, 3) + U_VH) +
-        "），多出来的栅压全部变成 " + P_VOXH + "</b>。这正是 MOSFET 里「栅压增加只增加沟道电荷、不增加耗尽层厚度」的原因 —— 也是 " +
-        MM("<i>I</i><sub>D</sub><span class='op'>∝</span>(<i>V</i><sub>G</sub><span class='op'>−</span><i>V</i><sub>T</sub>)") + " 成立的前提。";
+        "），多出来的栅压全部变成 " + P_VOXH + "</b>。这正是 MOSFET 里「栅压增加只增加沟道电荷、不增加耗尽层厚度」的原因。";
     }
   },
   {
     q: "把 " + P_VGH + " 调到「阈值 " + P_VTH + "」。此时 " + P_PSIH + " 与 " + MM("2<i>φ</i><sub>F</sub>") +
-      " 差多少？表面<b>少子</b>浓度和体内<b>多子</b>浓度之比是多少（p 型看 " + P_NSH + "<span class='op'>/</span>" + P_P0H +
-      "、n 型看 " + P_PSH + "<span class='op'>/</span>" + P_N0H + "）？为什么偏偏是 " + MM("2<i>φ</i><sub>F</sub>") + " 而不是 " + P_PHIH + "？再点「强反型」，反型层符号多了几枚？",
+      " 差多少？表面<b>少子</b>浓度和体内<b>多子</b>浓度之比是多少？为什么偏偏是 " + MM("2<i>φ</i><sub>F</sub>") + " 而不是 " + P_PHIH + "？再点「强反型」，反型层符号多了几枚？",
     a: () => {
       const d = der();
       /* 少子 / 多子的符号跟着掺杂走：p 型是 n_s、p_0；n 型是 p_s、n_0 */
@@ -2584,48 +2614,35 @@ const CHAL = [
         " —— 令两者相等立刻得到 " + MM("|<i>ψ</i><sub>s</sub>|<span class='op'>=</span>2|<i>φ</i><sub>F</sub>|") +
         "：<b>一个 " + P_PHIH + " 用来把 " + P_EIH + " 拉到 " + P_EFH + "，另一个 " + P_PHIH + " 用来让它继续越过 " +
         P_EFH + "、落到对称的另一侧</b>（p 型往下、n 型往上）。" +
-        "换成能带图的话：表面 " + P_EIH + " 必须越过 " + MM("<i>E</i><sub>F</sub><span class='op'>−</span><i>qφ</i><sub>F</sub>") +
-        "（拿第四行的 " + P_EIH + " 曲线去比那条水平的 " + P_EFH + " 线）。当前 " + MM("<i>ψ</i><sub>s</sub><span class='op'>=</span>" + fmt(d.psi, 3) + U_VH) +
-        " vs " + MM("2<i>φ</i><sub>F</sub><span class='op'>=</span>" + fmt(2 * d.phiF, 3) + U_VH) +
-        "；" + S_MIN + MM("<span class='op'>=</span>" + sciH(d.sMin, 2) + U_CM3H) + " vs 体内多子 " +
-        S_MAJ0 + MM("<span class='op'>=</span>" + sciH(d.maj0, 2) + U_CM3H) + "，比值 <b>" + fmt(d.invRatio, 3) + "</b>" +
-        (d.invRatio >= 1 ? "（<b>已进入强反型</b>）" : "（还差一点）") +
-        "。注意：" + P_VTH + " 只是<b>定义</b>上的起点 —— 此刻反型层的面电荷还不到耗尽层的 2%，薄到连一个反型载流子的小圆圈都凑不满；能导电的沟道要再往上加栅压才出现（点「强反型」预设，越过阈值 " +
-        MM("0.8" + U_VH) + "，反型层就涨到耗尽层电荷的两倍多）。";
+        "（能带图里：表面 " + P_EIH + " 必须越过 " + MM("<i>E</i><sub>F</sub><span class='op'>−</span><i>qφ</i><sub>F</sub>") + "。）" +
+        "拖到 " + P_VTH + "，读数面板里 " + P_PSIH + " 与 " + MM("2<i>φ</i><sub>F</sub>") +
+        " 相等、两者之比也等于 1。" +
+        "注意：" + P_VTH + " 只是<b>定义</b>上的起点 —— 此刻反型层的面电荷还不到耗尽层的 2%，能导电的沟道要再往上加栅压才出现（点「强反型」预设，看符号多几枚）。";
     }
   },
   {
-    q: "一步一步加大栅压，盯住模块一里的<b>耗尽层宽度</b>（和读数中的 " + P_WH + " 与 " + P_WMAXH + "）。进入强反型后 " + P_WH + " 还长吗？多出来的电荷去哪了？",
+    q: "一步一步加大栅压（看读数里的 " + P_WH + " 与 " + P_WMAXH + "）。进入强反型后 " + P_WH + " 还长吗？多出来的电荷去哪了？",
     a: () => {
       const d = der();
       return "耗尽层宽度由<b>电势</b>决定：" + MM("<i>W</i><span class='op'>=</span>" + SQ("2<span class='m'><i>ε</i><sub>s</sub></span>|<span class='m'><i>ψ</i><sub>s</sub></span>|<span class='sl'>/</span><i>qN</i>")) +
         "，而强反型后 " + P_PSIH + " 被钳在 " + MM("2<i>φ</i><sub>F</sub>") + " ⇒ " + P_WH + " 也跟着<b>饱和</b>在 " +
         MM("<i>W</i><sub>max</sub><span class='op'>=</span>" + SQ("4<span class='m'><i>ε</i><sub>s</sub></span>|<span class='m'><i>φ</i><sub>F</sub></span>|<span class='sl'>/</span><i>qN</i>") + "<span class='op'>=</span>" + fmtLen(d.Wmax)) +
-        "。当前 " + MM("<i>W</i><span class='op'>=</span>" + fmtLen(d.W)) +
-        (d.W >= d.Wmax * 0.999 ? "（<b>已饱和</b>）" : "（还在长）") +
-        "。多出来的电荷不再来自更深的耗尽层，而是变成<b>紧贴表面的反型层少子</b>：" +
-        MM("<i>Q</i><sub>min</sub><span class='op'>=</span><span class='op'>−</span>" + sciH(Math.abs(d.Qmin) / QE * 1e-4, 2) + U_CM2H) +
-        "，相比之下耗尽层电荷只有 " + MM("<i>Q</i><sub>maj</sub><span class='op'>=</span><span class='op'>−</span>" + sciH(Math.abs(d.Qmaj) / QE * 1e-4, 2) + U_CM2H) +
-        "。反型层厚度只有几个 " + MM(U_NMH) + "（模块一里那一薄条），却可以装下比耗尽层多几十倍的电荷 —— 所以 MOSFET 的沟道是一层<b>极薄的二维载流子气</b>，而沟道下方那片耗尽层厚度基本不随栅压变化。";
+        "（当前值见读数面板）。多出来的电荷不再来自更深的耗尽层，而是变成<b>紧贴表面的反型层少子</b>（两个电荷量的对账见更多读数）。" +
+        "反型层只有几个 " + MM(U_NMH) + " 厚（模块一里那一薄条），却装得下比耗尽层多几十倍的电荷 —— 这就是 MOSFET 里那层<b>极薄的二维载流子气</b>。";
     }
   },
   {
     q: "对比模块二的<b>高频</b>与<b>低频</b>两条 C–V 曲线。强反型区它们差在哪？把掺杂<b>类型</b>从 p 型切到 n 型，整条曲线怎么动？为什么高频下电容回不到 " + P_COXH + "？",
     a: () => {
       const d = der();
-      return "两条曲线在<b>积累区和耗尽区完全重合</b>（那里响应的是多子，介电弛豫时间极短，随时跟得上），分歧只出现在<b>强反型区</b>：低频下反型层电荷随交流信号增减 ⇒ 电荷又直接堆在表面，半导体侧没有厚度 ⇒ " +
+      return "两条曲线在<b>积累区和耗尽区完全重合</b>（那里响应的是多子，随时跟得上），分歧只出现在<b>强反型区</b>：低频下反型层电荷随交流信号增减 ⇒ 半导体侧没有厚度 ⇒ " +
         MM("<i>C</i><span class='op'>→</span><i>C</i><sub>ox</sub>") + "；高频下反型层的少子只能靠<b>产生–复合</b>慢慢补充（微秒到毫秒），跟不上 MHz 信号 ⇒ 交流电荷只能在耗尽层边缘进出 ⇒ 电容停在 " +
         MM("<i>C</i><sub>min</sub><span class='op'>=</span><i>C</i><sub>ox</sub><i>C</i><sub>dm</sub><span class='sl'>/</span>(<i>C</i><sub>ox</sub><span class='op'>+</span><i>C</i><sub>dm</sub>)") +
         "，" + MM("<i>C</i><sub>dm</sub><span class='op'>=</span><i>ε</i><sub>s</sub><span class='sl'>/</span><i>W</i><sub>max</sub>") +
-        "。当前 " + MM("<i>C</i><sub>min</sub><span class='sl'>/</span><i>C</i><sub>ox</sub><span class='op'>=</span>" + fmt(d.CminN, 3)) +
-        "，" + MM("<i>C</i><sub>ox</sub><span class='op'>=</span>" + sciH(d.Cox * 1e-4, 2) + U_FCM2H) +
-        "，" + MM("<i>W</i><sub>max</sub><span class='op'>=</span>" + fmtLen(d.Wmax)) +
-        "。" + P_CMINH + " 只由 " + MM("<i>C</i><sub>dm</sub><span class='op'>=</span><i>ε</i><sub>s</sub><span class='sl'>/</span><i>W</i><sub>max</sub>") +
-        " 决定，而 " + MM("<i>W</i><sub>max</sub><span class='op'>=</span>" + SQ("4<span class='m'><i>ε</i><sub>s</sub></span>|<span class='m'><i>φ</i><sub>F</sub></span>|<span class='sl'>/</span><i>qN</i>")) +
-        "：<b>掺杂越重 ⇒ " + P_WMAXH + " 越薄 ⇒ " + P_CDMH + " 越大 ⇒ " + P_CMINH + " 抬高</b>（本工具把 " + MM("<i>N</i>") +
-        " 固定在 " + MM("10<sup>16</sup>" + U_CM3H) + "，这条留给读者推演）。换<b>掺杂类型</b>则不动这些数值（p 与 n 的 " + MM("|<i>N</i>|") +
-        " 相同），但 " + P_VTH + " 由 " +
-        (d.VT > 0 ? "正" : "负") + " 变号、积累与反型两侧互换，整条 C–V 曲线沿 " + P_VGH + " 轴<b>左右镜像</b>。这套「高频曲线不回升」正是工业上判断界面态与反型层响应时间的标准手段。";
+        "。" + P_CMINH + " 只由 " + MM("<i>W</i><sub>max</sub><span class='op'>=</span>" + SQ("4<span class='m'><i>ε</i><sub>s</sub></span>|<span class='m'><i>φ</i><sub>F</sub></span>|<span class='sl'>/</span><i>qN</i>")) +
+        " 决定：<b>掺杂越重 ⇒ " + P_WMAXH + " 越薄 ⇒ " + P_CDMH + " 越大 ⇒ " + P_CMINH + " 抬高</b>（本工具把 " + MM("<i>N</i>") +
+        " 固定在 " + MM("10<sup>16</sup>" + U_CM3H) + "，这条留给读者推演）。换<b>掺杂类型</b>则这些数值不动，但 " + P_VTH + " 由 " +
+        (d.VT > 0 ? "正" : "负") + " 变号、积累与反型两侧互换，整条 C–V 曲线沿 " + P_VGH + " 轴<b>左右镜像</b>。";
     }
   }
 ];
@@ -2646,7 +2663,8 @@ function buildChal() {
     el.querySelector(".btn-row button").onclick = e => { e.stopPropagation(); ans.classList.toggle("show"); };
   });
 }
-function refreshAnswers() { ANS_EL.forEach((el, i) => { el.innerHTML = CHAL[i].a(); }); }
+const ansOf = c => (typeof c.a === "function" ? c.a() : c.a);
+function refreshAnswers() { ANS_EL.forEach((el, i) => { el.innerHTML = ansOf(CHAL[i]); }); }
 
 /* ---------------- 12. 读数 ---------------- */
 function kvRow(k, v) { return '<div class=\"row\"><span class=\"k\">' + k + '</span><span class=\"v\">' + v + "</span></div>"; }
@@ -2661,7 +2679,8 @@ function updateReadout() {
   /* ---- 核心区：V_G 的自洽分配 + 器件关键量 ---- */
   const h = [];
   h.push(hd(MM("<i>V</i><sub>G</sub><span class='op'>−</span><i>V</i><sub>FB</sub><span class='op'>=</span><i>ψ</i><sub>s</sub><span class='op'>+</span><i>V</i><sub>ox</sub>") + " 的自洽解"));
-  h.push(kvRow("栅压 " + P_VGH, MM("<b>" + fmt(d.VG, 3) + "</b>" + U_VH) + "　（量程 " + MM(fmt(d.vgLo, 2) + " ~ " + fmt(d.vgHi, 2) + U_VH) + "）"));
+  /* 括注「量程 min ~ max」是滑块的回显：滑块两端已经写死了，读数行不必再抄一遍。 */
+  h.push(kvRow("栅压 " + P_VGH, MM("<b>" + fmt(d.VG, 3) + "</b>" + U_VH)));
   h.push(kvRow("表面势 " + P_PSIH, MM("<b>" + fmt(d.psi, 3) + "</b>" + U_VH) + "　状态：<b style='color:" + d.regCol + "'>" + d.reg + "</b>"));
   h.push(kvRow("氧化层压降 " + P_VOXH, MM(fmt(d.Vox, 3) + U_VH) + "　（占 " +
     fmt((Math.abs(d.VG - d.VFB) > 1e-6 ? (1 - Math.abs(d.psi) / Math.abs(d.VG - d.VFB)) * 100 : 50), 1) + "%）"));
@@ -2675,29 +2694,30 @@ function updateReadout() {
   /* ---- 折叠区：结构参数 / 电荷分解与对账 / 表面载流子 ---- */
   const hm = [];
   hm.push(hd("当前结构（固定）"));
-  hm.push(kvRow("材料 / 掺杂", "<b>" + d.matName + "</b>（固定）/ " + (d.dop === 0 ? "p 型" : "n 型") + "　" + NU(d.Ndop, U_CM3H) + "（固定）"));
-  hm.push(kvRow(MM("<i>T</i>　·　" + U_KH + " / <i>kT</i>"), MM("<b>" + fmt(d.T, 0) + "</b>" + U_KH + "　(" + fmt(d.kT * 1000, 1) + U_MEVH + ")")));
-  hm.push(kvRow(MM("<i>E</i><sub>g</sub> / <i>n</i><sub>i</sub>"), MM(fmt(d.Eg, 3) + U_EVH + "　" + sciH(d.ni, 1) + U_CM3H)));
-  hm.push(kvRow(MM("<i>φ</i><sub>F</sub> / 2<i>φ</i><sub>F</sub>"), MM("<b>" + fmt(d.phiF, 3) + "</b>" + U_VH + " / <b>" + fmt(2 * d.phiF, 3) + "</b>" + U_VH)));
-  hm.push(kvRow(MM("<i>d</i><sub>ox</sub> / <i>C</i><sub>ox</sub>"), MM(fmt(d.doxNm, 1) + U_NMH + "　" + sciH(d.Cox * 1e-4, 2) + U_FCM2H)));
-  hm.push(kvRow(MM("<i>V</i><sub>FB</sub>"), MM("<b>" + fmt(d.VFB, 3) + "</b>" + U_VH) + "　（理想 MIS：" + MM("<i>Φ</i><sub>ms</sub><span class='op'>=</span>0") + "，无氧化层电荷）"));
+  /* 5 行固定参数压成 3 行：它们都是同一个「当前结构」的属性，分 5 行只会让折叠区变长。
+     信息一条不丢（固定量必须披露，不能隐藏）。V_FB 那行删掉：unit-note 已写
+     「本工具取理想 MIS：Φ_ms = 0、氧化层内无电荷 ⇒ V_FB = 0」。 */
+  hm.push(kvRow("衬底", "<b>" + d.matName + "</b>（固定）/ " + (d.dop === 0 ? "p 型" : "n 型") + "　" + NU(d.Ndop, U_CM3H)));
+  hm.push(kvRow(MM("<i>T</i> / <i>kT</i>　·　<i>E</i><sub>g</sub> / <i>n</i><sub>i</sub>"),
+    MM("<b>" + fmt(d.T, 0) + "</b>" + U_KH + "　(" + fmt(d.kT * 1000, 1) + U_MEVH + "）　" + fmt(d.Eg, 3) + U_EVH + "　" + sciH(d.ni, 1) + U_CM3H)));
+  hm.push(kvRow(MM("<i>φ</i><sub>F</sub> / 2<i>φ</i><sub>F</sub>　·　<i>d</i><sub>ox</sub> / <i>C</i><sub>ox</sub>"),
+    MM("<b>" + fmt(d.phiF, 3) + "</b> / <b>" + fmt(2 * d.phiF, 3) + "</b>" + U_VH + "　" + fmt(d.doxNm, 1) + U_NMH + "　" + sciH(d.Cox * 1e-4, 2) + U_FCM2H)));
 
-  hm.push(hd("电荷分解与对账"));
-  hm.push(kvRow("├ 多子电荷 " + P_QMAJH + "（耗尽时为 " + MM("<span class='op'>−</span><i>qNW</i>") + "）", qcm(d.Qmaj)));
-  hm.push(kvRow("└ 少子电荷 " + P_QMINH + "（反型层）", qcm(d.Qmin)));
-  /* Q_maj 与 Q_min 是对 ρ(x) 沿 x 做数值积分得来的，Q_s 是闭式 Q_s(u) —— 两条完全不同的路径，
-     所以这一行的差是「真残差」（数值积分误差），不是代数重言式。把它显示出来才看得到。 */
-  const relQ = Math.abs(d.Qs) > 1e-9 ? Math.abs(d.Qmaj + d.Qmin - d.Qs) / Math.abs(d.Qs) : -1;
-  hm.push(kvRow("两者之和 vs " + P_QSH, qcm(d.Qmaj + d.Qmin) +
-    (relQ >= 0 ? "<span class='nt2'>（与 " + MM("<i>Q</i><sub>s</sub>") + " 差 " + sciH(relQ, 1) + "：数值积分误差）</span>" : "")));
+  hm.push(hd("电荷分解"));
+  /* 原来用 ├└ 树形符号画在 k 里，既占宽度又不像分组；改成真正的分组标题。
+     「两者之和 vs Q_s」那行删掉：它是恒真的对账行（数值积分残差），
+     学生读它只会怀疑工具坏没坏；真正要看残差时走源码里的 audit 路径。 */
+  hm.push(kvRow("多子电荷 " + P_QMAJH + "（耗尽时为 " + MM("<span class='op'>−</span><i>qNW</i>") + "）", qcm(d.Qmaj)));
+  hm.push(kvRow("少子电荷 " + P_QMINH + "（反型层）", qcm(d.Qmin)));
 
-  hm.push(hd("表面载流子与其余"));
-  hm.push(kvRow("德拜长度 " + P_LDH, fmtLen(d.LD)));
+  hm.push(hd("表面载流子"));
   hm.push(kvRow("表面电子 " + MM("<i>n</i><sub>s</sub>") + " / 空穴 " + MM("<i>p</i><sub>s</sub>"), MM(sciH(d.ns, 2) + " / " + sciH(d.ps, 2) + U_CM3H)));
-  /* 判据跟着掺杂翻转：p 型是 n_s/p_0，n 型是 p_s/n_0 —— 分子永远是「表面少子」、分母永远是「体内多子」 */
+  /* 判据跟着掺杂翻转：p 型是 n_s/p_0，n 型是 p_s/n_0 —— 分子永远是「表面少子」、分母永远是「体内多子」。
+     保留这行，但只给 2 位有效数字：对一个「≥1 就好」的判据，6 位数字没有意义。 */
   const criK = d.dop === 0 ? P_NSH + MM("<span class='sl'>/</span>") + P_P0H : P_PSH + MM("<span class='sl'>/</span>") + P_N0H;
-  hm.push(kvRow("强反型判据 " + criK, "<b>" + fmt(d.invRatio, 3) + "</b>（≥1 即进入强反型）"));
-  hm.push(kvRow(MM("<i>C</i><sub>min</sub><span class='sl'>/</span><i>C</i><sub>ox</sub>") + "（" + MM("<i>W</i>") + " 饱和）", fmt(d.CminN, 3)));
+  hm.push(kvRow("强反型判据 " + criK, "<b>" + fmt(d.invRatio, 2) + "</b>（≥1 即进入强反型）"));
+  /* C_min/C_ox 行删掉：C–V 图上已经画了这条虚线并标注了同一个数。
+     德拜长度行删掉：本件不教德拜长度（那是「半导体表面边界条件」的内容）。 */
   $("readoutMore").innerHTML = hm.join("");
   refreshAnswers();
 }

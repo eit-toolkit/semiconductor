@@ -126,6 +126,7 @@
   .fold.open .fold-body { display: block; }
   .fold-val { font-weight: 400; color: var(--text-sub); font-size: 11px; margin-left: auto; }
   .fold-sub { font-size: 11.5px; color: var(--text-sub); line-height: 1.55; margin: 2px 0 5px; }
+  .unit-note { font-size: 11.5px; color: var(--text-sub); line-height: 1.55; margin-top: 6px; }
   .kv .hd:first-child { margin-top: 0; }
   /* ---- 课程页脚 ---- */
   .site-foot { max-width: 1500px; margin: 18px auto 0; padding: 12px 16px 24px;
@@ -274,9 +275,10 @@
       <div class="sec-title">读数面板</div>
       <div class="kv" id="readout"></div>
       <div class="fold" id="foldRo">
-        <div class="fold-head"><span class="chev">▶</span><span>更多读数（中间量与模型边界）</span></div>
+        <div class="fold-head"><span class="chev">▶</span><span>更多读数（中间量）</span></div>
         <div class="fold-body"><div class="kv" id="readoutMore"></div></div>
       </div>
+      <div class="unit-note" id="roNote"></div>
     </div>
 
   </div>
@@ -386,7 +388,7 @@ var I18N = {
   "预设": "Presets",
   "固定参量": "Fixed parameters",
   "读数面板": "Readout Panel",
-  "更多读数（中间量与模型边界）": "More readouts (intermediate quantities and model limits)",
+  "更多读数（中间量与模型边界）": "More readouts (intermediate quantities)",
   "引导探究（点击展开，先自己试一试再看答案）": "Guided exploration (click to expand — try it yourself before reading the answer)",
   "挑战任务": "Challenges",
   "禁带宽度；它同时出现在隧穿指数里（": "Band gap; it enters the tunneling exponent (",
@@ -690,6 +692,30 @@ var I18N = {
   "势垒顶": "Barrier top",
   "热发射：翻过去": "Thermionic emission: climbing over",
   " 钉死。": " .",
+  "，所以它是硬性的热力学极限，缩尺寸动不了它。": ", so it is a hard thermodynamic limit that scaling cannot move.",
+  "刚过阈值时 SS = ": "Just past threshold, SS = ",
+  "：陡在刚开启的头一两个十进位，不是整条转移曲线。": ": it is steep over the first one or two decades after turn-on, not over the whole transfer curve.",
+  "，透射率随之跨好几个数量级。": ", and the transmission grows by several orders of magnitude along with it.",
+  "，两者不是同一个因子。": " — the two are not the same factor.",
+  "陡是长项": "steepness is the strength",
+  " V —— 它的开启电压更高，栅压要先补上内建电势之外的半个 ": " V — its turn-on voltage is higher, because the gate voltage first has to make up the other half of ",
+  "。真要降 ": ". To really bring ",
+  "大部分时间待机、只偶尔算一下（物联网传感器、可穿戴、常开模块）⇒ ": "Mostly idle, computing only now and then (IoT sensors, wearables, always-on blocks) ⇒ ",
+  "；一直在满载跑的算力核心（服务器 CPU、GPU）⇒ 还是 ": "; compute cores that run at full load all the time (server CPUs, GPUs) ⇒ stick with ",
+  " —— 驱动电流小 ⇒ 给负载电容充电慢，频率上不去。开态电流的差距见读数面板。": " — a small drive current charges the load capacitance slowly, so the frequency cannot go up. The gap in on-current is on the readout panel.",
+  "更多读数（中间量）": "More readouts (intermediate quantities)",
+  "模型边界：势垒取三角势垒近似（场取耗尽近似峰值并视为常量）；源区按简并极限、沟道按本征处理 ⇒ ": "Model limits: the barrier uses the triangular-barrier approximation (the field is taken as the depletion-approximation peak and treated as constant); the source is treated in the degenerate limit and the channel as intrinsic ⇒ ",
+  "/2q；换材料时沟道介电常数仍取 Si 的 11.7；栅叠层 ": "/2q; when the material changes, the channel permittivity still uses Si's 11.7; the gate stack is ",
+  "（三档离散）；一律 300 K，不展开变温与双极性漏电；ψ 在整段栅压量程内恒 > 0（模型不进入积累区）。电流 I ∝ ": " (three discrete options); the temperature is always 300 K, with no variable-temperature or ambipolar leakage model; ψ stays positive over the whole gate-voltage range (the model never enters accumulation). The current I ∝ ",
+  "，前因子按 Si 参考点标定，绝对量只看量级。": ", with the prefactor calibrated against a Si reference point, so only the order of magnitude of the absolute value is meaningful.",
+  " mV/dec（MOSFET 室温极限 ": " mV/dec (the room-temperature MOSFET limit is ",
+  "最陡 SS / 开启栅压 ": "Steepest SS / turn-on gate voltage ",
+  " mV/dec @ ": " mV/dec at ",
+  "（点隧穿 PTBT）": " (point tunneling, PTBT)",
+  "（线隧穿 LTBT）": " (line tunneling, LTBT)",
+  " / 结区宽 ": " / junction width ",
+  "/2q）": "/2q)",
+  "（对照）": " (for comparison)",
 };
 (function () {
   if (typeof CanvasRenderingContext2D === "undefined") return;
@@ -2157,31 +2183,17 @@ function buildHints() {
       : "现在导带底还压在源端价带顶之上，禁带里没有能对上的空态 ⇒ 没有隧穿窗口。")
     + "<span class=\"eq\">注意栅压为零时沟道也不是平的：P⁺ 源区与本征沟道的掺杂差先给出内建电势 "
       + "<span class=\"m\"><i>V</i><sub>bi</sub> = <i>E</i><sub>g</sub>/2<i>q</i></span> = <b>" + d.Vbi.toFixed(2) + "</b> V，"
-      + "所以源区能带本来就比沟道高出半个带隙 —— 栅压只需再补上另外半个 E_g 就把窗口顶开了。</span>"
-    /* 「最强场在源结」要等栅压把源结拉开才成立；栅压低时源结只剩内建电势那一半，
-       结区窄、场弱，全器件最强的场落在漏结（由 V_DS 与内建电势撑着）。两支各说各的。 */
-    + (d.Emax > d.Ed
-      ? "<span class=\"eq\">中间那条热图是电场：源结一旦被栅压拉开，最强场就落在源结 —— 电势要在最短距离内爬完 ψ；"
-        + "漏结那一个小峰来自 <span class=\"m\"><i>V</i><sub>DS</sub></span>，与栅压无关。</span>"
-      : "<span class=\"eq\">栅压还低，源结只靠内建电势撑着（ψ ≈ <b>" + d.Vbi.toFixed(2) + "</b> V），结区窄、场还没起来；"
-        + "热图上现在最强的是漏结那个峰，它由 <span class=\"m\"><i>V</i><sub>DS</sub></span> 与内建电势撑起来，与栅压无关。</span>") +
-    "<span class=\"eq\">绿色区域的横向长度由 <span class=\"m\"><i>W</i><sub>t</sub></span> 定，纵向深度 <span class=\"m\"><i>A</i><sub>t</sub></span> 决定它是「点」还是「线」—— 两者都记在读数面板。</span>" +
-    "<span class=\"eq\">最下面那条是能带轮廓，只为了跟正上方的电场热图逐点对齐（读「场最陡处能带最陡」）；"
-    + "带能量刻度、费米能级与 <span class=\"m\"><i>W</i><sub>t</sub></span> 尺寸线的完整能带图在模块二。</span>" +
-    "<span class=\"eq\">右栏两条曲线共用同一个关态漏电地板，所以比的是斜率与高度本身：斜率钉死在 <b>"
-    + (d.SSmos * 1e3).toFixed(1) + "</b> mV/dec，再怎么缩尺寸也动不了；绿色实线刚开启时斜率可以远陡于它，"
-    + "但电流往上走一段就迅速变缓 —— TFET 陡是陡在「刚开的那一段」，不是整条曲线。</span>";
+      + "所以源区能带本来就比沟道高出半个带隙 —— 栅压只需再补上另外半个 E_g 就把窗口顶开了。</span>";
   const h2 = $("hintBand");
   if (h2) h2.innerHTML = OPT.view === "btbt"
     ? "势垒按三角势垒近似（场取耗尽近似给出的峰值并视为常量），它正是 " + EQ_WKB + " 所对应的那个形状。"
-      + "<span class=\"eq\">于是 <span class=\"m\"><i>E</i><sub>C</sub></span> 与 <span class=\"m\"><i>E</i><sub>V</sub></span> 之间在任何能量上的水平距离都是同一个值 " + EQ_WT
-      + "，图上用双箭头标了出来。</span>"
+      + "<span class=\"eq\">于是 <span class=\"m\"><i>E</i><sub>C</sub></span> 与 <span class=\"m\"><i>E</i><sub>V</sub></span> 之间在任何能量上的水平距离都是同一个值 " + EQ_WT + "。</span>"
       + (d.open
         ? "窗口上沿卡在源端价带顶（能量 0），下沿是沟道导带底，高度就是读数里的 ΔE。"
         : "窗口还没开：把栅压加到 <b>" + vthOf(d).toFixed(2) + "</b> V 以上，导带底才会落到源端价带顶之下。")
       + "<span class=\"eq\">右栏是同一个能量轴上的电流谱：供给函数（源价带占据）在能量 0 以下恒为 1，是一道<b>硬边</b>；"
         + "乘上处处相同的 <span class=\"m\"><i>T</i><sub>WKB</sub></span> 之后，窗口内就是一条<b>平顶</b> —— 高度由场强定、宽度由栅压定，"
-        + "两处都不含 <span class=\"m\"><i>kT</i></span>，这正是 SS 能压到 60 mV/dec 以下的原因。</span>"
+        + "两处都不含 <span class=\"m\"><i>kT</i></span>。</span>"
       + "<span class=\"eq\">切到「热发射」可以对照 MOSFET 的开门方式：那边是热尾翻势垒（电流谱是一条被 kT 锁死的斜线），这边是冷电子直接穿禁带。</span>"
     : "MOSFET 靠热发射：源端电子要翻过沟道势垒，只有玻尔兹曼热尾里能量够高的那一小撮过得去，"
       + "于是 " + EQ_MOS + "。栅压每加 Δ<span class=\"m\"><i>V</i></span>，势垒降 <span class=\"m\"><i>q</i>Δ<i>V</i></span>，电流就乘 <span class=\"m\">exp(<i>q</i>Δ<i>V</i>/<i>kT</i>)</span>。"
@@ -2201,43 +2213,44 @@ function buildReadout() {
   const ssNow = d.open ? ssOf(OPT.vg) : Infinity;
   const ro = $("readout");
   if (ro) ro.innerHTML = kvHTML([
+    /* 核心区只留「能带弯曲 → 隧穿窗口 → 隧穿概率 → 电流 → 摆幅」这条链：
+       栅控效率 η、V_bi、m*、A_t 都是中间量（移到更多读数）；「能带弯曲 qψ」就是 ψ
+       换了个单位，删；「隧穿类型」并进 WKB 行、理想 SS 并进 SS 行。 */
     { hd: "栅控与能带" },
-    ["栅控效率 <span class=\"m\"><i>η</i></span>", d.eta.toFixed(3)],
-    ["源结内建电势 V_bi（＝E_g/2q，掺杂决定）", d.Vbi.toFixed(3) + " V"],
     ["沟道电势 ψ", d.psi.toFixed(3) + " V"],
-    ["能带弯曲 qψ", d.bend.toFixed(3) + " eV"],
     ["隧穿窗口 ΔE", d.open ? d.win.toFixed(3) + " eV" : "0（未开启）"],
     { hd: "隧穿" },
-    [H_MS + " 有效质量", OPT.ms.toFixed(3) + " m<sub>0</sub>"],
     ["源结峰值电场 E_max", (d.Emax / 1e8).toFixed(2) + " MV/cm"],
     ["隧穿宽度 W_t", isFinite(d.WtNm) ? d.WtNm.toFixed(2) + " nm" : "—"],
-    ["WKB 指数 / 透射率", isFinite(d.X) ? d.X.toFixed(2) + " ／ " + d.Twkb.toExponential(2) : "—"],
-    ["隧穿长度 A_t", d.open ? d.AtNm.toFixed(2) + " nm" : "0 nm"],
-    ["隧穿类型", typeName(d)],
+    ["WKB 指数 / 透射率", isFinite(d.X) ? d.X.toFixed(2) + " ／ " + d.Twkb.toExponential(2) +
+      "（" + typeName(d) + "）" : "—"],
     { hd: "器件" },
     ["漏极电流 I_D", d.Id > 1e-3 ? d.Id.toFixed(3) + " µA/µm" : d.Id.toExponential(2) + " µA/µm"],
-    ["同栅压 MOSFET I_D", d.Imos > 1e-3 ? d.Imos.toFixed(1) + " µA/µm" : d.Imos.toExponential(2) + " µA/µm"],
-    ["亚阈值摆幅 SS（本点）", isFinite(ssNow) ? (ssNow * 1e3).toFixed(1) + " mV/dec" : "—（未开启）"]
+    ["亚阈值摆幅 SS（本点）", isFinite(ssNow) ? "<b>" + (ssNow * 1e3).toFixed(1) + "</b> mV/dec（MOSFET 室温极限 <b>" +
+      (d.SSmos * 1e3).toFixed(1) + "</b> mV/dec）" : "—（未开启）"]
   ]);
   const rm = $("readoutMore");
   if (rm) rm.innerHTML = kvHTML([
+    /* kT/q 与理想 SS 已并进核心区的 SS 行（它是对照基准，不是中间量）；
+       V_th 与「最陡 SS」是同一个极值点的两半 ⇒ 并成一行；λ_g 与 W_d 都是长度 ⇒ 并成一行。 */
     { hd: "中间量" },
-    [H_KT + " 与理想 SS", (d.ktq * 1e3).toFixed(2) + " mV ／ " + (d.SSmos * 1e3).toFixed(1) + " mV/dec"],
-    ["开启栅压 V_th（窗口刚开）", vthOf(d).toFixed(2) + " V"],
-    ["栅特征长度 λ_g", (d.lamG / 1e-9).toFixed(2) + " nm"],
-    ["结区宽度 W_d", isFinite(d.WdNm) ? d.WdNm.toFixed(2) + " nm" : "—"],
+    ["栅控效率 <span class=\"m\"><i>η</i></span>", d.eta.toFixed(3)],
+    ["源结内建电势 V_bi（＝E_g/2q）", d.Vbi.toFixed(3) + " V"],
+    [H_MS + " 有效质量", OPT.ms.toFixed(3) + " m<sub>0</sub>"],
+    ["隧穿长度 A_t", d.open ? d.AtNm.toFixed(2) + " nm" : "0 nm"],
+    ["同栅压 MOSFET I_D（对照）", d.Imos > 1e-3 ? d.Imos.toFixed(1) + " µA/µm" : d.Imos.toExponential(2) + " µA/µm"],
+    ["最陡 SS / 开启栅压 V_th", isFinite(sb.ss) ? "<b>" + (sb.ss * 1e3).toFixed(1) + "</b> mV/dec @ <b>" +
+      vthOf(d).toFixed(2) + "</b> V" : "—（全程未开启）"],
+    ["栅特征长度 λ_g / 结区宽 W_d", (d.lamG / 1e-9).toFixed(2) + " nm ／ " +
+      (isFinite(d.WdNm) ? d.WdNm.toFixed(2) + " nm" : "—")],
     ["漏结电场 E_d（来自 V_DS）", (d.Ed / 1e8).toFixed(2) + " MV/cm"],
-    ["本模型最陡 SS", isFinite(sb.ss) ? "<b>" + (sb.ss * 1e3).toFixed(1) + "</b> mV/dec（峰值栅压 <b>" + sb.vg.toFixed(2) + "</b> V）" : "—（全程未开启）"],
-    ["开关比 I_D(V_GS) / I_D(0)", (d.Id / withOpt({ vg: 0 }).Id).toExponential(2)],
-    { hd: "模型边界" },
-    ["电流幅值", "I ∝ A_t·ΔE·E²·T_WKB，前因子按 Si 参考点标定到实测 Si TFET 量级；绝对量只看量级，看趋势"],
-    ["结区静电", "势垒按三角势垒近似（场取耗尽近似峰值并视为常量）"],
-    ["介电常数", "换材料时沟道介电常数仍取 Si 的 11.7"],
-    ["源区掺杂", "按简并极限处理（E_F 贴住价带顶），沟道按本征处理（E_F 在禁带中央）⇒ V_bi = E_g/2q"],
-    ["栅压量程内 ψ 恒 > 0", "三种材料 × 三档栅叠层下 ψ 最小值仍为正，模型不进入积累区"],
-    ["栅叠层取值", H_TOX + " = " + OPT.tox.toFixed(1) + " nm ／ " + H_EOX + " = <b>" + OPT.eox + "</b>（三档离散）"],
-    ["温度", "一律 300 K；不展开变温与双极性漏电"]
+    ["开关比 I_D(V_GS) / I_D(0)", (d.Id / withOpt({ vg: 0 }).Id).toExponential(2)]
   ]);
+  /* 原「模型边界」7 行的 v 全是一整句话（建模声明，不是「标签 + 数值」的读数格式）
+     ⇒ 搬到下面的 unit-note 压成一段。**一条都不能真删**：换材料仍取 Si 的 ε、
+     栅叠层三档离散、一律 300 K、ψ 恒 > 0 —— 这些都是隐藏建模选择的披露（记忆 §3）。 */
+  const rn = $("roNote");
+  if (rn) rn.innerHTML = "模型边界：势垒取三角势垒近似（场取耗尽近似峰值并视为常量）；源区按简并极限、沟道按本征处理 ⇒ V_bi = E_g/2q；换材料时沟道介电常数仍取 Si 的 11.7；栅叠层 t_ox = " + OPT.tox.toFixed(1) + " nm / ε_ox = <b>" + OPT.eox + "</b>（三档离散）；一律 300 K，不展开变温与双极性漏电；ψ 在整段栅压量程内恒 > 0（模型不进入积累区）。电流 I ∝ A_t·ΔE·E²·T_WKB，前因子按 Si 参考点标定，绝对量只看量级。";
 }
 
 /* ==================================================================
@@ -2249,15 +2262,11 @@ const CHAL = [
     q: "切到模块二的「热发射」视图，盯住源端那支玻尔兹曼热尾：为什么电流随栅压指数增长？60 mV/dec 这个数字到底由哪些物理常数决定，和材料、和器件尺寸有没有关系？",
     a: function () {
       const d = D();
-      const k100 = KB * 100 / QQ, ss100 = k100 * Math.LN10;
       return "电流来自热尾里<b>能量高过势垒的那一小撮</b>电子，它占比 <span class=\"m\">exp(<span class=\"op\">−</span><i>Φ</i><sub>B</sub>/<i>kT</i>)</span>。"
         + "栅压每加 Δ<span class=\"m\"><i>V</i></span>，势垒降 <span class=\"m\"><i>q</i>Δ<i>V</i></span>，这一小撮就放大 <span class=\"m\">exp(<i>q</i>Δ<i>V</i>/<i>kT</i>)</span> 倍 —— 指数增长就是这么来的。<br>"
         + "换一个十进位要 <span class=\"m\">exp(<i>q</i>Δ<i>V</i>/<i>kT</i>) = 10</span>，即 " + EQ_SS + " = <b>" + (d.SSmos * 1e3).toFixed(1) + "</b> mV/dec（300 K）。<br>"
         + "式子里只有 <span class=\"m\"><i>k</i></span>、<span class=\"m\"><i>T</i></span>、<span class=\"m\"><i>q</i></span>：<b>与材料、与几何一概无关</b>，"
-        + "所以它是硬性的热力学极限，缩尺寸动不了它。真要把温度降到 100 K，<span class=\"m\"><i>kT</i>/<i>q</i></span> 变成 "
-        + "<b>" + (k100 * 1e3).toFixed(2) + " mV</b>，SS = <b>" + (ss100 * 1e3).toFixed(1) + "</b> mV/dec —— 但芯片不能靠泡液氮工作。"
-        + "<span class=\"eq\">真实 MOSFET 还要再乘一个体因子 <span class=\"m\">1 + <i>C</i><sub>s</sub>/<i>C</i><sub>ox</sub></span>，所以实测往往是 70～90 mV/dec；"
-        + "本工具画的是理想栅控下的那条极限线。</span>";
+        + "所以它是硬性的热力学极限，缩尺寸动不了它。";
     }
   },
   {
@@ -2268,13 +2277,11 @@ const CHAL = [
       const sa = a.open ? ssOf(vt + 0.02) : Infinity, sb2 = b.open ? ssOf(vt + 0.30) : Infinity;
       return "窗口开启的条件是沟道电势把导带压到源端价带之下：<span class=\"m\"><i>qψ</i> &gt; <i>E</i><sub>g</sub></span>，"
         + "换算成栅压是 <b>" + vt.toFixed(2) + "</b> V（本工具当前栅控效率 η = <b>" + d.eta.toFixed(3) + "</b>）。<br>"
-        + "刚过阈值 0.02 V 处：Δ<span class=\"m\"><i>E</i></span> 只有 <b>" + a.win.toFixed(3) + "</b> eV，"
-        + "电流 <b>" + a.Id.toExponential(2) + "</b> µA/µm，SS = <b>" + (isFinite(sa) ? (sa * 1e3).toFixed(1) : "—") + "</b> mV/dec —— 确实比 60 陡。<br>"
+        + "刚过阈值时 SS = <b>" + (isFinite(sa) ? (sa * 1e3).toFixed(1) : "—") + "</b> mV/dec —— 确实比 60 陡。<br>"
         + "但再往上加 0.30 V：SS 变成 <b>" + (isFinite(sb2) ? (sb2 * 1e3).toFixed(1) : "—") + "</b> mV/dec。"
         + "原因是刚开启时 Δ<span class=\"m\"><i>E</i></span> 与隧穿长度 <span class=\"m\"><i>A</i><sub>t</sub></span> 都从 0 起步，对数增长极快；"
         + "窗口一宽，这两个因子的对数导数就塌下来，只剩 WKB 指数在撑，斜率于是迅速变缓。<br>"
-        + "<b>所以 TFET 的“陡”是有电流区间的</b>：陡在刚开启的头一两个十进位，不是整条转移曲线。"
-        + "这也正是文献里 TFET 的 SS 必须标明「在哪一段电流上测」的原因。";
+        + "<b>所以 TFET 的“陡”是有电流区间的</b>：陡在刚开启的头一两个十进位，不是整条转移曲线。";
     }
   },
   {
@@ -2283,14 +2290,11 @@ const CHAL = [
       const s = withOpt({ eg: 1.12, ms: 0.20 });
       const g = withOpt({ eg: 0.66, ms: 0.10 });
       const i = withOpt({ eg: 0.35, ms: 0.023 });
-      const f = (x) => x === 0 ? "—" : x.toExponential(2);
-      const r = (a, b) => (b === 0 ? "—" : (a / b).toExponential(2));
-      return "三个材料的 WKB 指数（越小越容易穿）：Si <b>" + s.X.toFixed(2) + "</b>、Ge <b>" + g.X.toFixed(2) + "</b>、InAs <b>" + i.X.toFixed(2) + "</b>；"
-        + "透射率 <b>" + f(s.Twkb) + "</b> → <b>" + f(g.Twkb) + "</b> → <b>" + f(i.Twkb) + "</b>，即从 Si 到 InAs 放大约 <b>" + r(i.Twkb, s.Twkb) + "</b> 倍。<br>"
+      return "三个材料的 WKB 指数（越小越容易穿）：Si <b>" + s.X.toFixed(2) + "</b>、Ge <b>" + g.X.toFixed(2) + "</b>、InAs <b>" + i.X.toFixed(2) + "</b>，"
+        + "透射率随之跨好几个数量级。<br>"
         + "关键在于指数里是 <span class=\"m\"><i>E</i><sub>g</sub><sup>3/2</sup></span> 而不是 <span class=\"m\"><i>E</i><sub>g</sub></span>：带隙减半，"
         + "指数里的分子降到 <span class=\"m\">2<sup><span class=\"op\">−</span>3/2</sup></span> ≈ 0.35，而指数外面是负号 ⇒ 透射率是<b>指数级的指数</b>级上涨。"
         + "再叠上窄带隙材料通常更小 <span class=\"m\"><i>m</i><sup>*</sup></span>（InAs 0.023 对 Si 0.20），收益还要再乘一道。<br>"
-        + "同一栅压下三个材料的电流：<b>" + f(s.Id) + "</b> → <b>" + f(g.Id) + "</b> → <b>" + f(i.Id) + "</b> µA/µm。<br>"
         + "代价：带隙窄 ⇒ 关态下的带间隧穿压不住、双极性漏电上来，器件<b>关不断</b>；"
         + "而且窄带隙材料往往界面缺陷多、栅控更差。所以「窄带隙换大电流」不是免费的 —— 漏电与 I_ON 是同一枚硬币的两面。";
     }
@@ -2305,20 +2309,17 @@ const CHAL = [
         + "刚开启 <b>" + dLo.toFixed(2) + " V</b> 时：<span class=\"m\"><i>A</i><sub>t</sub></span> = <b>" + lo.AtNm.toFixed(2) + "</b> nm（"
         + (lo.type === 2 ? "线" : "点") + "隧穿），电流 <b>" + lo.Id.toExponential(2) + "</b> µA/µm；"
         + "再加 <b>" + dHi.toFixed(2) + " V</b> 时：<span class=\"m\"><i>A</i><sub>t</sub></span> = <b>" + hi.AtNm.toFixed(2) + "</b> nm（"
-        + (hi.type === 2 ? "线" : "点") + "隧穿），电流 <b>" + hi.Id.toExponential(2) + "</b> µA/µm。<br>"
+        + (hi.type === 2 ? "线" : "点") + "隧穿）。<br>"
         + "面积确实把电流顶上去了，但注意它是<b>对数</b>增长：栅压翻几倍，<span class=\"m\"><i>A</i><sub>t</sub></span> 只从零点几 nm 长到几个 nm。"
         + "而 SS 的分子是 <span class=\"m\">ln 10</span>、分母是 <span class=\"m\">d ln<i>I</i><sub>D</sub>/d<i>V</i><sub>GS</sub></span>，"
         + "对数项对斜率的贡献 <span class=\"m\">1/<i>A</i><sub>t</sub> · d<i>A</i><sub>t</sub>/d<i>V</i></span> 会随 <span class=\"m\"><i>A</i><sub>t</sub></span> 增大而迅速摊薄。<br>"
-        + "<b>结论：面积救 I_ON，指数救 SS</b>，两者不是同一个因子。真想在结构上放大面积，得让隧穿方向顺着栅场走"
-        + "（栅与源交叠的线隧穿结构），那样面积由几何一次给出，不必靠加大栅压慢慢长出来。";
+        + "<b>结论：面积救 I_ON，指数救 SS</b>，两者不是同一个因子。";
     }
   },
   {
     q: "看模块一右栏的两条转移曲线：TFET 更陡，但最高电流低得多。如果让你设计下一代低功耗芯片，你会怎么在「低漏电」和「大电流」之间取舍？",
     a: function () {
       const d = D();
-      const iT = withOpt({ vg: VMAXG }).Id, iM = mosAt(VMAXG);
-      const sb = ssBest();
       /* 只比「同一电流上各自的 SS」：这是唯一公平的比较。
          ⚠️ 别去比「爬到某个目标电流谁用的栅压小」—— 本模型 TFET 的开启电压更高
          （V_th ≈ 0.88 V 对 MOSFET 的 ~0.6 V），那样比会得出相反的结论，把人带偏。 */
@@ -2333,23 +2334,16 @@ const CHAL = [
       };
       const vT = vAt(v => withOpt({ vg: v }).Id), vM = vAt(v => mosAt(v));
       const ssT = isFinite(vT) && vT > 0.06 ? ssOf(vT) : Infinity;
-      return "本工具当前参数下：TFET 在 <span class=\"m\"><i>V</i><sub>GS</sub></span> = <b>" + VMAXG.toFixed(1) + " V</b> 时 <b>" + iT.toExponential(2) + "</b> µA/µm，"
-        + "参考 MOSFET 是 <b>" + iM.toFixed(0) + "</b> µA/µm —— 差 <b>" + (iM / iT).toFixed(0) + "</b> 倍，这是 TFET 的短板。<br>"
-        + "在两条曲线都够得到的 " + TGTS + " µA/µm（超低功耗真正用得上的电流区）上比斜率："
+      return "在两条曲线都够得到的 " + TGTS + " µA/µm（超低功耗真正用得上的电流区）上比斜率："
         + "MOSFET 恒为 <b>" + (d.SSmos * 1e3).toFixed(1) + "</b> mV/dec，"
-        + "TFET 是 <b>" + (isFinite(ssT) ? (ssT * 1e3).toFixed(1) : "—") + "</b> mV/dec（它最陡还到过 <b>"
-        + (isFinite(sb.ss) ? (sb.ss * 1e3).toFixed(1) : "—") + "</b> mV/dec）—— 这是 TFET 的长项。<br>"
+        + "TFET 是 <b>" + (isFinite(ssT) ? (ssT * 1e3).toFixed(1) : "—") + "</b> mV/dec —— <b>陡是长项</b>。<br>"
         + "<b>但“陡”不等于“省电压”。</b>爬到同一个 " + TGTS + " µA/µm，MOSFET 用 <b>" + (isFinite(vM) ? vM.toFixed(2) : "—") + "</b> V，"
-        + "TFET 反而要 <b>" + (isFinite(vT) ? vT.toFixed(2) : "＞" + VMAXG.toFixed(1)) + "</b> V："
-        + "因为它的开启电压更高（<span class=\"m\"><i>V</i><sub>th</sub></span> 高达 <b>" + vthOf(d).toFixed(2) + " V</b>，栅压要先补上内建电势之外的半个 <span class=\"m\"><i>E</i><sub>g</sub></span>）。"
+        + "TFET 反而要 <b>" + (isFinite(vT) ? vT.toFixed(2) : "＞" + VMAXG.toFixed(1)) + "</b> V —— "
+        + "它的开启电压更高，栅压要先补上内建电势之外的半个 <span class=\"m\"><i>E</i><sub>g</sub></span>。"
         + "真要降 <span class=\"m\"><i>V</i><sub>DD</sub></span>，得把阈值一起压下来 —— 光有陡的斜率不够。<br>"
-        + "<b>取舍因此是分场景的：</b>动态功耗 ∝ <span class=\"m\"><i>V</i><sub>DD</sub><sup>2</sup></span>，"
-        + "电压降下来是平方级收益；而漏电按关态电流×时间算，斜率陡的器件能在更低的关态下保住同样的开关比。<br>"
-        + "<b>代价是速度。</b>驱动电流小 ⇒ 给负载电容充电慢，频率上不去。所以：<br>"
-        + "· 物联网传感器、可穿戴、常开常听的模块 —— 大部分时间待机、只偶尔算一下 ⇒ <b>TFET 更合适</b>；<br>"
-        + "· 服务器 CPU、GPU 这类一直在满载跑的算力核心 ⇒ 还是 <b>MOSFET</b>。<br>"
-        + "工程上常见的折中是<b>异质集成</b>：同一块芯片上，算力核用 MOSFET，常开的电源管理与传感前端用 TFET。"
-        + "<span class=\"eq\">还有一条别忘：本模型里 TFET 只在最初一两个十进位上陡，做电路设计时必须按「哪一段电流」来用，而不是拿一个 SS 数字当全部。</span>";
+        + "<b>取舍因此是分场景的：</b>大部分时间待机、只偶尔算一下（物联网传感器、可穿戴、常开模块）⇒ <b>TFET</b>；"
+        + "一直在满载跑的算力核心（服务器 CPU、GPU）⇒ 还是 <b>MOSFET</b> —— 驱动电流小 ⇒ 给负载电容充电慢，频率上不去。"
+        + "开态电流的差距见读数面板。";
     }
   }
 ];
@@ -2368,13 +2362,14 @@ function buildChal() {
     ANS_EL.push(ans);
     d.querySelector(".btn-row button").onclick = e => {
       e.stopPropagation();
-      if (!ans.innerHTML) ans.innerHTML = CHAL[i].a();
+      if (!ans.innerHTML) ans.innerHTML = ansOf(CHAL[i]);
       ans.classList.toggle("show");
     };
   });
 }
+const ansOf = c => (typeof c.a === "function" ? c.a() : c.a);
 function refreshAnswers() {
-  ANS_EL.forEach(function (el, i) { if (el.innerHTML) el.innerHTML = CHAL[i].a(); });
+  ANS_EL.forEach(function (el, i) { if (el.innerHTML) el.innerHTML = ansOf(CHAL[i]); });
 }
 
 /* ==================================================================

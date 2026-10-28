@@ -187,14 +187,14 @@
       <div class="sec-title"><span class="mtag">模块二</span>迁移率–温度：<span class="m"><i>μ</i><sub>ii</sub></span> 随升温上升、<span class="m"><i>μ</i><sub>ph</sub></span> 随升温下降，中间出现<b>峰值</b></div>
       <div class="chart-wrap"><canvas id="mob" data-h="252" tabindex="0"></canvas></div>
       <div class="legend" id="legMob"></div>
-      <div class="hint">双对数坐标下 <span class="m"><i>μ</i><sub>ph</sub></span> 是一条斜率 <span class="m"><span class="op">−</span>3/2</span> 的直线（声子越来越多）；<span class="m"><i>μ</i><sub>ii</sub></span> 整体向上（温度越高散射越弱），但<b>不是</b>严格的 3/2 直线 —— 屏蔽对数因子 <span class="m">ln(1<span class="op">+</span><i>β</i><sup>2</sup>)</span> 随温度增长，把有效指数压到 0.8~1.5（读数面板给出当前值；只有低温极限才回到 1.5）。总迁移率由<b>马西森规则</b> <span class="m"><span class="frac"><span class="num">1</span><span class="den"><i>μ</i></span></span><span class="op">=</span><span class="frac"><span class="num">1</span><span class="den"><i>μ</i><sub>ii</sub></span></span><span class="op">+</span><span class="frac"><span class="num">1</span><span class="den"><i>μ</i><sub>ph</sub></span></span></span> 给出。</div>
+      <div class="hint">双对数坐标下 <span class="m"><i>μ</i><sub>ph</sub></span> 是一条斜率 <span class="m"><span class="op">−</span>3/2</span> 的直线（声子越来越多）；<span class="m"><i>μ</i><sub>ii</sub></span> 整体向上（温度越高散射越弱），但<b>不是</b>严格的 3/2 直线 —— 屏蔽对数因子 <span class="m">ln(1<span class="op">+</span><i>β</i><sup>2</sup>)</span> 随温度增长，把有效指数压到 0.8~1.5（只有低温极限才回到 1.5）。总迁移率由<b>马西森规则</b> <span class="m"><span class="frac"><span class="num">1</span><span class="den"><i>μ</i></span></span><span class="op">=</span><span class="frac"><span class="num">1</span><span class="den"><i>μ</i><sub>ii</sub></span></span><span class="op">+</span><span class="frac"><span class="num">1</span><span class="den"><i>μ</i><sub>ph</sub></span></span></span> 给出。</div>
     </div>
 
     <div class="card">
       <div class="sec-title"><span class="mtag">模块三</span>散射率–温度：谁在拖后腿（马西森规则的直接图像）</div>
       <div class="chart-wrap"><canvas id="rate" data-h="238" tabindex="0"></canvas></div>
       <div class="legend" id="legRate"></div>
-      <div class="hint">散射率就是<b>每秒被撞多少次</b>：<span class="m"><span class="frac"><span class="num">1</span><span class="den"><i>τ</i><sub>ii</sub></span></span></span> 随升温而<b>下降</b>（跑得快，撞得轻），<span class="m"><span class="frac"><span class="num">1</span><span class="den"><i>τ</i><sub>ph</sub></span></span></span> 随升温而<b>上升</b>（声子越来越多）。马西森规则说的是<b>散射率直接相加</b> <span class="m"><span class="frac"><span class="num">1</span><span class="den"><i>τ</i></span></span><span class="op">=</span><span class="frac"><span class="num">1</span><span class="den"><i>τ</i><sub>ii</sub></span></span><span class="op">+</span><span class="frac"><span class="num">1</span><span class="den"><i>τ</i><sub>ph</sub></span></span></span>。</div>
+      <div class="hint">散射率就是<b>每秒被撞多少次</b>：<span class="m"><span class="frac"><span class="num">1</span><span class="den"><i>τ</i><sub>ii</sub></span></span></span> 随升温而<b>下降</b>（跑得快，撞得轻），<span class="m"><span class="frac"><span class="num">1</span><span class="den"><i>τ</i><sub>ph</sub></span></span></span> 随升温而<b>上升</b>（声子越来越多）。</div>
     </div>
   </div>
 
@@ -840,6 +840,52 @@ var I18N = {
   "°。真实晶体里这种概率极小 —— 轨迹族那几条细线说明": "°. Such events are extremely rare in a real crystal — the thin lines of the trajectory family show that ",
   "绝大多数是小角散射": "the overwhelming majority are small-angle scattering events",
   "排斥": "repulsion",
+  "载流子跑得越快，在杂质身边停留的时间越短 ⇒ ": " the carrier moves faster and spends less time next to the impurity, so ",
+  " —— ": " — ",
+  " 大到几个 ": " reaching a few ",
+  " 时，实际偏角会被压到公式值的一半左右（「实测/公式」比值在更多读数里）。② 轨迹族是按 ": " , the actual deflection is squeezed to roughly half the formula value (the measured/formula ratio is in More readout). ② The family of trajectories is sampled at ",
+  "取样画的，不是按碰撞概率取样；按截面权重 ": " intervals, not by collision probability; weighting by the cross-section element ",
+  "）来数，小角散射占的权重压倒性地大。": " , small-angle scattering carries an overwhelmingly large share.",
+  "，实际被屏蔽对数 ": ", although the screening logarithm ",
+  " 压低），": " pushes it back down), ",
+  "，温度越高声子数越多，撞得越勤。所以“加热”对两种机制是": ", and the higher the temperature the more phonons there are, so the more often the carrier is hit. So 'heating' acts on the two mechanisms ",
+  "，总效果看谁占上风（三条迁移率读数面板里都有）。": ", and whichever gains the upper hand decides the net result (all three mobilities are listed in the readout panel).",
+  "：声子越来越多，迁移率随升温而降。总量由 ": ": there are more and more phonons, so the mobility falls as the temperature rises. The total is given by ",
+  " 给出 —— 峰值就出现在两者": " ; the peak sits exactly where the two ",
+  "交接": "cross over",
+  "处。拖动": ". Drag the ",
+  "跑（": " (",
+  " 读数面板里有）。": " is in the readout panel).",
+  "。但 ": ". But ",
+  " —— 对数因子随 ": " — the logarithmic factor shrinks as ",
+  " 收缩，把 ": " shrinks, eating a large part of the ",
+  " 的标度吃掉一大截：切到 ": " scaling: switching to ",
+  " = 2、3 时 ": " = 2 and 3, the drop in ",
+  " 的下降明显缓于 1/4、1/9（理想 ": " is markedly slower than 1/4 or 1/9 (the ideal ",
+  " 律给的是": " law gives ",
+  "）。所以 ": " ). So ",
+  " 翻倍不等于迁移率掉四倍": " doubling does not quarter the mobility",
+  "，具体比值对照读数面板。": "; check the exact ratios against the readout panel.",
+  "。但屏蔽只出现在": ". But screening enters only through the ",
+  "里，而 ": ", whereas ",
+  " 迅速塌缩。": " collapses rapidly. ",
+  "对数增长远远追不上平方衰减": "logarithmic growth can never keep up with a quadratic decay",
+  "，所以净效果仍然是": ", so the net result is still ",
+  "。这也是它不是严格的 ": ". This is also why it is not a strict ",
+  " 的原因：那个对数把有效指数从 1.5 压到了 ": " law: that logarithm pushes the effective exponent down from 1.5 to ",
+  "1 附近": "about 1",
+  "（中温段 ": " (in the mid-temperature range, at ",
+  " 时几乎压到 0 —— 压低幅度远不止“一点”）。另外注意当前截断由": " it is pushed almost to 0 — the reduction is far more than 'a little'). Note also that the cutoff now in force is set by ",
+  " 随温度增长，把有效指数压到 0.8~1.5（只有低温极限才回到 1.5）。总迁移率由": " grows with temperature, pushing the effective exponent down to 0.8–1.5 (only the low-temperature limit returns to 1.5). The total mobility is",
+  " 时，实际偏角会被压到公式值的一半左右（「实测/公式」比值在更多读数里）。": " , the actual deflection is squeezed to roughly half the formula value (the measured/formula ratio is in More readout).",
+  "（声子越来越多）。": " (more and more phonons).",
+  "（当前截断与 ": " (the present cutoff and ",
+  " 见更多读数）。": " are in More readout).",
+  "工作点": "Operating point",
+  " / 浓度 ": " / concentration ",
+  "截断取 λ 与 ": "Cut-off is the smaller of λ and ",
+  "/2 的较小者": "/2",
+  "个杂质间距": "impurity spacings",
 };
 
 /* 注入点②：画布直写字符串。老工具直接调 g.fillText()，这里在原型上兜住。
@@ -1361,7 +1407,7 @@ const M0U   = UN('m<sub>0</sub>');
 const M_T     = MM(VI('T')),   M_TH  = MM(VI('θ')),  M_Z   = MM(VI('Z')),   M_LAM = MM(VI('λ'));
 const M_NI    = MM(WSUB('N','I')), M_NN = MM(VI('n')), M_V = MM(VI('v')),  M_B = MM(VI('b'));
 const M_MUII  = MM(WSUB('μ','ii')), M_MUPH = MM(WSUB('μ','ph')), M_MUT = MM(WSUB('μ','total'));
-const M_MU    = MM(VI('μ')),  M_TAU = MM(VI('τ')),  M_ELL = MM(VI('ℓ')),  M_SIGM = MM(WSUB('σ','m'));
+const M_MU    = MM(VI('μ')),  M_TAU = MM(VI('τ')),  M_SIGM = MM(WSUB('σ','m'));
 const M_B90   = MM(WSUB('b','90')), M_BMAX = MM(WSUB('b','max')), M_BET = MM(VI('β'));
 const M_LAMD  = MM(WSUB('λ','D'));
 const M_TAUII = MM(FRAC('1', WSUB('τ','ii'))), M_TAUPH = MM(FRAC('1', WSUB('τ','ph'))),
@@ -1650,7 +1696,6 @@ function phys(T, NIcm, ncm, Z, mat, car, phF) {
      ~100 K 出现一段非单调的假象）。 */
   const mCut = Math.min(0.5 * dImp, lam);
   const bmax = Math.sqrt(mCut * mCut + b90 * b90);
-  const cutTag = mCut < lam ? "杂质间距 d_I/2" : "屏蔽长度 λ";
   const beta = bmax / b90;
   const Lam = Math.log(1 + beta * beta);
   const sig = 2 * Math.PI * b90 * b90 * Lam;
@@ -1668,7 +1713,7 @@ function phys(T, NIcm, ncm, Z, mat, car, phF) {
     T: T, NIcm: NIcm, ncm: ncm, Z: Z, ms: ms, eps: eps, kT: kT,
     v: v, vNm: v * 1e-3,                       // nm/ps
     Eth: Eth, lamD: lamD, lam: lam,
-    b90: b90, dImp: dImp, mCut: mCut, cutTag: cutTag, bmax: bmax, beta: beta, Lam: Lam, sig: sig,
+    b90: b90, dImp: dImp, mCut: mCut, bmax: bmax, beta: beta, Lam: Lam, sig: sig,
     rii: rii, rph: rph, rtot: rtot, tau: tau, ell: v * tau,
     muii: muii, muph: muph, mutot: mutot, muphRef: muphRef,
     msRel: M[C.mk], epsRel: M.eps
@@ -2144,13 +2189,16 @@ function updateReadout() {
   /* ---- 折叠区：当前条件 / 微观尺度 / 散射率与自由程 / 轨迹对照 ---- */
   const hm = [];
   hm.push(hd("当前条件"));
-  hm.push(kvRow("材料 / 载流子", "<b>" + M.name + "</b> / " + C.name + "　" +
-    MM(WSUB("ε", "r") + OP("=") + M.eps) + "，" + MM(VI("m") + WU("*") + OP("=") + d.msRel) + " " + M0U));
-  hm.push(kvRow("杂质 / 电荷", D.name + "，" + MM(VI("Z") + OP("=") + OPT.Z) + "　" +
+  /* 4 行固定/回显压成 2 行：材料、载流子、杂质电荷是一个「工作点」，
+     温度与浓度是两个滑块的值（滑块旁已经显示过一遍）。信息一条不丢。 */
+  hm.push(kvRow("工作点", "<b>" + M.name + "</b> / " + C.name + "　" +
+    MM(WSUB("ε", "r") + OP("=") + M.eps) + "，" + MM(VI("m") + WU("*") + OP("=") + d.msRel) + " " + M0U + "　·　" +
+    /* 杂质名与电荷态是随下拉切换的变量 ⇒ 各包一层标签，让静态汉字单独成文本节点，
+       否则「施主（+q）」与前后标点粘成一个节点，切到受主时整块翻不掉。 */
+    "<b>" + D.name + "</b>，" + MM(VI("Z") + OP("=") + OPT.Z) + "　" +
     (attractSign() > 0 ? "（<b>吸引</b>载流子）" : "（<b>排斥</b>载流子）")));
-  hm.push(kvRow("温度 " + M_T, "<b>" + fmtT(d.T) + "</b> K　（" +
-    MM(VI("k") + VI("T") + OP("=") + fmt(d.kT / Q * 1000, 1)) + " " + MEV + "）"));
-  hm.push(kvRow("浓度 " + MM(WSUB("N", "I") + OP("=") + VI("n")),
+  hm.push(kvRow("温度 " + M_T + " / 浓度 " + MM(WSUB("N", "I") + OP("=") + VI("n")),
+    "<b>" + fmtT(d.T) + "</b> K　（" + MM(VI("k") + VI("T") + OP("=") + fmt(d.kT / Q * 1000, 1)) + " " + MEV + "）　·　" +
     "<b>" + sciH(NInow(), 1) + "</b> " + CM3 + "（完全电离 ⇒ 平均间距 " + fmtLen(d.dImp) + "）"));
   hm.push(kvRow("非简并判据 " + MM(FRAC(VI("n"), WSUB("N", "c"))),
     sciH(NInow() / ncNow(d.T, OPT.car), 1) + ndJudge(NInow() / ncNow(d.T, OPT.car))));
@@ -2162,9 +2210,11 @@ function updateReadout() {
   hm.push(kvRow(M_B90 + "（偏 90° 的瞄准距离）", fmtLen(d.b90)));
   hm.push(kvRow("截断 " + MM(BMAX) + "，" + MM(VI("β") + OP("=") + FRAC(BMAX, B90)),
     "<b>" + fmtLen(d.bmax) + "</b> / " + MM(VI("β") + OP("=")) + " <b>" + fmt(d.beta, 2) + "</b>"));
-  hm.push(kvRow("截断由谁决定",
-    MM(FRAC(WSUB("d", "I"), "2") + OP("=")) + " " + fmtLen(0.5 * d.dImp) + "、" + M_LAM + " = " + fmtLen(d.lam) +
-    " ⇒ <b>" + d.cutTag + "</b> 接管"));
+  /* 原来把判断过程写成了结论（「d_I/2 接管」）。两个数并排放着，
+     谁小谁接管是一眼可见的事 —— 不必替学生把这句话说出来。 */
+  hm.push(kvRow("截断取 λ 与 d_I/2 的较小者",
+    M_LAM + " " + fmtLen(d.lam) + "　/　" + MM(FRAC(WSUB("d", "I"), "2")) + " " + fmtLen(0.5 * d.dImp) +
+    " ⇒ <b>" + fmtLen(d.bmax) + "</b>"));
   hm.push(kvRow("屏蔽因子 " + MM("ln" + OP("(") + "1" + OP("+") + VI("β") + WU("2") + OP(")")),
     "<b>" + fmt(d.Lam, 3) + "</b>"));
   hm.push(kvRow("传输截面 " + M_SIGM, "<b>" + sciH(d.sig * 1e18, 2) + "</b> " + NM2));
@@ -2173,21 +2223,18 @@ function updateReadout() {
 
   hm.push(hd("散射率与自由程"));
   hm.push(kvRow(M_TAUII, "<b>" + sciH(d.rii, 2) + "</b> " + SM1));
-  hm.push(kvRow(M_TAUPH, "<b>" + sciH(d.rph, 2) + "</b> " + SM1));
-  hm.push(kvRow(MM(FRAC("1", WSUB("τ", "tot"))), "<b>" + sciH(d.rtot, 2) + "</b> " + SM1));
-  hm.push(kvRow("平均自由时间 " + M_TAU, "<b>" + sciH(d.tau, 2) + "</b> s"));
-  hm.push(kvRow("平均自由程 " + MM(VI("ℓ") + OP("=") + VI("v") + VI("τ")), "<b>" + fmtLen(d.ell) + "</b>"));
-  hm.push(kvRow(MM(FRAC(VI("ℓ"), "杂质间距")), fmt(d.ell / d.dImp, 2)));
+  /* 1/τ_ph 与 τ 都不再单独占行：1/τ_ph = 1/τ_tot − 1/τ_ii（马西森就是这么合成的），
+     τ 是 1/τ_tot 的倒数 —— 两个都是一步能算出来的派生量，挤掉 4 行里的 2 行。 */
+  hm.push(kvRow(MM(FRAC("1", WSUB("τ", "tot"))), "<b>" + sciH(d.rtot, 2) + "</b> " + SM1 +
+    "　（" + M_TAU + " <b>" + sciH(d.tau, 2) + "</b> s）"));
+  hm.push(kvRow("平均自由程 " + MM(VI("ℓ") + OP("=") + VI("v") + VI("τ")),
+    "<b>" + fmtLen(d.ell) + "</b>（≈ " + fmt(d.ell / d.dImp, 2) + " <span class=\"rm\">个杂质间距</span>）"));
 
   hm.push(hd("模块一那条轨迹：对照"));
   hm.push(kvRow("瞄准距离 " + MM(FRAC(VI("b"), B90)),
     fmt(bnow(), 2) + " " + NM + " / " + fmt(bnow() / (d.b90 * 1e9), 2)));
-  /* 未屏蔽卢瑟福公式对照：tan(θ/2) = b₉₀/b 只对未屏蔽库仑势成立，
-     b ≳ 3b₉₀ 时屏蔽会把实际偏角压下来 —— 把差值摊开而不是藏起来。 */
-  const thR = 2 * Math.atan(d.b90 * 1e9 / bnow()) * 180 / Math.PI;
-  const thS = TRAJ ? TRAJ.main.theta : 0;
-  hm.push(kvRow("卢瑟福公式 " + MM(WSUB("θ", "R")) + "（未屏蔽极限）",
-    fmt(thR, 1) + "°　实测/公式 = <b>" + (thR > 0.05 ? fmt(thS / thR, 2) : "—") + "</b>×"));
+  /* 未屏蔽卢瑟福对照不再占读数行：它跟核心区那条「散射角 θ」互为对照，
+     是模块一的画外音。屏蔽把偏角压下来这件事，画布上的轨迹已经画出来了。 */
   $("readout").innerHTML = h.join("");
   $("readoutMore").innerHTML = hm.join("");
 
@@ -2239,77 +2286,57 @@ const CHAL = [
   {
     q: "在模块一里，先把<b>瞄准距离 " + M_B + "</b> 拖到很小再拖到很大，散射角 " + M_TH + " 怎么变？再把<b>温度</b>从 3 K 拉到 1000 K（速度变快），" + M_TH + " 又怎么变？能量越高，散射角越大还是越小？",
     a: () => {
-      const d = der(), th = TRAJ ? TRAJ.main.theta : 0;
-      return "两条规律都是<b>越小越偏</b>：" + M_B + " 越小离杂质越近、库仑力越强 ⇒ " + M_TH + " 越大；<b>温度越高</b>（当前 " +
-        M_V + " = " + sciH(d.v, 2) + " " + MSU + "）载流子跑得越快，在杂质身边停留的时间越短 ⇒ <b>" + M_TH + " 越小</b>。定量上 " +
+      return "两条规律都是<b>越小越偏</b>：" + M_B + " 越小离杂质越近、库仑力越强 ⇒ " + M_TH + " 越大；<b>温度越高</b>载流子跑得越快，在杂质身边停留的时间越短 ⇒ <b>" + M_TH + " 越小</b>。定量上 " +
         MM("tan" + FRAC(VI("θ"), "2") + OP("≈") + FRAC(WSUB("b", "90"), VI("b"))) + "，而 " +
         MM(WSUB("b", "90") + OP("=") + FRAC(VI("Z") + VI("q") + WU("2"), "4π" + WSUB("ε", "s") + VI("m") + WU("*") + VI("v") + WU("2")) + OP("∝") + FRAC("1", VI("E"))) +
-        "：当前 " + MM(FRAC(VI("b"), WSUB("b", "90")) + OP("=")) + " " + fmt(bnow() / (d.b90 * 1e9), 2) + "，" +
-        M_TH + " = <b>" + fmt(th, 1) + "°</b>。这正是 " + MM(WSUB("μ", "ii") + OP("∝") + VI("T") + WU("3/2")) +
+        "。这正是 " + MM(WSUB("μ", "ii") + OP("∝") + VI("T") + WU("3/2")) +
         " 的微观来源 —— 高能载流子“擦”过杂质几乎不偏转。<br>两点提醒：① 页头的 " + MM("tan" + FRAC(VI("θ"), "2") + OP("≈") + FRAC(WSUB("b", "90"), VI("b"))) +
         " 只对<b>未屏蔽</b>库仑势成立，而轨迹用的是屏蔽势 " + MM(RM("e") + WU(OP("−") + VI("r") + OP("/") + VI("λ")) + OP("/") + VI("r")) +
-        "：当前 " + M_LAM + " = " + fmtLen(d.lam) + "，当 " + M_B + " ≳ 3" + M_B90 + " 时屏蔽会把实际偏角压到公式值的一半以下（读数面板给出「实测/公式」比值）。" +
-        "② 轨迹族是按 " + M_B + " <b>等比</b>取样画出来的，不是按碰撞概率取样；要说“绝大多数碰撞是小角”，得按截面权重 " + MM("2π" + VI("b") + VI("d") + VI("b")) +
-        "（∝ " + MM(VI("b") + VI("d") + VI("b")) + "）来数 —— 那样小角散射占的权重确实压倒性地大。";
+        " —— " + M_B + " 大到几个 " + M_B90 + " 时，实际偏角会被压到公式值的一半左右（「实测/公式」比值在更多读数里）。";
+
     }
   },
   {
     q: "看模块二的 " + M_MUII + " 曲线：温度升高时它是<b>上升</b>还是下降？和 " + M_MUPH + " 的方向一样吗？为什么“温度越高散射越弱”听起来反直觉却是对的？",
     a: () => {
-      const d = der();
-      return M_MUII + " 随升温<b>一路上升</b>（理想极限 " + MM(OP("∝") + VI("T") + WU("3/2")) + "，但屏蔽对数 " +
-        MM("ln(1" + OP("+") + VI("β") + WU("2") + ")") + " 随温度增长，把有效指数从 1.5 压到当前的 <b>" + fmt(muiiExp(d.T), 2) + "</b>），" +
-        M_MUPH + " 随升温<b>下降</b>（" + MM(OP("∝") + VI("T") + WU("−3/2")) + "）—— 方向正好相反。原因在<b>散射源</b>不同：杂质是<b>静止的</b>，载流子越快就越“一掠而过”，偏得越少；声子是<b>热激发的</b>，温度越高声子数越多，撞得越勤。当前 " + M_T + " = " +
-        fmtT(d.T) + " K：" + M_MUII + " = <b>" + fmt(d.muii, 0) + "</b>、" + M_MUPH + " = <b>" + fmt(d.muph, 0) +
-        "</b> " + CM2VS + "。所以“加热”对两种机制是<b>一松一紧</b>，总效果看谁占上风。";
+      return M_MUII + " 随升温<b>一路上升</b>（理想极限 " + MM(OP("∝") + VI("T") + WU("3/2")) + "，实际被屏蔽对数 " +
+        MM("ln(1" + OP("+") + VI("β") + WU("2") + ")") + " 压低），" +
+        M_MUPH + " 随升温<b>下降</b>（" + MM(OP("∝") + VI("T") + WU("−3/2")) + "）—— 方向正好相反。" +
+        "原因在<b>散射源</b>不同：杂质是<b>静止的</b>，载流子越快就越“一掠而过”，偏得越少；声子是<b>热激发的</b>，温度越高声子数越多，撞得越勤。" +
+        "所以“加热”对两种机制是<b>一松一紧</b>，总效果看谁占上风（三条迁移率读数面板里都有）。";
+
     }
   },
   {
     q: "找到模块二里 " + M_MUT + " 的<b>峰值</b>（也就是交叉温度 " + MM(VI("T") + WU("*")) + "）。用情境预设在<b>低温 / 室温 / 高温</b>之间切换：低温侧谁主导？高温侧谁主导？为什么总迁移率在两边都由“最慢的那个机制”说了算？",
     a: () => {
-      const d = der(), Tc = crossTemp();
-      return "峰值左侧（" + MM(VI("T") + OP("<") + VI("T") + WU("*")) + "）<b>电离杂质散射主导</b>：升温让载流子跑得更快、偏得更少，迁移率随升温而升；峰值右侧<b>声子散射主导</b>：声子越来越多，迁移率随升温而降。当前 " +
-        MM(VI("T") + WU("*") + OP("≈")) + " <b>" + (isFinite(Tc) ? fmtT(Tc) + " K" : "本区间无交叉") +
-        "</b>。总量由 " + M_MATH + " 给出：" +
-        M_MUII + " = " + fmt(d.muii, 0) + "、" + M_MUPH + " = " + fmt(d.muph, 0) + "、" + M_MUT + " = <b>" + fmt(d.mutot, 0) +
-        "</b> " + CM2VS + "。拖动<b>浓度</b>滑块试一试：" + M_MUII + " 大体 ∝ 1/" + M_NI +
-        "，杂质越多这条 " + M_MUII + " 线整体越<b>低</b>，交叉温度 " + MM(VI("T") + WU("*")) + " 就往<b>高温</b>跑（当前 " + M_NI +
-        " = " + sciH(NInow(), 1) + " " + CM3 + " ⇒ " + MM(VI("T") + WU("*")) + " ≈ " + (isFinite(Tc) ? fmtT(Tc) + " K" : "本区间无交叉") + "）。";
+      return "峰值左侧（" + MM(VI("T") + OP("<") + VI("T") + WU("*")) + "）<b>电离杂质散射主导</b>：升温让载流子跑得更快、偏得更少，迁移率随升温而升；" +
+        "峰值右侧<b>声子散射主导</b>：声子越来越多，迁移率随升温而降。总量由 " + M_MATH + " 给出 —— 峰值就出现在两者<b>交接</b>处。" +
+        "拖动<b>浓度</b>滑块试一试：" + M_MUII + " 大体 ∝ 1/" + M_NI +
+        "，杂质越多这条 " + M_MUII + " 线整体越<b>低</b>，交叉温度 " + MM(VI("T") + WU("*")) +
+        " 就往<b>高温</b>跑（" + MM(VI("T") + WU("*")) + " 读数面板里有）。";
+
     }
   },
   {
     q: "把<b>杂质电荷数 " + M_Z + "</b> 从 1 切到 2、3，看读数里的 " + M_B90 + "、" + M_SIGM + " 与 " + M_MUII + "：" + M_MUII + " 依次变成多少？为什么“双电荷、三电荷杂质中心”的散射能力强得多？",
     a: () => {
-      const d = der();
-      const ratios = [1, 2, 3].map(function (Z) {
-        const p = phys(d.T, NInow(), nnow(), Z, OPT.mat, OPT.car, 1);
-        return { Z: Z, mu: p.muii, lam: p.Lam, k: d.muii / p.muii };
-      });
       return M_B90 + " 本身 ∝ " + M_Z + "，而它又以<b>平方</b>进入截面：" + MM(WSUB("σ", "m") + OP("=") + "2π" + WSUB("b", "90") + WU("2") + OP("⋅") + "ln(1" + OP("+") + VI("β") + WU("2") + ")" + OP("∝") + VI("Z") + WU("2")) +
-        "。当前 " + M_Z + " = " + OPT.Z + "：" + M_B90 + " = " + fmtLen(d.b90) + "、" + M_SIGM + " = <b>" + sciH(d.sig * 1e18, 2) +
-        "</b> " + NM2 + "、" + M_MUII + " = <b>" + fmt(d.muii, 0) + "</b> " + CM2VS +
-        "。切到 " + M_Z + " = 2、3 时，截面按 " + MM(VI("Z") + WU("2")) + " 放大，但 " + MM(VI("β") + OP("=") + FRAC(WSUB("b", "max"), WSUB("b", "90")) + OP("∝") + FRAC("1", VI("Z"))) +
-        " —— 对数因子随之收缩（" + ratios.map(function (r) { return fmt(r.lam, 2); }).join(" → ") + "），把 " +
-        MM(VI("Z") + WU("2")) + " 的标度吃掉一大截：本工具实测 " + M_MUII + " 只降到 <b>1/" + fmt(ratios[1].k, 1) + "、1/" + fmt(ratios[2].k, 1) +
-        "</b>（理想 " + MM(VI("Z") + WU("2")) + " 律会给出 1/4、1/9，那是<b>上限</b>）。实际比值请对照读数面板自行核对。" +
-        "同理它也不是严格的“整体平移”：对数因子随 " + M_Z + " 变，有效指数也会跟着变（" + M_Z + " 越大被压得越低）。";
+        "。但 " + MM(VI("β") + OP("=") + FRAC(WSUB("b", "max"), WSUB("b", "90")) + OP("∝") + FRAC("1", VI("Z"))) +
+        " —— 对数因子随 " + M_Z + " 收缩，把 " + MM(VI("Z") + WU("2")) + " 的标度吃掉一大截：切到 " + M_Z + " = 2、3 时 " + M_MUII +
+        " 的下降明显缓于 1/4、1/9（理想 " + MM(VI("Z") + WU("2")) + " 律给的是<b>上限</b>）。所以 <b>" + M_Z + " 翻倍不等于迁移率掉四倍</b>，具体比值对照读数面板。";
+
     }
   },
   {
     q: "保持 " + M_NI + " = " + M_NN + "（完全电离）不变，拖动<b>温度</b>：屏蔽长度 " + M_LAM + " 怎么变？既然升温反而让屏蔽云变<b>大</b>（屏蔽变弱），为什么 " + M_MUII + " 还是一路上升？",
     a: () => {
-      const d = der();
       return "自由载流子浓度固定，所以 " + M_LAMD + " 只剩温度依赖：" + MM(WSUB("λ", "D") + OP("=") + OP("√") + FRAC(VI("ε") + VI("k") + VI("T"), VI("q") + WU("2") + VI("n")) + OP("∝") + OP("√") + VI("T")) +
-        " ⇒ 升温使 <b>" + M_LAM + " 变长、屏蔽变弱</b>（当前 " + M_LAMD + " = " + fmtLen(d.lamD) + "、" + M_LAM + " = <b>" + fmtLen(d.lam) + "</b>）。" +
-        "但屏蔽只出现在<b>对数</b>里 —— 屏蔽因子 " + MM("ln(1" + OP("+") + VI("β") + WU("2") + ")" + OP("=")) + " " + fmt(d.Lam, 3) +
-        "（" + MM(VI("β") + OP("=")) + " " + fmt(d.beta, 2) + "），而 " + M_B90 + " 是以<b>平方</b>进入截面的：升温让 " + M_V +
-        " 变大 ⇒ " + M_B90 + " ∝ 1/" + MM(VI("v") + WU("2")) + " 迅速塌缩（当前 " + fmtLen(d.b90) +
-        "）。对数增长远远追不上平方衰减，所以净效果仍然是<b>散射变弱、" + M_MUII + " 上升</b>（当前 " + fmt(d.muii, 0) + " " + CM2VS +
-        "）。顺带可以看出为什么它不是严格的 " + MM(VI("T") + WU("3/2")) + "：这个对数把有效指数从 1.5 压到了 <b>" +
-        fmt(muiiExp(d.T), 2) + "</b>（压低幅度远不止“一点”：中温段 <span class='m'><i>β</i></span> ≈ 1 时它几乎把指数压到 0）。另外注意当前截断由<b>" +
-        d.cutTag + "</b>决定" + (d.cutTag.indexOf("间距") >= 0
-          ? " —— 这个分支与温度几乎无关，所以「升温使 <span class='m'><i>λ</i></span> 变长」在此并不是直接起作用的那一项；把浓度调到 10¹⁸ cm⁻³ 以上，屏蔽长度那一支才会接管。"
-          : " —— 此时屏蔽长度那一支在起作用。") + "";
+        " ⇒ 升温使 <b>" + M_LAM + " 变长、屏蔽变弱</b>。但屏蔽只出现在<b>对数</b>里，而 " + M_B90 +
+        " 是以<b>平方</b>进入截面的：升温让 " + M_V + " 变大 ⇒ " + M_B90 + " ∝ 1/" + MM(VI("v") + WU("2")) + " 迅速塌缩。" +
+        "<b>对数增长远远追不上平方衰减</b>，所以净效果仍然是<b>散射变弱、" + M_MUII + " 上升</b>。" +
+        "这也是它不是严格的 " + MM(VI("T") + WU("3/2")) + " 的原因：那个对数把有效指数从 1.5 压到了 <b>1 附近</b>（当前截断与 " + MM(VI("β")) + " 见更多读数）。";
+
     }
   }
 ];
@@ -2330,7 +2357,8 @@ function buildChal() {
     el.querySelector(".btn-row button").onclick = e => { e.stopPropagation(); ans.classList.toggle("show"); };
   });
 }
-function refreshAnswers() { ANS_EL.forEach((el, i) => { el.innerHTML = CHAL[i].a(); }); }
+const ansOf = c => (typeof c.a === "function" ? c.a() : c.a);
+function refreshAnswers() { ANS_EL.forEach((el, i) => { el.innerHTML = ansOf(CHAL[i]); }); }
 
 /* ---------------- 13. 同步与渲染 ---------------- */
 function markActive() {

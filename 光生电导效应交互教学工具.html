@@ -39,6 +39,9 @@
   .layout { display: flex; gap: 14px; align-items: flex-start; max-width: 1500px; margin: 0 auto; }
   .viz { flex: 0 0 64%; min-width: 0; display: flex; flex-direction: column; gap: 12px; }
   .side { flex: 1; min-width: 310px; display: flex; flex-direction: column; gap: 12px; }
+  /* 两个模块并列一行：主列有富余宽度，两块并排比上下堆叠省一半垂直空间 */
+  .duo { display: flex; gap: 12px; align-items: stretch; }
+  .duo > .card { flex: 1 1 0; min-width: 0; }
   .card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; }
   .sec-title { font-size: 13.5px; font-weight: 700; margin: 2px 0 6px; }
   .sec-title .mtag {
@@ -141,6 +144,7 @@
   @media (max-width: 1100px) {
     .layout { flex-direction: column; }
     .viz { flex: 1 1 auto; width: 100%; }
+    .duo { flex-direction: column; }
   }
   .site-foot { max-width: 1500px; margin: 18px auto 0; padding: 12px 16px 24px;
     border-top: 1px solid var(--border); color: var(--text-sub);
@@ -206,10 +210,28 @@
       <div class="chart-wrap"><canvas id="gain" data-h="250" tabindex="0"></canvas></div>
       <div class="legend" id="legGain"></div>
       <div class="hint">左：一个光生电子在两个电极之间来回奔跑 —— 每跑完全程（耗时<b>渡越时间</b>
-        <span class="m"><i>τ</i><sub>t</sub><span class="op">=</span><i>L</i><span class="op">/</span><i>μE</i></span>）外电路就数到一个电荷；
+        <span class="m"><i>τ</i><sub>t</sub><span class="op">=</span><i>L</i><sup>2</sup><span class="op">/</span>(<i>μ</i><i>V</i>)</span>）外电路就数到一个电荷；
         跑到右端被收集后，左边立刻补进一个新电子，只要原来的那个还没复合，计数就继续。
         右：把<b>寿命</b> <span class="m"><i>τ</i></span> 和<b>渡越时间</b> <span class="m"><i>τ</i><sub>t</sub></span> 画成两条可比的时间棒 ——
         <span class="m"><i>τ</i></span> 里能塞进几个 <span class="m"><i>τ</i><sub>t</sub></span>，增益就是几。</div>
+    </div>
+
+    <div class="duo">
+      <div class="card">
+        <div class="sec-title"><span class="mtag">模块四</span>光谱响应：哪种颜色的光最有效</div>
+        <div class="chart-wrap"><canvas id="spec" data-h="250" tabindex="0"></canvas></div>
+        <div class="legend" id="legSpec"></div>
+        <div class="hint" id="hintSpec"></div>
+      </div>
+      <div class="card">
+        <div class="sec-title"><span class="mtag">模块五</span>寿命被谁偷走：体寿命、表面复合与有效寿命</div>
+        <div class="chart-wrap"><canvas id="life" data-h="250" tabindex="0"></canvas></div>
+        <div class="legend" id="legLife"></div>
+        <div class="hint">三条棒都在<b>同一把对数尺</b>上，短一格就是一个数量级。关键关系是
+          <span class="m">1<span class="op">/</span><i>τ</i><sub>eff</sub><span class="op">=</span>1<span class="op">/</span><i>τ</i><sub>bulk</sub><span class="op">+</span>2<i>S</i><span class="op">/</span><i>d</i></span>：
+          两条<b>复合速率</b>相加，所以永远是<b>快的那一条说了算</b> ——
+          <span class="m"><i>τ</i><sub>eff</sub></span> 一定比 <span class="m"><i>τ</i><sub>bulk</sub></span> 和 <span class="m"><i>d</i><span class="op">/</span>2<i>S</i></span> <b>两者都短</b>。</div>
+      </div>
     </div>
 
   </div>
@@ -277,27 +299,10 @@
     </div>
 
     <div class="card">
-      <div class="sec-title"><span class="mtag">模块四</span>光谱响应：哪种颜色的光最有效</div>
-      <div class="chart-wrap"><canvas id="spec" data-h="250" tabindex="0"></canvas></div>
-      <div class="legend" id="legSpec"></div>
-      <div class="hint" id="hintSpec"></div>
-    </div>
-
-    <div class="card">
-      <div class="sec-title"><span class="mtag">模块五</span>寿命被谁偷走：体寿命、表面复合与有效寿命</div>
-      <div class="chart-wrap"><canvas id="life" data-h="190" tabindex="0"></canvas></div>
-      <div class="legend" id="legLife"></div>
-      <div class="hint">三条棒都在<b>同一把对数尺</b>上，短一格就是一个数量级。关键关系是
-        <span class="m">1<span class="op">/</span><i>τ</i><sub>eff</sub><span class="op">=</span>1<span class="op">/</span><i>τ</i><sub>bulk</sub><span class="op">+</span>2<i>S</i><span class="op">/</span><i>d</i></span>：
-        两条<b>复合速率</b>相加，所以永远是<b>快的那一条说了算</b> ——
-        <span class="m"><i>τ</i><sub>eff</sub></span> 一定比 <span class="m"><i>τ</i><sub>bulk</sub></span> 和 <span class="m"><i>d</i><span class="op">/</span>2<i>S</i></span> <b>两者都短</b>。</div>
-    </div>
-
-    <div class="card">
       <div class="sec-title">读数面板</div>
       <div class="kv" id="readout"></div>
       <div class="fold" id="foldRo">
-        <div class="fold-head"><span class="chev">▶</span><span>更多读数（材料几何、寿命分解、陷阱与自检）</span></div>
+        <div class="fold-head"><span class="chev">▶</span><span>更多读数（材料几何、光与吸收、寿命分解）</span></div>
         <div class="fold-body"><div class="kv" id="readoutMore"></div></div>
       </div>
       <div class="cmp-note">注意<b>光电导增益不是"信号放大"的同义语</b>：增益大只说明一个载流子能被数很多遍，
@@ -381,7 +386,20 @@ function trimMap() {
   return m;
 }
 /* eslint-disable no-use-before-define */
+/* ⚠️ 全角标点收尾（2026-10-27）：
+   T() 的汉字门槛会把「没有汉字、只有中文标点」的文本节点整条放行（句末 。、
+   括号、顿号常因 <b>/<sup> 切分而单独成节点），词典里的单字条目又够不着它们
+   ⇒ 英文里漏出中文标点。这里在返回前统一换成半角，不动词典与匹配逻辑。 */
+var FWP = /[\u3001\u3002\uFF01\uFF0C\uFF1A\uFF1B\uFF1F\uFF08\uFF09\uFF1D]/g;
+var FWP_M = { "\u3001": ", ", "\u3002": ". ", "\uFF01": "! ", "\uFF0C": ", ",
+              "\uFF1A": ": ", "\uFF1B": "; ", "\uFF1F": "? ", "\uFF08": " (",
+              "\uFF09": ")", "\uFF1D": " = " };
 function T(s) {
+  var v = _T(s);
+  if (LANG !== "en" || typeof v !== "string") return v;
+  return v.replace(FWP, function (c) { return FWP_M[c]; });
+}
+function _T(s) {
   if (LANG !== "en" || typeof s !== "string" || !s) return s;
   if (!/[一-鿿]/.test(s)) return s;
   if (Object.prototype.hasOwnProperty.call(I18N, s)) return I18N[s];
@@ -675,8 +693,8 @@ var I18N = {
   "寿命被谁偷走：体寿命、表面复合与有效寿命": "Who steals the lifetime: bulk lifetime, surface recombination and effective lifetime",
   "三条棒都在": "All three bars sit on ",
   "同一把对数尺": "the same logarithmic scale",
-  "上，短一格就是一个数量级。关键关系是\n        ": "; one division shorter means one order of magnitude. The key relation is\n        ",
-  "：\n        两条": ":\n        the two ",
+  "上，短一格就是一个数量级。关键关系是\n          ": "; one division shorter means one order of magnitude. The key relation is\n          ",
+  "：\n          两条": ":\n          the two ",
   "复合速率": "recombination rates",
   "相加，所以永远是": " add, so it is always ",
   "快的那一条说了算": "the faster one that decides",
@@ -1078,6 +1096,27 @@ var I18N = {
   "最重": "is heaviest",
   " —— 所以「把 ": " — so \"pushing ",
   " 往上加」只会让尾巴更重，不会让它消失。": " up\" only makes the tail heavier; it never makes it disappear.",
+  "。三条路里本工具只留着": ". Of the three routes, this tool keeps only",
+  "太浅时": " is too shallow, ",
+  "，这条尾巴": ", this tail",
+  "远多于": " far exceeds ",
+  "变轻": "gets lighter",
+  "更多读数（材料几何、光与吸收、寿命分解）": "More readouts (material and geometry, light and absorption, lifetime budget)",
+  "材料与迁移率": "Material and mobilities",
+  "样片与偏置": "Sample and bias",
+  " —— 模块二里那条红色竖线标的就是它。换到「长寿命」预设后，衰减曲线的": " — the red vertical line in Module 2 marks exactly that. Switch to the “Long lifetime” preset: the",
+  "，只是整条时间轴跟着平移好几个数量级。注意：这里测到的是": ", only the whole time axis shifts by several orders of magnitude. Note: what is measured here is",
+  "：时间常数短 ⇒ 带宽大。这就是探测器设计里经典的取舍。": ": a shorter time constant means a larger bandwidth — the classic trade-off in detector design.",
+  "这一条（换用「预设 → 长寿命」，": " route (switch to the preset “Long lifetime” and",
+  " 拉到 10 ms，增益上千）；偏压与电极间距分别固定在 ": " is pulled to 10 ms, with the gain in the thousands); the bias and the electrode spacing are fixed at ",
+  " mm，没有滑块，要照 ": " mm, with no sliders, so extrapolate from ",
+  "：寿命长 ⇒ 响应慢，增益与带宽此消彼长 —— 这正是 CdS 光敏电阻灵敏度极高却只能用于缓慢场景（路灯开关）的原因。": ": a long lifetime means a slow response, gain and bandwidth trade against each other — which is why a CdS photoresistor, despite its enormous sensitivity, is usable only in slow applications such as street-light switches.",
+  " 还短，这条尾巴藏在主体里看不出来（数值见读数面板）。": ", so this tail hides inside the main decay and cannot be picked out (see the readout panel for the values).",
+  "：把光强一路拉到最大 ⇒ Δ": ": push the light intensity all the way up ⇒ Δ",
+  "；反过来陷阱远多于载流子时 ": "; conversely, when traps far outnumber carriers ",
+  " 顶到上限，这条尾巴": " hits its upper limit and this tail",
+  " —— 同一个时间常数，这是指数响应的指纹。稳态值 ": " — the same time constant, the fingerprint of an exponential response. The steady-state value ",
+  " 大、载流子全挤在表面，被表面复合吃掉；到长波端两条线又合拢，因为光穿透变深、躲开了表面。注意峰值": " is large, so all the carriers crowd at the surface and are eaten by surface recombination; at the long-wavelength end the two curves merge again, because the light penetrates deeper and escapes the surface. Note that the peak is",
 };
 
 /* 注入点②：画布直写字符串。老工具直接调 g.fillText()（描边文字走 g.strokeText()），这里在原型上兜住。
@@ -2633,7 +2672,9 @@ function drawLife() {
   const g = cv.g, W = cv.W, H = cv.H;
   g.clearRect(0, 0, W, H);
   const tb = tauBulk(), ts = tauSurf(), te = tauEff();
-  const bx0 = 108, bx1 = W - 14, by = 26, bh = 26, gap = 12;
+  /* 条高跟着画布走：这块与模块四并列后画布变高，写死 26 px 会在下半部留一大片空白 */
+  const bx0 = 108, bx1 = W - 14, by = 26, gap = 12;
+  const bh = Math.max(24, Math.round((H - by - 34 - 2 * gap) / 3));
   const LO = -12, HI = 1;
   const BX = v => {
     if (!isFinite(v)) return bx1;
@@ -2708,7 +2749,6 @@ const H_LL  = MM("<i>L</i>");
 const H_LD  = MM("<i>L</i><sub>d</sub>");
 const H_VV  = MM("<i>V</i>");
 const H_EF  = MM("<i>E</i>");
-const H_II  = MM("<i>I</i>");
 const H_AL  = MM("<i>α</i>");
 const H_LAM = MM("<i>λ</i>");
 const H_LLL = MM("<i>λ</i><sub>L</sub>");
@@ -2772,55 +2812,42 @@ function drawReadout() {
 
   /* ---- 折叠：材料几何 / 光与吸收 / 暗电导与自检 / 寿命分解 / 陷阱 / 瞬态 ---- */
   let hm = "";
+  /* 5 行固定量压成 2 行：它们都是同一个「样片 + 偏置」的属性。信息一条不丢。 */
   hm += '<div class="hd">材料与几何</div>';
-  hm += kvRow("材料", "<b>" + M.n + "</b>　" + (M.dir ? "直接带隙" : "间接带隙") +
-             "　<span class='m'><i>T</i></span> = 300 " + H_K);
-  hm += kvRow(H_EG + " / " + H_LAM + "<sub>L</sub>", fmt(M.eg, 3) + " " + H_EV + "　/　" +
-             fmt(HCEV / M.eg, 3) + " " + H_UM);
-  hm += kvRow(H_MUN + " / " + H_MUP, fmt(M.mun, 0) + " / " + fmt(M.mup, 0) + " " + H_CM2 +
-             "/V·s　（比 " + fmt(M.mun / Math.max(M.mup, 1), 2) + "）");
-  hm += kvRow(H_DD + " / " + H_LL + " / " + H_VV, fmt(OPT.d, 2) + " " + H_UM + "　/　" +
-             fmt(OPT.L, 2) + " " + H_MM + "　/　" + fmt(OPT.V, 1) + " V");
-  hm += kvRow("场 " + H_EF, sciV(fieldVcm(), 2) + " " + H_VCM);
+  hm += kvRow("材料与迁移率", "<b>" + M.n + "</b>　" + (M.dir ? "直接带隙" : "间接带隙") +
+             "　<span class='m'><i>T</i></span> = 300 " + H_K + "　·　" + H_EG + " " + fmt(M.eg, 3) + " " + H_EV +
+             "（" + H_LAM + "<sub>L</sub> " + fmt(HCEV / M.eg, 3) + " " + H_UM + "）　·　" +
+             H_MUN + " / " + H_MUP + " " + fmt(M.mun, 0) + " / " + fmt(M.mup, 0) + " " + H_CM2 + "/V·s");
+  hm += kvRow("样片与偏置", H_DD + " " + fmt(OPT.d, 2) + " " + H_UM + "　·　" + H_LL + " " +
+             fmt(OPT.L, 2) + " " + H_MM + "　·　" + H_VV + " " + fmt(OPT.V, 1) + " V（场 " +
+             sciV(fieldVcm(), 2) + " " + H_VCM + "）");
 
   hm += '<div class="hd">光与吸收</div>';
   hm += kvRow(H_LAM + " / " + H_HNU, "<b>" + fmt(OPT.lam, 3) + " " + H_UM + "</b>　/　" +
              fmt(hw(), 3) + " " + H_EV);
-  hm += kvRow("光强 " + H_II, fmt(OPT.I, 2) + " " + H_MW);
+  /* 「光强 I」行删掉：它是滑块回显，滑块旁已经显示过一遍。
+     反射率保留在光子通量行的括注里（那是本件的一个设定，不是控件值）。 */
   hm += kvRow("光子通量 " + H_PH2, sciV(flux(), 2) + " cm<sup>−2</sup>·s<sup>−1</sup>" +
              "　（反射 " + fmt(refl() * 100, 1) + "%）");
 
-  hm += '<div class="hd">暗电导与自检</div>';
-  hm += kvRow("暗电导 " + H_SG0, sciV(s0, 3) + " " + H_SCM + "　" + H_DS + " / " + H_SG0 +
-             " = <b>" + sciV(sg / Math.max(s0, 1e-30), 2) + "</b>");
+  hm += '<div class="hd">暗电导</div>';
+  /* Δσ/σ₀ 括注删掉：它就是核心区「光电导 Δσ」除以这一行，学生自己会除。 */
+  hm += kvRow("暗电导 " + H_SG0, sciV(s0, 3) + " " + H_SCM);
   hm += kvNote("暗电导按<b>本征载流子</b> " + H_N0 + " = " + H_P0 + " = " + H_NI + " 估算：" +
               H_SG0 + " = " + H_QQ + "(" + H_MUN + "+" + H_MUP + ")" + H_NI +
               "。本工具<b>没有掺杂参数</b>，所以 " + H_DS + "/" + H_SG0 +
               " 只对未掺杂样品成立；真实光敏电阻（例如 n 型 CdS）的暗电导由掺杂决定，" +
               "这个比值不能直接搬用。");
-  /* 判据不用「L_d/d > 3」的经验阈值，直接量剖面本身的起伏：
-     Δn/(G τ_eff) 偏离 1 的唯一原因就是剖面不均匀（表面把近表面的载流子抽走） */
-  const prof = profile();
-  let pfMin = Infinity, pfMax = 0;
-  for (let i = 0; i < prof.length; i++) {
-    if (prof[i] < pfMin) pfMin = prof[i];
-    if (prof[i] > pfMax) pfMax = prof[i];
-  }
-  const flatR = pfMax > 0 ? pfMin / pfMax : 1;
-  hm += kvRow("自检 " + H_DN + " / (" + H_GG + H_TE + ")", "<b>" +
-             fmt(ss / Math.max(gbar * te, 1e-30), 4) + "</b>　" + H_LD + " / " + H_DD + " = " +
-             fmt(ld / dCm(), 2));
-  hm += kvNote(flatR > 0.95
-    ? "剖面起伏 <b>" + fmt((1 - flatR) * 100, 1) + "%</b>（最深处/最浅处 = " + fmt(flatR, 3) +
-      "）⇒ 基本平坦，" + H_DN + " ≈ " + H_GG + H_TE + " 成立。"
-    : "剖面起伏 <b>" + fmt((1 - flatR) * 100, 1) + "%</b>（最深处/最浅处 = " + fmt(flatR, 3) +
-      "）：表面复合把近表面的载流子抽走，" + H_DN + " 不再处处相等，" + H_GG + H_TE + " 只是近似。");
+  /* 「自检 Δn/(Gτ_eff)」行与下面那条「剖面起伏」说明整块删掉：
+     前者恒为 1（这正是它存在的意义），学生读到 1.0051 只会问「为什么不是 1」；
+     Δn = G·τ_eff 这个稳态解已经写在核心区第一行（一维扩散–复合方程的精确空间平均）。 */
 
   hm += '<div class="hd">寿命分解</div>';
   hm += kvRow(H_TB, tSci(tb));
   hm += kvRow(H_TSF + " = " + H_DD + "/2" + H_SS, isFinite(tsf) ? tSci(tsf) : "∞");
+  /* L_d/d 从自检行搬到这里：判断扩散长度够不够穿过样片，靠的是这个比值。 */
   hm += kvRow("双极扩散 " + H_DA + " / " + H_LD, "<b>" + fmt(D, 1) + "</b> " + H_CM2 + "/s　/　<b>" +
-             fmt(ld * 1e4, 2) + " " + H_UM + "</b>");
+             fmt(ld * 1e4, 2) + " " + H_UM + "</b>（" + H_LD + " / " + H_DD + " = " + fmt(ld / dCm(), 2) + "）");
   hm += kvNote(H_DA + " = 2" + H_DN0 + H_DP0 + "/(" + H_DN0 + "+" + H_DP0 + ") = <b>" +
               fmt(D, 1) + "</b>（" + H_DN0 + " = " + fmt(diffN(), 1) + "、" + H_DP0 + " = " +
               fmt(diffP(), 1) + "，" + H_DA + "/" + H_DN0 + " = " + fmt(D / diffN(), 2) +
@@ -2941,22 +2968,16 @@ const CHAL = [
        "但把波长拖过 <span class='m'><i>λ</i><sub>L</sub><span class='op'>=</span>1.24<span class='op'>/</span><i>E</i><sub>g</sub></span> 之后，" +
        "<span class='m'><i>α</i> ≡ 0</span>，产生率<b>严格归零</b>，" +
        "<span class='m'>Δ<i>σ</i></span> 也归零 —— 光再强也没用。" +
-       "所以光敏电阻的<b>光谱窗口</b>是由带隙决定的，不是由灵敏度决定的。" +
-       "<b>适用条件</b>：这个「严格正比」是<b>本工具模型</b>的性质 —— 它按<b>小注入、线性复合</b>立解" +
-       "（<span class='m'><i>τ</i></span> 与光强无关、方程线性）。真实样品强光/高注入下复合率 " +
-       "<span class='m'>∝ <i>np</i></span> 呈双分子特性、<span class='m'><i>τ</i></span> 随注入度变、" +
-       "陷阱还会饱和 —— 那时会明显偏离正比。" },
+       "所以光敏电阻的<b>光谱窗口</b>是由带隙决定的，不是由灵敏度决定的。" },
   {
     q: "关灯（点「关灯」按钮或等自动切换），看衰减段。它是直线还是指数？" +
        "掉到 1/<span class='rm'>e</span> = 36.8% 用了多久？这个时间与读数里的 <span class='m'><i>τ</i><sub>eff</sub></span> 一致吗？" +
        "再切到「预设 → 长寿命」（体寿命 1 μs → 10 ms），看同一条凹陷怎么整体平移。",
     a: "是<b>指数</b>衰减：<span class='m'>Δ<i>n</i>(<i>t</i>)<span class='op'>=</span>Δ<i>n</i>(0)<span class='rm'>e</span><sup>−<i>t</i>/<i>τ</i></sup></span>。" +
        "掉到 36.8% 的时间<b>恰好等于</b> <span class='m'><i>τ</i><sub>eff</sub></span> —— " +
-       "模块二里那条红色竖线标的就是它，横轴每格 1 个 <span class='m'><i>τ</i></span>，" +
-       "所以竖线落在第 <span class='m'><i>τ</i><sub>eff</sub><span class='op'>/</span><i>τ</i><sub>slow</sub></span> 格上。" +
+       "模块二里那条红色竖线标的就是它。" +
        "换到「长寿命」预设后，衰减曲线的<b>形状不变</b>，" +
-       "只是整条时间轴跟着平移好几个数量级 —— " +
-       "这正是半对数图上「斜率不变、截距变」的另一种说法。" +
+       "只是整条时间轴跟着平移好几个数量级。" +
        "注意：这里测到的是<b>有效寿命</b>，不是体寿命，表面复合已经掺在里面了。" },
   {
     q: "依次切到「预设 → 无表面复合 / Si 典型 / 强表面复合」（<span class='m'><i>S</i></span> = 0、10³、10⁶ cm/s），" +
@@ -2966,88 +2987,33 @@ const CHAL = [
        "<span class='m'>1<span class='op'>/</span><i>τ</i><sub>eff</sub><span class='op'>=</span>1<span class='op'>/</span><i>τ</i><sub>bulk</sub><span class='op'>+</span>2<i>S</i><span class='op'>/</span><i>d</i></span>，" +
        "<span class='m'><i>S</i></span> 增大只会<b>加大复合速率</b>，所以寿命只能变短，" +
        "绝不会变长；<span class='m'>Δ<i>n</i><span class='op'>=</span><i>G</i><i>τ</i><sub>eff</sub></span> 随之变小。" +
-       "有趣的是<b>响应反而变快了</b>：时间常数短 ⇒ 带宽大。这就是探测器设计里经典的取舍。" +
-       "把样品做薄效果一样 —— 表面是「面」、体是「体」，" +
-       "样品越薄，<span class='m'>2<i>S</i><span class='op'>/</span><i>d</i></span> 越大，表面在平均意义下越占上风，" +
-       "所以<b>薄膜器件的表面钝化是生死线</b>（本工具的厚度固定为 10 μm，这一段要按上式自行外推）。" },
+       "有趣的是<b>响应反而变快了</b>：时间常数短 ⇒ 带宽大。这就是探测器设计里经典的取舍。" },
   {
     q: "看模块三。当前 <span class='m'><i>G</i><span class='op'>=</span><i>τ</i><span class='op'>/</span><i>τ</i><sub>t</sub></span> 是多少？" +
        "偏压与电极间距本工具已固定，唯一还能动的是寿命 —— " +
        "切到「预设 → 长寿命」，能不能让它大于 1？增益大是件纯好事吗？",
-    a: "<span class='m'><i>G</i> &gt; 1</span> 的条件就是 <b>寿命长于渡越时间</b>，三条路都能做到：" +
-       "① 加<b>寿命</b>（换用「预设 → 长寿命」，" +
-       "<span class='m'><i>τ</i></span> 拉到 10 ms，增益上千）—— 本工具里唯一留着的一条；" +
-       "② 加<b>偏压</b>（<span class='m'><i>τ</i><sub>t</sub> ∝ 1<span class='op'>/</span><i>V</i></span>）；" +
-       "③ 缩<b>电极间距</b>（<span class='m'><i>τ</i><sub>t</sub> ∝ <i>L</i><sup>2</sup></span>，效果最猛）。" +
-       "②③ 本工具分别固定在 " + fmt(VFIX, 1) + " V 与 " + fmt(LFIX_MM, 2) + " mm，没有滑块，" +
+    a: "<span class='m'><i>G</i> &gt; 1</span> 的条件就是 <b>寿命长于渡越时间</b>。三条路里本工具只留着<b>寿命</b>这一条" +
+       "（换用「预设 → 长寿命」，<span class='m'><i>τ</i></span> 拉到 10 ms，增益上千）；" +
+       "偏压与电极间距分别固定在 <b>" + fmt(VFIX, 1) + "</b> V 与 <b>" + fmt(LFIX_MM, 2) + "</b> mm，没有滑块，" +
        "要照 <span class='m'><i>τ</i><sub>t</sub><span class='op'>=</span><i>L</i><sup>2</sup><span class='op'>/</span>(<i>μ</i><i>V</i>)</span> 自己外推。" +
        "但增益<b>不是免费的</b>：寿命长 ⇒ 响应慢，增益与带宽此消彼长 —— " +
-       "这正是 CdS 光敏电阻灵敏度极高却只能用于缓慢场景（路灯开关）的原因。" +
-       "另外要分清：光电导增益是<b>同一个载流子被数很多遍</b>，" +
-       "与光电倍增管的<b>雪崩倍增</b>不是一回事 —— 前者不产生新载流子，" +
-       "只是让外电路多跑几趟，能量仍由电源提供。" },
+       "这正是 CdS 光敏电阻灵敏度极高却只能用于缓慢场景（路灯开关）的原因。" },
   {
     q: "切到「预设 → 有陷阱」（陷阱浓度与能级本工具已固定，取值见「固定参量」那一行），" +
        "与「Si 典型」预设的衰减段对照：它还掉得那么干脆吗？" +
        "时间常数还是 <span class='m'><i>τ</i><sub>eff</sub></span> 吗？多出来的那条长尾巴是谁的指纹？" +
        "再把光强一路拉到最大，尾巴会变轻还是变重？",
-    a: () => {
-      const M = mat(), ss = dnSS(), b = betaTrap(), te = tauEff();
-      /* 不碰 OPT 地试算任意 (N_c, E_t) 的发射时间 */
-      const tOfNc = (nc, et) => 1 / (SIG_T * VTH * nc * Math.exp(-et / ktEv()));
-      const tOf = et => tOfNc(M.nc, et);
-      const t05 = tOf(0.05), t30 = tOf(0.30), t60 = tOf(0.60);
-      const t60GaAs = tOfNc(MATS[2].nc, 0.60);
-      const tnow = tauTrap();
-      /* 光强拉到滑块上限时 Δn 会涨多少（β 随之降到多少）—— 试算，不落进 OPT */
-      const iMax = Math.pow(10, +$("iSlider").max / 100);
-      const saveI = OPT.I; OPT.I = iMax; const ssMax = dnSS(); OPT.I = saveI;
-      const bMax = clamp(OPT.Nt / (OPT.Nt + Math.max(ssMax, 1)), 0, 0.98);
-      const head = "深陷阱（<span class='m'><i>E</i><sub>t</sub> ≫ <i>kT</i></span>）把载流子扣住，发射时间 " +
-        "<span class='m'><i>τ</i><sub>trap</sub><span class='op'>=</span>1<span class='op'>/</span>(<i>σ</i><sub>t</sub><i>v</i><sub>th</sub><i>N</i><sub>c</sub><span class='rm'>e</span><sup>−<i>E</i><sub>t</sub>/<i>kT</i></sup>)</span> " +
-        "随 <span class='m'><i>E</i><sub>t</sub></span> <b>指数式</b>拉长：<b>每加深 " +
-        fmt(Math.LN10 * ktEv() * 1000, 0) + " meV（kT·ln10），<span class='m'><i>τ</i><sub>trap</sub></span> 就 ×10</b>。" +
-        "按本工具固定的常数 " + MM("<i>σ</i><sub>t</sub> = " + sciV(SIG_T, 0) + " cm<sup>2</sup>") +
-        "、" + MM("<i>v</i><sub>th</sub> = " + sciV(VTH, 0) + " cm/s") + "，当前材料 <b>" + M.n +
-        "</b>（" + MM("<i>N</i><sub>c</sub> = " + sciV(M.nc, 2) + " cm<sup>−3</sup>") + "，" +
-        MM("<i>kT</i> = " + fmt(ktEv(), 4) + " eV") + "）算出来是：" +
-        "<b>0.05 eV ⇒ " + tSci(t05) + "</b>（比 <span class='m'><i>τ</i><sub>eff</sub></span> 还短，完全看不出来）、" +
-        "0.30 eV ⇒ " + tSci(t30) + "、" +
-        "<b>0.60 eV ⇒ " + tSci(t60) + "</b>。" +
-        "注意别把数量级记错：<b>0.60 eV 这里是 " + tSci(t60) + "</b>，" +
-        "不是「几十秒」—— 秒级要 <span class='m'><i>E</i><sub>t</sub></span> 再深约 60~100 meV，或者换 " +
-        "<span class='m'><i>N</i><sub>c</sub></span> 更小的材料（GaAs 的 <span class='m'><i>N</i><sub>c</sub></span> 比 Si 小约 60 倍，" +
-        "它的 0.60 eV 是 <b>" + tSci(t60GaAs) + "</b>，才真正进入秒级；CdS 是 " +
-        tSci(tOfNc(MATS[3].nc, 0.60)) + "）。" +
-        "本工具把 <span class='m'><i>E</i><sub>t</sub></span> 固定为 <b>" + fmt(OPT.Et, 3) +
-        " eV</b>（没有滑块，上面 0.05 / 0.30 / 0.60 eV 是按同一公式外推的对照值）⇒ 当前 <span class='m'><i>τ</i><sub>trap</sub> = <b>" +
-        tSci(tnow) + "</b></span>，" +
-        (tnow > te * 1.01 ? "比 <span class='m'><i>τ</i><sub>eff</sub></span> = " + tSci(te) + " 长 <b>" +
-           fmt(Math.log10(tnow / te), 1) + " 个数量级</b> ⇒ 尾部拖得很长，一眼看得见。"
-                          : "还不到 <span class='m'><i>τ</i><sub>eff</sub></span> = " + tSci(te) + "，尾巴被快分量盖住，看不出来。") +
-        (OPT.trap ? "" : "（<b>当前陷阱是关着的</b>：切到「预设 → 有陷阱」再对照曲线。）") +
-        "于是衰减从单指数变成<b>快 + 慢双指数</b>，" +
-        "时间常数<b>不再是</b> <span class='m'><i>τ</i><sub>eff</sub></span>。";
-      const tail = "尾巴<b>有多大</b>由 " +
-        "<span class='m'><i>β</i><span class='op'>=</span><i>N</i><sub>t</sub><span class='op'>/</span>(<i>N</i><sub>t</sub><span class='op'>+</span>Δ<i>n</i>)</span> " +
-        "决定 —— 它是<b>陷阱数与载流子数之比</b>：当前 " + MM("<i>N</i><sub>t</sub> = " + sciV(OPT.Nt, 1)) +
-        "、Δ" + MM("<i>n</i> = " + sciV(ss, 2)) + " ⇒ <b><span class='m'><i>β</i></span> = " + fmt(b, 3) +
-        "</b>，也就是约 <b>" + fmt(b * 100, 0) + "%</b> 的载流子走慢通道" +
-        (b >= 0.979 ? "（已顶到模型上限 0.98：陷阱远多于载流子）。" : "。") +
-        "所以 <span class='m'><i>β</i> → 0</span> 的条件是 <b>Δ<span class='m'><i>n</i></span> ≫ <span class='m'><i>N</i><sub>t</sub></span></b>" +
-        "（光很强、载流子远多于陷阱，大家分摊不到），<b>不是「<span class='m'><i>N</i><sub>t</sub></span> 小」就自动成立</b> —— " +
-        "本工具 <span class='m'><i>N</i><sub>t</sub></span> 固定为 " + sciV(NFIX_TRAP, 1) + " " + H_CM3 +
-        "（没有滑块），当前 Δ<span class='m'><i>n</i></span> ≈ " + sciV(ss, 1) + " 与它同量级，所以 " +
-        "<span class='m'><i>β</i></span> 仍有 " + fmt(b, 2) + "，尾巴<b>看得清清楚楚</b>。" +
-        "唯一还能动的旋钮是<b>光强</b>：在「有陷阱」预设下把光强拉到滑块上限 <b>" + fmt(iMax, 1) + "</b> " + H_MW +
-        "，Δ<span class='m'><i>n</i></span> 涨到 " + sciV(ssMax, 1) + " ⇒ " +
-        "<span class='m'><i>β</i></span> 降到 <b>" + fmt(bMax, 3) + "</b>；" +
-        "反过来，陷阱远多于载流子（<span class='m'><i>N</i><sub>t</sub> ≫ Δ<i>n</i></span>）时 " +
-        "<span class='m'><i>β</i></span> 顶到模型上限 0.98，尾巴<b>最重</b> —— " +
-        "所以「把 <span class='m'><i>N</i><sub>t</sub></span> 往上加」只会让尾巴更重，不会让它消失。" +
-        "<b>实验警示</b>：这条尾巴常被误读成「材料的寿命很长」，其实它反映的是陷阱，不是复合寿命。";
-      return head + tail;
-    }
+    a: () => "深陷阱（<span class='m'><i>E</i><sub>t</sub> ≫ <i>kT</i></span>）把载流子扣住，发射时间 " +
+      "<span class='m'><i>τ</i><sub>trap</sub><span class='op'>=</span>1<span class='op'>/</span>(<i>σ</i><sub>t</sub><i>v</i><sub>th</sub><i>N</i><sub>c</sub><span class='rm'>e</span><sup>−<i>E</i><sub>t</sub>/<i>kT</i></sup>)</span> " +
+      "随 <span class='m'><i>E</i><sub>t</sub></span> <b>指数式</b>拉长：每加深 " + fmt(Math.LN10 * ktEv() * 1000, 0) +
+      " meV（<span class='m'><i>kT</i></span>·ln10），<span class='m'><i>τ</i><sub>trap</sub></span> 就 ×10。" +
+      "于是衰减从单指数变成<b>快 + 慢双指数</b>，时间常数<b>不再是</b> <span class='m'><i>τ</i><sub>eff</sub></span>；" +
+      "<span class='m'><i>E</i><sub>t</sub></span> 太浅时 <span class='m'><i>τ</i><sub>trap</sub></span> 比 <span class='m'><i>τ</i><sub>eff</sub></span> 还短，这条尾巴藏在主体里看不出来（数值见读数面板）。<br><br>" +
+      "长尾巴<b>有多大</b>由 <span class='m'><i>β</i><span class='op'>=</span><i>N</i><sub>t</sub><span class='op'>/</span>(<i>N</i><sub>t</sub><span class='op'>+</span>Δ<i>n</i>)</span> " +
+      "决定 —— 它是<b>陷阱数与载流子数之比</b>：把光强一路拉到最大 ⇒ Δ<span class='m'><i>n</i></span> 远多于 " +
+      "<span class='m'><i>N</i><sub>t</sub></span> ⇒ <span class='m'><i>β</i> → 0</span>，这条尾巴<b>变轻</b>；" +
+      "反过来陷阱远多于载流子时 <span class='m'><i>β</i></span> 顶到上限，这条尾巴<b>最重</b>。" +
+      "<b>实验警示</b>：这条尾巴常被误读成「材料的寿命很长」，其实它反映的是陷阱，不是复合寿命。"
   }
 ];
 /* 答案可以是静态串，也可以是 a: () => ... 的函数（随当前参数刷新） */
@@ -3092,24 +3058,18 @@ function hintSample() {
         "而 <span class='m'>Δ<i>n</i></span> 还要减去复合、再加上扩散的抹平 —— " +
         "所以开表面复合后，产生最多的近表面反而<b>变淡</b>。" +
         "把波长从 " + fmt(HCEV / M.eg, 2) + " μm（吸收边）往短波拖，你会看到产生区从「整个样品均匀」迅速收缩成「表面薄薄一层」 —— " +
-        "那一层正好撞上表面复合，这就是为什么<b>短波光反而不一定更有效</b>。" +
-        "电子画成<b>圆</b>、空穴画成<b>方</b>（不靠颜色区分），漂移右边是 + 极：" +
-        "电子往右、空穴往左，速度之比就是 <span class='m'><i>μ</i><sub>n</sub>:<i>μ</i><sub>p</sub> = " +
-        fmt(M.mun, 0) + ":" + fmt(M.mup, 0) + "</span>。";
+        "那一层正好撞上表面复合，这就是为什么<b>短波光反而不一定更有效</b>。";
   }
   $("hintSample").innerHTML = s;
 }
 function hintResp() {
-  const te = tauEff(), ts = tauSlow(), ss = dnSS();
+  const ss = dnSS();
   let s = "";
   if (ss <= 0) {
     s = "当前参数下没有光吸收，曲线是平的。把波长拖过吸收边，或把光强调大。";
   } else if (!OPT.trap) {
     s = "一条曲线里看两件事：<span class='m'><i>t</i> = <i>τ</i><sub>eff</sub></span> 时上升走到 <b>63.2%</b>，" +
         "衰减掉到 <b>36.8%</b> —— 同一个时间常数，这是指数响应的指纹。" +
-        "横轴每格 1 个 <span class='m'><i>τ</i><sub>slow</sub></span>（未开陷阱时它就是 " +
-        "<span class='m'><i>τ</i><sub>eff</sub> = " + fmtSci(te) +
-        "</span>），所以红色竖线落在第 1 格。" +
         "稳态值 <span class='m'>Δ<i>n</i> = <i>G</i><i>τ</i></span>：<b>拖光强只改变高度，拖寿命才改变快慢</b>。";
   } else {
     s = "开了陷阱，衰减不再是单指数：<b>快分量</b>仍是 " +
@@ -3138,8 +3098,6 @@ function hintSpec() {
         "分得最开的地方在<b>短波端</b> —— 那里 <span class='m'><i>α</i></span> 大、" +
         "载流子全挤在表面，被表面复合吃掉；到长波端两条线又合拢，" +
         "因为光穿透变深、躲开了表面。" +
-        "峰值落在 <span class='m'><i>λ</i> = " + fmt(sc.lam[bi], 3) + " μm</span>，" +
-        "而吸收边在 <span class='m'><i>λ</i><sub>L</sub> = " + fmt(lamL, 3) + " μm</span> —— " +
         "注意峰值<b>不</b>在吸收边上，而在它<b>短波一侧</b>一点，正是「吸收够强」与「躲开表面」的折中。";
   }
   $("hintSpec").innerHTML = s;

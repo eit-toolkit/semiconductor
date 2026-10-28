@@ -126,6 +126,7 @@
   .fold.open .fold-body { display: block; }
   .fold-val { font-weight: 400; color: var(--text-sub); font-size: 11px; margin-left: auto; }
   .fold-sub { font-size: 11.5px; color: var(--text-sub); line-height: 1.55; margin: 2px 0 5px; }
+  .unit-note { font-size: 11.5px; color: var(--text-sub); line-height: 1.55; margin-top: 6px; }
   .kv .hd:first-child { margin-top: 0; }
   /* ---- 课程页脚 ---- */
   .site-foot { max-width: 1500px; margin: 18px auto 0; padding: 12px 16px 24px;
@@ -289,6 +290,7 @@
         <div class="fold-head"><span class="chev">▶</span><span>更多读数（中间量与模型边界）</span></div>
         <div class="fold-body"><div class="kv" id="readoutMore"></div></div>
       </div>
+      <div class="unit-note" id="roNote"></div>
     </div>
 
   </div>
@@ -544,7 +546,6 @@ var I18N = {
   "p̂（参考层极化，沿 z）": "p̂ (reference-layer polarization, along z)",
   "翻转 ": "Switching at ",
   "终态：已翻转到 −z": "Final state: switched to −z",
-  "1. 自旋是内禀角动量，却从不出现在 Schr. 方程的非相对论形式里。看模块一左侧两套自旋的态密度柱：它们为什么不等？如果把两个极化率都拉到 0.9，TMR 会变成多少？（彩蛋：The 720° Secret —— 转一圈回不来、转两圈才回来，指的是什么？）": "1. Spin is an intrinsic angular momentum, yet it never appears in the nonrelativistic Schrödinger equation. Look at the two sets of density-of-states bars on the left of Module 1: why are they unequal? If you pull both polarizations up to 0.9, what does the TMR become? (Easter egg: The 720° Secret — what is it that fails to come back after one turn and only returns after two?)",
   " 的乘积，而不是两者相加？": " rather than a sum of the two?",
   "3. 把势垒厚度从 1.0 nm 加到 2.0 nm：RA 变成多少倍？TMR 变了吗？如果变了，动一动课本上的模型；如果没变，说明这个模型忽略了什么。": "3. Increase the barrier thickness from 1.0 nm to 2.0 nm: by what factor does RA change? Does the TMR change? If it does, revise the textbook model; if it does not, say what this model leaves out.",
   " 从 100 ps 降到 25 ps（缩到 1/4），": " from 100 ps down to 25 ps (a factor of four shorter), ",
@@ -558,7 +559,6 @@ var I18N = {
   "数值：": "Numbers: ",
   "；同为 0.4 时只有 ": "; with both at 0.4 it is only ",
   " —— 因为 TMR 是两个极化率相乘，不是相加。": " — because the TMR is a product of the two polarizations, not a sum.",
-  "彩蛋 ": "Easter egg ",
   "：自旋 1/2 的态矢量转 360° 只回到 −ψ，要到 ": ": a spin-1/2 state vector returns only to −ψ after 360°; it takes ",
   " 才真正复原；这正是“费米子”与矢量、张量这类“转一圈就回来”的经典量的根本差别。": " to truly come back — the fundamental difference between fermions and classical quantities such as vectors and tensors, which return after a single turn.",
   " 掉到 ": " down to ",
@@ -799,7 +799,6 @@ var I18N = {
   "：场太大终态会被横向压住，": ": too large a field pins the final state sideways, and ",
   " 停在 0 附近而不是 −1。": " settles near 0 instead of −1.",
   /* 挑战四（SOT 与 STT 对比）题干 */
-  "1. 自旋是内禀角动量，却从不出现在 Schr. 方程的非相对论形式里。看模块一上方两套自旋的态密度柱：它们为什么不等？如果把两个极化率都拉到 0.9，TMR 会变成多少？（彩蛋：The 720° Secret —— 转一圈回不来、转两圈才回来，指的是什么？）": "1. Spin is an intrinsic angular momentum, yet it never appears in the nonrelativistic Schrödinger equation. Look at the two sets of spin-resolved density-of-states bars at the top of Module 1: why are they unequal? If you pull both polarizations up to 0.9, what does the TMR become? (Easter egg: The 720° Secret — what is it that fails to come back after one turn and only returns after two?)",
   "2. 在模块一下方那条曲线上把 ": "2. On the curve below Module 1, drag ",
   "3. 把自旋寿命 ": "3. Cut the spin lifetime ",
   "4. 在模块二把电流密度从 0 慢慢加上去：为什么非得到某个临界值 ": "4. In Module 2, raise the current density slowly from zero: why must it reach some critical value ",
@@ -848,7 +847,55 @@ var I18N = {
   "对称性": "symmetry",
   "：没有面内场时单畴方程对 +z 与 −z 完全对称，赤道两侧一样好，磁矩没有任何理由选一边，只能停在赤道 —— 这就是": ": with no in-plane field the single-domain equation is exactly symmetric under +z ↔ −z, both sides of the equator are equally good, and the moment has no reason to pick one — it can only stop at the equator. This is exactly the absence of ",
   "对称性破缺": "symmetry breaking",
-  "缺位：得有一样东西先把「上」和「下」区分开，翻转方向才唯一。": ", and something must first tell “up” from “down” before the switching direction is unique."
+  "缺位：得有一样东西先把「上」和「下」区分开，翻转方向才唯一。": ", and something must first tell “up” from “down” before the switching direction is unique.",
+  "1. 自旋是内禀角动量，却从不出现在 Schr. 方程的非相对论形式里。看模块一上方两套自旋的态密度柱：它们为什么不等？如果把两个极化率都拉到 0.9，TMR 会变成多少？": "1. Spin is an intrinsic angular momentum, yet it never appears in the nonrelativistic Schrödinger equation. Look at the two spin-resolved densities of states at the top of Module 1: why are they unequal? And if you pull both polarizations up to 0.9, what does the TMR become?",
+  "势垒厚度只改变绝对电阻、不改变 TMR（Jullière 模型的直接结论）；真实 MgO 单晶势垒靠相干滤波能把 TMR 做到远超本模型。": "The barrier thickness changes only the absolute resistance, not the TMR (a direct consequence of the Jullière model); real single-crystal MgO barriers exploit coherent filtering to reach TMR values far above this model.",
+  "平行时 ↑ 对 ↑、↓ 对 ↓，匹配最好 ⇒ 电导最高。": "In the parallel state ↑ pairs with ↑ and ↓ with ↓ — the best match — so the conductance is highest.",
+  " 是": " is",
+  "两个极化率相乘，不是相加": "the product of the two polarizations, not their sum",
+  " —— 所以单个电极的 ": " — so the ",
+  " 再高，另一侧不分辨自旋也白搭。把两边的 ": " of a single electrode, however high, is useless if the other electrode does not resolve spin. Move the ",
+  "隧穿要": "Tunneling requires ",
+  "之和，不是各自之和。左电极极化率再高，只要右电极不分辨自旋，两条通道的贡献就一样多，TMR 照样为零 —— 单个参数不可能翻盘，这叫“一个巴掌拍不响”。（把 ": " of the two sides, not the sum of each side separately. However high the polarization of the left electrode is, as long as the right electrode does not distinguish spin the two channels contribute equally and the TMR is still zero — no single parameter can turn the tables; it takes two to tango. (Pull ",
+  " 从 0.70 拉到 0.35，看读数面板里的 TMR 掉成几分之几。）": " from 0.70 down to 0.35 and see what fraction the TMR in the readout panel falls to.)",
+  " 只掉一半（两个值读数面板实时给出）。": " shrinks by only a factor of two (both values are updated live in the readout panel).",
+  " 还剩一成多、走到 ": " a little over ten percent is left; by ",
+  " 只剩几个百分点 —— 尾巴拖得很长。": " only a few percent are left — the tail is very long.",
+  "。所以自旋器件之间的间距必须短于 ": ". So the spacing between spin devices must be shorter than ",
+  " —— STT 走的就是这条路（": " — this is the route STT takes (",
+  " 与终态 ": " and the final ",
+  " 读数面板实时给出）。": " are given live in the readout panel).",
+  "SOT 换了一套逻辑": "SOT uses a different logic",
+  "：它的力矩 ": ": its torque is ",
+  "，于是赤道本身就成了一个吸引子：不给面内辅助场时，无论电流多大，磁矩都只能被掰到面内（90°），翻不过去。": ", so the equator itself becomes an attractor: with no in-plane assist field, no matter how large the current is, the moment can only be bent into the plane (90°) and cannot be switched over.",
+  " = 0 时 +z 与 −z 完全对称，赤道两侧一样好，磁矩没有任何理由选一边，只能停在赤道 —— 得有一样东西先把「上」和「下」区分开，翻转方向才唯一。": " = 0 the +z and −z directions are exactly symmetric, both sides of the equator are equally good, and the moment has no reason to pick one of them, so it simply stops at the equator — something has to separate “up” from “down” before the switching direction is unique.",
+  "的面内场才翻得动（": " in-plane field pointing the same way can it be switched at all (",
+  "，指向 −z），推平判据是 ": ", pointing along −z), and the criterion for pulling it flat is ",
+  "不是": "not",
+  " —— 横向场太强会把终态压回面内附近（扫 ": " — too strong a transverse field pushes the final state back close to the plane (sweep ",
+  " 看终态怎么变）。这也解释了为什么 ": " to see how the final state changes). This also explains why ",
+  " 从 0 加上去会发生什么？": " up from 0?",
+  "）。": ").",
+  "反平行时两边「多数」错位配对，两条通道一起变差 ⇒ 总电导掉到最低。": "In the antiparallel state the two “majority” channels are mismatched, so both channels worsen together and the total conductance drops to its lowest.",
+  "势垒厚度只改变绝对电阻、不改变 TMR；真实 MgO 单晶势垒靠相干滤波能把 TMR 做到远超本模型。（读电流必须远低于 ": "The barrier thickness changes only the absolute resistance, not the TMR; real single-crystal MgO barriers exploit coherent filtering to reach TMR values far above this model. (The read current must stay far below ",
+  "，否则「读」会把「写」进去的内容擦掉。）": ", otherwise reading erases what writing stored.)",
+  " 再高，另一侧不分辨自旋也白搭。（TMR 实时值见读数面板。）": " of a single electrode, however high, is useless if the other electrode does not resolve spin. (The live TMR value is in the readout panel.)",
+  "含义：自旋信息在传播途中被弛豫吃掉（两个值读数面板实时给出）。所以自旋器件之间的间距必须短于 ": "What it means: spin information is eaten by relaxation while it travels (both values are updated live in the readout panel). So the spacing between spintronic devices must stay shorter than ",
+  " = 0 时 +z 与 −z 完全对称，磁矩没有任何理由选一边 —— 加上 ": " = 0 the +z and −z directions are exactly symmetric and the moment has no reason to pick one — adding ",
+  " 才破掉对称，推平判据是 ": " breaks the symmetry, and the criterion for pulling it flat is ",
+  " —— STT 走的就是这条路。": " — that is the route STT takes.",
+  " 拉低，看读数面板里的 TMR 掉成几分之几。）": " down and see what fraction the TMR in the readout panel falls to.)",
+  "⚠️ 本工具是": "⚠️ This tool uses the ",
+  " 阈值比真实 SOT 器件（10～30 MA/cm": " threshold is higher than real SOT devices (10–30 MA/cm",
+  "）高一到两个数量级。": ") by one to two orders of magnitude.",
+  "模型：这里的几百 MA/cm": " model: the several hundred MA/cm",
+  " 只掉一半。": " it only halves.",
+  "隧道结（模块一，当前：平行 P）": "Magnetic tunnel junction (module 1, currently: parallel P)",
+  "隧道结（模块一，当前：反平行 AP）": "Magnetic tunnel junction (module 1, currently: antiparallel AP)",
+  "两层自旋极化": "Spin polarization of the two layers",
+  "势垒与电流": "Barrier and current",
+  "动力学参数": "Dynamics parameters",
+  "模型边界：Jullière 模型只计自旋守恒隧穿（TMR 与势垒厚度无关），真实 MgO 结靠相干滤波使 TMR 远超本模型；单畴（宏自旋）模型的翻转阈值比真实器件高一到两个数量级；SOT 只能把磁矩拉到面内，配合同向面内场才能确定性翻转。": "Model boundaries: the Jullière model counts spin-conserving tunneling only (TMR is independent of barrier thickness), while real MgO junctions use coherent filtering and reach TMR values far above this model; the switching threshold of a single-domain (macrospin) model is one to two orders of magnitude above real devices; SOT only pulls the moment into the plane, and an in-plane field in the same direction is needed for deterministic switching.",
 };
 
 (function () {
@@ -2006,7 +2053,6 @@ function swatch(col, cls) { return "<span class=\"swatch " + (cls || "") + "\" s
 const M_P = "<span class=\"m\"><i>P</i></span>", M_TMR = "<span class=\"m\">TMR</span>";
 const EQ_POL = "<span class=\"m\"><i>P</i><span class=\"op\">=</span><span class=\"frac\"><span class=\"num\"><i>N</i><sub>↑</sub><span class=\"op\">−</span><i>N</i><sub>↓</sub></span><span class=\"den\"><i>N</i><sub>↑</sub><span class=\"op\">+</span><i>N</i><sub>↓</sub></span></span></span>";
 const EQ_JUL = "<span class=\"m\">TMR<span class=\"op\">=</span><span class=\"frac\"><span class=\"num\">2<i>P</i><sub>1</sub><i>P</i><sub>2</sub></span><span class=\"den\">1<span class=\"op\">−</span><i>P</i><sub>1</sub><i>P</i><sub>2</sub></span></span></span>";
-const EQ_WKB = "<span class=\"m\"><i>G</i><span class=\"op\">∝</span>exp<span class=\"op\">(</span><span class=\"op\">−</span>2<i>κd</i><span class=\"op\">)</span><span class=\"op\">,</span><i>κ</i><span class=\"op\">=</span><span class=\"sqrt\"><span class=\"rd\">√</span><span class=\"rdc\">2<i>m</i>Φ</span></span>/<i>ħ</i></span>";
 const EQ_DIF = "<span class=\"m\">Δ<i>n</i>(<i>x</i>)<span class=\"op\">=</span>Δ<i>n</i>(0)exp<span class=\"op\">(</span><span class=\"op\">−</span><i>x</i>/<i>L</i><sub>s</sub><span class=\"op\">)</span><span class=\"op\">,</span><i>L</i><sub>s</sub><span class=\"op\">=</span><span class=\"sqrt\"><span class=\"rd\">√</span><span class=\"rdc\"><i>D</i><sub>s</sub><i>τ</i><sub>s</sub></span></span></span>";
 const EQ_LLG = "<span class=\"m\">d<i>m</i>/d<i>t</i><span class=\"op\">=</span><span class=\"op\">−</span><i>γ</i><i>m</i><span class=\"op\">×</span><i>H</i><span class=\"op\">+</span><i>α</i><i>m</i><span class=\"op\">×</span>d<i>m</i>/d<i>t</i><span class=\"op\">+</span><i>τ</i></span>";
 const EQ_BDL = "<span class=\"m\"><i>B</i><sub>DL</sub><span class=\"op\">=</span><i>ħθ</i><sub>SH</sub><i>J</i><span class=\"op\">/</span>2<i>eM</i><sub>s</sub><i>t</i></span>";
@@ -2039,16 +2085,12 @@ function buildHints() {
     "铁磁体的 3d 带交换劈裂，两套自旋在费米面处的态密度不再相等 ⇒ " + EQ_POL +
     "<span class=\"eq\">" + EQ_JUL + "：同自旋通道的态密度乘积之和才是隧穿电导。</span>" +
     (OPT.ap
-      ? "反平行时两边「多数」错位配对，两条通道一起变差 ⇒ 总电导掉到最低（数值见读数面板）。"
-      : "平行时 ↑ 对 ↑、↓ 对 ↓，匹配最好 ⇒ 总电导最高（数值见读数面板）。") +
+      ? "反平行时两边「多数」错位配对，两条通道一起变差 ⇒ 总电导掉到最低。"
+      : "平行时 ↑ 对 ↑、↓ 对 ↓，匹配最好 ⇒ 电导最高。") +
     "<span class=\"eq\">下方那条曲线是这条公式的全景：曲线只由 <span class=\"m\"><i>P</i><sub>1</sub></span> 定形，"
     + "工作点由 <span class=\"m\"><i>P</i><sub>2</sub></span> 决定 —— 只调一边收益有限，两边同时高才有量级差异。</span>" +
-    "<span class=\"eq\">势垒厚度固定为 <b>" + OPT.d.toFixed(2) + "</b> nm：" + EQ_WKB
-    + "，它只改变绝对电阻，不改变 TMR —— 这是 Jullière 模型的直接结论。</span>" +
-    "实际 MgO 单晶势垒靠相干滤波能把 TMR 做到远超本模型的水平，属于模型边界之外。" +
-    "<span class=\"eq\">TMR 的用处就在这一步：同样的读出电压下，两个构型给出不同的电流 —— "
-    + "这就是磁存储器判 0 / 判 1 的窗口。反过来写入要求 <span class=\"m\"><i>j</i></span> &gt; <span class=\"m\"><i>J</i><sub>c</sub></span>，"
-    + "所以读电流必须远低于临界值，否则「读」会把「写」进去的内容擦掉。</span>";
+    "势垒厚度只改变绝对电阻、不改变 TMR；真实 MgO 单晶势垒靠相干滤波能把 TMR 做到远超本模型。"
+    + "（读电流必须远低于 <span class=\"m\"><i>J</i><sub>c</sub></span>，否则「读」会把「写」进去的内容擦掉。）";
   const h3 = $("hintInj");
   if (h3) h3.innerHTML =
     "注入的非平衡自旋一边扩散一边弛豫 ⇒ " + EQ_DIF +
@@ -2080,13 +2122,11 @@ function buildReadout() {
   const isSTT = OPT.tq === "stt";
   const ro = $("readout");
   if (ro) ro.innerHTML = kvHTML([
-    { hd: "隧道结（模块一）" },
-    ["当前构型", OPT.ap ? "反平行 AP" : "平行 P"],
+    /* 「当前构型」原来单独占一行，但它是 cfgBtns 的状态回显（按钮自己就有 sel 态），
+       而且默认恒为「平行 P」⇒ 并进分组标题，省一行。 */
+    { hd: "隧道结（模块一，当前：" + (OPT.ap ? "反平行 AP" : "平行 P") + "）" },
     ["电导 <span class=\"m\"><i>G</i> / <i>G</i>′</span>", d.gP.toFixed(3) + " / " + d.gA.toFixed(3)],
     ["TMR", (d.tmr * 100).toFixed(1) + " %"],
-    ["<span class=\"m\"><i>RA</i></span>（当前构型）", d.raNow.toFixed(2) + " Ω·μm<sup>2</sup>"],
-    /* A/m² → MA/cm²：1 MA/cm² = 10⁶ A/cm² = 10¹⁰ A/m² */
-    ["读出电流密度", (d.jReadNow / 1e10).toFixed(2) + " MA/cm<sup>2</sup>"],
     { hd: "磁矩动力学（模块二）" },
     isSTT
       ? ["临界电流密度 <span class=\"m\"><i>J</i><sub>c</sub></span>", d.JcSTT.toFixed(2) + " MA/cm<sup>2</sup>"]
@@ -2101,20 +2141,28 @@ function buildReadout() {
   ]);
   const rm = $("readoutMore");
   if (rm) rm.innerHTML = kvHTML([
-    { hd: "中间量" },
+    /* 原来只有一个「中间量」标题。加分组标题有两个用处：
+       ① 参考层与自由层默认数值完全相同（P₁ = P₂），不标清楚学生以为是漏算；
+       ② κ → WKB 透射因子 → RA → 电流 是一条因果链，按这个顺序排才读得懂。 */
+    { hd: "两层自旋极化" },
     ["参考层 D↑ / D↓", (d.D1u * 100).toFixed(1) + " / " + (d.D1d * 100).toFixed(1) + " %"],
     ["自由层 D↑ / D↓", (d.D2u * 100).toFixed(1) + " / " + (d.D2d * 100).toFixed(1) + " %"],
+    { hd: "势垒与电流" },
     ["衰减常数 <span class=\"m\"><i>κ</i></span>", d.kapN.toFixed(3) + " nm<sup>−1</sup>"],
     ["WKB 透射因子 <span class=\"m\">exp(<span class=\"op\">−</span>2<i>κ</i><i>d</i>)</span>", d.Tk.toExponential(2)],
+    /* A/m² → MA/cm²：1 MA/cm² = 10⁶ A/cm² = 10¹⁰ A/m² */
+    ["<span class=\"m\"><i>RA</i></span>（当前构型）", d.raNow.toFixed(2) + " Ω·μm<sup>2</sup>"],
+    ["读出电流密度", (d.jReadNow / 1e10).toFixed(2) + " MA/cm<sup>2</sup>"],
+    ["对应电流 <span class=\"m\"><i>J</i></span>（SOT）", d.Jinplane.toFixed(0) + " MA/cm<sup>2</sup>"],
+    { hd: "动力学参数" },
     ["进动频率 <span class=\"m\"><i>γ</i><i>H</i><sub>k</sub>/2π</span>", (d.f0 / 1e9).toFixed(2) + " GHz"],
     ["Slonczewski 效率 <span class=\"m\"><i>η</i> <span class=\"op\">=</span> <i>P</i><sub>1</sub>/2</span>", d.eta.toFixed(3)],
     ["拉平面内所需 <span class=\"m\"><i>B</i><sub>DL</sub></span>", (MU0HK * 1e3 / 2).toFixed(0) + " mT (= μ₀H_k/2)"],
-    ["对应电流 <span class=\"m\"><i>J</i></span>（SOT）", d.Jinplane.toFixed(0) + " MA/cm<sup>2</sup>"],
-    { hd: "模型边界" },
-    ["Jullière 模型", "只计自旋守恒隧穿，TMR 与势垒厚度无关"],
-    ["真实 MgO 隧道结", "相干滤波使 TMR 远超本模型"],
-    ["面内辅助场缺失时", "SOT 只能拉到面内（90°），配合同向 H_x 才能翻过去"]
   ]);
+  /* 「模型边界」那 3 行（Jullière / 真实 MgO / 面内辅助场缺失时）的 v 是整句、k 是话题名，
+     那是注释格式不是读数格式 ⇒ 搬进下面的 unit-note 压成一句（信息一条没丢）。 */
+  const rn = $("roNote");
+  if (rn) rn.innerHTML = "模型边界：Jullière 模型只计自旋守恒隧穿（TMR 与势垒厚度无关），真实 MgO 结靠相干滤波使 TMR 远超本模型；单畴（宏自旋）模型的翻转阈值比真实器件高一到两个数量级；SOT 只能把磁矩拉到面内，配合同向面内场才能确定性翻转。";
 }
 
 /* ==================================================================
@@ -2146,85 +2194,47 @@ function buildBtns() {
 let ANS_EL = [];
 const CHAL = [
   {
-    q: "自旋是内禀角动量，却从不出现在 Schr. 方程的非相对论形式里。看模块一上方两套自旋的态密度柱：它们为什么不等？如果把两个极化率都拉到 0.9，TMR 会变成多少？（彩蛋：The 720° Secret —— 转一圈回不来、转两圈才回来，指的是什么？）",
+    q: "自旋是内禀角动量，却从不出现在 Schr. 方程的非相对论形式里。看模块一上方两套自旋的态密度柱：它们为什么不等？如果把两个极化率都拉到 0.9，TMR 会变成多少？",
     a: function () {
-      const hi = withOpt({ p1: 0.90, p2: 0.90 }).d;
-      const lo = withOpt({ p1: 0.40, p2: 0.40 }).d;
       return "不等的根源是<b>交换作用</b>：泡利原理让自旋平行的两个电子必须占据不同的空间轨道，库仑排斥因此下降，" +
         "等价于一个与自旋方向有关的有效场（交换场），把 3d 带沿能量轴劈开，<span class=\"m\"><i>E</i><sub>F</sub></span> 处的态密度 <span class=\"m\"><i>N</i><sub>↑</sub></span>、<span class=\"m\"><i>N</i><sub>↓</sub></span> 自然不同。" +
         "劈裂不改变总电子数，只改变两套自旋在费米面上的“配额”，于是有了不为零的 <span class=\"m\"><i>P</i></span>。<br>" +
-        "数值：<span class=\"m\"><i>P</i><sub>1</sub></span> = <span class=\"m\"><i>P</i><sub>2</sub></span> = 0.9 时 TMR = <b>" + (hi.tmr * 100).toFixed(0) + " %</b>；" +
-        "同为 0.4 时只有 <b>" + (lo.tmr * 100).toFixed(0) + " %</b> —— 因为 TMR 是两个极化率相乘，不是相加。" +
-        "<br>彩蛋 <i>The 720° Secret</i>：自旋 1/2 的态矢量转 360° 只回到 −ψ，要到 <b>720°</b> 才真正复原；" +
-        "这正是“费米子”与矢量、张量这类“转一圈就回来”的经典量的根本差别。";
+        EQ_JUL + " 是<b>两个极化率相乘，不是相加</b> —— 所以单个电极的 <span class=\"m\"><i>P</i></span> 再高，另一侧不分辨自旋也白搭。" +
+        "（TMR 实时值见读数面板。）";
     }
   },
   {
     q: "在模块一下方那条曲线上把 <span class=\"m\"><i>P</i><sub>2</sub></span> 从 0.70 拉到 0.35（<span class=\"m\"><i>P</i><sub>1</sub></span> 不动）。TMR 降为原来的几分之几？为什么 TMR 里是 <span class=\"m\"><i>P</i><sub>1</sub><i>P</i><sub>2</sub></span> 的乘积，而不是两者相加？",
     a: function () {
-      const a = withOpt({ p1: 0.70, p2: 0.70 }).d;
-      const b = withOpt({ p1: 0.70, p2: 0.35 }).d;
-      return "从 <b>" + (a.tmr * 100).toFixed(0) + " %</b> 掉到 <b>" + (b.tmr * 100).toFixed(0) + " %</b>，约为原来的 <b>" +
-        (b.tmr / a.tmr).toFixed(2) + "</b> 倍。<br>" +
-        "原因是隧穿要<b>两个电极同时配合</b>：电子从左电极的某个自旋通道出发，必须落进右电极<b>同一个</b>自旋通道。" +
+      return "隧穿要<b>两个电极同时配合</b>：电子从左电极的某个自旋通道出发，必须落进右电极<b>同一个</b>自旋通道。" +
         "电导因此是两侧态密度的<b>乘积</b>之和，不是各自之和。左电极极化率再高，只要右电极不分辨自旋，" +
-        "两条通道的贡献就一样多，TMR 照样为零 —— 单个参数不可能翻盘，这叫“一个巴掌拍不响”。";
+        "两条通道的贡献就一样多，TMR 照样为零 —— 单个参数不可能翻盘，这叫“一个巴掌拍不响”。" +
+        "（把 <span class=\"m\"><i>P</i><sub>2</sub></span> 拉低，看读数面板里的 TMR 掉成几分之几。）";
     }
   },
   {
     q: "把自旋寿命 τ_s 从 100 ps 降到 25 ps（缩到 1/4），L_s 会不会也缩到 1/4？衰减曲线为什么是「先陡后缓」而不是一条直线？这对自旋器件能挨多近意味着什么？",
     a: function () {
-      const a = withOpt({ ts: 100 }).d;
-      const b = withOpt({ ts: 25 }).d;
       return "不会。<span class=\"m\"><i>L</i><sub>s</sub></span> = √(<span class=\"m\"><i>D</i><sub>s</sub><i>τ</i><sub>s</sub></span>) 是<b>平方根</b>关系：" +
-        "τ_s 缩到 1/4，<span class=\"m\"><i>L</i><sub>s</sub></span> 从 " + (a.Ls * 1e9).toFixed(0) + " nm 缩到 <b>" + (b.Ls * 1e9).toFixed(0) +
-        " nm</b>，只掉一半。<br>" +
+        "<span class=\"m\"><i>τ</i><sub>s</sub></span> 缩到 1/4，<span class=\"m\"><i>L</i><sub>s</sub></span> 只掉一半。<br>" +
         "曲线先陡后缓，是因为衰减速率正比于<b>还剩下的那一份</b>：剩得越少，掉得越慢。" +
-        "所以走到 <span class=\"m\">2<i>L</i><sub>s</sub></span> 还剩 <b>" + (Math.exp(-2) * 100).toFixed(1) + " %</b>，" +
-        "走到 <span class=\"m\">3<i>L</i><sub>s</sub></span> 还剩 <b>" + (Math.exp(-3) * 100).toFixed(1) + " %</b> —— 尾巴拖得很长。<br>" +
-        "含义：自旋信息在传播途中被弛豫吃掉，且<b>越长的距离代价增长得比线性更快</b>（e<small>−</small><span class=\"m\"><i>x</i>/<i>L</i><sub>s</sub></span> 是头重脚轻的衰减）。" +
+        "所以走到 <span class=\"m\">2<i>L</i><sub>s</sub></span> 还剩一成多、走到 <span class=\"m\">3<i>L</i><sub>s</sub></span> 只剩几个百分点 —— 尾巴拖得很长。<br>" +
+        "含义：自旋信息在传播途中被弛豫吃掉（两个值读数面板实时给出）。" +
         "所以自旋器件之间的间距必须短于 <span class=\"m\"><i>L</i><sub>s</sub></span>，这一条直接锁死了它的集成度上限；" +
-        "反过来说，提高 <span class=\"m\"><i>L</i><sub>s</sub></span> 的收益也是平方根打折的 —— 想把传递距离翻倍，得把 τ_s 提高四倍。";
+        "反过来说，提高 <span class=\"m\"><i>L</i><sub>s</sub></span> 的收益也是平方根打折的 —— 想把传递距离翻倍，得把 <span class=\"m\"><i>τ</i><sub>s</sub></span> 提高四倍。";
     }
   },
   {
-    q: "在模块二把电流密度从 0 慢慢加上去：为什么非得到某个临界值 J_c 才开始翻转？切到 SOT 再试一遍——不加面内辅助场时为什么翻不过去（+z 与 −z 明明是对称的）？把 H_x 从 0 加上去会发生什么，是不是越大越好？",
+    q: "在模块二把电流密度从 0 慢慢加上去：为什么非得到某个临界值 J_c 才开始翻转？切到 SOT 再试一遍——不加面内辅助场时为什么翻不过去（+z 与 −z 明明是对称的）？把 H_x 从 0 加上去会发生什么？",
     a: function () {
-      const stt = withOpt({ tq: "stt", j: 4.0, hx: 0 });
-      const sttLo = withOpt({ tq: "stt", j: 1.0, hx: 0 });
-      const sttHi = withOpt({ tq: "stt", j: 8.0, hx: 0 });
-      const sot0 = withOpt({ tq: "sot", j: 100, hx: 0 });
-      const sotA = withOpt({ tq: "sot", j: 100, hx: 60 });
-      const sotB = withOpt({ tq: "sot", j: 100, hx: 80 });
-      const sotC = withOpt({ tq: "sot", j: 100, hx: 200 });
       return "LLG 里阻尼 <span class=\"m\"><i>α</i></span> 一直在把磁矩拽回易轴，自旋力矩要<b>先抵消掉这份阻尼</b>才能让进动幅度发散，" +
-        "这个“收支相抵”的电流就是 <span class=\"m\"><i>J</i><sub>c</sub></span>。本工具 STT 的 <span class=\"m\"><i>J</i><sub>c</sub></span> = <b>" +
-        stt.d.JcSTT.toFixed(2) + " MA/cm<sup>2</sup></b>：<span class=\"m\"><i>J</i></span> = 1.0 时终态 <span class=\"m\"><i>m</i><sub>z</sub></span> = <b>" + sttLo.tr.mzEnd.toFixed(2) +
-        "</b>（没翻），<span class=\"m\"><i>J</i></span> = 8.0 时终态 <span class=\"m\"><i>m</i><sub>z</sub></span> = <b>" + sttHi.tr.mzEnd.toFixed(2) + "</b>（翻了，用了 " +
-        (sttHi.tr.tsw > 0 ? (sttHi.tr.tsw * 1e9).toFixed(2) : "—") + " ns）。<br>" +
-        "SOT 换了一套逻辑：它的力矩 <span class=\"m\"><i>m</i>×(<i>σ</i>×<i>m</i>)</span> 等价于一个<b>横着推</b>的等效场 " +
+        "这个“收支相抵”的电流就是 <span class=\"m\"><i>J</i><sub>c</sub></span> —— STT 走的就是这条路。<br>" +
+        "<b>SOT 换了一套逻辑</b>：它的力矩 <span class=\"m\"><i>m</i>×(<i>σ</i>×<i>m</i>)</span> 等价于一个<b>横着推</b>的等效场 " +
         "<span class=\"m\"><i>B</i><sub>DL</sub></span> ∝ <span class=\"m\"><i>m</i>×<i>σ</i></span>，" +
-        "它<b>不抵消阻尼</b>，于是赤道本身就成了一个吸引子 —— <span class=\"m\"><i>J</i></span> = 100（<span class=\"m\"><i>B</i><sub>DL</sub></span> = <b>" +
-        (sot0.d.Bdl * 1e3).toFixed(0) + "</b> mT）而 <span class=\"m\"><i>H</i><sub>x</sub></span> = 0 时，终态 <span class=\"m\"><i>m</i><sub>z</sub></span> = <b>" +
-        sot0.tr.mzEnd.toFixed(2) + "</b>，只被掰弯，翻不过去。<br>" +
-        "根子不在推力不够，而在<b>对称性</b>：没有面内场时单畴方程对 +z 与 −z 完全对称，" +
-        "赤道两侧一样好，磁矩没有任何理由选一边，只能停在赤道 —— 这就是<b>对称性破缺</b>缺位：" +
-        "得有一样东西先把「上」和「下」区分开，翻转方向才唯一。<br>" +
-        "配上<b>同向</b>的面内场才翻得动：<span class=\"m\"><i>H</i><sub>x</sub></span> 先把 <span class=\"m\"><i>m</i></span> 拉向 +x̂，" +
-        "<span class=\"m\"><i>B</i><sub>DL</sub></span> 沿 <span class=\"m\"><i>z</i></span> 的分量为 <span class=\"m\"><span class=\"op\">−</span><i>B</i><sub>DL</sub><i>m</i><sub>x</sub></span>，指向 −z，" +
-        "磁矩于是越过赤道一路到 −z。同一电流下把 <span class=\"m\"><i>H</i><sub>x</sub></span> 从 0 加上去：<b>60 mT</b> → 终态 <b>" +
-        sotA.tr.mzEnd.toFixed(2) + "</b>（还差一点，没翻）；<b>80 mT</b> → <b>" + sotB.tr.mzEnd.toFixed(2) +
-        "</b>（翻过去了）；<b>200 mT</b> → <b>" + sotC.tr.mzEnd.toFixed(2) +
-        "</b>（翻是翻了，但横向场把终态压回面内附近）。<br>" +
-        "<b>所以辅助场是够用就好，不是越大越好</b> —— 这也解释了为什么 <span class=\"m\"><i>σ</i></span> 必须取在辅助方向上：" +
-        "若 <span class=\"m\"><i>σ</i></span> 反个向，<span class=\"m\"><i>B</i><sub>DL</sub></span> 在 <span class=\"m\"><i>m</i></span> = +z 时指向 −x̂，" +
-        "正好把 <span class=\"m\"><i>H</i><sub>x</sub></span> 抵消掉，加多少场都只会把磁矩顶回 +1 侧。<br>" +
-        "工程上的好处：写电流走的是重金属层的横向路径，不必穿过隧道结本身，" +
-        "读写两条路分开 ⇒ 势垒不再被写电流反复冲击，可靠性与速度不再互相牺牲。" +
-        "<span class=\"eq\">两条量级提醒：① 这里的几百 MA/cm<sup>2</sup> 是<b>单畴（宏自旋）</b>模型算出来的，" +
-        "比真实 SOT 器件（10～30 MA/cm<sup>2</sup>）高一到两个数量级——真实翻转靠畴壁形核与推进，" +
-        "不需要整层磁矩一起硬顶各向异性场。② 本模型的 SOT 翻转在 <b>0.1 ns</b> 量级就完成（不到一个进动周期），" +
-        "这正对应 SOT 比 STT 快得多这一点；真实器件受畴壁形核限制，落在 ns 量级。</span>";
+        "它<b>不抵消阻尼</b>，于是赤道本身就成了一个吸引子：不给面内辅助场时，无论电流多大，磁矩都只能被掰到面内（90°），翻不过去。<br>" +
+        "根子不在推力不够，而在<b>对称性</b>：<span class=\"m\"><i>H</i><sub>x</sub></span> = 0 时 +z 与 −z 完全对称，磁矩没有任何理由选一边 —— " +
+        "加上 <span class=\"m\"><i>H</i><sub>x</sub></span> 才破掉对称，推平判据是 <span class=\"m\"><i>B</i><sub>DL</sub></span> ≥ <span class=\"m\"><i>μ</i><sub>0</sub><i>H</i><sub>k</sub>/2</span>（<b>不是</b> <span class=\"m\"><i>μ</i><sub>0</sub><i>H</i><sub>k</sub></span>）。<br>" +
+        "⚠️ 本工具是<b>单畴（宏自旋）</b>模型：这里的几百 MA/cm<sup>2</sup> 阈值比真实 SOT 器件（10～30 MA/cm<sup>2</sup>）高一到两个数量级。";
     }
   }
 ];
@@ -2243,15 +2253,16 @@ function buildChal() {
     ANS_EL.push(ans);
     d.querySelector(".btn-row button").onclick = e => {
       e.stopPropagation();
-      if (!ans.innerHTML) ans.innerHTML = CHAL[i].a();
+      if (!ans.innerHTML) ans.innerHTML = ansOf(CHAL[i]);
       ans.classList.toggle("show");
     };
   });
 }
+const ansOf = c => (typeof c.a === "function" ? c.a() : c.a);
 function refreshAnswers() {
   /* 只刷新已经展开过的答案：挑战五要跑 4 遍 LLG 轨迹，
      拖动滑块时若每题都重算，一次输入就是上百万步 RK4。 */
-  ANS_EL.forEach(function (el, i) { if (el.innerHTML) el.innerHTML = CHAL[i].a(); });
+  ANS_EL.forEach(function (el, i) { if (el.innerHTML) el.innerHTML = ansOf(CHAL[i]); });
 }
 
 /* ==================================================================

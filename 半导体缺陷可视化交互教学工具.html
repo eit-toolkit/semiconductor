@@ -107,6 +107,17 @@
   .kv .hd { grid-column: 1 / -1; font-weight: 700; color: var(--text); font-size: 12px; margin: 6px 0 2px; }
   .kv .hd:first-child { margin-top: 0; }
   .unit-note { font-size: 11.5px; color: var(--text-sub); line-height: 1.55; margin-top: 6px; }
+  /* ---- 折叠区（.fold）：读数的「更多」专用 ----
+     独立组件，类名一律 .fold：不许复用 .chal-head / .chev，
+     否则会被挑战区回归脚本按「挑战题」计数。 */
+  .fold { margin-top: 7px; border-top: 1px dotted var(--border); padding-top: 5px; }
+  .fold-head { display: flex; align-items: center; gap: 6px; cursor: pointer;
+    font-size: 12px; font-weight: 600; color: var(--text-sub); user-select: none; flex-wrap: wrap; }
+  .fold-head:hover { color: var(--blue); }
+  .fold-head .chev { font-size: 11px; transition: transform .15s; display: inline-block; }
+  .fold.open .fold-head .chev { transform: rotate(90deg); }
+  .fold-body { display: none; margin-top: 4px; }
+  .fold.open .fold-body { display: block; }
   /* ---- 引导探究 ---- */
   .chal-wrap { max-width: 1500px; margin: 14px auto 0; }
   .chal-bar { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
@@ -209,12 +220,6 @@
       </div>
 
       <div class="ctrl grp">
-        <div class="ctrl-head"><span>读数面板</span></div>
-        <div class="sub" id="lvlBox"></div>
-        <div class="sub" id="elecNote" style="margin-top:8px;"></div>
-      </div>
-
-      <div class="ctrl grp">
         <div class="ctrl-head"><span>显示项目</span></div>
         <div class="chk-row">
           <label><input type="checkbox" id="ckDisp" checked> 弛豫位移箭头</label>
@@ -230,6 +235,13 @@
       </div>
     </div>
 
+    <div class="card">
+      <div class="sec-title">读数面板</div>
+      <div class="sub" id="lvlBox"></div>
+      <div class="kv" id="readout" style="margin-top:6px;"></div>
+      <div class="kv" id="readoutMore"></div>
+      <div class="unit-note" id="roNote"></div>
+    </div>
   </div>
 </div>
 
@@ -712,6 +724,41 @@ var I18N = {
   "相距": "apart",
   "晶粒 1（−θ/2）": "Grain 1 (−θ/2)",
   "晶粒 2（+θ/2）": "Grain 2 (+θ/2)",
+  "，和自间隙的区别只在于「是不是外来户」。": ", and the only difference from a self-interstitial is whether the atom is a foreigner.",
+  "平行": "parallel",
+  "打开可以看到：绕位错沿格点走一圈": " shows that a circuit along lattice sites around the dislocation ",
+  "，闭合差正好是一个原子间距（画布上的红色双箭头就是它） —— 这就是": ", and the closure failure is exactly one atomic spacing (the red double arrow on the canvas is it) — that is the",
+  "没有任何多余的半原子面，也没有受压区 / 受拉区": "there is no extra half-plane of atoms, and no compressed / stretched region",
+  " —— 滑移是": " — the slip is ",
+  "于位错线的，只是把书页错开再粘上，没有往里塞任何东西。所以": " to the dislocation line: the pages are simply offset and glued back together, with nothing inserted. So",
+  "每绕一圈上升一个 ": "one full turn raises you by ",
+  "（球的颜色深浅就是标高，转一圈正好循环一次）。正因为它任何时候都在表面露出一个": " (the shading of the spheres is the height coordinate; one full turn is exactly one cycle). And precisely because it always exposes a",
+  "，这也是它在半导体外延里格外重要的原因。对比刃位错：柏氏矢量 ": ", and this is why it matters so much in semiconductor epitaxy. Contrast it with the edge dislocation: the Burgers vector ",
+  "的）。": ").",
+  "。粘好之后：第 ": ". Once glued back together: page ",
+  "，图中用红色短线标出。注意它们": ", marked by short red lines in the figure. Note that they",
+  "长在界面那一两个原子层上，体内每个原子的配位数仍是 4 —— 这正是面缺陷「二维」的含义：破坏只发生在一个面上。": " of them sit in the one or two atomic layers at the interface; every atom in the bulk still has a coordination number of 4 — this is exactly what 'two-dimensional' means for a planar defect: the damage happens on one plane only.",
+  " 越大，失配区越宽、断键越密；但某些特殊角度两侧恰好对得整齐，断键会明显变少 —— 那就是真实存在的": " , the wider the mismatched region and the denser the broken bonds; but at certain special angles the two sides happen to line up neatly and the number of broken bonds drops markedly — that is the real ",
+  "。小角晶界还有个漂亮的结果：": " . Low-angle grain boundaries come with one more elegant result: ",
+  "（拖 ": "(drag ",
+  " 看 ": " to see how ",
+  " 怎么变，实时读数就在滑块下面）。": " changes; the live reading sits right below the slider).",
+  "是反例：两侧镜像对称、原子一一对应，": " is the counterexample: the two sides are mirror images with a one-to-one correspondence of atoms, ",
+  "几乎没有悬挂键": "almost no dangling bonds",
+  "，所以它的电学活性远低于普通晶界。": ", so its electrical activity is far lower than that of an ordinary grain boundary.",
+  "；界面上悬挂键 ": "; there are dangling bonds at the interface: ",
+  " 个。": " in total.",
+  "均为示意量级、非文献值。": " are order-of-magnitude placeholders, not literature values.",
+  "本页两个特征浓度 ": "The two characteristic concentrations used here ",
+  "（迁移率半损浓度）": " (mobility half-loss concentration)",
+  "本缺陷的特征浓度": "Characteristic concentrations of this defect",
+  "（寿命半损浓度）": " (lifetime half-loss concentration)",
+  "电学影响": "Electrical impact",
+  "晶界几何": "Grain-boundary geometry",
+  "位错间距": "Dislocation spacing",
+  "界面悬挂键个数": "Number of dangling bonds at the interface",
+  "小角晶界 ≈ 一列刃位错，间距": "A low-angle grain boundary is roughly a row of edge dislocations with spacing",
+  "（数值见读数面板）。": " (the values are listed in the readout panel).",
 };
 
 /* 注入点②：画布直写字符串。老工具直接调 g.fillText()，这里在原型上兜住。
@@ -2334,59 +2381,52 @@ const CHAL = [
   {
     q: "在「点缺陷」里依次点开<b>空位、自间隙、替位杂质、间隙杂质</b>。它们分别<b>少了</b>什么或<b>多了</b>什么？周围原子的弛豫方向一样吗？",
     a: () => {
-      const s = curSub();
       return "四种点缺陷的区别只有一句话：<b>看原子是「少了」还是「多了」，以及多的那个原子坐在哪里</b>。" +
         "<b>空位</b>是格点上<b>少一个</b>原子（虚线圈），周围原子<b>向内</b>弛豫（蓝箭头）去填补那个坑；" +
         "<b>自间隙</b>是主体原子<b>多一个</b>，但它挤在<b>格点之间</b>（蓝球），把周围原子<b>向外</b>推开（红箭头）；" +
         "<b>替位杂质</b>是杂质原子<b>占了格点</b>（红球）—— 原子总数没变，只是换了一个人坐，因为半径不同，周围仍有局域畸变；" +
-        "<b>间隙杂质</b>（绿球）是杂质原子<b>待在间隙里</b>，和自间隙的区别只在于「是不是外来户」。当前选的是<b>" +
-        s.name + "</b>：" + s.feat + "。";
+        "<b>间隙杂质</b>（绿球）是杂质原子<b>待在间隙里</b>，和自间隙的区别只在于「是不是外来户」。";
     }
   },
   {
     q: "切到「刃位错」，打开<b>柏氏回路</b>。额外半原子面在哪一侧？滑移面上方与下方的原子间距各是多少？应力方向是什么？",
     a: () => {
-      const st = strainStats(), B = burgers();
+      const st = strainStats();
       /* 判断由实时数值生成，不再写死 —— 位错滑走后读数若变化，文字会跟着变，不会自相矛盾 */
       const judge = v => (v + 1e-9 < 1 ? "<b>小于</b> 1 ⇒ <b>受压</b>" : "<b>大于</b> 1 ⇒ <b>受拉</b>");
-      const s0 = st ? ("滑移面<b>上方</b>近邻间距 <b>" + fmt(st.above, 3) + " a</b>（" + judge(st.above) + "），" +
-        "<b>下方</b> <b>" + fmt(st.below, 3) + " a</b>（" + judge(st.below) + "）") : "（切到刃位错即可读数）";
+      /* 上方 / 下方的近邻间距只有这里给出（画布只标了受压 / 受拉的方向），故保留实时读数；
+         柏氏回路的闭合差画布上已用红色双箭头加 chip 标出，答案不再抄一遍。 */
+      const s0 = st ? ("：滑移面<b>上方</b>近邻间距 <b>" + fmt(st.above, 3) + " a</b>（" + judge(st.above) + "），" +
+        "<b>下方</b> <b>" + fmt(st.below, 3) + " a</b>（" + judge(st.below) + "）") : "";
       return "刃位错的形象就是<b>多插了半张原子面</b>：那一张面在滑移面<b>上方</b>（红球那一列），到 <span class='m'>⊥</span> 处戛然而止 —— " +
-        "<span class='m'>⊥</span> 就是位错线。因为这张面是硬塞进去的，<b>上面被挤、下面被拉</b>：" + s0 +
-        "。把<b>柏氏回路</b>打开可以看到：绕位错沿格点走一圈（5 右 / 5 下 / 5 左 / 5 上）<b>回不到原点</b>，闭合差正好是一个原子间距 —— " +
-        (B ? "当前闭合差 <b>" + fmt(B.b, 3) + " a</b>" : "当前未显示") + "，这就是<b>柏氏矢量 " + M_B + "</b>，也是「位错」的定量定义。" +
+        "<span class='m'>⊥</span> 就是位错线。因为这张面是硬塞进去的，<b>上面被挤、下面被拉</b>" + s0 +
+        "。把<b>柏氏回路</b>打开可以看到：绕位错沿格点走一圈<b>回不到原点</b>，闭合差正好是一个原子间距（画布上的红色双箭头就是它）" +
+        " —— 这就是<b>柏氏矢量 " + M_B + "</b>，也是「位错」的定量定义。" +
         "注意：位错<b>不是</b>一条线上少了一排原子，而是<b>整个晶体的弹性畸变</b>，越远越弱。";
+
     }
   },
   {
     q: "切到「螺位错」，<b>拖动画面转一圈</b>、再打开<b>俯视图</b>对照。同一张原子面是怎么绕位错线<b>一圈一圈盘上去</b>的？红色双箭头标出的 <span class='m'><i>b</i></span> 是怎么量出来的？它为什么<b>不需要</b>额外半原子面？",
     a: () => {
-      return "先按<b>播放</b>把全过程看一遍，这就是教科书的「书页」比喻：<b>完整晶体 = 一叠平行的原子面</b> → 沿一条半径<b>剪开</b>（俯视图里那条红色虚线），剪口两侧沿竖直方向相对滑移 <span class='m'><i>b</i></span>，成了一叠「<b>错了一页</b>」的书页 → 再<b>粘合、弹性弛豫</b> —— " +
-        "粘好之后：第 <span class='m'><i>n</i></span> 页的末端正好接到第 <span class='m'><i>n</i><span class='op'>+</span>1</span> 页的开头，整叠书页连成图中的<b>一张连续螺旋面</b>，没有任何多余的半原子面，也没有受压区 / 受拉区。" +
-        "主图里标了 ①、② 两点：<b>① 是起点</b>，沿最外圈走一整圈到 <b>②</b>，位置回到了起点的<b>正上方</b>，高度正好抬升 <span class='m'><i>b</i></span>（红色双箭头量出来的就是它）—— " +
-        "所以<b>每绕一圈上升一个原子间距</b>，球的颜色深浅表示标高，转一圈颜色正好由浅变深再回到浅（循环一次 = 上升一个 b）。" +
-        "因为它任何时候都在表面露出一个<b>永不消失的台阶</b>，螺位错是晶体<b>螺旋生长的台阶源</b>，这正是它在半导体外延里格外重要的原因。" +
-        "<b>与刃位错的本质区别</b>有两条：① 没有额外半原子面；② 柏氏矢量 <span class='m'><i>b</i></span> <b>平行</b>于位错线（刃位错是<b>垂直</b>的）。" +
-        "顺带一个反直觉的事实：<b>俯视图里每个原子的位置并未被挪动</b>（位错的位移只有垂直分量），所以从上往下看仍是一排排整齐的格子 —— 乱的只是「标高」。" +
-        "把位错线与 <span class='m'><i>b</i></span> 的夹角记作 <span class='m'><i>α</i></span>：<span class='m'><i>α</i><span class='op'>=</span>90°</span> 就是<b>纯刃型</b>、" +
-        "<span class='m'><i>α</i><span class='op'>=</span>0°</span> 就是<b>纯螺型</b>，本工具只演示这两个极限情形（真实晶体里的位错大多是斜交的<b>混合型</b>）。" +
-        "（实用提示：打开<b>柏氏回路</b>只对刃位错有意义 —— 螺位错的闭合差是<b>垂直纸面</b>的，在这张投影里看不出来。）";
+      return "先按<b>播放</b>把全过程看一遍，这就是教科书的「书页」比喻：<b>完整晶体 = 一叠平行的原子面</b> → 沿一条半径<b>剪开</b>（俯视图里那条红色虚线），剪口两侧沿竖直方向相对滑移 <span class='m'><i>b</i></span>，成了一叠「<b>错了一页</b>」的书页 → 再<b>粘合、弹性弛豫</b>。" +
+        "粘好之后：第 <span class='m'><i>n</i></span> 页的末端正好接到第 <span class='m'><i>n</i><span class='op'>+</span>1</span> 页的开头，整叠书页连成图中的<b>一张连续螺旋面</b>，<b>没有任何多余的半原子面，也没有受压区 / 受拉区</b> —— 滑移是<b>平行</b>于位错线的，只是把书页错开再粘上，没有往里塞任何东西。" +
+        "所以<b>每绕一圈上升一个 <span class='m'><i>b</i></span></b>（球的颜色深浅就是标高，转一圈正好循环一次）。" +
+        "正因为它任何时候都在表面露出一个<b>永不消失的台阶</b>，螺位错是晶体<b>螺旋生长的台阶源</b>，这也是它在半导体外延里格外重要的原因。" +
+        "对比刃位错：柏氏矢量 <span class='m'><i>b</i></span> <b>平行</b>于位错线（刃位错是<b>垂直</b>的）。";
+
     }
   },
   {
     q: "切到「晶界」，把取向差 <span class='m'><i>θ</i></span> 从 3° 拖到 30°。界面上的<b>悬挂键</b>数量怎么变？小角晶界里的<b>位错间距 <span class='m'><i>D</i></span></b> 与 <span class='m'><i>θ</i></span> 什么关系？",
     a: () => {
-      const th = OPT.thS, D = LAT && LAT.D ? LAT.D : 1 / (2 * Math.sin(th * Math.PI / 360));
-      const dg = LAT && LAT.dang !== undefined ? LAT.dang : 0;
-      const rad = th * Math.PI / 180;
-      return         "两个晶粒取向差 <span class='m'><i>θ</i></span>，界面上的原子就<b>对不上号</b>：有些方向找不到近邻 ⇒ 留下<b>断键（悬挂键）</b>，图中用红色短线标出，当前共 <b>" +
-        dg + "</b> 个 —— 注意它们<b>全部</b>长在界面那一两个原子层上，体内每个原子的配位数仍是 4（这正是面缺陷「二维」的含义：破坏只发生在一个面上）。" +
-        "<span class='m'><i>θ</i></span> 越大，两侧晶格越对不上，失配区越宽、断键越密（普通大角晶界几乎是一条连续的悬挂键带）；不过某些特殊角度两侧恰好对得整齐，断键会明显变少 —— 那就是真实存在的<b>重位晶界</b>。" +
-        "小角晶界有个漂亮的结果：<b>它其实就是一列刃位错</b>，间距 " + MM(VI("D") + OPR("=") + FRAC(VI("b"), "2" + RM("sin") + OPR("(") + VI("θ") + SL() + "2" + OPR(")")) + OPR("≈") + FRAC(VI("b"), VI("θ"))) + "。" +
-        "当前 " + MM(VI("θ") + OPR("=") + th + "°" + OPR("=") + fmt(rad, 3) + " rad") + " ⇒ " + MM(VI("D") + OPR("=") + fmt(D, 2) + " a") +
-        "，而 " + MM(FRAC("1", VI("θ")) + OPR("=") + fmt(1 / rad, 2)) +
-        " —— 两者只差一个正弦修正，<span class='m'><i>θ</i></span> 越小越吻合。位错间距越小（<span class='m'><i>θ</i></span> 越大）⇒ 位错核心重叠 ⇒ 就不再是「一列位错」而是真正的界面了。" +
-        "<b>孪晶界</b>是反例：两侧镜像对称、原子一一对应，几乎没有悬挂键，所以它的电学活性远低于普通晶界。";
+      return "两个晶粒取向差 <span class='m'><i>θ</i></span>，界面上的原子就<b>对不上号</b>：有些方向找不到近邻 ⇒ 留下<b>断键（悬挂键）</b>，图中用红色短线标出。" +
+        "注意它们<b>全部</b>长在界面那一两个原子层上，体内每个原子的配位数仍是 4 —— 这正是面缺陷「二维」的含义：破坏只发生在一个面上。" +
+        "<span class='m'><i>θ</i></span> 越大，失配区越宽、断键越密；但某些特殊角度两侧恰好对得整齐，断键会明显变少 —— 那就是真实存在的<b>重位晶界</b>。" +
+        "小角晶界还有个漂亮的结果：<b>它其实就是一列刃位错</b>，间距 " + MM(VI("D") + OPR("=") + FRAC(VI("b"), "2" + RM("sin") + OPR("(") + VI("θ") + SL() + "2" + OPR(")")) + OPR("≈") + FRAC(VI("b"), VI("θ"))) +
+        "（拖 <span class='m'><i>θ</i></span> 看 " + MM(VI("D")) + " 怎么变，实时读数就在滑块下面）。" +
+        "<b>孪晶界</b>是反例：两侧镜像对称、原子一一对应，<b>几乎没有悬挂键</b>，所以它的电学活性远低于普通晶界。";
+
     }
   }
 ];
@@ -2407,7 +2447,8 @@ function buildChal() {
     el.querySelector(".btn-row button").onclick = e => { e.stopPropagation(); ANS_SHOWN = true; ans.classList.toggle("show"); refreshAnswers(); };
   });
 }
-function refreshAnswers() { if (!ANS_SHOWN) return; ANS_EL.forEach((el, i) => { el.innerHTML = CHAL[i].a(); }); }
+const ansOf = c => (typeof c.a === "function" ? c.a() : c.a);
+function refreshAnswers() { if (!ANS_SHOWN) return; ANS_EL.forEach((el, i) => { el.innerHTML = ansOf(CHAL[i]); }); }
 
 /* ---------------- 14. 同步与渲染 ---------------- */
 function markActive() {
@@ -2437,14 +2478,26 @@ function syncInputs() {
   $("subNote").innerHTML = sub.feat + "。";
   $("lvlBox").innerHTML = lvlBar(sub);
   const mt = muTau(sub, NTFIX), CM3 = MM(" cm<sup>" + OPR("−") + "3</sup>");
-  $("elecNote").innerHTML = "由上面这套<b>示意参数化</b>算出的读数（" + MM(WSUB("N", "t") + OPR("=") + "10<sup>16</sup>") + CM3 + "）：" +
-    MM(VI("μ") + SL() + WSUB("μ", "0") + OPR("=") + fmt(mt.mu, 3)) + "、" +
-    MM(VI("τ") + SL() + WSUB("τ", "0") + OPR("=") + fmt(mt.tau, 3)) +
-    " （本缺陷 " + MM(WSUB("N", "μ") + OPR("=") + sci(sub.Nmu, 0)) + "、" + MM(WSUB("N", "τ") + OPR("=") + sci(sub.Ntau, 0)) +
-    CM3 + "；两个特征浓度都是<b>示意量级</b>，不是文献值）";
+  const isGB = OPT.dim === 2 && sub.k === "gb";
+  const dg = LAT && LAT.dang !== undefined ? LAT.dang : 0;
+  /* 电学影响进核心区；两个特征浓度与晶界几何进折叠区（非晶界模式整组不留占位） */
+  $("readout").innerHTML =
+    kvRow("电学影响", "") +
+    kvRow(MM(VI("μ") + SL() + WSUB("μ", "0")), "<b>" + fmt(mt.mu, 3) + "</b>") +
+    kvRow(MM(VI("τ") + SL() + WSUB("τ", "0")), "<b>" + fmt(mt.tau, 3) + "</b>");
+  $("readoutMore").innerHTML =
+    kvRow("本缺陷的特征浓度", "") +
+    kvRow(MM(WSUB("N", "μ") + "（迁移率半损浓度）"), "<b>" + sci(sub.Nmu, 0) + "</b>" + CM3) +
+    kvRow(MM(WSUB("N", "τ") + "（寿命半损浓度）"), "<b>" + sci(sub.Ntau, 0) + "</b>" + CM3) +
+    (isGB
+      ? kvRow("晶界几何", "") +
+        kvRow("位错间距 " + MM(VI("D") + OPR("=") + VI("b") + SL() + VI("θ")), "<b>" + fmt(1 / (OPT.thS * Math.PI / 180), 2) + "</b> " + MM(VI("a"))) +
+        kvRow("界面悬挂键个数", "<b>" + dg + "</b>")
+      : "");
+  $("roNote").innerHTML = "本页两个特征浓度 " + MM(WSUB("N", "μ") + "、" + WSUB("N", "τ")) + " 均为示意量级、非文献值。";
   $("thVal").textContent = OPT.thS + "°";
-  $("thSub").innerHTML = OPT.dim === 2 && sub.k === "gb"
-    ? "小角晶界 ≈ 一列刃位错，间距 " + MM(VI("D") + OPR("=") + VI("b") + SL() + VI("θ") + OPR("=")) + " <b>" + fmt(1 / (OPT.thS * Math.PI / 180), 2) + "</b> " + MM(VI("a")) + "。"
+  $("thSub").innerHTML = isGB
+    ? "小角晶界 ≈ 一列刃位错，间距 " + MM(VI("D") + OPR("=") + VI("b") + SL() + VI("θ")) + "（数值见读数面板）。"
     : "仅在「晶界」模式下起作用。";
   $("spVal").textContent = fmt(OPT.speed, 2) + "×";
   syncPlayBtns();
@@ -2483,6 +2536,11 @@ const LVL_STY = {
   band1: { col: "#7b3fa0", nm: "一维能带" },
   band2: { col: "#ef8c1a", nm: "界面态带" }
 };
+/* 读数行：v 为空 ⇒ 渲染成 .hd 分组标题（与其余 17 件同一写法） */
+function kvRow(k, v) {
+  if (v === "") return '<div class="row"><div class="hd">' + k + "</div></div>";
+  return '<div class="row"><div class="k">' + k + '</div><div class="v">' + v + "</div></div>";
+}
 function lvlBar(sub) {
   const L = levelOf(sub), S = LVL_STY[L.kind] || LVL_STY.deep;
   const lo = clamp(L.lo / EG_SI * 100, 0, 100);
@@ -2576,6 +2634,11 @@ function init() {
     else if (e.key === "e" || e.key === "E") { e.preventDefault(); jumpEnd(); syncInputs(); render(); }
   });
   window.addEventListener("resize", () => { fitAll(); render(); });
+  /* 折叠区（读数）：类名与 .chal-head 分开，不进挑战区计数 */
+  document.addEventListener("click", e => {
+    const h = e.target.closest ? e.target.closest(".fold-head") : null;
+    if (h) h.parentNode.classList.toggle("open");
+  });
   OPT.playing = isScrew();
   resetWalk(); syncInputs(); fitAll(); render();
   requestAnimationFrame(loop);

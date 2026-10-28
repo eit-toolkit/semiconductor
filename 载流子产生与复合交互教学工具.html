@@ -181,14 +181,14 @@
       <div class="sec-title"><span class="mtag">模块二</span>三种复合率随注入水平的变化（双对数）</div>
       <div class="chart-wrap"><canvas id="rate" data-h="268" tabindex="0"></canvas></div>
       <div class="legend" id="legRate"></div>
-      <div class="hint">横轴是<b>注入水平</b> <span class="m">Δ<i>n</i></span>（对数），纵轴是<b>复合率</b>（对数）。三条线的<b>斜率完全不同</b>：<b>SRH（间接）</b>整条都是斜率 ≈ 1 的直线 —— 低注入 <span class="m"><i>R</i><span class="op">≈</span>Δ<i>n</i><span class="sl">/</span><i>τ</i></span>、高注入降到 <span class="m"><i>R</i><span class="op">≈</span>Δ<i>n</i><span class="sl">/</span>2<i>τ</i></span>，即<b>寿命始终是常数</b>（双对数上“斜率 1”＝匀速上升，<b>不是水平</b>）；<b>直接（辐射）</b>低注入斜率 1（<span class="m"><span class="op">∝</span>Δ<i>n</i><span class="op">·</span>(<i>n</i><sub>0</sub><span class="op">+</span><i>p</i><sub>0</sub>)</span>）、高注入斜率 2（<span class="m"><span class="op">∝</span>Δ<i>n</i><sup>2</sup></span>）；<b>俄歇</b>低注入也是斜率 1、高注入斜率 3（<span class="m"><span class="op">∝</span>Δ<i>n</i><sup>3</sup></span>）最陡。<b>曲线最高的那条就是主导机制</b> —— 竖虚线是你当前的工作点。</div>
+      <div class="hint">横轴是<b>注入水平</b> <span class="m">Δ<i>n</i></span>（对数），纵轴是<b>复合率</b>（对数）。三条线的<b>斜率完全不同</b>：<b>SRH（间接）</b>整条都是斜率 ≈ 1 的直线 —— 低注入 <span class="m"><i>R</i><span class="op">≈</span>Δ<i>n</i><span class="sl">/</span><i>τ</i></span>、高注入降到 <span class="m"><i>R</i><span class="op">≈</span>Δ<i>n</i><span class="sl">/</span>2<i>τ</i></span>，即<b>寿命始终是常数</b>（双对数上“斜率 1”＝匀速上升，<b>不是水平</b>）；<b>直接（辐射）</b>低注入斜率 1（<span class="m"><span class="op">∝</span>Δ<i>n</i><span class="op">·</span>(<i>n</i><sub>0</sub><span class="op">+</span><i>p</i><sub>0</sub>)</span>）、高注入斜率 2（<span class="m"><span class="op">∝</span>Δ<i>n</i><sup>2</sup></span>）；<b>俄歇</b>低注入也是斜率 1、高注入斜率 3（<span class="m"><span class="op">∝</span>Δ<i>n</i><sup>3</sup></span>）最陡。<b>曲线最高的那条就是主导机制。</b></div>
     </div>
 
     <div class="card">
       <div class="sec-title"><span class="mtag">模块三</span>产生与复合的平衡：净复合率与寿命</div>
       <div class="chart-wrap"><canvas id="bal" data-h="224" tabindex="0"></canvas></div>
       <div class="legend" id="legBal"></div>
-      <div class="hint">左：三种复合率与<b>产生率</b>的对比（对数条）。复合率总和 <span class="m"><i>R</i></span> 与光产生率 <span class="m"><i>G</i><sub>opt</sub></span> 相等时，<b>净复合率</b> <span class="m"><i>R</i><sub>net</sub><span class="op">=</span><i>R</i><span class="op">−</span><i>G</i><sub>opt</sub><span class="op">=</span>0</span>，系统进入<b>稳态</b>。右：各机制给出的<b>分寿命</b>，总寿命按 <span class="m">1<span class="op">/</span><i>τ</i><span class="op">=</span>Σ1<span class="op">/</span><i>τ</i><sub>i</sub></span> 合成 —— 谁最快谁说了算。</div>
+      <div class="hint">三种复合率与<b>产生率</b>的对比（对数条）。复合率总和 <span class="m"><i>R</i></span> 与光产生率 <span class="m"><i>G</i><sub>opt</sub></span> 相等时，<b>净复合率</b> <span class="m"><i>R</i><sub>net</sub><span class="op">=</span><i>R</i><span class="op">−</span><i>G</i><sub>opt</sub><span class="op">=</span>0</span>，系统进入<b>稳态</b>。右边是各机制给出的<b>分寿命</b>，总寿命按 <span class="m">1<span class="op">/</span><i>τ</i><span class="op">=</span>Σ1<span class="op">/</span><i>τ</i><sub>i</sub></span> 合成 —— 谁最快谁说了算。</div>
     </div>
   </div>
 
@@ -243,7 +243,7 @@
       <div class="sec-title">读数面板</div>
       <div class="kv" id="readout"></div>
       <div class="fold" id="foldRo">
-        <div class="fold-head"><span class="chev">▶</span><span>更多读数（材料与平衡态、固定参数、产生与分寿命）</span></div>
+        <div class="fold-head"><span class="chev">▶</span><span>更多读数（材料与平衡态、固定参数与文献对照）</span></div>
         <div class="fold-body">
           <div class="kv" id="readoutMore"></div>
         </div>
@@ -658,7 +658,7 @@ var I18N = {
   "电子 / 空穴浓度": "Electron / hole concentration",
   "材料与平衡态（固定）": "Material and equilibrium (fixed)",
   "产生与寿命（其余）": "Generation and lifetimes (rest)",
-  "更多读数（材料与平衡态、固定参数、产生与分寿命）": "More readings (material and equilibrium, fixed parameters, generation and partial lifetimes)",
+  "更多读数（材料与平衡态、固定参数与文献对照）": "More readings (material and equilibrium, fixed parameters and the literature check)",
   "固定参数（硅典型量级，本工具锁定）": "Fixed parameters (typical Si magnitudes, locked in this tool)",
   "0.000 eV（禁带中央）": "0.000 eV (mid-gap)",
   "SRH 寿命 ": "SRH lifetime ",
@@ -801,6 +801,45 @@ var I18N = {
   "全程 < 0": "below zero all the way",
   "全程 > 0": "above zero all the way",
   "。这正是": ". This is exactly ",
+  "曲线最高的那条就是主导机制。": "Whichever curve lies highest is the dominant mechanism.",
+  "三种复合率与": "three recombination rates and the",
+  "。右边是各机制给出的": ". On the right are the ",
+  "表示什么？它的能量有多少？为什么硅几乎不发光？": "represent? How much energy does it carry? And why does silicon hardly emit light?",
+  " —— 它的 ": " — its ",
+  " 比直接带隙的砷化镓小 ": " is smaller than that of direct-gap GaAs by ",
+  " 个数量级（文献值与量纲对照见更多读数）。": " orders of magnitude (literature values and the units check are in More readout).",
+  "），注入越高涨得越猛。这就是 LED 在高电流下": "), and the higher the injection the more steeply it grows. This is the main reason LEDs suffer",
+  "，整条曲线": ", the whole curve",
+  "（寿命近乎常数）。注入升高后是 ": " (the lifetime is nearly constant). Once injection rises it is ",
+  "）反超，交接点随": ") that overtakes; the hand-over point moves with ",
+  "移动 —— 看模块二底部的彩色条。至于": " — see the color bar at the bottom of module 2. As for ",
+  "）：硅参数下它": "): with silicon parameters it ",
+  "，最接近时还差 ": ", and even at its closest it is still short by a factor of ",
+  " 个数量级 —— 这正是间接带隙硅几乎不发光在图上的样子。": " orders of magnitude — this is what indirect-gap silicon hardly emitting light looks like on the plot.",
+  "5. 光产生率 ": "5. The optical generation rate ",
+  " 本工具固定（数值见更多读数）。拖动": " is fixed in this tool (the value sits in More readout). Drag the ",
+  " 恰好等于总复合率的工作点（模块三里净复合率≈0）—— 此时系统处于什么状态？": " where it exactly equals the total recombination rate (net rate ≈ 0 in module 3) — what state is the system in then?",
+  "稳态条件是 ": "The steady-state condition is ",
+  "：光照每产生一对，复合就消耗一对，浓度不再变化（模块三里 ": ": for every pair light generates, recombination removes one, so the concentration stops changing (in module 3, the point where ",
+  " 归零的那一点）。注意 ": " returns to zero). Note that ",
+  " 是个隐式方程），所以这个点得解方程才准：拖注入水平滑块找 ": " is an implicit equation), so this point has to be solved for: drag the injection-level slider to find where ",
+  " 归零的位置。这正是": " returns to zero. This is exactly the ",
+  " —— 太阳能电池与光电导器件的工作点。": " — the operating point of a solar cell or of a photoconductive device.",
+  " 是个隐式方程），所以这个点得解方程才准 —— 而且本档的解": " is an implicit equation), so this point has to be solved for — and for this preset the solution ",
+  "落在滑块量程之下": "falls below the slider range",
+  "落在滑块量程之上": "falls above the slider range",
+  "，即便把注入拉到最低，复合也始终强于产生，滑块上只会看到 ": ", and even with injection pulled to its minimum, recombination stays stronger than generation, so on the slider you only ever see ",
+  "，即便把注入拉到最高，产生也始终强于复合，滑块上只会看到 ": ", and even with injection pulled to its maximum, generation stays stronger than recombination, so on the slider you only ever see ",
+  "空穴": "hole",
+  " 通道：另一个价带": " : another valence-band ",
+  "拿到能量，被顶到价带更深处；这个高能载流子随后一步步发": " receives the energy and is pushed deeper into the valence band; this hot carrier then emits ",
+  "光产生（固定）": "Optical generation (fixed)",
+  "陷阱（SRH）": "Trap (SRH)",
+  "材料与温度": "Material and temperature",
+  "复合系数": "Recombination coefficients",
+  "（固定，不做材料对比）": "(fixed; no material comparison is offered)",
+  "eV（禁带中央）·": "eV (mid-gap) ·",
+  "在本工具给定的硅参数下，把注入水平滑块拉到任何一端，占比最大的始终是 SRH（间接复合）—— 这不是巧合。": "Under the silicon parameters used here, dragging the injection-level slider to either end always leaves SRH (indirect recombination) with the largest share — this is no coincidence.",
 };
 
 /* 注入点②：画布直写字符串。老工具直接调 g.fillText()（描边文字走 g.strokeText()），这里在原型上兜住。
@@ -1577,7 +1616,7 @@ function rates(dn) {
   const rS = den > 0 ? excess / den : 0;
   const rA = C * (c.n + c.p) * excess;
   return { ni: ni, n0: c.n0, p0: c.p0, n: c.n, p: c.p, excess: excess,
-    rB: rB, rS: rS, rA: rA, rTot: rB + rS + rA, n1: n1, p1: p1, den: den, dE: dE, B: B, C: C, tau: tau };
+    rB: rB, rS: rS, rA: rA, rTot: rB + rS + rA, den: den, dE: dE, B: B, C: C, tau: tau };
 }
 
 function lifetime(r, dn) {
@@ -1595,16 +1634,6 @@ function dominant(r) {
   return arr[0];
 }
 
-/* 交接点：SRH 与俄歇谁更大（返回交叉处的 Δn；全量程未交接返回 null）。
-   二分 40 次 ⇒ 精度 7/2⁴⁰ 个数量级，远超显示需要。这两个量都是 Δn 的单调函数，可直接二分。 */
-function crossSRHAuger() {
-  const f = x => { const r = rates(Math.pow(10, x)); return r.rA - r.rS; };
-  if (f(19) <= 0) return null;                  // 拉到 10¹⁹ 俄歇仍未追上
-  if (f(12) > 0) return Math.pow(10, 12);       // 一开局就是俄歇（重掺档）
-  let lo = 12, hi = 19;
-  for (let k = 0; k < 40; k++) { const m = (lo + hi) / 2; if (f(m) > 0) hi = m; else lo = m; }
-  return Math.pow(10, (lo + hi) / 2);
-}
 /* 光稳态工作点：解 R_tot(Δn) = G_opt（R_tot 是 Δn 的单调增函数 ⇒ 二分 40 次）。
    返回 { dn, flag }：flag = "ok" | "under"（解在注入滑块量程之下，本档全程复合偏强）
    | "over"（解在量程之上）。2026-10-22 新增，取代挑战五里写死的「Δn ≈ 10¹⁴、滑块 28–29」。 */
@@ -1617,8 +1646,6 @@ function steadyDn() {
   for (let k = 0; k < 40; k++) { const m = (lo + hi) / 2; if (f(m) > 0) hi = m; else lo = m; }
   return { dn: Math.pow(10, (lo + hi) / 2), flag: "ok" };
 }
-/* 稳态 Δn 对应的注入滑块刻度：Δn = 10^(12 + inj/100·7) */
-function injPosOf(dn) { return (Math.log10(Math.max(dn, 1e-30)) - 12) / 7 * 100; }
 
 /* 直接复合离“主导者”最近时还差几个数量级（全量程取最小值 ⇒ 最乐观的一次）。
    硅是间接带隙，这个数在真实参数下永远 ≫ 0，即辐射复合永远当不了老大。 */
@@ -2201,26 +2228,33 @@ function updateReadout() {
   html += kvRow("间接 " + H_RS, "<b>" + sci(r.rS) + "</b>");
   html += kvRow("俄歇 " + H_RA, "<b>" + sci(r.rA) + "</b>");
   html += kvRow("合计 " + H_RT, "<b>" + sci(r.rTot) + "</b> cm⁻³s⁻¹");
-  html += kvRow("主导机制", "<b>" + dom[0] + "</b>（占 " + fmt(dom[1] / Math.max(r.rTot, 1e-30) * 100, 0) + "%）");
+  /* 原来 toFixed(0) 在硅参数下恒为「100%」，看着像巧合；其实到高注入端差距会缩到
+     SRH 只占 ~91%，所以按量级选小数位：接近 100% 时给出 99.995%，否则一位小数。 */
+  const dpct = dom[1] / Math.max(r.rTot, 1e-30) * 100;
+  html += kvRow("主导机制", "<b>" + dom[0] + "</b>（占 " + fmt(dpct, dpct > 99.9 ? 3 : 1) + "%）");
   html += kvRow("总寿命 " + H_TEF + H_EQ + H_DN + H_SL + H_R,
     "<b>" + (isFinite(lt.tT) ? sci(lt.tT, 2) + " s" : "∞") + "</b>");
+  /* 分寿命原在折叠区，但「1/τ_eff = Σ1/τ_i、最快的那个主导」正是本件要教的 ⇒ 提到核心区。
+     与总寿命并排放，学生才看得到「τ_eff 比最小的分寿命还小」这一事实。 */
+  html += kvRow(H_TAU + " 直接 / 间接 / 俄歇", sci(lt.tB, 1) + " / " + sci(lt.tS, 1) + " / " + sci(lt.tA, 1) + " s");
   $("readout").innerHTML = html;
 
   /* ---- 折叠区：材料与平衡态 / 固定参数（含文献对照） / 产生与分寿命 ---- */
   let hm = "";
   hm += kvHd("材料与平衡态（固定）");
-  hm += kvRow("材料 / 禁带 " + H_EG, M.name + " / <b>" + fmt(M.Eg, 2) + "</b> eV（固定，不做材料对比）");
-  hm += kvRow("温度 " + H_T + "（固定）/ 本征浓度 " + H_NI, FIX.T + " K / <b>" + sci(r.ni) + "</b> cm⁻³");
+  hm += kvRow("材料与温度", M.name + "，" + H_EG + " " + fmt(M.Eg, 2) + " eV · " + FIX.T + " K · " +
+              H_NI + " <b>" + sci(r.ni) + "</b> cm⁻³（固定，不做材料对比）");
   hm += kvRow("掺杂情境", D.name + "（" + H_N0 + " = " + sci(r.n0) + "，" + H_P0 + " = " + sci(r.p0) + "）");
-  hm += kvRow(H_EXC + "（复合驱动力）", sci(Math.max(0, r.excess)));
+  /* 原「np − n_i²（复合驱动力）」行已删：它就是核心区 n × p 再减 n_i²，两个因子都
+     摆在上面两行，而 10³⁰ 这个数量级学生没法直觉使用；np − n_i² 仍写在三条复合率的 k 里。 */
 
   hm += kvHd("固定参数（硅典型量级，本工具锁定）");
-  hm += kvRow("陷阱能级 " + H_ET + H_MN + H_EI,
-    fmt(r.dE, 3) + " eV（" + (r.dE > 0.05 ? "偏导带" : (r.dE < -0.05 ? "偏价带" : "禁带中央")) + "）");
-  hm += kvRow("SRH 寿命 " + H_TN + H_EQ + H_TP, sci(r.tau) + " s");
-  hm += kvRow("直接复合系数 " + H_B, sci(Bnow(), 1) + " cm³/s");
-  hm += kvRow("俄歇系数 " + H_C, sci(Cnow(), 1) + " cm⁶/s");
-  hm += kvRow(H_N1 + " / " + H_P1, sci(r.n1) + " / " + sci(r.p1) + " cm⁻³");
+  /* 5 行压成 2 行：E_t / τ / B / C 全是常量（控制面板的 fixNote 也列了同一组），
+     拆成 5 行只是把同一句话分五次说；n₁/p₁ 因为 E_t = E_i 而恒等于 n_i，是恒等式回显 ⇒ 删。 */
+  hm += kvRow("陷阱（SRH）", H_ET + H_MN + H_EI + " = " + fmt(r.dE, 1) + " eV（" +
+              (r.dE > 0.05 ? "偏导带" : (r.dE < -0.05 ? "偏价带" : "禁带中央")) + "）· " +
+              H_TN + H_EQ + H_TP + " = " + sci(r.tau) + " s");
+  hm += kvRow("复合系数", H_B + " " + sci(Bnow(), 1) + " cm³/s · " + H_C + " " + sci(Cnow(), 1) + " cm⁶/s");
   /* 文献对照：把“硅的典型量级”这句话坐实成可核的数字，并顺手堵住最常见的常数张冠李戴
      （把俄歇系数 C ≈ 10⁻³¹ cm⁶/s 误当成辐射系数 B ≈ 10⁻¹⁵ cm³/s，两者量纲不同、差十几个数量级）。 */
   hm += '<div class="unit-note"><b>与文献对照：</b>硅室温辐射（直接）复合系数 ' + H_B + ' ≈ ' +
@@ -2230,9 +2264,10 @@ function updateReadout() {
     '俄歇文献值 ' + MM("<i>C</i><sub>n</sub>") + ' ≈ 2.8×10<sup>−31</sup>、' + MM("<i>C</i><sub>p</sub>") +
     ' ≈ 1.0×10<sup>−31</sup> cm<sup>6</sup>/s，本工具简化为单一 ' + H_C + ' = ' + sciH(Cnow(), 1) +
     ' cm<sup>6</sup>/s（量级相同、数值偏高 3~5 倍）。<b>注意量纲</b>：' + H_B + ' 是 cm<sup>3</sup>/s、' +
-    H_C + ' 是 cm<sup>6</sup>/s，两者相差十几个数量级，不可互换。</div>';
+    H_C + ' 是 cm<sup>6</sup>/s，两者相差十几个数量级，不可互换。' +
+    '在本工具给定的硅参数下，把注入水平滑块拉到任何一端，占比最大的始终是 SRH（间接复合）—— 这不是巧合。</div>';
 
-  hm += kvHd("产生与寿命（其余）");
+  hm += kvHd("光产生（固定）");
   hm += kvRow("光产生率 " + H_GO + "（固定）", sci(G) + " cm⁻³s⁻¹");
   hm += kvRow(H_TAU + " 直接 / 间接 / 俄歇", sci(lt.tB, 1) + " / " + sci(lt.tS, 1) + " / " + sci(lt.tA, 1) + " s");
   $("readoutMore").innerHTML = hm;
@@ -2267,15 +2302,10 @@ function buildLegends() {
 /* ---------------- 9. 引导探究 ---------------- */
 const CHAL = [
   {
-    q: "切到「直接复合」模式。画面里那个<b>画成波浪形的光子箭头</b>表示什么？它的能量有多少？既然曲线定律都是 <span class=\"m\"><i>R</i><span class=\"op\">∝</span><i>np</i></span>，为什么硅几乎不发光？",
-    a: () => { const r = rates(injNow()); const dom = dominant(r); return "波浪形箭头就是光子：<b>箭头从能带里射出去＝发射了一个光子</b>（反之，箭头从外面指进来＝吸收光子）。它的能量就是<b>禁带宽度</b> <span class='m'><i>h</i><i>ν</i><span class='op'>≈</span><i>E</i><sub>g</sub><span class='op'>=</span>" +
-      fmt(mat().Eg, 2) + " eV</span> —— 价带电子一次性跨过整个禁带，多余能量全交给这一个光子。发光强弱由辐射复合系数 <span class='m'><i>B</i></span> 决定（<span class='m'><i>R</i><sub>B</sub><span class='op'>=</span><i>B</i>(<i>np</i><span class='op'>−</span><i>n</i><sub>i</sub><sup>2</sup>)</span>）：本工具把 <span class='m'><i>B</i></span> 固定在硅的典型值 <span class='m'><i>B</i><span class='op'>=</span>" +
-      sci(Bnow(), 1) + " cm³/s</span>。作为对照，直接带隙的砷化镓 <span class='m'><i>B</i><span class='op'>≈</span>" +
-      sci(B_LIT.GaAs, 1) + " cm³/s</span>，比硅大 <b>" + fmt(Math.log10(B_LIT.GaAs / Bnow()), 1) +
-      "</b> 个数量级 —— <b>硅是间接带隙半导体，辐射复合要声子“帮忙”，效率极低</b>。当前 <span class='m'><i>R</i><sub>直接</sub><span class='op'>=</span>" +
-      sci(r.rB, 1) + " cm⁻³s⁻¹</span>，主导者是<b>" + dom[0] + "</b>（注意单位：辐射系数 " +
-      "<span class='m'><i>B</i></span> 是 cm³/s，而俄歇系数 <span class='m'><i>C</i></span> 是 cm⁶/s，别把 " +
-      "<span class='m'>10<sup>−31</sup></span> 那个数安到 <span class='m'><i>B</i></span> 头上）。"; }
+    q: "切到「直接复合」模式。画面里那个<b>画成波浪形的光子箭头</b>表示什么？它的能量有多少？为什么硅几乎不发光？",
+    a: () => { return "波浪形箭头就是光子：<b>箭头从能带里射出去＝发射了一个光子</b>（反之，箭头从外面指进来＝吸收光子）。它的能量就是<b>禁带宽度</b> <span class='m'><i>h</i><i>ν</i><span class='op'>≈</span><i>E</i><sub>g</sub><span class='op'>=</span>" +
+      fmt(mat().Eg, 2) + " eV</span> —— 价带电子一次性跨过整个禁带，多余能量全交给这一个光子。发光强弱由辐射复合系数 <span class='m'><i>B</i></span> 决定（<span class='m'><i>R</i><sub>B</sub><span class='op'>=</span><i>B</i>(<i>np</i><span class='op'>−</span><i>n</i><sub>i</sub><sup>2</sup>)</span>）；<b>硅是间接带隙半导体，辐射复合要声子“帮忙”，效率极低</b> —— 它的 <span class='m'><i>B</i></span> 比直接带隙的砷化镓小 <b>" +
+      fmt(Math.log10(B_LIT.GaAs / Bnow()), 1) + "</b> 个数量级（文献值与量纲对照见更多读数）。"; }
   },
   {
     q: "切到「间接（陷阱）」。本工具把陷阱能级固定在<b>禁带中央</b>（<span class=\"m\"><i>E</i><sub>t</sub><span class=\"op\">=</span><i>E</i><sub>i</sub></span>）。为什么这是最“毒”的复合中心？如果把它移向带边，SRH 分母里的 <span class=\"m\"><i>n</i><sub>1</sub></span>、<span class=\"m\"><i>p</i><sub>1</sub></span> 会发生什么？",
@@ -2285,41 +2315,33 @@ const CHAL = [
   },
   {
     q: "切到「俄歇复合」。复合释放的能量去了哪里？第三个载流子发生了什么？把注入水平拉到 10¹⁸ 以上，俄歇复合率如何变化？",
-    a: () => { const r = rates(injNow()); const k3 = thirdKind(); return "能量<b>没有变成光</b>，而是直接交给附近的第三个载流子 —— 注意它<b>就是普通的电子或空穴</b>，并不是第三种粒子，绿色只是“接收能量者”的高亮圈。当前掺杂下走的是 <b>" + (k3 === "e" ? "e-e-h" : "e-h-h") + "</b> 通道：" +
+    a: () => { const k3 = thirdKind(); return "能量<b>没有变成光</b>，而是直接交给附近的第三个载流子 —— 注意它<b>就是普通的电子或空穴</b>，并不是第三种粒子，绿色只是“接收能量者”的高亮圈。当前掺杂下走的是 <b>" + (k3 === "e" ? "e-e-h" : "e-h-h") + "</b> 通道：" +
       (k3 === "e" ? "另一个导带<b>电子</b>拿到能量，被顶到导带更高处" : "另一个价带<b>空穴</b>拿到能量，被顶到价带更深处") +
       "；这个高能载流子随后一步步发<b>声子</b>把能量交给晶格（发热）。因为要有<b>三个载流子同时到场</b>，概率 " +
-      H_PR + MM("<i>n</i><sup>2</sup><i>p</i>") + "（或 " + MM("<i>n</i><i>p</i><sup>2</sup>") + "），注入越高涨得越猛：当前 " +
-      H_RA + H_EQ + sci(r.rA, 1) + " cm⁻³s⁻¹。这就是 LED 在高电流下<b>效率骤降</b>（droop）和硅器件高注入下寿命变短的主因。"; }
+      H_PR + MM("<i>n</i><sup>2</sup><i>p</i>") + "（或 " + MM("<i>n</i><i>p</i><sup>2</sup>") + "），注入越高涨得越猛。这就是 LED 在高电流下<b>效率骤降</b>（droop）和硅器件高注入下寿命变短的主因。"; }
   },
   {
     q: "切回「三种对比」，把注入水平从 10¹² 一路拉到 10¹⁹，看模块二的三条曲线：低注入谁主导？高注入谁主导？中间的“冠军交接”发生在哪？",
-    a: () => { const r = rates(injNow()); const dom = dominant(r);
-      const xc = crossSRHAuger(), gap = directGapDec();
-      return "低注入时 <b>SRH（间接）主导</b>：它的 " +
-      H_R + " 大致 " + H_PR + H_DN + " —— 整条曲线<b>斜率恒为 1</b>（寿命近乎常数，高注入只是从 " +
-      H_DN + "<span class='op'>/</span>" + H_TAU + " 降到 " + H_DN + "<span class='op'>/</span>2" + H_TAU +
-      "）。注入升高后是 <b>俄歇</b> 以最陡的斜率（高注入 " + H_PR + MM("Δ<i>n</i><sup>3</sup>") +
-      "）反超：本参数下的交接点在 <b>" + H_DN + " ≈ " + (xc ? sci(xc, 1) : "（本档全量程没交接）") +
-      "</b> cm<sup>−3</sup> 附近。至于<b>直接（辐射）复合</b>（高注入 " + H_PR + MM("Δ<i>n</i><sup>2</sup>") +
-      "）：在当前硅参数下它<b>从头到尾都没当过老大</b>，最接近时也还差 <b>" + fmt(gap, 1) +
-      "</b> 个数量级 —— 这正是间接带隙硅几乎不发光在图上的样子。当前 " + H_DN + H_EQ +
-      sci(injNow(), 1) + " 时主导者是 <b>" + dom[0] + "</b>。看模块二底部的彩色条，颜色的分界点就是“冠军交接”的位置 —— 而且交接点会随<b>掺杂情境</b>的改变而移动（温度、陷阱位置、<span class='m'><i>B</i></span>、<span class='m'><i>C</i></span> 本工具已固定）。"; }
+    a: () => { const gap = directGapDec();
+      return "低注入时 <b>SRH（间接）主导</b>：" + H_R + " 大致 " + H_PR + H_DN +
+      "，整条曲线<b>斜率恒为 1</b>（寿命近乎常数）。注入升高后是 <b>俄歇</b>（高注入 " +
+      H_PR + MM("Δ<i>n</i><sup>3</sup>") + "）反超，交接点随<b>掺杂情境</b>移动 —— 看模块二底部的彩色条。至于" +
+      "<b>直接（辐射）复合</b>（高注入 " + H_PR + MM("Δ<i>n</i><sup>2</sup>") + "）：硅参数下它<b>从头到尾都没当过老大</b>，" +
+      "最接近时还差 <b>" + fmt(gap, 1) + "</b> 个数量级 —— 这正是间接带隙硅几乎不发光在图上的样子。"; }
+
   },
   {
-    q: "光产生率已固定为 <span class=\"m\"><i>G</i><sub>opt</sub><span class=\"op\">=</span>1.0<span class=\"op\">×</span>10<sup>20</sup></span> cm⁻³s⁻¹。拖动<b>注入水平</b>，找到 <span class=\"m\"><i>G</i><sub>opt</sub></span> 恰好等于总复合率的工作点（模块三里净复合率≈0）—— 此时系统处于什么状态？稳态的过剩载流子浓度是多少？",
-    a: () => { const r = rates(injNow()), G = Gopt(), st = steadyDn(); const rnet = r.rTot - G; return "当 <b>" + H_GO + " 等于总复合率</b>（当前 " +
-      H_DN + H_EQ + sci(injNow(), 1) + " 时 " + H_RT + H_EQ + sci(r.rTot, 1) + "，" + H_GO + H_EQ + sci(G, 1) +
-      " ⇒ 净复合率 " + H_RN + " " + (Math.abs(rnet) < 0.02 * Math.max(r.rTot, G, 1e-30) ? "≈ 0，正好达到稳态" : (rnet > 0 ? "> 0，复合偏强" : "< 0，产生偏强")) +
-      "）时，系统进入<b>稳态</b>：光照每产生一对，复合就消耗一对，浓度不再变化。稳态条件是 " +
-      H_RT + "(" + H_DN + ") " + H_EQ + " " + H_GO + "，注意 " + H_TEF + " 本身随 " + H_DN + " 变" +
-      "（" + H_DN + H_EQ + H_GO + "<span class='op'>·</span>" + H_TEF + " 是个隐式方程），所以这个点得解方程才准：" +
-      "本档的解为 " + H_DN + " ≈ <b>" + sci(st.dn, 2) + "</b> cm<sup>−3</sup>" +
-      (st.flag === "ok" ? "（注入水平滑块约 <b>" + fmt(injPosOf(st.dn), 0) + "</b>），拖到那里就能看到" + H_RN + "归零"
-        : "，<b>它落在滑块量程" + (st.flag === "under" ? "之下" : "之上") + "</b> —— 本档即便把注入拉到" +
-          (st.flag === "under" ? "最低，复合也始终强于产生" : "最高，产生也始终强于复合") +
-          "，滑块上只会看到" + H_RN + (st.flag === "under" ? "全程 &lt; 0" : "全程 &gt; 0")) +
-      "。这正是<b>光稳态</b>（太阳能电池、光电导器件的工作点）；由于 " +
-      H_TAU + " 本工具固定为 1 μs，<b>光照越强，稳态载流子就积累得越多</b>，光响应也越强。"; }
+    q: "光产生率 <span class=\"m\"><i>G</i><sub>opt</sub></span> 本工具固定（数值见更多读数）。拖动<b>注入水平</b>，找到 <span class=\"m\"><i>G</i><sub>opt</sub></span> 恰好等于总复合率的工作点（模块三里净复合率≈0）—— 此时系统处于什么状态？",
+    a: () => { const st = steadyDn(); return "稳态条件是 " +
+      H_RT + "(" + H_DN + ") " + H_EQ + " " + H_GO + "：光照每产生一对，复合就消耗一对，浓度不再变化（模块三里 " +
+      H_RN + H_EQ + H_R + H_MN + H_GO + " 归零的那一点）。注意 " + H_TEF + " 本身随 " + H_DN + " 变" +
+      "（" + H_DN + H_EQ + H_GO + "<span class='op'>·</span>" + H_TEF + " 是个隐式方程），所以这个点得解方程才准" +
+      (st.flag === "ok" ? "：拖注入水平滑块找 " + H_RN + " 归零的位置"
+        : " —— 而且本档的解<b>落在滑块量程" + (st.flag === "under" ? "之下" : "之上") + "</b>，即便把注入拉到" +
+          (st.flag === "under" ? "最低，复合也始终强于产生" : "最高，产生也始终强于复合") + "，滑块上只会看到 " +
+          H_RN + (st.flag === "under" ? "全程 &lt; 0" : "全程 &gt; 0")) +
+      "。这正是<b>光稳态</b> —— 太阳能电池与光电导器件的工作点。"; }
+
   }
 ];
 
@@ -2344,8 +2366,9 @@ function buildChal() {
 }
 /* 和站内其余工具同一套门禁：没展开的答案不重建 innerHTML —— 否则拖动滑块（乃至每 6 帧一次
    的动画刷新）都要把 7 段含几十个数学标签、其中两段还带全量程扫描的答案整段重算。 */
+const ansOf = c => (typeof c.a === "function" ? c.a() : c.a);
 function refreshAnswers() {
-  ANS_EL.forEach((el, i) => { if (ANS_SHOWN[i]) el.innerHTML = CHAL[i].a(); });
+  ANS_EL.forEach((el, i) => { if (ANS_SHOWN[i]) el.innerHTML = ansOf(CHAL[i]); });
 }
 
 /* ---------------- 10. 交互绑定 ---------------- */

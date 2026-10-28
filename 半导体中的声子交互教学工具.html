@@ -104,6 +104,16 @@
   .kv .hd { grid-column: 1 / -1; font-weight: 700; color: var(--text); font-size: 12px; margin: 6px 0 2px; }
   .kv .hd:first-child { margin-top: 0; }
   .unit-note { font-size: 11.5px; color: var(--text-sub); line-height: 1.55; margin-top: 6px; }
+  /* ---- 折叠区（读数「更多」）---- 独立组件，类名一律 .fold：
+     不许复用 .chal-head / .chev，否则会被挑战区回归脚本按「挑战题」计数。 */
+  .fold { margin-top: 7px; border-top: 1px dotted var(--border); padding-top: 5px; }
+  .fold-head { display: flex; align-items: center; gap: 6px; cursor: pointer;
+    font-size: 12px; font-weight: 600; color: var(--text-sub); user-select: none; }
+  .fold-head:hover { color: var(--blue); }
+  .fold-head .chev { font-size: 11px; transition: transform .15s; display: inline-block; }
+  .fold.open .fold-head .chev { transform: rotate(90deg); }
+  .fold-body { display: none; margin-top: 4px; }
+  .fold.open .fold-body { display: block; }
   /* ---- 引导探究 ---- */
   .chal-wrap { max-width: 1500px; margin: 14px auto 0; }
   .chal-bar { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
@@ -166,14 +176,14 @@
       <div class="sec-title"><span class="mtag">模块一</span>原子链振动模式（<span class="m">LA / TA / LO / TO</span>）</div>
       <div class="chart-wrap"><canvas id="chain" data-h="440" tabindex="0"></canvas></div>
       <div class="legend" id="legChain"></div>
-      <div class="hint">上图：灰色点是平衡位置，圆球是当前位置，橙色箭头给出位移方向与大小——<b>纵波</b>沿链方向（压缩 / 膨胀），<b>横波</b>垂直链方向（剪切）。下图：两个子格的位移曲线 <span class="m"><i>u</i>(<i>x</i>)</span>，可直接读出两个原子的振幅比与相位差：<b>声学支</b>两条曲线同向、<span class="m"><i>q</i></span> 较小时几乎重合（<span class="m"><i>q</i><span class="op">→</span>π</span> 时轻原子逐渐冻结，只剩重原子在动，两条曲线就分开了），<b>光学支</b>两条曲线反号（反向、轻原子振幅大）。悬停任一原子可读取它的位移与相位；方向键 ←→ 可微调 <span class="m"><i>q</i></span>。</div>
+      <div class="hint">橙色箭头给出位移方向与大小——<b>纵波</b>沿链方向（压缩 / 膨胀），<b>横波</b>垂直链方向（剪切）。下图：两个子格的位移曲线 <span class="m"><i>u</i>(<i>x</i>)</span>，可直接读出两个原子的振幅比与相位差：<b>声学支</b>两条曲线同向、<span class="m"><i>q</i></span> 较小时几乎重合（<span class="m"><i>q</i><span class="op">→</span>π</span> 时轻原子逐渐冻结，只剩重原子在动，两条曲线就分开了），<b>光学支</b>两条曲线反号（反向、轻原子振幅大）。</div>
     </div>
 
     <div class="card">
       <div class="sec-title"><span class="mtag">模块二</span>声子色散关系 <span class="m"><i>ω</i>(<i>q</i>)</span></div>
       <div class="chart-wrap"><canvas id="disp" data-h="380" tabindex="0"></canvas></div>
       <div class="legend" id="legDisp"></div>
-      <div class="hint">蓝色 = 声学支（<span class="m"><i>q</i><span class="op">→</span>0</span> 时 <span class="m"><i>ω</i><span class="op">→</span>0</span>），红色 = 光学支（<span class="m"><i>q</i><span class="op">→</span>0</span> 时 <span class="m"><i>ω</i><span class="op">→</span><i>ω</i><sub>0</sub></span>）。灰色横带是两支之间的<b>禁带</b>：该频率区间不存在任何振动模式，其相对宽度只随质量比增大（绝对宽度还随 <span class="m"><span class='sqrt'><span class='rd'>√</span><span class='rdc'><i>K</i></span></span></span> 缩放）。在图上点击可切换分支并把 <span class="m"><i>q</i></span> 移到该处；悬停可读取该点的 <span class="m"><i>q</i></span> 与两支频率。</div>
+      <div class="hint">蓝色 = 声学支（<span class="m"><i>q</i><span class="op">→</span>0</span> 时 <span class="m"><i>ω</i><span class="op">→</span>0</span>），红色 = 光学支（<span class="m"><i>q</i><span class="op">→</span>0</span> 时 <span class="m"><i>ω</i><span class="op">→</span><i>ω</i><sub>0</sub></span>）。灰色横带是两支之间的<b>禁带</b>：该频率区间不存在任何振动模式，其相对宽度只随质量比增大（绝对宽度还随 <span class="m"><span class='sqrt'><span class='rd'>√</span><span class='rdc'><i>K</i></span></span></span> 缩放）。</div>
     </div>
 
     <div class="card">
@@ -248,10 +258,11 @@
       <div class="sec-title">读数面板</div>
       <div class="kv" id="readout"></div>
       <div class="unit-note">单位约定：质量以 <span class="m"><i>m</i><sub>2</sub><span class="op">=</span>1</span> 计；频率以 <span class="m"><span class='sqrt'><span class='rd'>√</span><span class='rdc'><span class="frac"><span class="num"><i>K</i></span><span class="den"><i>m</i><sub>2</sub></span></span></span></span></span> 计；波矢 <span class="m"><i>q</i></span> 以 <span class="m">π<span class="sl">/</span><i>a</i></span> 计、波长 <span class="m"><i>λ</i></span> 以 <span class="m"><i>a</i></span> 计；速度 <span class="m"><i>v</i></span> 以 <span class="m"><i>a</i><span class='sqrt'><span class='rd'>√</span><span class='rdc'><span class="frac"><span class="num"><i>K</i></span><span class="den"><i>m</i><sub>2</sub></span></span></span></span></span> 计；位移振幅取同一约定下的相对值。</div>
+      <div class="kv" id="readoutMore"></div>
       <div class="unit-note">从<b>模式</b>到<b>声子</b>：本页画的是<b>经典</b>简正模式（实数 <span class="m"><i>ω</i></span>、确定相位）。把每个模式<b>量子化</b>即得声子 —— 能量量子 <span class="m"><i>ħω</i></span>，平均占有数 <span class="m"><i>n&#772;</i><span class="op">=</span>1<span class="sl">/</span><span class="op">(</span><span class="rm">exp</span><span class="op">(</span><i>ħω</i><span class="sl">/</span><i>kT</i><span class="op">)</span><span class="op">−</span>1<span class="op">)</span></span>（玻色分布）。本工具频率取示意单位，不直接给出 <span class="m"><i>ħω</i></span>；以 Si 作锚点：Γ 点光学声子 ≈ 520 cm<sup>−1</sup>（15.6 THz、64 meV），德拜温度 <span class="m"><i>θ</i><sub>D</sub> ≈ 645 K</span>。
       <!-- 2026-10-18 简化：删掉原尾句（把两类声子分别接到另两个散射工具、并点出极性材料
-           那一类散射的整句）。前两项在第 6 道挑战的答案里已带着机制讲过一遍。 -->
-      </div>
+       那一类散射的整句）。前两项在第 6 道挑战的答案里已带着机制讲过一遍。 -->
+        </div>
     </div>
   </div>
 </div>
@@ -763,6 +774,31 @@ var I18N = {
   "倍（GaN 的真实质量比 ≈ ": "-fold (the real mass ratio of GaN ≈ ",
   "）：禁带很宽（本模型相对宽度约 ": "): the gap is wide (relative width in this model ≈ ",
   "）。真实 GaN 是极性纤锌矿结构，Γ 点 LO–TO 劈裂同样主要来自": "). Real GaN has the polar wurtzite structure, and its LO–TO splitting at Γ again comes mainly from ",
+  "：原胞内两个原子反向振动、质心不动 ⇒ 可被电磁波直接激发的局域相对振动（极性材料中就是红外吸收的那支）。": ": the two atoms in the cell vibrate against each other while the center of mass stays put ⇒ a localized relative vibration that an electromagnetic wave can excite directly (in polar materials this is the branch responsible for infrared absorption).",
+  " 的振幅更大（实时比值见读数面板），质心基本不动。这就是「声学 / 光学」这两个名字的唯一本质区别。": " has the larger amplitude (see the readout panel for the live ratio), and the center of mass barely moves. That is the only essential difference behind the names “acoustic” and “optical”.",
+  "，激发不出光学声子，散射被「冻死」（Si 的锚点数值见读数面板）。": ", no optical phonon can be excited and the scattering is “frozen out” (for the Si anchor values, see the readout panel).",
+  "：波长趋于无穷、原子整体缓慢平移 ⇒ 宏观弹性波 / 声波；": ": the wavelength tends to infinity and the atoms translate slowly as a whole ⇒ a macroscopic elastic wave / sound wave;",
+  "禁带的相对宽度 —— 实时宽度就写在模块二的灰带上。": "the relative width of the gap — the live width is written right on the gray band in module 2.",
+  "支数通式就一句：3 ×（原胞原子数 N）": "The general rule for the number of branches is one line: 3 × (number of atoms per cell N)",
+  " 四种模式。教学近似取 ": " four modes. The teaching approximation takes ",
+  "两条曲线反号（反向、轻原子振幅大）。": "the two curves have opposite signs (opposite directions, the light atom has the larger amplitude).",
+  "橙色箭头给出位移方向与大小——": "The orange arrows give the direction and size of the displacement —",
+  "每个原子有 3 个自由度，": "Each atom has 3 degrees of freedom, ",
+  "（原胞 2 个原子）共 ": " (2 atoms per cell) has a total of ",
+  " 0.967。注意 ": " 0.967. Note that ",
+  " 方向有 3N 支。": " direction has 3N branches.",
+  "：原胞内那两个原子是": ": are the two atoms in the cell",
+  "（4 个原子）共 ": " (4 atoms) has a total of ",
+  " 支光学 —— ": " optical branches — ",
+  "（横）。所以": " (transverse). So ",
+  " 缩放）。": " scaling).",
+  "（纵）+ ": " (longitudinal) + ",
+  "12 支": "12 branches",
+  "（纵波·光学支，频率以": " (longitudinal, optical branch; the frequency is in units of",
+  " 计）": " )",
+  "模型参数": "Model parameters",
+  "（群速反向）": " (group velocity reversed)",
+  "，频率以 ": ", the frequency is in units of ",
 };
 
 /* 注入点②：画布直写字符串。老工具直接调 g.fillText()，这里在原型上兜住。
@@ -1881,24 +1917,33 @@ function kvRow(k, v) { return '<div class="row"><span class="k">' + k + '</span>
 function updateReadout() {
   const st = state(), p = PRESETS[OPT.preset];
   const medianStep = Math.abs(st.vp) < 1e4;
-  let html = "";
-  html += kvHd("参数");
-  html += kvRow("质量比 " + M_M1 + " / " + M_M2,
-    "<b>" + fmt(OPT.r, 2) + "</b>（" + M_M1 + " = " + fmt(st.m1, 2) + "，" + M_M2 + " = 1）");
-  html += kvRow("力常数 " + M_K + "（当前偏振）",
-    fmt(st.K, 2) + (OPT.pol === "T" ? "（= 0.55 " + M_KL + "）" : "（" + M_KL + "）"));
-  html += kvRow("偏振 / 分支", (OPT.pol === "L" ? "纵波" : "横波") + " / " + (OPT.branch === "ac" ? "声学支" : "光学支"));
-
-  html += kvHd("当前模式 " + MM(RM(st.modeName)));
+  let html = "", more = "";
+  /* 核心区只留 7 个「随 q 走」的量：参数（质量比 / 力常数 / 偏振）是回显，排在读数面板核心区之后。
+     分组标题把单位与偏振分支一次说清 ⇒ 底下那条单位约定不必每读一行回查。 */
+  /* 偏振与分支各包一层 span：四种组合（纵/横 × 声学/光学）都要能单独翻译，
+     合成一个文本节点的话词典里只会有默认那一支的 key，切到别的支就漏翻。 */
+  html += kvHd("当前模式 " + MM(RM(st.modeName)) + "（<span>" +
+    (OPT.pol === "L" ? "纵波" : "横波") + "</span>·<span>" + (OPT.branch === "ac" ? "声学支" : "光学支") + "</span>" +
+    "，频率以 <span class=\"m\"><span class='sqrt'><span class='rd'>\u221a</span><span class='rdc'>" + FRAC("K", VI("m") + WSUB("", "2")) + "</span></span></span> 计）");
   html += kvRow("波矢 " + M_Q, "<b>" + fmt(OPT.qf, 2) + " " + M_PIA + "</b>");
   html += kvRow("波长 " + MM(VI("λ") + OPR("=") + FRAC("2π", VI("q"))),
     isFinite(st.lambda) ? fmt(st.lambda, 2) + " " + M_A : "∞");
   html += kvRow("频率 " + M_OM, "<b>" + fmt(st.omega, 3) + "</b>");
   html += kvRow("相速度 " + M_VP, medianStep ? fmt(st.vp, 3) : "→ ∞");
-  html += kvRow("群速度 " + M_VG, fmt(st.vg, 3));
-  html += kvRow("振幅比 " + MM("|" + WSUB("u", "1") + "|" + OPR("/") + "|" + WSUB("u", "2") + "|"), "<b>" + ampRatioText() + "</b>");
+  /* v_g 为负是布里渊区附近的真实现象（群速反向），但不解释一眼看上去像 bug。 */
+  /* 「（群速反向）」包一层 span：数字与汉字分成两个文本节点，
+     否则整节点含运行时数字，i18n 无法登记 key（数值部分每次刷新都在变）。 */
+  html += kvRow("群速度 " + M_VG, fmt(st.vg, 3) + (st.vg < -1e-9 ? "<span class=\"rm\">（群速反向）</span>" : ""));
+  /* 先定性（两原子同向 / 反向）后定量（振幅比）：定性判据比 0.92 这个数更好读。 */
   html += kvRow("原胞内两原子", "<b>" + phaseText() + "</b>");
+  html += kvRow("振幅比 " + MM("|" + WSUB("u", "1") + "|" + OPR("/") + "|" + WSUB("u", "2") + "|"), "<b>" + ampRatioText() + "</b>");
   $("readout").innerHTML = html;
+  more += kvHd("模型参数");
+  /* 括注「m₂ = 1」删掉：单位约定那条 unit-note 已声明。 */
+  more += kvRow("质量比 " + M_M1 + " / " + M_M2, "<b>" + fmt(OPT.r, 2) + "</b>");
+  more += kvRow("力常数 " + M_K + "（当前偏振）",
+    fmt(st.K, 2) + (OPT.pol === "T" ? "（= 0.55 " + M_KL + "）" : "（" + M_KL + "）"));
+  $("readoutMore").innerHTML = more;
 }
 
 /* ---------------- 8. 图例 ---------------- */
@@ -1923,15 +1968,12 @@ function buildLegends() {
 /* ---------------- 9. 引导探究 ---------------- */
 const CHAL = [
   {
-    q: "在「分支」里来回切换<b>声学支 / 光学支</b>，盯着模块一的原子链：原胞内那两个原子是<b>同向</b>还是<b>反向</b>运动？两条位移曲线 " + MM(VI("u") + OPR("(") + VI("x") + OPR(")")) + " 有什么差别？",
-    a: () => "<b>声学支：同向</b>——两条 " + MM(VI("u") + OPR("(") + VI("x") + OPR(")")) + " 曲线同号、几乎重合（" + MM(VI("q") + OPR("→") + "0") + " 时完全重合），整个原胞作为一个整体在晃；<b>光学支：反向</b>——两条曲线反号，且轻原子 " + M_M2 + " 的振幅更大（当前 " +
-      MM("|" + WSUB("u", "1") + "|" + SL() + "|" + WSUB("u", "2") + "|") + " = " +
-      ampRatioText() + "，" + phaseText() + "），质心基本不动。这就是「声学 / 光学」这两个名字的唯一本质区别。"
+    q: "在「分支」里来回切换<b>声学支 / 光学支</b>：原胞内那两个原子是<b>同向</b>还是<b>反向</b>运动？两条位移曲线 " + MM(VI("u") + OPR("(") + VI("x") + OPR(")")) + " 有什么差别？",
+    a: () => "<b>声学支：同向</b>——两条 " + MM(VI("u") + OPR("(") + VI("x") + OPR(")")) + " 曲线同号、几乎重合（" + MM(VI("q") + OPR("→") + "0") + " 时完全重合），整个原胞作为一个整体在晃；<b>光学支：反向</b>——两条曲线反号，且轻原子 " + M_M2 + " 的振幅更大（实时比值见读数面板），质心基本不动。这就是「声学 / 光学」这两个名字的唯一本质区别。"
   },
   {
     q: "把 " + M_Q + " 拖到接近 0，比较两支的频率读数。哪一支趋于 0？哪一支停在有限值 " + M_OM0 + "？这两种极限各对应什么物理图像？",
-    a: () => "<b>声学支 " + MM(VI("ω") + OPR("→") + "0") + "</b>（当前 " + MM(VI("ω") + OPR("=")) + " " + fmt(state().wa, 3) + "）：波长趋于无穷、原子整体缓慢平移 ⇒ 宏观弹性波 / 声波；<b>光学支 " + MM(VI("ω") + OPR("→") + WSUB("ω", "0") + OPR("=")) + " " +
-      fmt(state().w0, 3) + "</b>（当前 " + fmt(state().wo, 3) + "）：原胞内两个原子反向振动、质心不动 ⇒ 可被电磁波直接激发的局域相对振动（极性材料中就是红外吸收的那支）。",
+    a: () => "<b>声学支 " + MM(VI("ω") + OPR("→") + "0") + "</b>：波长趋于无穷、原子整体缓慢平移 ⇒ 宏观弹性波 / 声波；<b>光学支 " + MM(VI("ω") + OPR("→") + WSUB("ω", "0")) + "</b>：原胞内两个原子反向振动、质心不动 ⇒ 可被电磁波直接激发的局域相对振动（极性材料中就是红外吸收的那支）。",
     h: "提示：留意动画速度——光学支始终快得多，因为它的频率高。"
   },
   {
@@ -1939,29 +1981,22 @@ const CHAL = [
     a: () => MM("Δ" + VI("ω") + OPR("=") + OPR("√") + FRAC("2" + VI("K"), WSUB("m", "2")) + OPR("−") + OPR("√") + FRAC("2" + VI("K"), WSUB("m", "1"))) +
       "，绝对宽度随 " + MM(OPR("√") + VI("K")) + " 缩放，但<b>相对宽度 " + MM("Δ" + VI("ω") + SL() + WSUB("ω", "0")) + " 只由质量比决定</b>：" + M_M1 + " = " + M_M2 + " 时 " + MM("Δ" + VI("ω") + OPR("=")) + " <b>0</b>（两支在区边界简并，等价于折叠的单原子链）；" +
       MM(WSUB("m", "1") + SL() + WSUB("m", "2") + OPR("=") + "10") + " 时 " + MM("Δ" + VI("ω") + OPR("≈")) + " " +
-      fmt(gapFor(10), 3) + "。当前 " + MM(WSUB("m", "1") + SL() + WSUB("m", "2") + OPR("=")) + " " + fmt(OPT.r, 2) +
-      " → " + MM("Δ" + VI("ω") + OPR("=")) + " " + fmt(state().gapW, 3) + "（相对宽度 " + MM("Δ" + VI("ω") + SL() + WSUB("ω", "0")) +
-      " = " + fmt(state().gapW / Math.max(state().w0, 1e-9) * 100, 1) + "%）。注意 " + M_K + " 只整体缩放频率（拖它会看到灰带变宽变窄），<b>不改变</b>禁带的相对宽度。"
+      fmt(gapFor(10), 3) + "。注意 " + M_K + " 只整体缩放频率（拖它会看到灰带变宽变窄），<b>不改变</b>禁带的相对宽度 —— 实时宽度就写在模块二的灰带上。"
   },
   {
     q: "切换<b>纵波 / 横波</b>：原子的振动方向怎么变？它们与「声学 / 光学」这两支是什么关系？",
     a: () => "纵波把回复方向取在链方向上（压缩—膨胀），横波取在垂直方向上（剪切），所以<b>偏振与分支是两个独立的标签</b>：" +
       MM("2" + OPR("×") + "2") + " 组合给出 " +
-      MM(RM("LA")) + "、" + MM(RM("TA")) + "、" + MM(RM("LO")) + "、" + MM(RM("TO")) + " 四种模式。当前是 <b>" + MM(RM(state().modeName)) +
-      "</b>。教学近似取 " + MM(WSUB("K", "T") + OPR("=") + "0.55" + WSUB("K", "L")) + "（横向更软），所以 TA / TO 的频率整体低于 LA / LO —— 但要注意：本模型里 " +
+      MM(RM("LA")) + "、" + MM(RM("TA")) + "、" + MM(RM("LO")) + "、" + MM(RM("TO")) + " 四种模式。教学近似取 " + MM(WSUB("K", "T") + OPR("=") + "0.55" + WSUB("K", "L")) + "（横向更软），所以 TA / TO 的频率整体低于 LA / LO —— 但要注意：本模型里 " +
       MM(WSUB("ω", "T") + SL() + WSUB("ω", "L") + OPR("≡") + OPR("√") + "0.55") + " 与 " + M_Q + " 无关，TA / TO 只是 LA / LO 的等比缩小，<b>形状完全一样</b>；真实晶体的 TA 支在区边界明显压平，形状与 LA 不同。"
   },
   {
     q: "本工具只有一维链，给出<b>两支</b>色散。推广到三维晶体：一共几支声学、几支光学？偏振分别是什么？",
-    a: () => "每个原子有 3 个自由度；原胞里两个原子 ⇒ 3 支声学 " + MM(OPR("+")) + " 3 支光学：<b>声学</b> " + MM(OPR("=")) + " " +
-      MM("1" + OPR("×") + RM("LA")) + "（纵）" + MM(OPR("+")) + " " + MM("2" + OPR("×") + RM("TA")) + "（横，简并），<b>光学</b> " + MM(OPR("=")) + " " +
-      MM("1" + OPR("×") + RM("LO")) + "（纵）" + MM(OPR("+")) + " " + MM("2" + OPR("×") + RM("TO")) + "（横）。" +
-      "原胞里有 <b>2</b> 个原子的<b>金刚石 / 闪锌矿</b>结构（Si、GaAs）⇒ 共 <b>6 支</b>；而<b>纤锌矿</b>原胞有 <b>4</b> 个原子" +
-      "（本工具的 GaN 预设正是纤锌矿 GaN）⇒ 共 <b>12 支 = 3 声学 + 9 光学</b>。支数通式就一句：<b>3 ×（原胞原子数 N）</b>，" +
-      "其中 3 支声学、" + MM("3(" + VI("N") + OPR("−") + "1)") + " 支光学。<br>本页只画了同一偏振下的 2 支（1 声学 + 1 光学）；" +
-      "真实晶体沿同一个 " + M_Q + " 方向有 3N 支。" +
-      "GaAs 等极性材料中 " + MM(RM("LO")) + " 与 " + MM(RM("TO")) +
-      " 在 Γ 点还会因长程库仑作用而进一步劈裂。"
+    a: () => "每个原子有 3 个自由度，<b>支数通式就一句：3 ×（原胞原子数 N）</b>，其中 3 支声学、" + MM("3(" + VI("N") + OPR("−") + "1)") + " 支光学 —— " +
+      "<b>声学</b> = " + MM("1" + OPR("×") + RM("LA")) + "（纵）+ " + MM("2" + OPR("×") + RM("TA")) + "（横，简并），" +
+      "<b>光学</b> = " + MM("1" + OPR("×") + RM("LO")) + "（纵）+ " + MM("2" + OPR("×") + RM("TO")) + "（横）。" +
+      "所以<b>金刚石 / 闪锌矿</b>（原胞 2 个原子）共 <b>6 支</b>、<b>纤锌矿</b>（4 个原子）共 <b>12 支</b>。<br>" +
+      "本页只画了同一偏振下的 2 支（1 声学 + 1 光学）；真实晶体沿同一个 " + M_Q + " 方向有 3N 支。"
   },
   {
     q: "本页画的是<b>经典</b>的 <span class=\"m\"><i>ω</i>(<i>q</i>)</span>（实数频率、确定相位）。把它接到半导体的散射上：为什么升温时<b>声学声子</b>散射越来越强（<span class=\"m\"><i>μ</i><sub>ph</sub> ∝ <i>T</i><sup>−3/2</sup></span>），而<b>光学声子</b>在低温下几乎不参与散射？",
@@ -1971,9 +2006,7 @@ const CHAL = [
       MM(VI("n\u0304") + OPR("≈") + VI("kT") + SL() + VI("ħω") + OPR("∝") + VI("T")) + "：声子数正比于温度，散射率随之上升，热平均给出 " +
       MM(WSUB("μ", "ph") + OPR("∝") + VI("T") + WU(OPR("−") + "3/2")) + "（形变势散射，见「形变势与压电势散射」工具；它再与电离杂质散射按马西森规则并联，见「电离杂质散射对载流子影响」工具）。" +
       "<b>光学支</b> " + MM(VI("ω") + OPR("≈") + WSUB("ω", "0")) + " 是有限值，低温下 " + MM(VI("ħ") + WSUB("ω", "0") + OPR("≫") + VI("kT")) +
-      " ⇒ 占有数按 " + MM(RM("e") + WU(OPR("−") + VI("ħ") + WSUB("ω", "0") + SL() + VI("kT"))) + " <b>指数冻结</b>，激发不出光学声子，散射被「冻死」。" +
-      "以 Si 的 Γ 点光学声子 520 cm<sup>−1</sup>（≈ 64 meV）为例：要 " + MM(VI("kT") + OPR("=") + "64 meV") + " 需 " +
-      MM(VI("T") + OPR("≈") + "740 K") + " —— 室温下它确实几乎不被激发。"
+      " ⇒ 占有数按 " + MM(RM("e") + WU(OPR("−") + VI("ħ") + WSUB("ω", "0") + SL() + VI("kT"))) + " <b>指数冻结</b>，激发不出光学声子，散射被「冻死」（Si 的锚点数值见读数面板）。"
   }
 ];
 
@@ -1995,7 +2028,8 @@ function buildChal() {
     d.querySelector(".btn-row button").onclick = e => { e.stopPropagation(); ans.classList.toggle("show"); };
   });
 }
-function refreshAnswers() { ANS_EL.forEach((el, i) => { el.innerHTML = CHAL[i].a(); }); }
+const ansOf = c => (typeof c.a === "function" ? c.a() : c.a);
+function refreshAnswers() { ANS_EL.forEach((el, i) => { el.innerHTML = ansOf(CHAL[i]); }); }
 
 /* ---------------- 10. 交互绑定 ---------------- */
 function buildPresets() {
@@ -2112,6 +2146,13 @@ function init() {
     });
   });
 
+  /* 折叠区（.fold）：事件委托，新增折叠块不用再逐个绑定。 */
+  document.addEventListener("click", e => {
+    const h = e.target.closest ? e.target.closest(".fold-head") : null;
+    if (!h) return;
+    const f = h.parentNode;
+    if (f && f.classList && f.classList.contains("fold")) f.classList.toggle("open");
+  });
   window.addEventListener("resize", () => { fitAll(); render(); });
 
   syncInputs();

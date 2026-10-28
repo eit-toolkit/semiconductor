@@ -278,8 +278,12 @@
       <div class="sec-title">读数面板</div>
       <div class="kv" id="readout"></div>
       <div class="fold" id="foldRo">
-        <div class="fold-head"><span class="chev">▶</span><span>更多读数（中间量与损失拆分）</span></div>
+        <div class="fold-head"><span class="chev">▶</span><span>更多读数（工作点、能带与损失拆分）</span></div>
         <div class="fold-body"><div class="kv" id="readoutMore"></div></div>
+      </div>
+      <div class="fold" id="foldRel">
+        <div class="fold-head"><span class="chev">▶</span><span>关系式与固定假设</span></div>
+        <div class="fold-body"><div class="kv" id="roRel"></div></div>
       </div>
     </div>
 
@@ -376,7 +380,7 @@ var I18N = {
   "显示项目": "Display",
   "预设": "Presets",
   "固定参量": "Fixed parameters",
-  "更多读数（中间量与损失拆分）": "More readouts (intermediate quantities and the loss breakdown)",
+  "更多读数（中间量与损失拆分）": "More readouts (operating point, bands and the loss breakdown)",
   "反馈意见": " Feedback",
   "本工具是 EIT-SP（半导体物理交互式教学工具箱）的一部分（武汉大学物理学院《半导体物理》智慧课程），以 MIT 协议开源，可自由使用与二次开发；转载请保留出处。": "This tool is part of EIT-SP, the Educational Interactive Toolkit for Semiconductor Physics (School of Physics and Technology, Wuhan University). Released under the MIT license: free to use, modify and redistribute, including commercially. Please keep this attribution.",
   "本工具是 EIT-SP（半导体物理交互式教学工具箱）的一部分（武汉大学物理学院《半导体物理》智慧课程），以 MIT 协议开源，可自由使用与二次开发；转载请保留出处。反馈意见": "This tool is part of EIT-SP, the Educational Interactive Toolkit for Semiconductor Physics (School of Physics and Technology, Wuhan University). Released under the MIT license: free to use, modify and redistribute, including commercially. Please keep this attribution. Feedback",
@@ -542,7 +546,7 @@ var I18N = {
   "饱和电流 ": "Saturation current ",
   " mA/cm²（其中辐射部分 ": " mA/cm² (of which the radiative part is ",
   "非辐射损失的电压": "Voltage lost to non-radiative recombination",
-  "kT·ln(1/外辐射效率) = ": "kT·ln(1/ERE) = ",
+  "1/外辐射效率": "1/ERE",
   "理想因子": "Ideality factor",
   "1（本工具只有复合中心一条复合通道）": "1 (this tool has a single recombination channel)",
   "能带与抽取": "Bands and extraction",
@@ -558,9 +562,8 @@ var I18N = {
   "1/α（代表性光子）": "1/α (representative photon)",
   " nm，层厚是它的 ": " nm; the layer is ",
   " 倍": " times thicker",
-  "kT 与激子结合能": "kT and the exciton binding energy",
-  " eV，E_b/kT = ": " eV; E_b/kT = ",
-  "（远小于 1 ⇒ 室温自发解离）": " (well below 1 ⇒ dissociation is spontaneous at room temperature)",
+  " 与激子结合能": " and the exciton binding energy",
+  "，远小于 1 ⇒ 室温自发解离；热电压 ": "; well below 1 ⇒ dissociation is spontaneous at room temperature; the thermal voltage ",
   "若折算成 Br 含量 ": "Convert to a Br fraction ",
   "x ≈ ": "x ≈ ",
   "（MAPb(I₁₋ₓBrₓ)₃ 的线性估算）": " (linear estimate for MAPb(I₁₋ₓBrₓ)₃)",
@@ -627,6 +630,7 @@ var I18N = {
   "势垒 |Δ": "Barrier |Δ",
   "|：抽取受阻": "|: extraction blocked",
   "|，界面抽取速度被压到原来的 e^(−|Δ": "|, and the interface extraction velocity is suppressed to e^(−|Δ",
+  "，界面抽取速度被压到原来的 ": ", and the interface extraction velocity is suppressed to ",
   "，界面抽取速度被压到原来的 e^(−|Δ": ", and the interface extraction velocity is suppressed to e^(−|Δ",
   "高于接触电势上限，已被压回 ": "above the contact-potential ceiling and is pushed back to ",
   "偏移偏大：电子好抽，但接触电势被吃掉，": "The offset is too large: electrons are easy to extract, but the contact potential is eaten away, ",
@@ -727,6 +731,43 @@ var I18N = {
   "（": " (",
   " — ": " — ",
   "。": ".",
+  "光从上面射进来，穿过透明电极与电子传输层（它们基本不吸光），在钙钛矿层里按 Beer 定律被吃掉。浅色的阴阳小球是被拆开的电子–空穴对：": "Light enters from above, passes through the transparent electrode and the electron transport layer (which barely absorb), and is consumed inside the perovskite layer according to Beer's law. The pale ± balls are the separated electron–hole pairs: ",
+  "（相对真空能级）。左边紫色竖线是接触电势上限 ": " (relative to the vacuum level). The purple vertical line on the left is the contact-potential ceiling ",
+  " —— 后一项就是左边那条紫色竖线。": " — the second term is exactly the purple vertical line on the left.",
+  "的，缺陷态因此被推进能带里面或只变成浅能级 —— 于是「缺陷多」不等于「复合快」（轨道来源见挑战 3）。": ", so the defect states are pushed into the bands or left as shallow levels — hence \"many defects\" does not mean \"fast recombination\" (see challenge 3 for the orbital origin).",
+  "本工具用的关系式": "The relations used by this tool",
+  "短路电流": "Short-circuit current",
+  "收集效率": "Collection efficiency",
+  "　（扩散方程在界面抽取速度 ": "　 (the analytic solution of the diffusion equation with the interface extraction velocity ",
+  " 边界条件下的解析解）": " as the boundary condition)",
+  "开路电压": "Open-circuit voltage",
+  "　（后一项即接触电势上限）": "　 (the second term is the contact-potential ceiling)",
+  "J–V 与效率": "J–V and efficiency",
+  "　（每个 V 用二分法解出 J）；": "　 (each V is solved for J by bisection); ",
+  " 主要由 Pb–X 骨架决定：换 A 位只是微调（键角微变、带隙略动），换 X 位（I → Br）才是大改。": " is set mainly by the Pb–X framework: swapping the A site is only a fine adjustment (bond angles shift slightly and the gap moves a little), whereas swapping the X site (I → Br) is the big change.",
+  " 是往上涨的 —— 涨回来的那部分补不上丢掉的那部分，所以单结效率会降（这也是叠层要用宽带隙顶电池去接高能光子的原因；本工具只算单结）。拖带隙滑块直接看 ": " rises — what comes back does not make up for what is lost, so the single-junction efficiency falls (this is also why a tandem puts a wide-gap cell on top to catch the energetic photons; this tool models a single junction only). Drag the band-gap slider to watch directly how ",
+  " 怎么反向走。": " move in opposite directions.",
+  "（或只留下浅能级），带隙中间反而是干净的。这解释了它的「缺陷容忍」：溶液法旋涂出来的多晶薄膜，缺陷密度比单晶硅高好几个数量级，却依然能拿到长载流子寿命与高发光效率。": " (or leaves only a shallow level), and the middle of the gap stays clean. That explains its \"defect tolerance\": a solution-processed polycrystalline film carries a defect density orders of magnitude above single-crystal silicon, yet still delivers long carrier lifetimes and high luminescence efficiency.",
+  "5. 把扩散长度从 1500 nm 拉到 100 nm，再看层厚从 200 nm 拉到 1000 nm：收集效率怎么变？什么时候「加厚」反而亏？": "5. Drag the diffusion length from 1500 nm down to 100 nm, then the layer thickness from 200 nm to 1000 nm: how does the collection efficiency change? When does \"going thicker\" actually lose out?",
+  "加厚能把光吃得更干净（吸收效率上升），但更深处产生的载流子要走更远的路，收集效率反而下降 —— 所以厚度有个最优值，": "going thicker harvests the light more completely (absorption rises), but carriers born deeper have further to travel, so collection falls instead — thickness therefore has an optimum, and ",
+  "拖厚度滑块在几百 nm 处把它找出来": "drag the thickness slider to find it at a few hundred nm",
+  "吸收与收集": "Absorption and collection",
+  "器件性能": "Device performance",
+  "（见下方损失拆分）": " (see the loss breakdown below)",
+  "更多读数（工作点、能带与损失拆分）": "More readouts (operating point, bands and the loss breakdown)",
+  "关系式与固定假设": "Relations and fixed assumptions",
+  " V（当前余量 ": " V (current margin ",
+  "能带偏移与抽取": "Band offsets and extraction",
+  " eV　⇒　接触电势上限 ": " eV ⇒ contact-potential ceiling ",
+  " V　·　": " V · ",
+  " → ∞ 极限）": " → ∞ limit)",
+  "　（扩散方程 + ": "　(analytic solution of the diffusion equation with the ",
+  " 边界条件的解析解）": " boundary condition)",
+  "入射光功率 ": "Incident optical power ",
+  "（AM1.5）　·　理想因子 = 1（本工具只有复合中心一条复合通道）　·　界面抽取速度 ": " (AM1.5)　·　ideality factor = 1 (this tool has a single recombination channel, via recombination centers)　·　the interfacial extraction velocity ",
+  " 取热速度量级 ": " is of thermal-velocity order, ",
+  "固定假设": "Fixed assumptions",
+  "0，已被钳住）": "0, the voltage is clamped)",
 };
 
 (function () {
@@ -1291,7 +1332,7 @@ const ETLS = [
 ];
 function htlOf() { for (const h of HTLS) if (h.key === OPT.htl) return h; return HTLS[0]; }
 const DEV = () => htlOf().dev;
-/* ΔE_C 由 ETL 按钮决定，但 OPT.dec 仍是唯一真源（挑战题要用 withOpt 取任意值） */
+/* ΔE_C 由 ETL 按钮决定，但 OPT.dec 仍是唯一真源 */
 function etlOf() { for (const e of ETLS) if (Math.abs(e.dec - OPT.dec) < 1e-6) return e; return null; }
 const fmtEc = (v) => (v >= 0 ? "+" : "−") + Math.abs(v).toFixed(2);
 
@@ -2186,6 +2227,7 @@ const H_VOC = "<span class=\"m\"><i>V</i><sub>OC</sub></span>";
 const H_LAM = "<span class=\"m\"><i>λ</i><sub>g</sub></span>";
 const H_LD = "<span class=\"m\"><i>L</i><sub>D</sub></span>";
 const H_J0 = "<span class=\"m\"><i>J</i><sub>0</sub></span>";
+const H_KT = "<span class=\"m\"><i>kT</i></span>";
 const pct = (v) => (v * 100).toFixed(1) + " %";
 function rowsTo(el, rows) {
   el.innerHTML = rows.map(r => {
@@ -2224,29 +2266,25 @@ const EQ_VOC = "<span class=\"m\"><i>V</i><sub>OC</sub><span class=\"op\">=</spa
 const EQ_DIODE = "<span class=\"m\"><i>J</i><span class=\"op\">=</span><i>J</i><sub>0</sub><span class=\"op\">[</span>exp<span class=\"op\">(</span>(<i>V</i><span class=\"op\">−</span><i>J</i><i>R</i><sub>s</sub>)/<i>kT</i><span class=\"op\">)</span><span class=\"op\">−</span>1<span class=\"op\">]</span><span class=\"op\">+</span>(<i>V</i><span class=\"op\">−</span><i>J</i><i>R</i><sub>s</sub>)/<i>R</i><sub>sh</sub><span class=\"op\">−</span><i>J</i><sub>SC</sub></span>";
 const EQ_PCE = "<span class=\"m\">PCE<span class=\"op\">=</span><span class=\"frac\"><span class=\"num\"><i>J</i><sub>SC</sub><i>V</i><sub>OC</sub>FF</span><span class=\"den\"><i>P</i><sub>in</sub></span></span><span class=\"op\">,</span><i>P</i><sub>in</sub><span class=\"op\">=</span>100 mW/cm²</span>";
 function buildHints() {
-  const s = S();
   const set = (id, t) => { const e = $(id); if (e) e.innerHTML = t; };
-  set("hintDev", "光从上面射进来，穿过透明电极与电子传输层（它们基本不吸光），在钙钛矿层里按 Beer 定律被吃掉：" +
-    "本档的吸收深度约 <b>" + (1e7 / alphaRep(s.Eg)).toFixed(0) + " nm</b>（剩余强度随深度指数衰减，层里的黄色深浅就是它）。" +
+  set("hintDev", "光从上面射进来，穿过透明电极与电子传输层（它们基本不吸光），在钙钛矿层里按 Beer 定律被吃掉。" +
     "浅色的阴阳小球是被拆开的电子–空穴对：<span class=\"m\">–</span> 往上走进 ETL、<span class=\"m\">+</span> 往下走进 HTL，" +
     "谁在半路被复合就用灰叉标记。两侧 ✗ 是选择性接触在挡人：ETL 不让空穴过，HTL 不让电子过。" +
-    "<span class=\"eq\">短路电流是两级效率相乘：" + EQ_JSC + "：吸收按 Beer 定律随深度 e^(−αz) 逐层衰减，" +
-    "收集由扩散方程在「界面抽取速度 <span class=\"m\"><i>S</i></span>」这一边界条件下的解析解给出：" + EQ_COLL + "</span>");
+    "<span class=\"eq\">短路电流是两级效率相乘：" + EQ_JSC + "，" + EQ_COLL + "</span>");
   set("hintBand", "三列的上下两条粗线分别是各自的 <span class=\"m\"><i>E</i></span><sub>C</sub> 与 " +
-    "<span class=\"m\"><i>E</i></span><sub>V</sub>，能量读数是相对真空能级的电子能量。" +
+    "<span class=\"m\"><i>E</i></span><sub>V</sub>（相对真空能级）。" +
     "左边紫色竖线是接触电势上限 <span class=\"m\"><i>E</i><sub>g</sub><span class=\"op\">−</span>Δ<i>E</i><sub>C</sub><span class=\"op\">−</span>Δ<i>E</i><sub>V</sub></span>：" +
     "开压再高也高不过它。把 Δ" + "<span class=\"m\"><i>E</i><sub>C</sub></span>" +
     " 从 0 往上推，<span class=\"m\"><i>J</i><sub>SC</sub></span> 一动不动而 <span class=\"m\"><i>V</i><sub>OC</sub></span> 往下掉；" +
     "推到 0 以下，电子要爬一个势垒，<span class=\"m\"><i>J</i><sub>SC</sub></span> 和 FF 先垮。所以「对齐」不是越平越好。" +
-    "<span class=\"eq\">开压取两者中的小者：" + EQ_VOC + " —— 前一项是二极管方程给出的值，后一项就是左边那条紫色竖线。</span>");
+    "<span class=\"eq\">开压取两者中的小者：" + EQ_VOC + " —— 后一项就是左边那条紫色竖线。</span>");
   set("hintJv", "蓝色实线是光照下的 J–V，灰色虚线是同一只二极管在暗态的曲线（两者之差就是被收集的光生电流）。" +
     "虚线方框的面积是 <span class=\"m\"><i>J</i><sub>SC</sub><i>V</i><sub>OC</sub></span>，橙色实矩形是实际最大功率 " +
-    "<span class=\"m\"><i>P</i><sub>max</sub></span>，两者之比即填充因子 FF。鼠标移到曲线上可以读出该点的 V、J 与功率。" +
-    "<span class=\"eq\">曲线由单二极管方程隐式给出，" + EQ_DIODE + "（每个 V 用二分法解出 J）；效率即 " + EQ_PCE + "</span>");
+    "<span class=\"m\"><i>P</i><sub>max</sub></span>，两者之比即填充因子 FF。" +
+    "鼠标移到曲线上可以读出该点的 V、J 与功率。");
   set("hintDef", "抽掉一个原子必然留下悬挂键，但落点取决于原来那条键的形式：常规半导体的价带是<b>成键</b>态，" +
-    "悬键能级落在带隙中央，成为高效的复合中心；铅卤钙钛矿的价带顶与导带底<b>都是反键</b>的 " +
-    "（Pb 6s–I 5p 反键给出价带顶，Pb 6p–I 5p 反键给出导带底），缺陷态被推到带边之外或变成浅能级，" +
-    "于是「缺陷多」不等于「复合快」。");
+    "悬键能级落在带隙中央，成为高效的复合中心；铅卤钙钛矿的价带顶与导带底<b>都是反键</b>的，" +
+    "缺陷态因此被推进能带里面或只变成浅能级 —— 于是「缺陷多」不等于「复合快」（轨道来源见挑战 3）。");
   set("hintLat", "八面体共顶点连成三维骨架（B 位 Pb²⁺ 居中、X 位 I⁻ 在六个面心），A 位的一价阳离子坐在晶胞的八个顶点上（换个角度看，就是 8 个八面体围出的空腔中心）：" +
     "它不参与前线轨道，只在电荷平衡和结构稳定性上出力 —— " +
     "也就是<span class=\"m\"><i>E</i><sub>g</sub></span> 主要由 Pb–X 骨架决定。拖动可旋转。");
@@ -2335,85 +2373,92 @@ function updatePanels() {
   const etl = etlOf();
   put("decSub", (etl ? etl.note : "") + "　当前 Δ" +
     "<span class=\"m\"><i>E</i><sub>C</sub></span> = " + fmtEc(s.dEc) + " eV" +
-    (s.dEc < 0 ? "，界面抽取速度被压到原来的 e^(−|ΔE_C|/kT) ≈ " + fmtSupp(Math.exp(s.dEc / s.vt)) : ""));
+    (s.dEc < 0 ? "，界面抽取速度被压到原来的 <span class=\"m\">e<span class=\"op\">(</span>−|Δ<i>E</i><sub>C</sub>|/<i>kT</i><span class=\"op\">)</span></span> ≈ " + fmtSupp(Math.exp(s.dEc / s.vt)) : ""));
   put("htlSub", s.htl.note + "　当前 Δ" + "<span class=\"m\"><i>E</i><sub>V</sub></span> = " + s.dEv.toFixed(2) + " eV");
   /* 读数 */
   const core = [
+    ["吸收与收集"],
     ["吸收边 " + H_LAM, "<b>" + s.lamG.toFixed(0) + " nm</b>（1240 / " + H_EG + "）"],
     ["光子吸收效率", "<b>" + pct(s.absEff) + "</b>（整层加权，含带边以下的那部分）"],
     ["载流子收集效率", "<b>" + pct(s.coll) + "</b>（" + H_LD + " / d = " + (s.ld / s.d).toFixed(2) + "）"],
+    ["器件性能"],
     [H_JSC, "<b>" + s.jsc.toFixed(2) + " mA/cm²</b>（理想上限 " + s.jGenMax.toFixed(2) + "）"],
     [H_VOC, "<b>" + s.voc.toFixed(3) + " V</b>" + (s.capped
       ? "<span class=\"warn\">　已被接触电势钳住</span>" : "")],
     ["填充因子 FF", "<b>" + s.ff.toFixed(3) + "</b>（零串阻时约 " + s.ff0.toFixed(3) + "）"],
     ["转换效率 PCE", "<b>" + (s.pce * 100).toFixed(2) + " %</b>（同 " + H_EG + " 的 SQ 极限 " + (s.pceSQ * 100).toFixed(1) + " %）"],
-    ["当前瓶颈", "<b>" + s.topLoss.k + "</b>（占 SQ 极限的 " + (s.topLoss.v * 100).toFixed(1) + " %）"]
+    /* 百分比与下面「损失拆分」那组完全重复 ⇒ 核心只留机制名并指路（那组是完整饼图，
+       少一项反而不像一份拆分）。 */
+    ["当前瓶颈", "<b>" + s.topLoss.k + "</b>（见下方损失拆分）"]
   ];
   rowsTo($("readout"), core);
-  const more = [["工作点"],
+  const more = [
+    ["工作点"],
+
     ["最大功率 " + "<span class=\"m\"><i>P</i><sub>max</sub></span>", s.pmax.toFixed(2) + " mW/cm²　（V_mp = " + s.vmp.toFixed(3) + " V，J_mp = " + s.jmp.toFixed(2) + "）"],
-    ["钳制前的 " + H_VOC, s.vDiode.toFixed(3) + " V（" + (s.capped ? "高于接触电势上限，已被压回 " + s.vContact.toFixed(3) + " V" : "未触及接触电势上限 " + s.vContact.toFixed(3) + " V") + "）"],
+    /* 原来写「钳制前的 V_OC = 1.121 V」，与核心区那行 V_OC 是同一个数，学生会以为重复
+       ⇒ 改成只给上限与余量（这两个数核心区都没有）。 */
+    ["接触电势上限", "<b>" + s.vContact.toFixed(3) + "</b> V（当前余量 " +
+      (s.capped ? "0，已被钳住" : "<b>" + (s.vContact - s.voc).toFixed(3) + "</b> V") + "）"],
     ["饱和电流 " + H_J0, PSciArr(s.j0) + " mA/cm²（其中辐射部分 " + PSciArr(s.j0rad) + "）"],
-    ["非辐射损失的电压", "kT·ln(1/外辐射效率) = " + (s.vt * Math.log(1 / ERE)).toFixed(3) + " V"],
+    ["非辐射损失的电压", "<span class=\"m\"><i>kT</i><span class=\"op\">·</span>ln<span class=\"op\">(</span></span>1/外辐射效率<span class=\"m\"><span class=\"op\">)</span></span> = " + (s.vt * Math.log(1 / ERE)).toFixed(3) + " V"],
     ["理想因子", "1（本工具只有复合中心一条复合通道）"],
     ["能带与抽取"],
-    [H_EC + " / " + H_EV, s.dEc.toFixed(2) + " / " + s.dEv.toFixed(2) + " eV"],
-    ["接触电势上限", s.vContact.toFixed(3) + " V = " + H_EG + " − " + H_EC + " − " + H_EV],
-    ["界面抽取速度 <span class=\"m\"><i>S</i></span>", PSciArr(s.S) + " cm/s（无势垒时取热速度量级 " + PSciArr(ESL) + "）"],
-    ["走到界面后的抽取率", pct(s.fext)],
+    /* 三项合成一行：接触电势上限就是 E_g − ΔE_C − ΔE_V（派生的），
+       抽取率 100 % 是 S 取热速度量级的后果（S → ∞ 极限）。 */
+    ["能带偏移与抽取", H_EC + " / " + H_EV + " = <b>" + s.dEc.toFixed(2) + " / " + s.dEv.toFixed(2) + "</b> eV　⇒　接触电势上限 <b>" +
+      s.vContact.toFixed(3) + "</b> V　·　<span class=\"m\"><i>S</i></span> = <b>" + PSciArr(s.S) + "</b> cm/s"],
+    ["走到界面后的抽取率", pct(s.fext) + "（<span class=\"m\"><i>S</i></span> → ∞ 极限）"],
     ["载流子与吸收"],
-    ["扩散系数 D = µkT/q", PSciArr(s.D) + " cm²/s，反推寿命 τ = " + fmtTau(s.tau)],
-    [H_LD + " / d", (s.ld / s.d).toFixed(2) + "（越接近 1，越省着用扩散长度）"],
+    /* D → τ → L_D 是同一条链（L_D = √(Dτ)），原来拆成两行 ⇒ 合成一行。 */
+    [H_LD + " / D / τ", PSciArr(s.D) + " cm²/s　·　" + fmtTau(s.tau) + "　·　" +
+      H_LD + " / d = " + (s.ld / s.d).toFixed(2)],
     ["1/α（代表性光子）", (1e7 / alphaRep(s.Eg)).toFixed(0) + " nm，层厚是它的 " + (OPT.d / (1e7 / alphaRep(s.Eg))).toFixed(1) + " 倍"],
-    ["kT 与激子结合能", s.vt.toFixed(4) + " eV，E_b/kT = " + (EB / s.vt).toFixed(2) + "（远小于 1 ⇒ 室温自发解离）"],
-    ["若折算成 Br 含量 <span class=\"m\"><i>x</i></span>", (s.Eg >= 1.55 ? "x ≈ " + ((s.Eg - 1.55) / 0.8).toFixed(2) + "（MAPb(I₁₋ₓBrₓ)₃ 的线性估算）" : "低于 MAPbI₃ 的 1.55 eV，不在 I/Br 混晶的估算范围内")],
+    [H_KT + " 与激子结合能", "<span class=\"m\"><i>E</i><sub>b</sub>/<i>kT</i></span> = " + (EB / s.vt).toFixed(2) +
+      "，远小于 1 ⇒ 室温自发解离；热电压 " + H_KT + " = " + s.vt.toFixed(4) + " eV"],
+    /* 「折算成 Br 含量」行已删：它是 E_g 滑块的附会反推，且 E_g < 1.55 eV 时直接说
+       「不在估算范围内」——一个会自己失效的读数。「换 X 位（I → Br）才是大改」这个
+       化学旋钮教学点仍保留在挑战区的答案里。 */
     ["损失拆分（占 SQ 极限的比例）"]
   ];
   for (const l of s.loss) more.push([l.k, (l.v * 100).toFixed(1) + " %"]);
   rowsTo($("readoutMore"), more);
+  /* 四条关系式 + 固定假设原来占「更多读数」的前 4 行，但它们是公式表不是读数
+     ⇒ 搬到独立折叠。⚠️ 固定假设一条都不能丢：它们是没有滑口的建模选择（记忆 §3）。
+     「每个 V 用二分法解出 J」是数值方法细节，删。 */
+  rowsTo($("roRel"), [
+    [H_JSC, EQ_JSC],
+    ["收集效率", EQ_COLL + "　（扩散方程 + <span class=\"m\"><i>S</i></span> 边界条件的解析解）"],
+    ["开路电压", EQ_VOC + "　（后一项即接触电势上限）"],
+    ["J–V 与效率", EQ_DIODE + "；" + EQ_PCE],
+    ["固定假设"],
+    ["固定假设", "入射光功率 <span class=\"m\"><i>P</i><sub>in</sub></span> = 100 mW/cm²（AM1.5）　·　理想因子 = 1（本工具只有复合中心一条复合通道）　·　界面抽取速度 <span class=\"m\"><i>S</i></span> 取热速度量级 <b>" + PSciArr(ESL) + "</b> cm/s"]
+  ]);
 }
 
 /* ==================================================================
    9. 挑战任务
    ================================================================== */
-/* 临时改 OPT 算一个对比值再还原（答案里的数字必须是这一档的真值） */
-function withOpt(o, fn) {
-  const bak = { eg: OPT.eg, d: OPT.d, ld: OPT.ld, dec: OPT.dec, htl: OPT.htl };
-  for (const k in o) OPT[k] = o[k];
-  ST = null;
-  const r = fn();
-  for (const k in bak) OPT[k] = bak[k];
-  ST = null;
-  return r;
-}
 const CHAL = [
   {
     q: "看模块四右侧的晶胞：A 位阳离子坐在哪里？B 位与 X 位围成什么几何？把视角转一圈看看八面体是怎么连成骨架的——A 位的有机分子有没有出现在能带上？",
     a: () => {
-      const s = S();
       return "<b>A 位坐在晶胞的八个顶点上</b>（换个角度看，就是 8 个八面体围出的空腔中心，图里橙色的球）：" +
         "它是一价的 MA⁺ / FA⁺ / Cs⁺，靠电荷平衡把骨架撑住，并决定八面体怎么倾斜；" +
         "<b>前线轨道上没有它</b>——价带顶是 I 5p（掺一点 Pb 6s），导带底主要是 Pb 6p。" +
         "<b>B 位 Pb²⁺ 居中，六个 X 位 I⁻ 在六个面心</b>，围成 [PbI₆]⁴⁻ 正八面体；" +
         "八面体<b>共顶点</b>连出去就是三维骨架，转动视角能看到每一个 I⁻ 都被两个八面体共用。" +
-        "所以带隙 " + H_EG + "（现在 " + s.Eg.toFixed(2) + " eV）主要由 Pb–X 骨架决定：" +
-        "换 A 位只是微调（键角微变、带隙略动），换 X 位（I → Br）才是大改 —— " +
-        "这就是「" + "<span class=\"m\">MAPb(I<sub>1−<i>x</i></sub>Br<sub><i>x</i></sub>)₃</span>" + "」能连续调带隙的原因。";
+        "所以带隙 " + H_EG + " 主要由 Pb–X 骨架决定：" +
+        "换 A 位只是微调（键角微变、带隙略动），换 X 位（I → Br）才是大改。";
     }
   },
   {
     q: "把带隙从 1.40 eV 拉到 2.00 eV：吸收边 λ_g 往哪个方向走？J_SC 与 PCE 是升还是降？为什么「宽带隙」的电池还要拿来当叠层电池的顶电池？",
     a: () => {
-      const lo = withOpt({ eg: 1.40 }, () => { const x = S(); return { lam: x.lamG, j: x.jsc, p: x.pce }; });
-      const hi = withOpt({ eg: 2.00 }, () => { const x = S(); return { lam: x.lamG, j: x.jsc, p: x.pce }; });
       return "吸收边按 λ_g = 1240 / E_g 走：带隙<b>变大</b>，吸收边就往<b>短波（蓝移）</b>方向动，" +
         "够得着的光子变少，" + H_JSC + " 因此下降，而 " + H_VOC + " 是往上涨的 —— 涨回来的那部分补不上丢掉的那部分，" +
-        "所以单结效率会降。既然单结更差，为什么叠层还要用宽带隙顶电池？因为在窄带隙材料里，" +
-        "一个高能光子超出带隙的那部分能量会以热的形式浪费掉（热化损失）；交给宽带隙的顶层去接，" +
-        "这部分就能被捞回来，底层那片窄带隙的再去接剩下的红光。本工具只算单结，看的是「同样一片材料」的取舍。" +
-        "<b>本档读数：</b>1.40 eV → λ_g = " + lo.lam.toFixed(0) + " nm，" + H_JSC + " = " + lo.j.toFixed(1) +
-        " mA/cm²，PCE = " + (lo.p * 100).toFixed(1) + " %；2.00 eV → λ_g = " + hi.lam.toFixed(0) + " nm，" +
-        H_JSC + " = " + hi.j.toFixed(1) + " mA/cm²，PCE = " + (hi.p * 100).toFixed(1) + " %。";
+        "所以单结效率会降（这也是叠层要用宽带隙顶电池去接高能光子的原因；本工具只算单结）。" +
+        "拖带隙滑块直接看 " + H_JSC + " 与 " + H_VOC + " 怎么反向走。";
     }
   },
   {
@@ -2423,48 +2468,26 @@ const CHAL = [
       "铅卤钙钛矿不一样：价带顶（Pb 6s–I 5p 反键）和导带底（Pb 6p–I 5p 反键）<b>都是反键的</b>，" +
       "缺一个原子产生的能级因此被<b>推进能带里面</b>（或只留下浅能级），带隙中间反而是干净的。" +
       "这解释了它的「缺陷容忍」：溶液法旋涂出来的多晶薄膜，缺陷密度比单晶硅高好几个数量级，" +
-      "却依然能拿到长载流子寿命与高发光效率 —— 剩下的损失主要落在「非辐射复合」这一项上" +
-      "（读数里「非辐射复合（1/ERE）」那一行就是它）。",
+      "却依然能拿到长载流子寿命与高发光效率。",
   },
   {
     q: "只换电子传输层（ΔE_C 三档各试一遍），其它不动：J_SC、V_OC、FF、PCE 各自怎么变？为什么「能带对齐」不是越平越好？最优区间大概在哪？",
     a: () => {
-      const cur = S();
-      const shot = (dec) => {
-        const r = withOpt({ dec: dec }, () => { const x = S(); return { j: x.jsc, v: x.voc, f: x.ff, p: x.pce, c: x.coll }; });
-        r.dec = dec; return r;
-      };
-      const neg = shot(ETLS[0].dec), mid = shot(ETLS[1].dec), big = shot(ETLS[2].dec);
-      const line = (x) => fmtEc(x.dec) + " eV：收集 " + pct(x.c) + "，" + H_JSC + " " + x.j.toFixed(1) +
-        " mA/cm²，" + H_VOC + " " + x.v.toFixed(3) + " V，FF " + x.f.toFixed(3) + "，PCE " + (x.p * 100).toFixed(1) + " %";
       return "<b>负的那一侧是势垒：</b>Δ" + "<span class=\"m\"><i>E</i><sub>C</sub></span>" +
         " &lt; 0 意味着电子要往上爬一个台阶才进得去 ETL，界面抽取速度按 e^(−|ΔE_C|/kT) 被压掉，" +
         "收集效率、" + H_JSC + " 和 FF 一起垮。<b>正的一旦过大（悬崖），</b>电子好抽了，但接触电势上限被吃掉，" +
         H_JSC + " 不动、" + H_VOC + " 先降。<b>折中区在 0.1～0.3 eV</b>：既挡得住空穴，又不至于白白丢太多电压 —— " +
-        "所以「能带对齐」从来不是越平越好，完全齐平的时候电子过得去、空穴也容易跟着往回漏，选择性反而不行。" +
-        "<b>本档读数：</b>Δ" + "<span class=\"m\"><i>E</i><sub>C</sub></span> = " +
-        line(neg) + "；" + line(mid) + "；" + line(big) + "。" +
-        "当前这一档 Δ" + "<span class=\"m\"><i>E</i><sub>C</sub></span> = " + fmtEc(cur.dEc) +
-        " eV，PCE = " + (cur.pce * 100).toFixed(2) + " %。";
+        "所以「能带对齐」从来不是越平越好，完全齐平的时候电子过得去、空穴也容易跟着往回漏，选择性反而不行。";
     }
   },
   {
-    q: "把扩散长度从 1500 nm 拉到 100 nm，再看层厚从 200 nm 拉到 1000 nm：收集效率怎么变？什么时候「加厚」反而亏？钙钛矿的扩散长度通常有多长——这解释了什么？",
+    q: "把扩散长度从 1500 nm 拉到 100 nm，再看层厚从 200 nm 拉到 1000 nm：收集效率怎么变？什么时候「加厚」反而亏？",
     a: () => {
-      const a1 = withOpt({ ld: 1500, d: 500 }, () => { const x = S(); return { c: x.coll, p: x.pce, j: x.jsc }; });
-      const a2 = withOpt({ ld: 100, d: 500 }, () => { const x = S(); return { c: x.coll, p: x.pce, j: x.jsc }; });
-      const b1 = withOpt({ ld: 1000, d: 200 }, () => { const x = S(); return { a: x.absEff, c: x.coll, p: x.pce }; });
-      const b2 = withOpt({ ld: 1000, d: 1000 }, () => { const x = S(); return { a: x.absEff, c: x.coll, p: x.pce }; });
       return "<b>扩散长度那一边：</b>扩散长度一短，载流子还没走到传输层就复合了，收集效率塌、短路电流跟着塌。" +
         "<b>厚度那一边：</b>加厚能把光吃得更干净（吸收效率上升），但更深处产生的载流子要走更远的路，" +
-        "收集效率反而下降 —— 所以厚度有个最优值，本工具里在几百 nm 量级。<b>实际钙钛矿薄膜的扩散长度" +
+        "收集效率反而下降 —— 所以厚度有个最优值，<b>拖厚度滑块在几百 nm 处把它找出来</b>。<b>实际钙钛矿薄膜的扩散长度" +
         "常常在几百 nm 到几 µm 量级</b>，与片子厚度同量级甚至更长，这正解释了为什么它只要几百 nm " +
-        "就能把光吃干净，不必像硅那样做到上百 µm。" +
-        "<b>本档读数：</b>500 nm 厚、" + H_LD + " 从 1500 降到 100 nm：收集 " + pct(a1.c) + " → " + pct(a2.c) +
-        "，" + H_JSC + " " + a1.j.toFixed(1) + " → " + a2.j.toFixed(1) + " mA/cm²；" +
-        H_LD + " = 1000 nm 时把厚度从 200 加到 1000 nm：吸收 " + pct(b1.a) + " → " + pct(b2.a) +
-        "，收集 " + pct(b1.c) + " → " + pct(b2.c) + "，PCE " + (b1.p * 100).toFixed(1) + " % → " +
-        (b2.p * 100).toFixed(1) + " %。";
+        "就能把光吃干净，不必像硅那样做到上百 µm。";
     }
   }
 ];
@@ -2484,12 +2507,13 @@ function buildChal() {
     ANS_EL.push(ans);
     d.querySelector(".btn-row button").onclick = e => {
       e.stopPropagation();
-      if (!ans.innerHTML) ans.innerHTML = CHAL[i].a();
+      if (!ans.innerHTML) ans.innerHTML = ansOf(CHAL[i]);
       ans.classList.toggle("show");
     };
   });
 }
-function refreshAnswers() { ANS_EL.forEach((el, i) => { el.innerHTML = CHAL[i].a(); }); }
+const ansOf = c => (typeof c.a === "function" ? c.a() : c.a);
+function refreshAnswers() { ANS_EL.forEach((el, i) => { el.innerHTML = ansOf(CHAL[i]); }); }
 
 /* ==================================================================
    10. 控件、动画与初始化

@@ -191,9 +191,8 @@
       <div class="sec-title"><span class="mtag">模块一</span><span class="m"><b><i>k</i></b></span> 空间分布：电场 → <b>平移</b>（左）　vs　温度梯度 → <b>展宽</b>（右）</div>
       <div class="chart-wrap"><canvas id="ks" data-h="300" tabindex="0"></canvas></div>
       <div class="legend" id="legKs"></div>
-      <div class="hint">两图都是 <span class="m"><i>k</i><sub><i>x</i></sub><span class="op">−</span><i>k</i><sub><i>y</i></sub></span> 截面，灰度深浅表示占据概率 <span class="m"><i>f</i></span>（深灰 = 满占，白 = 空；刻意不用彩色，为的是把红蓝留给“变化”）。<b>左：</b>虚线圆是平衡态费米球，实线圆是加电场后平移了 <span class="m">Δ<i>k</i></span> 的费米球 —— 红色月牙是<b>新占据</b>的态、蓝色月牙是<b>新空出</b>的态，两者不对称正是电流的来源。<b>右：</b>四条同心圆分别是冷侧与热侧 <span class="m"><i>f</i><span class="op">=</span>0.9</span> 与 <span class="m"><i>f</i><span class="op">=</span>0.1</span> 的等值线：<b>圆心（<span class="m"><i>k</i><sub>F</sub></span>）不动</b>，但热侧的环带明显更宽。<br>
-        <b>两图是「分解图」：</b>左图冻结了温度梯度（整球取同一个冷侧 <span class="m"><i>T</i></span>），右图冻结了电场（<span class="m">Δ<i>k</i><span class="op">=</span>0</span>）。因为线性响应下两种扰动<b>可以相加</b>，把两图的效果叠起来就是真实分布。<br>
-        <b>两点声明：</b>①月牙只有几个像素宽，图上已用红/蓝引线直接标出「新占据 / 新空出」，图例与之同一口径；②左图只画<b>刚性平移</b>那一份 —— 真到了 <span class="m"><i>eEℓ</i><span class="sl">/</span><i>kT</i></span> ≳ 0.2（控制面板里有实时读数）时载流子会被加热，真实分布除平移外还会再展宽，<span class="m"><i>v</i><sub>d</sub></span> 也开始偏离 <span class="m"><i>μE</i></span>。</div>
+      <div class="hint"><b>左：</b>虚线圆是平衡态费米球，实线圆是加电场后平移了 <span class="m">Δ<i>k</i></span> 的球 —— 红色月牙（<b>新占据</b>）与蓝色月牙（<b>新空出</b>）不对称，这就是电流的来源。<b>右：</b>冷侧与热侧 <span class="m"><i>f</i><span class="op">=</span>0.9</span> 与 <span class="m"><i>f</i><span class="op">=</span>0.1</span> 两条等值线：<b>圆心 <span class="m"><i>k</i><sub>F</sub></span> 不动</b>，热侧的环带更宽。<br>
+        <b>两图是「分解图」：</b>左图冻结了温度梯度（整球取同一个冷侧 <span class="m"><i>T</i></span>），右图冻结了电场（<span class="m">Δ<i>k</i><span class="op">=</span>0</span>）。因为线性响应下两种扰动<b>可以相加</b>，把两图的效果叠起来就是真实分布。</div>
     </div>
 
     <div class="card">
@@ -207,8 +206,8 @@
       <div class="sec-title"><span class="mtag">模块三</span>两种电流的较量：漂移 vs 热扩散</div>
       <div class="chart-wrap"><canvas id="cur" data-h="222" tabindex="0"></canvas></div>
       <div class="legend" id="legCur"></div>
-      <div class="hint">把前两个模块看到的<b>平移</b>与<b>展宽</b>换算成电流，放在<b>同一对数刻度</b>上比大小：漂移 <span class="m"><i>J</i><span class="op">=</span><i>qnμE</i></span> 由电场驱动，热扩散 <span class="m"><i>J</i><span class="op">=</span><i>qDn</i><span class="op">·</span>(1<span class="sl">/</span><i>T</i>)<span class="op">|</span><span class="op">d</span><i>T</i><span class="sl">/</span><span class="op">d</span><i>x</i><span class="op">|</span></span> 由温度梯度驱动，其中的相对温度梯度 <span class="m"><span class="op">=</span>Δ<i>T</i><span class="sl">/</span>(<i>T</i><sub>av</sub><i>L</i>)</span> 由温差与冷热端间距共同决定；最后一行的<b>等效电场</b> <span class="m"><i>E</i><sub>eff</sub><span class="op">=</span>(<i>kT</i><sub>av</sub><span class="sl">/</span><i>q</i>)<span class="op">·</span>(1<span class="sl">/</span><i>T</i>)<span class="op">|</span><span class="op">d</span><i>T</i><span class="sl">/</span><span class="op">d</span><i>x</i><span class="op">|</span></span>。<br>
-        <b>两条口径：</b>①两根柱子<b>并排</b>比大小，对应的是<b>短路</b>情形（外接回路，或样品里真有掺杂梯度，两种电流同时流动）；均匀样品<b>开路</b>时，这个热电场会自动建立起来把热扩散电流<b>正好抵消</b> ⇒ 净电流为零、两端出现塞贝克电压 —— 那时两者不是「并存」而是「相抵」。②<b>绝对值只作标度对比</b>：这里的电流密度普遍比真实器件长期可承受的量级（10<sup>4</sup>–10<sup>5</sup> A/cm<sup>2</sup>）高出一到两个数量级，那是把浓度和电场同时取大换来的「好读数」。</div>
+      <div class="hint">把前两个模块看到的<b>平移</b>与<b>展宽</b>换算成电流，放在<b>同一对数刻度</b>上比大小：漂移 <span class="m"><i>J</i><span class="op">=</span><i>qnμE</i></span> 由电场驱动，热扩散 <span class="m"><i>J</i><span class="op">=</span><i>qDn</i><span class="op">·</span>(1<span class="sl">/</span><i>T</i>)<span class="op">|</span><span class="op">d</span><i>T</i><span class="sl">/</span><span class="op">d</span><i>x</i><span class="op">|</span></span> 由温度梯度驱动；末行的<b>等效电场</b> <span class="m"><i>E</i><sub>eff</sub><span class="op">=</span>(<i>kT</i><sub>av</sub><span class="sl">/</span><i>q</i>)<span class="op">·</span>(1<span class="sl">/</span><i>T</i>)<span class="op">|</span><span class="op">d</span><i>T</i><span class="sl">/</span><span class="op">d</span><i>x</i><span class="op">|</span></span> 是热扩散折算成的等效电场。<br>
+        两根柱子画的是<b>短路</b>：两种电流同时流动；均匀样品<b>开路</b>时它会<b>相抵</b>、两端出现塞贝克电压（详见「更多读数」注③）。</div>
     </div>
   </div>
 
@@ -904,6 +903,61 @@ var I18N = {
   " 分摊在 ": " spread over ",
   " 上），而电场是 ": "), while the electric field is ",
   " —— 差 ": " — a factor of ",
+  "的球 —— 红色月牙（": " sphere displaced by the field — the red crescent (",
+  "）与蓝色月牙（": ") and the blue crescent (",
+  "）不对称，这就是电流的来源。": ") are not symmetric, and that asymmetry is where the current comes from.",
+  "冷侧与热侧": "Cold-side and hot-side",
+  "两条等值线：": " contours:",
+  "圆心": "The center",
+  "不动": " does not move",
+  "，热侧的环带更宽。": "; the band on the hot side is wider.",
+  "由温度梯度驱动；末行的": " is driven by the temperature gradient; the last line,",
+  "是热扩散折算成的等效电场。": " is the equivalent field that thermal diffusion amounts to.",
+  "两根柱子画的是": "The two bars are drawn for the",
+  "：两种电流同时流动；均匀样品": " case: both currents flow at once. In a uniform sample under",
+  "时它会": " conditions the two",
+  "相抵": "cancel",
+  "、两端出现塞贝克电压（详见「更多读数」注③）。": ", leaving a Seebeck voltage across the ends (see note ③ under More readings).",
+  "—— 两种电流不是并存而是相抵，净电流为零 ⇒ 塞贝克效应。模块三两根柱子并排摆在一起，对应的是": "— the two currents do not coexist but cancel, so the net current is zero ⇒ the Seebeck effect. In module 3 the two bars sit side by side, which corresponds to",
+  "（外接回路，或样品里真有掺杂梯度）。真实塞贝克系数还多一项散射的能量依赖，见本系列《塞贝克效应》交互工具。": "(an external circuit, or a sample that really does have a doping gradient). The real Seebeck coefficient carries one more term from the energy dependence of scattering — see the Seebeck Effect tool in this series.",
+  "只有百分之几，但红色月牙（新占据）与蓝色月牙（新空出）": " is only a few percent, but the red crescent (newly occupied) and the blue crescent (newly vacated)",
+  "并不对称": "are not symmetric",
+  "：这正是全部漂移电流的来源 —— 电流 ∝ 这个偏移量。": ": that asymmetry is exactly where all the drift current comes from — the current ∝ this shift.",
+  "。两侧过渡区宽度之比可在读数面板直接读；它近似等于温度之比这件事，只在": ". The ratio of the two transition widths can be read straight off the readout panel; saying that it equals the temperature ratio holds only when",
+  "很小时才成立 —— 宽度 ∝": " is small — the width ∝",
+  "，t 小的时候才近似线性。热侧的台阶被“抹平”得更宽 ⇒ 高能电子更多 ⇒ 它们向冷侧扩散，这就是": ", and it is approximately linear only for small t. The step on the hot side is “smeared” wider ⇒ more high-energy electrons ⇒ they diffuse toward the cold side, which is the",
+  "，除以 ℏ 得到偏移，": ", and dividing by ℏ gives the shift —",
+  "全程用不上惯性": "inertia never enters",
+  "。第二条要把": ". The second relation has to convert",
+  "/V·s）。换成更轻的 GaAs：": "/V·s). Try a lighter material, GaAs:",
+  "一点不变，但": "does not change at all, but",
+  "更小 ⇒": "is smaller, so",
+  "放大约": "is larger by about",
+  "；这就是“迁移率高的材料散射弱”的另一面 ——": "; that is the other side of “high mobility means weak scattering” —",
+  "本工具量程里": "Within the range of this tool,",
+  "远小于": "is far smaller than",
+  "（两者读数面板都有实时值），所以温差几乎顶不过电场。但这不是“哪个效应更强”的普适结论，而是一个": " (both are shown live on the readout panel), so a temperature gradient can hardly match an electric field. But this is not a universal verdict on “which effect is stronger” — it is a",
+  "，把冷热端拉到微米量级（芯片里的热斑、探针尖）时，同样几开尔的温差就能顶上一个可观的电场 —— 这正是": ": shrink the hot–cold distance to the micrometer scale (a hot spot on a chip, a probe tip) and the same few kelvin will match a sizable electric field — that is exactly the",
+  "开路与短路的口径见「更多读数」注③。": "For the open-circuit vs short-circuit convention, see note ③ under More readings.",
+  "材料与工作点": "Material and operating point",
+  "费米尺度": "Fermi scales",
+  "输运与几何": "Transport and geometry",
+  "冷侧 / 热侧过渡区宽（相对 ": "Cold/hot transition width (relative to ",
+  "（比 ": " (ratio ",
+  "画那对 ": "The pair of ",
+  " 钉住了 —— 球心（": " curves is drawn with ",
+  "）只由 ": " pinned down — the sphere center depends only on ",
+  " 决定、严格不动，便于单独看清「展宽」。严格「浓度处处相等」要求 ": " and never moves, so the broadening can be seen on its own. Strictly equal density everywhere would require ",
+  " 随温度下移（Sommerfeld）；本页热侧隐含密度约为冷侧的 ": " to shift downward with temperature (Sommerfeld); here the implied density on the hot side is about the cold-side value times ",
+  " 倍，这份密度差正是热扩散与 ": "; that density difference is exactly the physical source of thermal diffusion and of ",
+  " 的物理来源。": ".",
+  "这里的绝对值只用于两种效应的标度对比（当前 ": "Absolute values here serve only as a scale comparison between the two effects (currently ",
+  " 比真实器件可承受的 10": " is higher than the 10",
+  " 高约 ": " A/cm² a real device can sustain by about ",
+  " 个数量级）。": " orders of magnitude).",
+  "样品里自动建立、恰好抵消热扩散电流的那个热电场 —— 即塞贝克效应（模块三两根柱子并排是": "the thermoelectric field that builds up by itself in an open-circuited sample and exactly cancels the thermal diffusion current — that is the Seebeck effect (the two bars in module 3 stand for ",
+  "，两种电流并存）；详见本系列《塞贝克效应》工具。": ", where the two currents coexist); see the Seebeck effect tool in this series.",
+  "这里的绝对值只用于两种效应的标度对比（两者都在合理范围内）。": "Absolute values here serve only as a scale comparison between the two effects (both are within a reasonable range).",
 };
 
 /* 注入点②：画布直写字符串。老工具直接调 g.fillText()（描边文字走 g.strokeText()），这里在原型上兜住。
@@ -1433,10 +1487,6 @@ const H_JDFF = '<span class="m"><i>J</i><span class="op">=</span><i>qDn</i><span
 const H_EEFF = '<span class="m"><i>E</i><sub>eff</sub><span class="op">=</span>(<i>kT</i><sub>av</sub><span class="sl">/</span><i>q</i>)<span class="op">·</span>(1<span class="sl">/</span><i>T</i>)<span class="op">|</span><span class="op">d</span><i>T</i><span class="sl">/</span><span class="op">d</span><i>x</i><span class="op">|</span></span>';
 /* 热载流子判据 eEℓ/kT（ℓ = v_th τ 为平均自由程） */
 const H_GAM = '<span class="m"><i>eEℓ</i><span class="sl">/</span><i>kT</i></span>';
-/* 跨工具衔接用：δf、v_x > 0、σ */
-const H_DFP = '<span class="m"><i>δf</i></span>';
-const H_VXP = '<span class="m"><i>v</i><sub><i>x</i></sub><span class="op">&gt;</span>0</span>';
-const H_SIG = '<span class="m"><i>σ</i></span>';
 
 /* ---------------- 3. 画布与画布内排版 ---------------- */
 const CV = {};
@@ -2143,77 +2193,69 @@ function updateReadout() {
   html += kvRow("漂移电流 " + H_JDR, "<b>" + sci(cu.jdr, 2) + "</b> A/m²");
 
   html += kvHd("温度梯度效应：展宽");
-  /* 宽度比用实测值：f = 0.9 等值线在某一侧消失时（T/T_F > 0.455）这条就写「失去定义」 */
-  html += kvRow("两侧过渡区宽度之比", d.wOK
-    ? "<b>" + fmt(d.wwH / d.wwL, 2) + "</b>（温度比 " + fmt(OPT.TH / Math.max(OPT.TL, 1), 2) + "）"
+  /* 原来「两侧过渡区宽度之比」单独占一行，而冷侧 / 热侧各自的宽度在折叠区又占两行
+     ⇒ 三行说一件事。合成一行：两个宽度并排，比值做括注（比值是两者之比，学生自己也会除）。
+     宽度比用实测值：f = 0.9 等值线在某一侧消失时（T/T_F > 0.455）这条就写「失去定义」。 */
+  html += kvRow("冷侧 / 热侧过渡区宽（相对 " + H_KF + "）", d.wOK
+    /* 「（比 」与「）」各包一层 span：数值与汉字分成不同文本节点，
+       否则「1.011 / 1.011（比 」整块含运行时数字，i18n 无法登记 key。 */
+    ? fmt(d.wwL, 3) + " / " + fmt(d.wwH, 3) + "<span class=\"rm\">（比 </span><b>" +
+      fmt(d.wwH / d.wwL, 2) + "</b><span class=\"rm\">）</span>"
     : "失去定义（某一侧 " + H_F + " = 0.9 等值线已消失）");
   html += kvRow("热扩散电流 " + H_JDF, "<b>" + sci(cu.jdf, 2) + "</b> A/m²");
   html += kvRow("热扩散的等效电场 " + H_EFF, gradNow() > 0
     ? "<b>" + fmt(eEffNow() / 100, 2) + "</b> V/cm" +
       (OPT.E > 0 ? "（占漂移电场 <b>" + fmt(100 * eEffNow() / OPT.E, 2) + "%</b>）" : "")
-    : H_DT + " = 0 ⇒ 0");
+    : "<b>0</b> V/cm");
 
   /* ---- 折叠区：工作点 / 中间量 / 三条说明 ---- */
   let hm = "";
+  /* 固定量必须披露（不能隐藏），但 6 行占太多 ⇒ 按「材料 / 费米尺度 / 输运几何」压成 3 行。 */
   hm += kvHd("工作点（固定参数）");
-  hm += kvRow("材料 / 有效质量（固定）", "Si / <b>" + fmt(M_REL, 3) + "</b> <span class='m'><i>m</i><sub>0</sub></span>");
-  hm += kvRow("载流子浓度 " + H_N + "（固定）", "<b>" + sci(nNow() / 1e6, 1) + "</b> cm⁻³");
-  hm += kvRow("费米波矢 " + H_KF, "<b>" + sci(d.kF / 100, 2) + "</b> cm⁻¹");
-  hm += kvRow("费米能 " + H_EF + " / 费米温度 " + H_TF, fmt(d.EF / QE, 4) + " eV / <b>" + fmt(d.TF, 0) + " K</b>");
-  hm += kvRow("散射时间 " + H_TAU + "（固定）/ 迁移率 " + H_MU,
-    fmt(TAU_PS, 2) + " ps / <b>" + fmt(d.mu * 1e4, 0) + "</b> cm²/V·s");
-  hm += kvRow("冷热端间距 " + H_L + "（固定）", fmt(lenNow() * 1e6, lenNow() * 1e6 < 10 ? 1 : 0) + " μm");
+  hm += kvRow("材料与工作点", "Si / <b>" + fmt(M_REL, 3) + "</b> <span class='m'><i>m</i><sub>0</sub></span>　·　" +
+    H_N + " <b>" + sci(nNow() / 1e6, 1) + "</b> cm⁻³");
+  hm += kvRow("费米尺度", H_KF + " <b>" + sci(d.kF / 100, 2) + "</b> cm⁻¹　·　" + H_EF + " " +
+    fmt(d.EF / QE, 4) + " eV　·　" + H_TF + " <b>" + fmt(d.TF, 0) + " K</b>");
+  hm += kvRow("输运与几何", H_TAU + " " + fmt(TAU_PS, 2) + " ps　·　" + H_MU + " <b>" + fmt(d.mu * 1e4, 0) +
+    "</b> cm²/V·s　·　" + H_L + " " + fmt(lenNow() * 1e6, lenNow() * 1e6 < 10 ? 1 : 0) + " μm");
 
   hm += kvHd("电场效应：其余中间量");
   hm += kvRow("偏移量 " + H_DK + " = <span class='m'><i>eEτ</i><span class='sl'>/</span>ℏ</span>",
     "<b>" + sci(d.dkInf / 100, 2) + "</b> cm⁻¹");
   hm += kvRow(H_VD + " / <span class='m'><i>v</i><sub>F</sub></span>", fmt(d.vd / d.vF, 4));
-  hm += kvRow("热载流子判据 " + H_GAM, "<b>" + fmt(d.gam, 2) + "</b>" +
-    (d.gam > 0.2 ? "（已进入热载流子区）" : "（线性响应区）"));
+  hm += kvRow("热载流子判据 " + H_GAM, "<b>" + fmt(d.gam, 2) + "</b>");
 
   hm += kvHd("温度梯度效应：其余中间量");
-  hm += kvRow("冷侧 / 热侧温度", OPT.TL + " K / " + OPT.TH + " K（" + H_DT + " = " + (OPT.TH - OPT.TL) + " K）");
-  hm += kvRow("冷侧 " + H_TTF + " / 热侧 " + H_TTF, fmt(d.wL, 3) + " / " + fmt(d.wH, 3));
+  hm += kvRow("冷侧 / 热侧温度", OPT.TL + " K / " + OPT.TH + " K（" + H_DT + " = " + (OPT.TH - OPT.TL) +
+    " K，" + H_TTF + " " + fmt(d.wL, 3) + " / " + fmt(d.wH, 3) + "）");
   /* 「0.9/0.1 之间算宽度」这套尺子在 T/T_F > 0.455 时失效：连 k=0 处的 f 都不到 0.9，
      0.9 等值线在数学上不存在（kLevel 返回 0），再减出来的「宽度」就是从 0 到 k₁₀ 的一大截，
      比真的过渡区宽好几倍。此时如实写「失去定义」，而不是把虚高数字印出来。 */
-  const badP = T => kLevel(0.9, T) <= 0.02;
-  hm += kvRow("冷侧过渡区宽（相对 " + H_KF + "）", badP(OPT.TL)
-    ? "失去定义（" + H_F + "(0) = " + fmt(f0(0, OPT.TL), 2) + " < 0.9）"
-    : fmt(d.wwL, 3));
-  hm += kvRow("热侧过渡区宽（相对 " + H_KF + "）", badP(OPT.TH)
-    ? "失去定义（" + H_F + "(0) = " + fmt(f0(0, OPT.TH), 2) + " < 0.9）"
-    : "<b>" + fmt(d.wwH, 3) + "</b>");
-  hm += kvRow("费米球中心 " + H_KF, "不随温度改变（只由 " + H_N + " 决定）");
-  /* 固定 E_F 画 f₀(k,T) 时，曲线下面积 ∫u²f₀du 会随温度变大 —— 这就是「等量浓度」与「固定 E_F」
-     两种系综的差别。把它读出来而不是藏起来：这份密度差正是下面那些热扩散项的物理来源。 */
-  hm += kvRow("固定 " + H_EF + " 时两侧隐含密度比", OPT.TH > OPT.TL
-    ? "<b>" + fmt(d.nRH / Math.max(d.nRL, 1e-9), 2) + "</b>（严格等 " + H_N + " 时应为 1）"
-    : "1.00（两侧等温）");
+  /* 「费米球中心不随温度改变」与「两侧隐含密度比」两行删掉：前者是文字结论（不是读数），
+     后者默认恒为 1.00；两者的内容都由下面 unit-note ① 承担（那里本来就在讲为什么钉住 E_F）。
+     冷 / 热侧各自的过渡区宽也删：核心区那一行已经两个数并排给出来了。 */
   hm += kvRow("扩散系数 " + H_D + " = <span class='m'><i>μkT</i><span class='sl'>/</span><i>q</i></span>",
     "<b>" + sci(diffD(cu.Tav) * 1e4, 2) + "</b> cm²/s");
-  hm += kvRow("相对温度梯度 " + H_GRAD, gradNow() > 0
-    ? "<b>" + fmt(gradNow() / 100, 0) + "</b> cm⁻¹ ＝ " + H_DT + "/(" + H_TAV + H_L + ")"
-    : H_DT + " = 0 ⇒ 无温度梯度 ⇒ 热扩散电流为 0");
+  /* 「相对温度梯度」那行删掉：默认态下它的 v 是「ΔT = 0 ⇒ 无温度梯度 ⇒ 热扩散电流为 0」
+     一整句话（23 字，根本不是读数格式），而同一件事核心区已经用 J_diff = 0、E_eff = 0
+     说过两遍了 —— 三遍讲同一个 0，只会让学生觉得工具坏了。 */
 
   /* 三条「图上装不下、但读图必须知道」的说明：系综约定、绝对量级、开路 / 短路。
      每一条都对应一份由数据支撑的自证（否则就是空口免责）。 */
   const JR = cu.jdr / 1e4, JD2 = cu.jdf / 1e4;                       // 换成 A/cm²
-  hm += '<div class="unit-note"><b>① 系综约定：</b>画那一对 ' + H_F0 + ' 曲线时把 ' + H_EF +
-    ' 钉住了 —— 只有这样球心才严格不动，便于把「展宽」这一件事单独看清楚。严格「浓度处处相等」的样品要求 ' +
-    H_EF + " 随温度下移（Sommerfeld：E_F(T) ≈ E_F(0)[1 − (π²/12)(T/T_F)²])，那时两条曲线下的面积才真正相等。" +
-    "当前固定 " + H_EF + " 的画法使热侧隐含密度约为冷侧的 <b>" +
+  /* 删掉 Sommerfeld 的展开式与「（见上一行）」：上一行（隐含密度比）已删，指路语会指向空处。
+     球心不动只由 n 决定这一点也一并收进来（原来占一行）。 */
+  hm += '<div class="unit-note"><b>① 系综约定：</b>画那对 ' + H_F0 + ' 曲线时把 ' + H_EF +
+    " 钉住了 —— 球心（" + H_KF + "）只由 " + H_N + " 决定、严格不动，便于单独看清「展宽」。" +
+    "严格「浓度处处相等」要求 " + H_EF + " 随温度下移（Sommerfeld）；本页热侧隐含密度约为冷侧的 <b>" +
     fmt(OPT.TH > OPT.TL ? d.nRH / Math.max(d.nRL, 1e-9) : 1, 2) +
-    "</b> 倍（见上一行）；这份密度差正是热扩散与下面那行 " + H_EFF + " 的物理来源 —— 与其在文字里否认它，不如读出来。</div>";
-  hm += '<div class="unit-note"><b>② 绝对量级：</b>模块三用对数条跨 8 个数量级，' +
-    "这里的绝对数值只用于两种效应的<b>标度对比</b>。当前 " + H_JDR + " = " + sci(JR, 1) + " A/cm²、" +
-    H_JDF + " = " + sci(JD2, 1) + " A/cm²；真实 Si 器件长期可承受的量级约 10⁴–10⁵ A/cm²" +
-    (JR > 1e5 ? "，前者高出约 <b>" + fmt(Math.log10(JR / 1e5), 1) + "</b> 个数量级（" + H_N +
-      " = 10¹⁹ cm⁻³ 与 " + H_E + " = " + OPT.E + " V/cm 同时取大所致）" : "，两者都在合理范围内") + "。</div>";
-  hm += '<div class="unit-note"><b>③ ' + H_EFF + " 的物理身份：</b>它就是<b>开路</b>样品里自动建立起来、" +
-    "恰好把热扩散电流抵消掉的那个<b>热电场</b>（净电流为零 ⇒ 塞贝克效应）。模块三把两根柱子<b>并排</b>摆在一起，" +
-    "对应的则是<b>短路</b>（外接回路）或样品里真有掺杂梯度、两种电流同时流动的情形。" +
-    "真实塞贝克系数还多一项散射的能量依赖，见本系列《塞贝克效应》交互工具。</div>";
+    "</b> 倍，这份密度差正是热扩散与 " + H_EFF + " 的物理来源。</div>";
+  hm += '<div class="unit-note"><b>② 绝对量级：</b>这里的绝对值只用于两种效应的标度对比' +
+    (JR > 1e5 ? "（当前 " + H_JDR + " 比真实器件可承受的 10⁵ A/cm² 高约 <b>" + fmt(Math.log10(JR / 1e5), 1) +
+      "</b> 个数量级）" : "（两者都在合理范围内）") + "。</div>";
+  hm += '<div class="unit-note"><b>③ ' + H_EFF + " 的物理身份：</b>它就是<b>开路</b>样品里自动建立、" +
+    "恰好抵消热扩散电流的那个热电场 —— 即塞贝克效应（模块三两根柱子并排是<b>短路</b>，两种电流并存）；" +
+    "详见本系列《塞贝克效应》工具。</div>";
 
   $("readout").innerHTML = html;
   $("readoutMore").innerHTML = hm;
@@ -2294,64 +2336,30 @@ const CHAL = [
   },
   {
     q: "加一个正向电场（<span class=\"m\">+<i>x</i></span> 方向）。费米球是<b>平移</b>还是<b>展宽</b>？球心朝哪边移动？电子带负电，为什么会朝那边？",
-    a: () => { const d = der(); return "是<b>整体平移</b>，形状一点没变（对比虚线的平衡态圆）。球心朝 <b><span class=\"m\"><span class=\"op\">−</span><i>x</i></span></b> 移动，与电场<b>相反</b>：因为 <span class=\"m\">ℏ<span class=\"op\">d</span><b><i>k</i></b><span class=\"sl\">/</span><span class=\"op\">d</span><i>t</i><span class=\"op\">=</span><span class=\"op\">−</span><i>e</i><b><i>E</i></b></span>（电子电荷 −e）。当前 " + H_DK + "/" + H_KF + " = " +
-      fmt(d.relDk, 4) + "（即 " + fmt(d.relDk * 100, 2) + "%），别看只有百分之几，红色月牙（新占据，在 " +
-      "<b>−<span class='m'><i>x</i></span> 那一侧</b>、电子堆进来的地方）与蓝色月牙（新空出，在 <b>+<span class='m'><i>x</i></span> 那一侧</b>）的不对称就是全部漂移电流的来源 —— 电流 ∝ 这个偏移量。" +
-      "<br><br>换个写法，它就是您在本系列《玻耳兹曼方程交互教学工具》里会再见到的那条式子：把平移后的分布做一次泰勒展开，" +
-      "<span class=\"m\"><i>δf</i><span class=\"op\">=</span><i>f</i><sub>0</sub>(<b><i>k</i></b><span class=\"op\">+</span>Δ<b><i>k</i></b>)<span class=\"op\">−</span><i>f</i><sub>0</sub>(<b><i>k</i></b>)<span class=\"op\">=</span><i>τv</i><sub><i>x</i></sub><i>qE</i><span class=\"op\">·</span>∂<i>f</i><sub>0</sub><span class=\"sl\">/</span>∂<i>E</i></span>" +
-      " —— 由于 ∂" + H_F0 + "/∂" + H_E + " &lt; 0，" + H_VXP + " 的一侧 " + H_DFP +
-      " &lt; 0，正是图上<b>右侧</b>那片蓝月牙。两个工具对电子采用同一套符号约定（电荷记 " +
-      "<span class=\"m\"><span class=\"op\">−</span><i>e</i></span>），差别只在「把分布画出来」还是「把 " + H_DFP +
-      " 乘上速度积分出 " + H_SIG + "」。"; }
+    a: () => { const d = der(); return "是<b>整体平移</b>，形状一点没变（对比虚线的平衡态圆）。球心朝 <b><span class=\"m\"><span class=\"op\">−</span><i>x</i></span></b> 移动，与电场<b>相反</b>：因为 <span class=\"m\">ℏ<span class=\"op\">d</span><b><i>k</i></b><span class=\"sl\">/</span><span class=\"op\">d</span><i>t</i><span class=\"op\">=</span><span class=\"op\">−</span><i>e</i><b><i>E</i></b></span>（电子电荷 −e）。当前 " + H_DK + "/" + H_KF +
+      " 只有百分之几，但红色月牙（新占据）与蓝色月牙（新空出）<b>并不对称</b>：这正是全部漂移电流的来源 —— 电流 ∝ 这个偏移量。"; }
   },
   {
     q: "选「温度梯度」预设。费米球的<b>中心</b>动了吗？冷侧和热侧的过渡区宽度差多少？为什么温度梯度不会移动球心？",
-    a: () => { const d = der();
-      const wr = d.wOK ? fmt(d.wwH / d.wwL, 2) : "失去定义";
-      const tr = fmt(OPT.TH / Math.max(OPT.TL, 1), 2);
-      return "中心<b>一动没动</b>：" + H_KF + " 只由载流子浓度决定（" + H_KF + " = " + H_KFN + "），而温度梯度不改变浓度，只改变各处电子的<b>能量分布</b>。当前冷侧过渡区宽度 " +
-      fmt(Math.max(0, d.k10L - d.k90L), 3) + " " + H_KF + "、热侧 " + fmt(Math.max(0, d.k10H - d.k90H), 3) +
-      " " + H_KF + "（宽窄之比 <b>" + wr + "</b>，而对应的温度之比是 " + tr + "）。注意这两者<b>只在 " + H_TTF +
-      " ≪ 1 时才近似相等</b>：宽度是 <span class=\"m\">√(1<span class=\"op\">+</span>2.197<i>t</i>)<span class=\"op\">−</span>√(1<span class=\"op\">−</span>2.197<i>t</i>)</span>（" +
-      "<span class=\"m\"><i>t</i><span class=\"op\">=</span>" + H_TTF + "</span>），小 " + H_TTF +
-      " 时才线性；" + (d.wOK ? "本预设 " + H_TH + "/" + H_TF + " = " + fmt(d.wH, 2) + " 已经明显偏离线性（差约 " +
-      fmt(Math.abs((d.wwH / Math.max(d.wwL, 1e-9) - OPT.TH / Math.max(OPT.TL, 1)) / (OPT.TH / Math.max(OPT.TL, 1)) * 100), 0) +
-      "%），左侧面板底下写的也是这个实测比。" : "本预设的热侧 " + H_F + " = 0.9 等值线已经消失，" +
-      "宽度比本身不再有定义 —— 这正是图上只标了一个小红圈记号的情形。") + "<br><br>" +
-      "<b>一个必须说破的前提：</b>这组曲线是把 " + H_EF + " <b>钉住</b>画出来的（因此球心才严格不动）。严格「各处浓度相等」的样品要求 " + H_EF +
-      " 随温度下移（Sommerfeld 修正），那时两条曲线下的面积才真正相等。把曲线下的态数老老实实积出来，" +
-      "<span class=\"m\"><i>n</i><span class=\"op\">∝</span><span class=\"op\">∫</span><i>u</i><sup>2</sup><i>f</i><sub>0</sub><span class=\"op\">d</span><i>u</i></span> 给出热侧隐含密度约为冷侧的 <b>" +
-      fmt(OPT.TH > OPT.TL ? d.nRH / Math.max(d.nRL, 1e-9) : 1, 2) + " 倍</b>（读数面板有实时数值）—— " +
-      "这份多出来的密度恰恰不是画错了，而是热扩散电流的来源：热侧的台阶被“抹平”得更宽 ⇒ 高能电子更多 ⇒ 它们向冷侧扩散，这就是<b>扩散电流</b>（温差电效应的微观起源）。<br><br>顺带解释一个“消失”现象：若把 " + H_TH + " 拉得足够高（本预设 <span class=\"m\"><i>T</i><sub>H</sub><span class=\"sl\">/</span><i>T</i><sub>F</sub><span class=\"op\">=</span>" + fmt(d.wH, 2) + "</span>），中心处的占据概率只剩 <span class=\"m\"><i>f</i>(0)<span class=\"op\">=</span>" + fmt(f0(0, OPT.TH), 2) + "</span>，连 0.9 都不到 —— 此时<b>红虚线（" + H_F + " = 0.9 等值线）在数学上已不存在</b>，图中只标了一个小红圈记号。这不是画丢了，而是热侧分布已抹平到“经典极限”，0.9/0.1 这对等值线不再能定义过渡区。"; }
+    a: () => { return "中心<b>一动没动</b>：" + H_KF + " 只由载流子浓度决定（" + H_KF + " = " + H_KFN +
+      "），而温度梯度不改变浓度，只改变各处电子的<b>能量分布</b>。两侧过渡区宽度之比可在读数面板直接读；它近似等于温度之比这件事，只在 " + H_TTF +
+      " 很小时才成立 —— 宽度 ∝ <span class=\"m\">√(1<span class=\"op\">+</span>2.197<i>t</i>)<span class=\"op\">−</span>√(1<span class=\"op\">−</span>2.197<i>t</i>)</span>，" +
+      "t 小的时候才近似线性。热侧的台阶被“抹平”得更宽 ⇒ 高能电子更多 ⇒ 它们向冷侧扩散，这就是<b>扩散电流</b>（温差电效应的微观起源）。"; }
   },
   {
     q: "把漂移的两个式子放在一起看：<span class=\"m\">Δ<i>k</i><span class=\"op\">=</span><i>eEτ</i><span class=\"sl\">/</span>ℏ</span> 与 <span class=\"m\"><i>v</i><sub>d</sub><span class=\"op\">=</span><i>μE</i><span class=\"op\">=</span><i>eτE</i><span class=\"sl\">/</span><i>m</i><span class=\"op\">*</span></span>。为什么前一条里<b>没有</b> <span class=\"m\"><i>m</i><span class=\"op\">*</span></span>，后两条却<b>反比</b>于它？再想两个极端：<span class=\"m\"><i>τ</i><span class=\"op\">→</span>0</span>（散射极强）会怎样？把材料从 Si（<span class=\"m\">0.26<i>m</i><sub>0</sub></span>）换成 GaAs（<span class=\"m\">0.067<i>m</i><sub>0</sub></span>）又会怎样？",
     a: () => {
       const d = der();
-      /* 换材料重算一遍：k_F 只由 n 决定，所以 T_F = ℏ²k_F²/(2m*k_B) 单纯 ∝ 1/m* */
-      const tFof = msRel => HBAR * HBAR * kF() * kF() / (2 * msRel * M_0) / K_B;
-      const tSi = tFof(M_REL), tGa = tFof(0.067), fg = M_REL / 0.067;
-      const rSi = OPT.TH / tSi, rGa = OPT.TH / tGa;
-      return "第一条是<b>冲量</b>式的直接结果：<span class=\"m\">ℏ<span class=\"op\">d</span><i>k</i><span class=\"sl\">/</span><span class=\"op\">d</span><i>t</i><span class=\"op\">=</span><span class=\"op\">−</span><i>e</i><i>E</i></span> —— 电场在两次散射之间的 <span class=\"m\"><i>τ</i></span> 时间里给出的动量就是 <span class=\"m\"><i>eEτ</i></span>，除以 ℏ 得到偏移，全程用不上惯性（当前 " + H_DK + " = " +
-      sci(d.dkInf / 100, 2) + " cm⁻¹，" + H_DK + "/" + H_KF + " = " + fmt(d.relDk, 4) +
-      "）。第二条要把 <span class=\"m\"><i>k</i></span> 换算成<b>速度</b>，惯性这才登场：<span class=\"m\"><i>v</i><span class=\"op\">=</span>ℏ<i>k</i><span class=\"sl\">/</span><i>m</i><span class=\"op\">*</span></span> ⇒ <span class=\"m\"><i>v</i><sub>d</sub><span class=\"op\">=</span>ℏΔ<i>k</i><span class=\"sl\">/</span><i>m</i><span class=\"op\">*</span><span class=\"op\">=</span><i>eτE</i><span class=\"sl\">/</span><i>m</i><span class=\"op\">*</span></span>，于是 <span class=\"m\"><i>μ</i><span class=\"op\">=</span><i>eτ</i><span class=\"sl\">/</span><i>m</i><span class=\"op\">*</span></span>。同一个偏移量，轻的电子跑得更快（本工具固定 Si：<span class=\"m\"><i>m</i><span class=\"op\">*</span><span class=\"op\">=</span>" + fmt(M_REL, 3) +
-      "<i>m</i><sub>0</sub></span> ⇒ <span class=\"m\"><i>μ</i></span> = " + fmt(d.mu * 1e4, 0) + " cm²/V·s，v_d = " + sci(d.vd * 100, 2) + " cm/s）。<br><br>" +
-      "换 GaAs 的三件事：<b>①</b> " + H_DK + " <b>一点不变</b>（冲量式里没有 " + H_MSTAR + "）；<b>②</b> " + H_MU + " 与 " + H_VD + " 都放大 " + fmt(fg, 1) +
-      " 倍；<b>③</b> 更要紧的是 <span class=\"m\"><i>T</i><sub>F</sub><span class=\"op\">=</span>ℏ<sup>2</sup><i>k</i><sub>F</sub><sup>2</sup><span class=\"sl\">/</span>2<i>m</i><span class=\"op\">*</span><i>k</i><sub>B</sub></span> 也同步放大 " + fmt(fg, 1) +
-      " 倍 —— Si 的 " + fmt(tSi, 0) + " K 变成 GaAs 的 " + fmt(tGa, 0) +
-      " K，于是同样的热侧温度 <span class=\"m\"><i>T</i><sub>H</sub><span class=\"op\">=</span>" + OPT.TH + " K</span>，比值 " + H_TTF + " 从 " + fmt(rSi, 2) +
-      " 降到 " + fmt(rGa, 2) + "，台阶被“抹平”的程度明显更轻。结论：<b>决定展宽的不是温度本身，而是 " + H_TTF + "</b>，而 <span class=\"m\"><i>T</i><sub>F</sub><span class=\"op\">∝</span>1<span class=\"sl\">/</span><i>m</i><span class=\"op\">*</span></span>。<br><br>" +
-      "最后是 <span class=\"m\"><i>τ</i><span class=\"op\">→</span>0</span> 的思想实验：电子刚被电场加速一点就被散射打乱，偏移量被压回 0 ⇒ " + H_DK + " → 0、<b>漂移电流消失</b>；这就是“迁移率高的材料散射弱”这句话的另一面 —— <span class=\"m\"><i>μ</i><span class=\"op\">=</span><i>eτ</i><span class=\"sl\">/</span><i>m</i><span class=\"op\">*</span></span> 大，前提是 " + H_TAU + " 大。"; }
+      return "第一条是<b>冲量</b>式的直接结果：<span class=\"m\">ℏ<span class=\"op\">d</span><i>k</i><span class=\"sl\">/</span><span class=\"op\">d</span><i>t</i><span class=\"op\">=</span><span class=\"op\">−</span><i>e</i><i>E</i></span> —— 电场在两次散射之间的 <span class=\"m\"><i>τ</i></span> 时间里给出的动量就是 <span class=\"m\"><i>eEτ</i></span>，除以 ℏ 得到偏移，<b>全程用不上惯性</b>。" +
+      "第二条要把 <span class=\"m\"><i>k</i></span> 换算成<b>速度</b>，惯性这才登场：<span class=\"m\"><i>v</i><span class=\"op\">=</span>ℏ<i>k</i><span class=\"sl\">/</span><i>m</i><span class=\"op\">*</span></span> ⇒ <span class=\"m\"><i>μ</i><span class=\"op\">=</span><i>eτ</i><span class=\"sl\">/</span><i>m</i><span class=\"op\">*</span></span>。同一个偏移量，轻的电子跑得更快（本工具固定 Si：<span class=\"m\"><i>m</i><span class=\"op\">*</span><span class=\"op\">=</span>" + fmt(M_REL, 3) +
+      "<i>m</i><sub>0</sub></span> ⇒ <span class=\"m\"><i>μ</i></span> = " + fmt(d.mu * 1e4, 0) + " cm²/V·s）。换成更轻的 GaAs：" + H_DK +
+      " 一点不变，但 <span class=\"m\"><i>m</i><span class=\"op\">*</span></span> 更小 ⇒ " + H_MU + " 放大约 <b>" + fmt(M_REL / 0.067, 1) + "</b> 倍。<br><br>" +
+      "最后是 <span class=\"m\"><i>τ</i><span class=\"op\">→</span>0</span> 的思想实验：电子刚被电场加速一点就被散射打乱，偏移量被压回 0 ⇒ " + H_DK + " → 0、<b>漂移电流消失</b>；这就是“迁移率高的材料散射弱”的另一面 —— <span class=\"m\"><i>μ</i><span class=\"op\">=</span><i>eτ</i><span class=\"sl\">/</span><i>m</i><span class=\"op\">*</span></span> 大，前提是 " + H_TAU + " 大。"; }
   },
   {
     q: "模块三最后一行给出<b>等效电场</b> <span class=\"m\"><i>E</i><sub>eff</sub></span>：热扩散电流折合多大电场。把它和当前电场 <span class=\"m\"><i>E</i></span> 比一比，再把温差拉到最大 —— 在本工具的量程里，什么时候温度梯度才真能与电场<b>势均力敌</b>？",
-    a: () => { const d = der(), cu = currents(); const eEff = eEffNow();
-      const needDT = OPT.E > 0 ? OPT.E * 100 * (((OPT.TL + OPT.TH) / 2) * lenNow()) / (K_B * ((OPT.TL + OPT.TH) / 2) / QE) : 0;
-      return "把 " + H_JDFF + " 与 " + H_JDRF + " 相除，" + H_MU + " 和 " + H_N + " 会整整齐齐约掉：比值只取决于 <span class=\"m\"><i>E</i><span class=\"sl\">/</span><i>E</i><sub>eff</sub></span>，而 " + H_EEFF + " —— 这不过是爱因斯坦关系 <span class=\"m\"><i>D</i><span class=\"sl\">/</span><i>μ</i><span class=\"op\">=</span><i>kT</i><span class=\"sl\">/</span><i>q</i></span> 换个说法。<br><br>当前 <span class=\"m\"><i>E</i><sub>eff</sub> = " + fmt(eEff / 100, 2) +
-      " V/cm</span>（" + H_DT + " = " + (OPT.TH - OPT.TL) + " K 分摊在 " + L_UM + " μm 上），而电场是 " + OPT.E +
-      " V/cm —— 差 <b>" + (OPT.E > 0 ? fmt(OPT.E * 100 / Math.max(eEff, 1e-30), 0) : "∞") + " 倍</b>。要在 <span class=\"m\"><i>L</i><span class=\"op\">=</span>" + L_UM +
-      " μm</span> 上用温差顶上现在的电场，需要 ΔT ≈ <b>" + (OPT.E > 0 ? sci(needDT, 1) + " K" : "0 K") +
-      "</b> —— 所以在<b>这个尺度</b>上几乎做不到势均力敌：室温附近的漂移主导，除非把电场降到几 V/cm 量级（如今这条 " + H_E + " 滑块的步长 10 V/cm 已经嫌粗了）。<br><br><b>顺带把口径说死：</b>上面两根柱子并排共存，对应的是<b>短路</b>情形（外接回路，或样品里真有掺杂梯度）；若均匀样品是<b>开路</b>的，这个热电场会自动建立到正好等于 " + H_EFF + "，把热扩散电流完全抵消 ⇒ <b>净电流为零</b>、两端留下一个塞贝克电压 —— 那时两种电流不是并存，而是相抵。<br><br>这不是“哪个效应更强”的普适结论，而是一个<b>尺度问题</b>：" + H_EEFF_PROP + "，把冷热端拉到微米量级（芯片里的热斑、探针尖）时同样几开尔的温差就能顶上一个可观的电场 —— 这正是<b>热电／热电势效应</b>的物理尺码。"; }
+    a: () => { return "把 " + H_JDFF + " 与 " + H_JDRF + " 相除，" + H_MU + " 和 " + H_N + " 会整整齐齐约掉：比值只取决于 <span class=\"m\"><i>E</i><span class=\"sl\">/</span><i>E</i><sub>eff</sub></span>，而 " + H_EEFF + " —— 这不过是爱因斯坦关系 <span class=\"m\"><i>D</i><span class=\"sl\">/</span><i>μ</i><span class=\"op\">=</span><i>kT</i><span class=\"sl\">/</span><i>q</i></span> 换个说法。<br><br>本工具量程里 " + H_EFF + " 远小于 " + H_E +
+      "（两者读数面板都有实时值），所以温差几乎顶不过电场。但这不是“哪个效应更强”的普适结论，而是一个<b>尺度问题</b>：" + H_EEFF_PROP + "，把冷热端拉到微米量级（芯片里的热斑、探针尖）时，同样几开尔的温差就能顶上一个可观的电场 —— 这正是<b>热电／热电势效应</b>的物理尺码。<br><br>开路与短路的口径见「更多读数」注③。"; }
   }
 ];
 
@@ -2373,12 +2381,13 @@ function buildChal() {
     d.querySelector(".btn-row button").onclick = e => {
       e.stopPropagation();
       ANS_SHOWN[i] = ans.classList.toggle("show");
-      if (ANS_SHOWN[i]) ans.innerHTML = CHAL[i].a();
+      if (ANS_SHOWN[i]) ans.innerHTML = ansOf(CHAL[i]);
     };
   });
 }
+const ansOf = c => (typeof c.a === "function" ? c.a() : c.a);
 function refreshAnswers() {
-  ANS_EL.forEach((el, i) => { if (ANS_SHOWN[i]) el.innerHTML = CHAL[i].a(); });
+  ANS_EL.forEach((el, i) => { if (ANS_SHOWN[i]) el.innerHTML = ansOf(CHAL[i]); });
 }
 
 /* ---------------- 9. 交互绑定 ---------------- */

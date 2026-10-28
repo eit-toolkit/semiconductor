@@ -43,6 +43,18 @@
   .chart-wrap { position: relative; }
   .hint { font-size: 12px; color: var(--text-sub); margin-top: 6px; line-height: 1.6; }
   .sec-title { font-size: 13.5px; font-weight: 700; margin: 2px 0 6px; }
+  .unit-note { font-size: 11.5px; color: var(--text-sub); line-height: 1.55; margin-top: 6px; }
+  /* ---- 折叠区（.fold）：读数的「更多」专用 ----
+     独立组件，类名一律 .fold：不许复用 .chal-head / .chev，
+     否则会被挑战区回归脚本按「挑战题」计数。 */
+  .fold { margin-top: 7px; border-top: 1px dotted var(--border); padding-top: 5px; }
+  .fold-head { display: flex; align-items: center; gap: 6px; cursor: pointer;
+    font-size: 12px; font-weight: 600; color: var(--text-sub); user-select: none; flex-wrap: wrap; }
+  .fold-head:hover { color: var(--blue); }
+  .fold-head .chev { font-size: 11px; transition: transform .15s; display: inline-block; }
+  .fold.open .fold-head .chev { transform: rotate(90deg); }
+  .fold-body { display: none; margin-top: 4px; }
+  .fold.open .fold-body { display: block; }
   /* 模块编号徽标：只有教学内容模块才带编号；控制面板等辅助面板不是模块，不加 */
   .sec-title .mtag {
     display: inline-block; background: var(--blue); color: #fff;
@@ -172,7 +184,7 @@
       <div class="sec-title"><span class="mtag">模块一</span>三维轨道视图（电子云形状示意）</div>
       <div class="chart-wrap"><canvas id="orb" data-h="440" tabindex="0"></canvas></div>
       <div class="legend" id="legend"></div>
-      <div class="hint">拖动旋转 · 滚轮缩放 · 右键拖动平移 · 悬停轨道看读数 · 方向键旋转 · +/− 缩放　<b style="color:#6b7a8c">（为看清形状，除球形轨道外各轨道沿自身轴向外错开陈列，细点线的交点即原子核位置）</b></div>
+      <div class="hint">拖动旋转 · 滚轮缩放 · 右键拖动平移 · 悬停轨道看读数　<b style="color:#6b7a8c">（为看清形状，除球形轨道外各轨道沿自身轴向外错开陈列，细点线的交点即原子核位置）</b></div>
       <div class="mini" style="margin-top:6px;">电子云为示意：轮廓<b>半径按 |<span class="m"><i>ψ</i></span>|<sup>2</sup>（概率密度）画</b>，故每个 sp<sup>3</sup> 的背面小瓣轴向长度只有大瓣的 [(1−<span class="m"><i>λ</i></span>)/(1+<span class="m"><i>λ</i></span>)]<sup>2</sup> ≈ <b>7%</b>（<span class="m"><i>λ</i></span> = a/b = 0.577），肉眼几乎不可见。图中已把小瓣夸大到大瓣的约 40%，并画成矮胖形状，以便看清「一个大瓣 + 一个反号小瓣」的结构。</div>
     </div>
 
@@ -182,7 +194,7 @@
     </div>
 
     <div class="card">
-      <div class="sec-title"><span class="mtag">模块三</span>能量权衡图（每原子，参考态 = 基态原子；<b style="color:#1976d2">净额 = −内聚能是记账恒等，独立核见读数面板</b>）</div>
+      <div class="sec-title"><span class="mtag">模块三</span>能量权衡图（每原子，参考态 = 基态原子；<b style="color:#1976d2">净额 = −内聚能是记账恒等，口径见读数面板下方注释</b>）</div>
       <div class="chart-wrap"><canvas id="bal" data-h="180" tabindex="0"></canvas></div>
     </div>
   </div>
@@ -195,7 +207,6 @@
       <div class="ctrl">
         <div class="ctrl-head"><span>材料</span></div>
         <div class="btn-row" id="matBtns" style="margin-top:0;"></div>
-        <div class="kv" id="matInfo" style="margin-top:8px;"></div>
         <div class="mini" style="margin-top:6px;">C（金刚石）、Si、Ge 同为金刚石结构、同为 sp<sup>3</sup> 杂化，差别只在能级高低、键长与键强。</div>
       </div>
 
@@ -209,6 +220,16 @@
         <div class="ctrl-head"><span>显示项目：电子云不透明度</span><span class="val" id="aVal">0.85</span></div>
         <input type="range" id="aSlider" min="40" max="95" value="85">
       </div>
+    </div>
+
+    <div class="card">
+      <div class="sec-title">读数面板</div>
+      <div class="kv" id="readout"></div>
+      <div class="fold" id="foldRo">
+        <div class="fold-head"><span class="chev">▶</span><span>更多读数（能级与能量账本）</span></div>
+        <div class="fold-body"><div class="kv" id="readoutMore"></div></div>
+      </div>
+      <div class="unit-note" id="roNote"></div>
     </div>
 
     <div class="card">
@@ -316,7 +337,7 @@ var I18N = {
   " 第 ④ 栏为能带，零点 = 价带顶，与左轴不是同一根尺子": " In column ④ the bands are drawn with their zero at the valence-band top — not the same ruler as the left axis",
   "模块三": "Module 3",
   "能量权衡图（每原子，参考态 = 基态原子；": "Energy trade-off diagram (per atom, reference = the free ground-state atom; ",
-  "净额 = −内聚能是记账恒等，独立核见读数面板": " the net = −cohesive energy is a bookkeeping identity; the independent check is in the readouts",
+  "净额 = −内聚能是记账恒等，口径见读数面板下方注释": " the net = −cohesive energy is a bookkeeping identity; the independent check is in the readouts",
   /* ---- 电子云说明 ---- */
   "电子云为示意：轮廓": "The electron cloud is schematic: the contour ",
   "半径按 |": " radius is drawn from |",
@@ -541,6 +562,61 @@ var I18N = {
   " 个 ": " ",
   "③ 一个 σ 键": "③ one σ bond",
   "每原子 2 个键": "2 bonds per atom",
+  "拖动旋转 · 滚轮缩放 · 右键拖动平移 · 悬停轨道看读数　": "Drag to rotate · scroll to zoom · right-drag to pan · hover an orbital for readouts　",
+  "。激发能取的是": ". The promotion energy used here is the ",
+  "（读数面板「激发/杂化代价」一行），不是能级图里那个更大的单电子轨道能差 ": " (the “promotion/hybridization cost” row in the readout panel), not the larger single-electron orbital energy difference ",
+  " —— 激发后剩下的电子库仑排斥下降、四个电子平行自旋还有交换稳定化，这部分「回吐」让实测值明显更小（原因就写在那一行的小字里）。切到右半幅「② 杂化后」就能看到：4 个 sp": " — after the promotion the Coulomb repulsion between the remaining electrons drops and the four parallel spins add exchange stabilization, so this “payback” makes the measured value noticeably smaller (the reason is printed in the small type on that row). Switch to the right panel “② after hybridization” and you will see: the four sp",
+  "，每个都是「一个大瓣 + 一个背面的小瓣」，大瓣指向正四面体的四个顶点。朝向也跟着变：三个 np 的瓣轴从 ": ", each of which is “one large lobe plus a small lobe at the back”, with the large lobe pointing at one of the four vertices of a regular tetrahedron. The orientation changes along with it: the lobe axes of the three np orbitals move away from the ",
+  " 轴转到四个": " axes and onto the four ",
+  "体对角线": "body diagonals",
+  "方向，两两夹角由 90° 变为 109°28′（几何来源见挑战三）。形状由 s/p 振幅比 ": " directions, and the pairwise angle changes from 90° to 109°28′ (for the geometric origin see Challenge 3). The shape is set by the s/p amplitude ratio ",
+  " 决定：": ": ",
+  " 时才是「大瓣 + 背面小瓣」（sp": " does one obtain “large lobe + small lobe at the back” (sp",
+  " → ∞ 又变回球 —— 拖": " → ∞ it turns back into a sphere — drag the ",
+  "杂化进度": "hybridization progress",
+  "滑块看它怎么长出来。": " slider to watch it grow out.",
+  "小瓣来自 s 与 p 的相消叠加": "The small lobe comes from destructive superposition of s and p",
+  " 中 s 部分处处同号、p 部分在背面变号，于是正面相加变长、背面相减变短。图中把小瓣画成浅色虚线经线，表示它与大瓣": ", the s part has the same sign everywhere while the p part changes sign at the back, so the front adds up and lengthens while the back subtracts and shortens. In the figure the small lobe is drawn with light dashed meridians to show that it has ",
+  " —— 这也是共价键「头碰头」重叠时只有大瓣能有效成键的原因。真实 sp": " — which is also why only the large lobe can bond effectively when a covalent bond overlaps head-on. In a real sp",
+  " 的小瓣只有大瓣的约 ": " the small lobe is only about ",
+  "，图上已": " of the large lobe, but the figure has ",
+  " 才看得见（示意图的常规画法，不是真实比例）。四个轨道的 s 成分都是 25%、p 成分 75% —— 等价性是线性组合的直接结果。": " so that it can be seen at all (the usual way of drawing a schematic; it is not the true ratio). All four orbitals are 25% s and 75% p — their equivalence is a direct consequence of the linear combination.",
+  "（= 109.47°，工程上常直接写 109.5°）。几何来源：四个方向两两点积都是 ": " (= 109.47°, often written simply as 109.5° in engineering). Where it comes from: the dot product of any two of the four directions is ",
+  "，故夹角 = arccos(−1/3) = ": ", so the angle is arccos(−1/3) = ",
+  " —— 这正是正四面体中心到两顶点连线的夹角，也是金刚石与甲烷的标准键角。（一般规律：4 个单位向量之和为零时，两两夹角必然是 arccos(−1/3)；sp": " — this is exactly the angle between the two lines from the center of a regular tetrahedron to two of its vertices, and it is the standard bond angle of diamond and methane. (General rule: when four unit vectors add up to zero, the pairwise angle is necessarily arccos(−1/3); for sp",
+  " 那边三个向量之和为零，得到的就是 arccos(−1/2) = 120°。）左半幅里三个 np 轨道沿 ": " three vectors add up to zero instead, and one gets arccos(−1/2) = 120°.) In the left panel the three np orbitals lie along the ",
+  " —— 等价性直接决定了键角。": " — the equivalence dictates the bond angle.",
+  "的（Si 需 +4.13 eV/原子，NIST 光谱 3s": ": silicon needs +4.13 eV per atom (NIST spectrum 3s",
+  "），成键则释放能量，净变化": "), while bonding releases energy, and the net change ",
+  "正好等于实验内聚能的负值": "is exactly minus the experimental cohesive energy",
+  " —— 这就是“先付出后收益”（三个材料的账本逐项对照：读数面板切到 C / Ge 即可）。关键在于：": " — that is what “pay first, profit later” means (to compare the three materials item by item, switch to C / Ge in the readout panel). The key point is that ",
+  "不杂化只能成 2 个键，杂化后能成 4 个键": "without hybridization only 2 bonds can form, whereas with hybridization 4 can",
+  "，多出的成键能远大于激发代价。Ge 的激发代价最大（3d": ", and the extra bonding energy far exceeds the promotion cost. Germanium pays the largest promotion cost (poor 3d",
+  " 屏蔽差 ⇒ 4s 被压低），但成键收益仍能覆盖，所以同样形成金刚石结构。": " screening pushes 4s down), yet the bonding gain still covers it, so it too forms the diamond structure.",
+  ")，那么净额 ≡ −": "), so the net is identically −",
+  "，无论物理对不对都成立；真正的独立核对是读数面板里的 ": " no matter whether the physics is right; the real independent check is the ",
+  " —— 键能与内聚能是两套互不相关的实验数据，吻合到 1%~3% 才是真的自检。": " in the readout panel — the bond energy and the cohesive energy are two independent sets of experimental data, and agreement to 1%–3% is a genuine self-check.",
+  " —— C/Si/Ge 的 s–p 差属同一量级（数值见读数面板），若相差几十 eV，组合出的轨道仍几乎就是纯 s 与纯 p；② ": " — the s–p separations of C/Si/Ge are of the same order (values in the readout panel); if they differed by tens of eV the resulting orbitals would still be almost pure s and pure p. ② ",
+  " —— ns 与 np 径向分布重叠大、角向正交；跨壳层（如 3s 与 2p）径向节点数不同、空间重合差，且能量相差上百 eV，无法有效混合；教材里写 sp": " — ns and np overlap strongly in their radial distributions and are orthogonal in angle; across shells (say 3s with 2p) the number of radial nodes differs, the spatial overlap is poor and the energies differ by hundreds of eV, so no effective mixing is possible; when a textbook writes sp",
+  " —— 四面体配位让 4 个 sp": " — tetrahedral coordination lets all four sp",
+  " 键，收益足以覆盖代价。还要注意：": " orbitals overlap head-on with their neighbors to form σ bonds, and the gain is enough to cover the cost. One more caveat: ",
+  "杂化是一种表象变换": "Hybridization is a change of representation",
+  "更多读数（能级与能量账本）": "More readouts (levels and the energy budget)",
+  "材料与结构": "Material and structure",
+  "　金刚石结构（sp": "　diamond structure (sp",
+  "）　价层 ": ")　valence shell ",
+  "（4 个价电子）": " (4 valence electrons)",
+  " / 键角": " / bond angle",
+  "口径：s–p 能级差是": "Conventions: the s–p level difference is ",
+  "单电子轨道能差，不是光谱激发能": "a single-electron orbital energy difference, not a spectroscopic excitation energy",
+  "；净额 = −内聚能是": "; the net balance = −cohesive energy is ",
+  "记账恒等，不是独立验证": "a bookkeeping identity, not an independent check",
+  "；单键键能由该恒等式": "; the single-bond energy is ",
+  "反推": "back-derived",
+  "，差 ": ", a difference of ",
+  " %），不是独立测量值。激发代价 ": " %), not an independently measured value. The promotion cost ",
+  " eV 小于 ΔE": " eV is below ΔE",
+  " eV，是因为激发后 4 个电子平行自旋、库仑排斥下降（多电子光谱值）。": " eV because after promotion the four electrons have parallel spins and the Coulomb repulsion drops (a many-electron spectroscopic value).",
 };
 
 /* 注入点②：画布直写字符串。老工具直接调 g.fillText()（描边文字走 g.strokeText()），这里在原型上兜住。
@@ -1946,28 +2022,31 @@ function kv(rows) {
 function updatePanels() {
   const m = MATS[OPT.mat], d = DERIVED[OPT.mat];
   const n = m.n;
-  $("matInfo").innerHTML = kv([
-    ["#", "材料与几何"],
-    ["材料", m.lab + "（" + m.full + "，<span class='m'><i>Z</i></span> = " + m.Z + "）"],
-    ["电子排布", m.cfg],
-    ["价层", m.val + "　（4 个价电子）"],
-    ["晶体结构", "金刚石结构（sp³）"],
+  /* 材料与几何 7 → 3 行：全壳层电子排布与杂化无关（杂化只看价层）⇒ 删；
+     材料与晶体结构、键长与键角各合并；键角原来把同一个角写了三遍
+     （109°28′ = arccos(−1/3) = 109.47°）⇒ 压成一遍，与 sp² 的 arccos(−1/2) 同一写法。 */
+  $("readout").innerHTML = kv([
+    ["材料与结构", "<b>" + m.lab + "</b>　金刚石结构（sp³）　价层 <b>" + m.val + "</b>（4 个价电子）"],
     ["晶格常数 <span class='m'><i>a</i></span>", m.a.toFixed(3) + " Å"],
-    ["键长 <span class='m'><i>d</i></span>", m.bond.toFixed(3) + " Å　（= √3 a / 4）"],
-    ["键角", "109°28′　<i style=\"color:#8b97a6;font-style:normal\">= arccos(−1/3) = 109.47°</i>"],
-    ["#", "能级与能量账本"],
-    ["带隙 <span class='m'><i>E</i><sub>g</sub></span>", m.Eg.toFixed(2) + " eV（300 K）"],
-    ["轨道能 <span class='m'><i>E</i><sub></span>" + n + "s</sub>", m.Es.toFixed(2) + " eV"],
-    ["轨道能 <span class='m'><i>E</i><sub></span>" + n + "p</sub>", m.Ep.toFixed(2) + " eV"],
-    ["s–p 能级差 <span class='m'>Δ<i>E</i><sub>sp</sub></span>", d.dEsp.toFixed(2) + " eV　<i style=\"color:#8b97a6;font-style:normal\">单电子轨道能差，<b>不是</b>光谱激发能</i>"],
-    ["杂化轨道能 <span class='m'><i>E</i><sub>sp³</sub></span>", d.Esp3.toFixed(2) + " eV　<i style=\"color:#8b97a6;font-style:normal\">= (E<sub>" + n + "s</sub>+3E<sub>" + n + "p</sub>)/4</i>"],
-    ["激发/杂化代价", "+" + m.Epro.toFixed(2) + " eV　<i style=\"color:#8b97a6;font-style:normal\">多电子光谱值 " + n + "s²" + n + "p² → " + n + "s¹" + n + "p³；激发后 4 个电子平行自旋、库仑排斥下降，故小于 <span class='m'>Δ<i>E</i><sub>sp</sub></span></i>"],
-    ["成键收益", "−" + (m.Ecoh + m.Epro).toFixed(2) + " eV"],
-    ["净能量变化", "<b style=\"color:#1976d2\">−" + m.Ecoh.toFixed(2) + " eV</b>　<i style=\"color:#8b97a6;font-style:normal\">= −内聚能（记账恒等，不是独立验证）</i>"],
-    ["单键键能 / 内聚能", m.Dbond.toFixed(2) + " eV/键　·　" + m.Ecoh.toFixed(2) + " eV/原子　<i style=\"color:#8b97a6;font-style:normal\">独立核对：每原子 2 个键 → <span class='m'>2<i>D</i><span class='op'>=</span></span> " +
-      (2 * m.Dbond).toFixed(2) + " ≈ <span class='m'><i>E</i><sub>coh</sub></span> " + m.Ecoh.toFixed(2) + "（差 " +
-      ((2 * m.Dbond - m.Ecoh) / m.Ecoh * 100 > 0 ? "+" : "") + ((2 * m.Dbond - m.Ecoh) / m.Ecoh * 100).toFixed(1) + "%）</i>"]
+    ["键长 <span class='m'><i>d</i></span> / 键角", "<b>" + m.bond.toFixed(3) + "</b> Å（= √3 a / 4）　/　109.47°（= arccos(−1/3)）"]
   ]);
+  /* 能级与能量账本 9 行一行不留地全留 —— 它们就是模块三那张柱状图的数据。
+     三条口径声明与激发代价的物理解释搬到 roNote，读数行只留纯数值。 */
+  $("readoutMore").innerHTML = kv([
+    ["带隙 <span class='m'><i>E</i><sub>g</sub></span>", m.Eg.toFixed(2) + " eV（300 K）"],
+    ["轨道能 <span class='m'><i>E</i><sub>" + n + "s</sub></span>", m.Es.toFixed(2) + " eV"],
+    ["轨道能 <span class='m'><i>E</i><sub>" + n + "p</sub></span>", m.Ep.toFixed(2) + " eV"],
+    ["s–p 能级差 <span class='m'>Δ<i>E</i><sub>sp</sub></span>", d.dEsp.toFixed(2) + " eV"],
+    ["杂化轨道能 <span class='m'><i>E</i><sub>sp³</sub></span>", d.Esp3.toFixed(2) + " eV　<span class=\"m\" style=\"color:#8b97a6\"><span class=\"op\">=</span>(<i>E</i><sub>" + n + "s</sub><span class=\"op\">+</span>3<i>E</i><sub>" + n + "p</sub>)/4</span>"],
+    ["激发/杂化代价", "+" + m.Epro.toFixed(2) + " eV"],
+    ["成键收益", "−" + (m.Ecoh + m.Epro).toFixed(2) + " eV"],
+    ["净能量变化", "<b style=\"color:#1976d2\">−" + m.Ecoh.toFixed(2) + " eV</b>"],
+    ["单键键能 / 内聚能", "<b>" + m.Dbond.toFixed(2) + "</b> eV/键　·　<b>" + m.Ecoh.toFixed(2) + "</b> eV/原子"]
+  ]);
+  $("roNote").innerHTML = "口径：s–p 能级差是<b>单电子轨道能差，不是光谱激发能</b>；净额 = −内聚能是<b>记账恒等，不是独立验证</b>；单键键能由该恒等式<b>反推</b>（2D = <b>" +
+    (2 * m.Dbond).toFixed(2) + "</b> vs E<sub>coh</sub> <b>" + m.Ecoh.toFixed(2) + "</b>，差 <b>" +
+    ((2 * m.Dbond - m.Ecoh) / m.Ecoh * 100 > 0 ? "+" : "") + ((2 * m.Dbond - m.Ecoh) / m.Ecoh * 100).toFixed(1) + "</b> %），不是独立测量值。激发代价 <b>" +
+    m.Epro.toFixed(2) + "</b> eV 小于 ΔE<sub>sp</sub> <b>" + d.dEsp.toFixed(2) + "</b> eV，是因为激发后 4 个电子平行自旋、库仑排斥下降（多电子光谱值）。";
 
   $("wfBox").innerHTML = wfHTML(m);
 
@@ -1980,14 +2059,14 @@ function wfHTML(m) {
   const frac = (a, b) => '<span class="frac"><span class="num">' + a + '</span><span class="den">' + b + '</span></span>';
   const HALF = frac(1, 2);
   const d = (s) => '<span class="d">' + s + '</span>';
-  const S = "ψ<sub>" + d(n) + "s</sub>";
-  const P = ["x", "y", "z"].map(a => "ψ<sub>" + d(n) + "p<sub>" + a + "</sub></sub>");
+  const S = "<i>ψ</i><sub>" + d(n) + "s</sub>";
+  const P = ["x", "y", "z"].map(a => "<i>ψ</i><sub>" + d(n) + "p<sub><i>" + a + "</i></sub></sub>");
   const rows = [[1, 1, 1], [1, -1, -1], [-1, 1, -1], [-1, -1, 1]];
   let html = "";
   for (let i = 0; i < 4; i++) {
     const sg = rows[i];
     const term = (v, nm) => (v > 0 ? ' <span class="op">+</span> ' : ' <span class="op">−</span> ') + HALF + nm;
-    html += '<div class="m">ψ<sub>sp³(' + d(i + 1) + ')</sub><span class="op">=</span>' + HALF + S +
+    html += '<div class="m"><i>ψ</i><sub>sp³(' + d(i + 1) + ')</sub><span class="op">=</span>' + HALF + S +
       term(sg[0], P[0]) + term(sg[1], P[1]) + term(sg[2], P[2]) +
       '　<span style="color:#8b97a6">瓣轴 ∝ (' + sg.join(", ") + ')</span></div>';
   }
@@ -2011,49 +2090,39 @@ const CHALS = [
     a: "基态价层是 ns²np²：ns 轨道里坐了 2 个电子（占满），三个 np 轨道能量完全相同（三重简并，能级图上画作一根线），按洪特规则只填了 2 个 —— 两个轨道各 1 个电子、第三个空着 → <b>只有 2 个未成对电子</b>。" +
        "注意：这两个单电子的自旋彼此平行，但整体朝上还是朝下是任意的（两种取向能量完全简并），所以本工具<b>不画自旋箭头</b>，只标电子数。" +
        "而金刚石结构里每个原子有 4 个等价共价键，需要 4 个未成对电子 → 矛盾。解决办法正是：先把一个 ns 电子激发到空的 np（付出激发能），得到 ns¹np³（4 个未成对电子），再把这 4 个轨道重新组合成 4 个等价的 sp³。" +
-       "<b>激发能该取哪个数？</b>取<b>光谱激发能</b>（读数面板的「激发/杂化代价」、能量权衡图的橙色台阶）：C 4.18 / Si 4.13 / Ge 5.20 eV。" +
-       "<b>不要</b>取能级图里的 <span class='m'>Δ<i>E</i><sub>sp</sub></span>（8.31 / 7.20 / 7.97 eV）——那是<b>单电子轨道能差</b>，比光谱值大 2.8~4.1 eV：" +
-       "把一个 ns 电子挪到 np 之后，剩下的电子间库仑排斥下降，且四个电子平行自旋还有交换稳定化，这部分「回吐」的能量使实测激发能明显小于单电子能级差。" +
+       "激发能取的是<b>光谱激发能</b>（读数面板「激发/杂化代价」一行），不是能级图里那个更大的单电子轨道能差 <span class='m'>Δ<i>E</i><sub>sp</sub></span> —— 激发后剩下的电子库仑排斥下降、四个电子平行自旋还有交换稳定化，这部分「回吐」让实测值明显更小（原因就写在那一行的小字里）。" +
        "切到右半幅「② 杂化后」就能看到：4 个 sp³ 各坐 1 个电子，未成对电子变成 4 个。"
   },
   {
     t: "挑战二 · 对比杂化前后的轨道形状",
     q: "并排看「① 杂化前」与「② 杂化后」两幅图：形状、个数、朝向各发生了什么变化？特别注意每个 sp³ 背面那个小瓣是从哪来的、它和大瓣的颜色为什么不一样。",
     a: "个数与形状：杂化前是 <b>1 个球形 ns + 3 个哑铃形 np</b>（沿 <span class='m'><i>x</i></span>、<span class='m'><i>y</i></span>、<span class='m'><i>z</i></span> 轴，两两 90°）；杂化后变成 <b>4 个完全等价的 sp³</b>，每个都是「一个大瓣 + 一个背面的小瓣」，大瓣指向正四面体的四个顶点。" +
-       "朝向：三个 np 的瓣轴从 <span class='m'><i>x</i></span>/<span class='m'><i>y</i></span>/<span class='m'><i>z</i></span> 轴转到 (1,1,1)、(1,−1,−1)、(−1,1,−1)、(−1,−1,1) 方向，两两夹角由 90° 变为 109°28′。" +
-       "形状由 <span class='m'><i>r</i></span>(<span class='m'><i>θ</i></span>) = <span class='m'><i>R</i></span>·[(<span class='m'><i>λ</i></span> + cos<span class='m'><i>θ</i></span>)/(1+<span class='m'><i>λ</i></span>)]² 给出（电子云示意），<span class='m'><i>λ</i></span> = <span class='m'><i>a</i>/<i>b</i></span> 是 s/p 振幅比：<span class='m'><i>λ</i></span> = 0 是对称哑铃（纯 p），<span class='m'><i>λ</i></span> = 1/√3 ≈ 0.577 时「大瓣 + 背面小瓣」（sp³），<span class='m'><i>λ</i></span> → ∞ 又变回球（纯 s）。" +
-       "注意真实 sp³ 的小瓣只有大瓣的约 7%，图上已<b>夸大到大瓣的约 40%</b>才看得见——这是示意图的常规画法，不是真实比例。" +
-       "<b>7% 还是 27%？</b>取决于量的是什么：本图的轮廓半径按 <b>|<span class='m'><i>ψ</i></span>|²</b>（概率密度）画，轴向长度比 = [(1−<span class='m'><i>λ</i></span>)/(1+<span class='m'><i>λ</i></span>)]² = 0.268² ≈ <b>7%</b>；" +
-       "教材常见的<b>振幅图</b>画的是 |<span class='m'><i>ψ</i></span>| 本身，比值就是 (1−<span class='m'><i>λ</i></span>)/(1+<span class='m'><i>λ</i></span>) ≈ <b>26.8%</b>。两个数都对，只是口径不同 —— 看到教材写 1/4 时别以为这里写错了。" +
-       "小瓣来自 s 与 p 的<b>相消叠加</b>：<span class='m'><i>ψ</i></span> = <span class='m'><i>a</i></span>·<span class='m'><i>ψ</i></span><sub>s</sub> + <span class='m'><i>b</i></span>·<span class='m'><i>ψ</i></span><sub>p</sub> 中 s 部分处处同号，p 部分在背面变号，于是正面相加变长、背面相减变短。图中把小瓣画成浅色虚线经线，表示它与大瓣<b>波函数反号</b>；这也是共价键「头碰头」重叠时只有大瓣能有效成键的原因。" +
-       "四个轨道的 s 成分都是 25%、p 成分 75% —— 等价性是线性组合的直接结果。"
+       "朝向也跟着变：三个 np 的瓣轴从 <span class='m'><i>x</i></span>/<span class='m'><i>y</i></span>/<span class='m'><i>z</i></span> 轴转到四个<b>体对角线</b>方向，两两夹角由 90° 变为 109°28′（几何来源见挑战三）。" +
+       "形状由 s/p 振幅比 <span class='m'><i>λ</i></span> 决定：<span class='m'><i>λ</i></span> = 0 是对称哑铃（纯 p），<span class='m'><i>λ</i></span> = 1/√3 时才是「大瓣 + 背面小瓣」（sp³），<span class='m'><i>λ</i></span> → ∞ 又变回球 —— 拖<b>杂化进度</b>滑块看它怎么长出来。" +
+       "<b>小瓣来自 s 与 p 的相消叠加</b>：<span class='m'><i>ψ</i></span> = <span class='m'><i>a</i></span>·<span class='m'><i>ψ</i></span><sub>s</sub> + <span class='m'><i>b</i></span>·<span class='m'><i>ψ</i></span><sub>p</sub> 中 s 部分处处同号、p 部分在背面变号，于是正面相加变长、背面相减变短。图中把小瓣画成浅色虚线经线，表示它与大瓣<b>波函数反号</b> —— 这也是共价键「头碰头」重叠时只有大瓣能有效成键的原因。" +
+       "真实 sp³ 的小瓣只有大瓣的约 <b>7%</b>，图上已<b>夸大到大瓣的约 40%</b> 才看得见（示意图的常规画法，不是真实比例）。四个轨道的 s 成分都是 25%、p 成分 75% —— 等价性是线性组合的直接结果。"
   },
   {
     t: "挑战三 · 验证四面体几何",
     q: "旋转右半幅「② 杂化后」，读出任两个 sp³ 大瓣之间的夹角标注。是 109°28′ 吗？这个数与正四面体有什么几何关系？再看左半幅「① 杂化前」，三个 np 之间的夹角是多少？",
-    a: "完全杂化时任意两个大瓣轴的夹角标注是 <b>109°28′</b>（= 109.47°，工程上也常直接写 109.5°）。四个方向 (1,1,1)、(1,−1,−1)、(−1,1,−1)、(−1,−1,1) 两两点积都是 −1/3，" +
-       "故夹角 = arccos(−1/3) = 109.4712° = <b>109°28′</b>——这正是正四面体中心到两顶点连线的夹角，也是金刚石与甲烷的标准键角。" +
-       "左半幅里三个 np 轨道沿 <span class='m'><i>x</i></span>、<span class='m'><i>y</i></span>、<span class='m'><i>z</i></span> 轴，两两夹角标注为 <b>90°</b>。所以杂化带来的几何变化是 <b>90° → 109°28′</b>。" +
-       "几何来源：4 个单位向量之和为零时，两两夹角必然是 arccos(−1/3)，这是「四个等价方向」在三维空间中的唯一解——等价性直接决定了键角。"
+    a: "完全杂化时任意两个大瓣轴的夹角标注是 <b>109°28′</b>（= 109.47°，工程上常直接写 109.5°）。几何来源：四个方向两两点积都是 <span class='m'><span class='op'>−</span>1/3</span>，故夹角 = arccos(−1/3) = <b>109°28′</b> —— 这正是正四面体中心到两顶点连线的夹角，也是金刚石与甲烷的标准键角。" +
+       "（一般规律：4 个单位向量之和为零时，两两夹角必然是 arccos(−1/3)；sp² 那边三个向量之和为零，得到的就是 arccos(−1/2) = 120°。）" +
+       "左半幅里三个 np 轨道沿 <span class='m'><i>x</i></span>、<span class='m'><i>y</i></span>、<span class='m'><i>z</i></span> 轴，两两夹角标注为 <b>90°</b>。所以杂化带来的几何变化是 <b>90° → 109°28′</b> —— 等价性直接决定了键角。"
   },
   {
     t: "挑战四 · 能量权衡分析",
     q: "看能量权衡图：杂化本身需要能量还是释放能量？成键后总能量如何变化？为什么“先付出再收益”仍然划算？换到 C 和 Ge 再比较一次。",
-    a: "杂化（激发）是<b>吸热</b>的：Si 需 +4.13 eV/原子（NIST 光谱：3s²3p² ³P → 3s3p³ ⁵S°，33326 cm⁻¹）；成键则释放 −8.76 eV/原子；净变化 <b>−4.63 eV/原子</b>，正好等于实验内聚能的负值 —— 这就是“先付出后收益”。" +
-       "关键在于：不杂化只能成 2 个键，杂化后能成 4 个键，多出的成键能远大于激发代价。三者对比：C +4.18 → −11.55 → 净 −7.37 eV；Si +4.13 → −8.76 → 净 −4.63 eV；Ge +5.20 → −9.05 → 净 −3.85 eV。" +
-       "Ge 的激发代价最大（3d¹⁰ 屏蔽差、4s 被压低），但成键仍能补偿，所以同样形成金刚石结构。" +
-       "<b>别把「净 = −内聚能」当成验证</b>：本图把成键收益定义成 −(<span class='m'><i>E</i><sub>coh</sub></span> + <span class='m'><i>E</i><sub>pro</sub></span>)，那么 +<span class='m'><i>E</i><sub>pro</sub></span> − (<span class='m'><i>E</i><sub>coh</sub></span> + <span class='m'><i>E</i><sub>pro</sub></span>) ≡ −<span class='m'><i>E</i><sub>coh</sub></span> 是<b>记账恒等式</b>，无论物理对不对都成立。" +
-       "它真正的物理内容是「激发能被成键能覆盖有余」这一定性判断；要独立核对得换一套数据：" +
-       "金刚石结构每个原子分摊 2 个键，故 2×单键键能应与内聚能相等 —— C 2×3.59 = 7.18 vs 7.37（−2.6%）、Si 2×2.34 = 4.68 vs 4.63（+1.1%）、Ge 2×1.95 = 3.90 vs 3.85（+1.3%），" +
-       "键能与内聚能是两套互不相关的实验数据，吻合到 1%~3% 才是真的自检。"
+    a: "杂化（激发）是<b>吸热</b>的（Si 需 +4.13 eV/原子，NIST 光谱 3s²3p² → 3s3p³，33326 cm<sup>−1</sup>），成键则释放能量，净变化<b>正好等于实验内聚能的负值</b> —— 这就是“先付出后收益”（三个材料的账本逐项对照：读数面板切到 C / Ge 即可）。" +
+       "关键在于：<b>不杂化只能成 2 个键，杂化后能成 4 个键</b>，多出的成键能远大于激发代价。Ge 的激发代价最大（3d¹⁰ 屏蔽差 ⇒ 4s 被压低），但成键收益仍能覆盖，所以同样形成金刚石结构。" +
+       "<b>别把「净 = −内聚能」当成验证</b>：本图把成键收益定义成 −(<span class='m'><i>E</i><sub>coh</sub></span> + <span class='m'><i>E</i><sub>pro</sub></span>)，那么净额 ≡ −<span class='m'><i>E</i><sub>coh</sub></span> 是<b>记账恒等式</b>，无论物理对不对都成立；真正的独立核对是读数面板里的 <span class='m'>2<i>D</i></span> ≈ <span class='m'><i>E</i><sub>coh</sub></span> —— 键能与内聚能是两套互不相关的实验数据，吻合到 1%~3% 才是真的自检。"
   },
   {
     t: "挑战五 · 杂化发生的条件",
     q: "在 C、Si、Ge 之间切换，比较它们的 s–p 能级差、激发代价与内聚能。三者为什么都能 sp³ 杂化？如果把不同主量子数的轨道（例如 Si 的 3s 与 2p）放在一起，还能杂化吗？",
-    a: "杂化要满足三个条件：① <b>能量相近</b>——C/Si/Ge 的 s–p 差分别只有 8.31 / 7.20 / 7.97 eV，属同一量级，混合才有效（若相差几十 eV，组合出的轨道仍几乎就是纯 s 与纯 p）；" +
-       "② <b>同一壳层（同一主量子数 n）</b>——ns 与 np 径向分布重叠大、角向正交；跨壳层（如 3s 与 2p）径向节点数不同、空间重合差，且能量相差上百 eV（Si 的 2p 在 −100 eV 量级），无法有效混合；教材里写 sp³ 时默认同一个 n。" +
-       "③ <b>成键环境有利</b>——四面体配位让 4 个 sp³ 都能与近邻“头碰头”重叠成 <span class='m'><i>σ</i></span> 键，收益足以覆盖代价。" +
-       "还要注意：杂化是一种<b>表象变换</b>（把 <span class='m'>{s, p<sub><i>x</i></sub>, p<sub><i>y</i></sub>, p<sub><i>z</i></sub>}</span> 这组正交基旋转成 4 个 sp³），本身不改变体系总能量；真正要付出能量的是 s → p 的激发。" +
+    a: "杂化要满足三个条件：① <b>能量相近</b> —— C/Si/Ge 的 s–p 差属同一量级（数值见读数面板），若相差几十 eV，组合出的轨道仍几乎就是纯 s 与纯 p；" +
+       "② <b>同一壳层（同一主量子数 n）</b> —— ns 与 np 径向分布重叠大、角向正交；跨壳层（如 3s 与 2p）径向节点数不同、空间重合差，且能量相差上百 eV，无法有效混合；教材里写 sp³ 时默认同一个 n。" +
+       "③ <b>成键环境有利</b> —— 四面体配位让 4 个 sp³ 都能与近邻“头碰头”重叠成 <span class='m'><i>σ</i></span> 键，收益足以覆盖代价。" +
+       "还要注意：<b>杂化是一种表象变换</b>（把 <span class='m'>{s, p<sub><i>x</i></sub>, p<sub><i>y</i></sub>, p<sub><i>z</i></sub>}</span> 这组正交基旋转成 4 个 sp³），本身不改变体系总能量；真正要付出能量的是 s → p 的激发。" +
        "本工具把「杂化前 / 杂化后」画成两幅<b>静态对照图</b>而不是连续动画，正是为了强调这一点：中间的“过渡形态”只是数学上的连续基变换，并非原子实际经历的某个稳定状态。"
   }
 ];
@@ -2211,6 +2280,11 @@ function init() {
     /* 「显示项目」只保留电子云不透明度；其余显示选项不再暴露，一律取默认值 */
 
     window.addEventListener("resize", () => fitAll());
+    /* 折叠区：只有这里挂一次；类名与 chal-head 分开，不进挑战区计数 */
+    document.addEventListener("click", e => {
+      const h = e.target.closest ? e.target.closest(".fold-head") : null;
+      if (h) h.parentNode.classList.toggle("open");
+    });
   } catch (err) {
     if (typeof console !== "undefined") console.error("[初始化]", err);
   }

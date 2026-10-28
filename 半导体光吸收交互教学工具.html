@@ -198,7 +198,7 @@
       <div class="hint">把整条能量轴按「局部谁最大」染色，就得到四种机制的<b>势力范围</b>——它跟模块一<b>共用同一条能量轴</b>，可以直接上下对照着看。
         注意边界会随 <span class="m"><i>N</i></span>、<span class="m"><i>T</i></span>、<span class="m"><i>E</i><sub>b</sub></span> 移动——
         重掺杂时自由载流子区会向高能扩张，高温时激子区会被热展宽抹平。点击色带可把工作点（<span class="m"><i>hν</i></span>）移到那里。
-        下方四条是<b>当前 <span class="m"><i>h</i><i>ν</i></span> 处各通道各贡献多少</b>（色带在工作点处切下来的一刀），竖线把两者连起来，拖 <span class="m"><i>h</i><i>ν</i></span> 时上下同时变。</div>
+        下方四条就是色带在工作点处切下来的一刀。</div>
     </div>
 
     <div class="card">
@@ -1003,6 +1003,32 @@ var I18N = {
   " 的爬升——波长越长（能量越低）吸收越强。它跟本征吸收的趋势": " climb — the longer the wavelength (the lower the energy), the stronger the absorption. Its trend is the ",
   "（波长越长越有效），这才是重掺杂材料在红外段吸收增强的原因。迁移率越低 ⇒ 动量弛豫时间越短 ⇒ 带内吸收越强（本工具的迁移率是固定参量，取值见控制面板「固定参量」）。　当前 ": " (the longer the wavelength, the more effective), which is why heavily doped materials absorb more strongly in the infrared. The lower the mobility, the shorter the momentum relaxation time and the stronger the intraband absorption (mobility is a fixed parameter in this tool — see “Fixed parameters” in the control panel).　Current ",
   "吸收长度 1 / ": "Absorption length 1 / ",
+  " 跨过 ": " crosses ",
+  "红移": "red-shifts",
+  " 时还会被热离化抹平。拖 ": " it is finally smeared out by thermal ionization. Drag ",
+  "（可见—紫外）由": " (visible–UV) is ",
+  " 附近出现。": ".",
+  "）；两者合起来，电子的净位移才是": "); the electron's net displacement is therefore ",
+  "的。三体过程概率低得多，所以间接带隙的吸收系数比直接带隙小几个数量级（E–k 上的动量账见「直接带隙与间接带隙」工具）。": ". A three-body process is far less probable, so the absorption coefficient of an indirect gap lies several orders of magnitude below that of a direct gap (the momentum bookkeeping on the E–k diagram is laid out in the \"Direct and Indirect Gaps\" tool).",
+  "下方四条就是色带在工作点处切下来的一刀。": " The four bars below are exactly the slice cut out of the color band at the operating point.",
+  "观察本征吸收曲线：": "Look at the intrinsic absorption curve: ",
+  "前后吸收系数怎么变？直接带隙和间接带隙的边形状有什么不同？": " how does the absorption coefficient change? And how do the edge shapes of a direct and an indirect gap differ?",
+  "：激子是电子-空穴的": ": an exciton is an electron-hole ",
+  "位置并不钉死 —— 带边按 Varshni 随温度下降，激子峰跟着一起走，所以升温时峰位": " is not nailed down — the band edge falls with temperature following Varshni and the exciton peak travels with it, so on heating the peak position ",
+  "（不是不动）。同一升温过程里峰高按 1/": " (it does not stay put). Across the same heating the peak height falls as 1/",
+  " 下降、峰宽增大（振子强度守恒），": " and the width grows (the oscillator strength is conserved), while ",
+  " 与温度两个滑块直接看这两条。": " and temperature sliders to watch both effects directly.",
+  "。原因不是没有振动，而是": ". The reason is not the absence of vibration, but that ",
+  " ——电磁波是横波，只能通过": " — an electromagnetic wave is transverse, and it can exchange energy with matter only through ",
+  "与物质交换能量。Si 是两个相同原子的共价晶体，相对位移时正负电荷中心始终重合 ⇒ 偶极矩恒为零 ⇒ 红外不活性；GaAs 的键有离子性，TO 模的正负离子反向位移产生交变偶极矩，于是出现强烈的 Reststrahlen 带。这也是为什么 Si 能做红外窗口材料而 GaAs 不能。": "the electric dipole moment. Si is a covalent crystal of two identical atoms, so the positive and negative charge centers always coincide under relative displacement: the dipole moment is identically zero and the mode is infrared-inactive. The GaAs bond is partly ionic, so the opposite displacement of the positive and negative ions in the TO mode builds an alternating dipole moment, producing the strong Reststrahlen band. That is also why Si can serve as an infrared window material while GaAs cannot.",
+  "；这一段是红外探测器与硅基光电子里的主要损耗来源。④ 最后在 ": "; this range is the main loss channel in infrared detectors and silicon photonics. ④ Finally, in the far infrared around ",
+  "收尾，且只有极性晶体才有。": " lattice absorption closes the spectrum, and only polar crystals have it at all.",
+  "材料与光子": "Material and photon",
+  "当前光子 ": "Current photon ",
+  "吸收分解": "Absorption breakdown",
+  "激子与热": "Excitons and thermal energy",
+  "激子项精确值": "Exact exciton term",
+  "（当前光子远离激子峰，故核心区显示 ≈0）": " (the current photon is far from the exciton peak, so the core panel shows ≈0)",
 };
 
 /* 注入点②：画布直写字符串。老工具直接调 g.fillText()（描边文字走 g.strokeText()），这里在原型上兜住。
@@ -2180,14 +2206,10 @@ const TRANS_HINT = [
   "间接带隙材料导带谷偏在 <span class='m'><i>k</i><sub>X</sub></span>，光子动量几乎为零，" +
   "差额要由<b>声子</b>补上——所以图里<b>光子是竖直的</b>（只给能量，" +
   "<span class='m'>Δ<i>k</i> ≈ 0</span>），<b>声子是横着的</b>（横向补 <span class='m'>Δ<i>k</i></span>，" +
-  "纵向那一点点就是 <span class='m'><i>E</i><sub>p</sub></span>，读数里有数值，比带隙小两个数量级）；" +
+  "纵向那一点点就是 <span class='m'><i>E</i><sub>p</sub></span>）；" +
   "两者合起来，电子的净位移才是<b>斜</b>的。" +
-  "三体过程概率低得多：相同超出量下，间接带隙的吸收系数比直接带隙小 1～3 个数量级" +
-  "（<span class='m'><i>hν</i> − <i>E</i><sub>g</sub></span> 越大，差距越小：刚过带边差约 3 个数量级，" +
-  "超出 0.5 eV 后只差 1 个）。" +
-  "想看清 <span class='m'><i>E</i></span>–<span class='m'><i>k</i></span> 上的动量账" +
-  "（<span class='m'>Δ<i>k</i></span> 有多大、声子一脚能给多少能量、能量与动量如何各自守恒），" +
-  "请到<b>「直接带隙与间接带隙」</b>工具 —— 那里按真实布里渊区几何讲得更完整。",
+  "三体过程概率低得多，所以间接带隙的吸收系数比直接带隙小几个数量级" +
+  "（E–k 上的动量账见「直接带隙与间接带隙」工具）。",
   "光子能量差一点点不够跨带隙时，电子与留下来的空穴靠库仑吸引<b>束缚成一对</b>，形成激子。" +
   "它是<b>电中性</b>的，不导电，所以激子吸收不改变半导体的导电特性。" +
   "能级位于 <span class='m'><i>E</i><sub>c</sub> − <i>E</i><sub>b</sub></span>，" +
@@ -2453,15 +2475,21 @@ function drawReadout() {
   const kt = ktEv(), pd = penDepth(c.at), tr = transmit(c.at, OPT.d), nb = phononN();
   let h = "", hm = "";
 
-  /* ---- 核心区：本件主角是「当前光子在四条通道上各吸收多少」 ---- */
+  /* ---- 核心区：本件主角是「当前光子在四条通道上各吸收多少」 ----
+     11 行原来一个分组标题都没有，补 3 个：材料与光子 / 吸收 / 激子与热。 */
+  h += '<div class="hd">材料与光子</div>';
   h += kvRow(H_EG, "<b>" + fmt(Eg, 3) + " " + H_EV + "</b>（" + fmt(OPT.T, 0) + " " + H_K +
              "；长波限 " + H_LL + " = " + sciV(HCEV / Eg, 2) + " " + H_UM + "）");
-  h += kvRow("── 当前光子 " + H_HNU + " ──", H_LM + " = <b>" + sciV(HCEV / OPT.hw, 2) + " " + H_UM + "</b>");
-  for (let i = 0; i < 4; i++) {
-    h += '<div class="row"><div class="hd">' + MM(ALIST[i].p) + "</div>" +
-         '<span style="color:' + ALIST[i].c + '">' + sciV(c[ALIST[i].k], 2) + " " +
-         H_CMM1 + "</span></div>";
-  }
+  h += kvRow("当前光子 " + H_HNU, H_LM + " = <b>" + sciV(HCEV / OPT.hw, 2) + " " + H_UM + "</b>");
+  h += '<div class="hd">吸收</div>';
+  /* 四个分量原来各占一行，可是 α_ex 在远离激子峰处是 10⁻¹¹² 这种荒谬小数、
+     α_lat 对非极性晶体恒为 0 —— 两个「看着像 bug」的数各占一行黄金位置。
+     ⇒ 并成一行：吸收长度超过公里级（α < 1e-6 cm⁻¹）的一律显示 ≈0，
+       精确值搬到更多读数并写明「当前光子远离激子峰」（否则学生会以为机制没实现）。 */
+  h += kvRow("吸收分解", ALIST.map(function (A) {
+    return '<span style="color:' + A.c + '">' + MM(A.p) + " " +
+           (c[A.k] < 1e-6 ? "≈0" : sciV(c[A.k], 2)) + "</span>";
+  }).join(" ／ ") + " " + H_CMM1);
   h += kvRow("总吸收 " + MM("<i>α</i><sub>tot</sub>"),
              "<b>" + sciV(c.at, 3) + " " + H_CMM1 + "</b>　主导：<b>" +
              (d.v > 0 ? d.n : "无") + "</b>");
@@ -2473,6 +2501,7 @@ function drawReadout() {
   h += kvRow("吸收长度 1 / " + H_AL,
              "<b>" + sciV(pd, 2) + " " + H_UM + "</b>　（" + H_DD + " = " +
              fmt(OPT.d, 2) + " " + H_UM + "）");
+  h += '<div class="hd">激子与热</div>';
   h += kvRow("激子峰位 " + H_EG + " − " + H_EB, "<b>" + fmt(Eg - OPT.Eb * 1e-3, 3) + " " + H_EV + "</b>");
   h += kvRow("热能量 " + MM("<i>k</i><i>T</i>"), "<b>" + fmt(kt * 1000, 1) + " " + H_MEV + "</b>　" +
              H_EB + " / " + MM("<i>k</i><i>T</i>") + " = <b>" + fmt(OPT.Eb * 1e-3 / kt, 3) + "</b>" +
@@ -2483,6 +2512,11 @@ function drawReadout() {
   hm += kvRow("材料", "<b>" + M.n + "</b>　" + (M.dir ? "直接带隙" : "间接带隙") +
               "　" + (M.pol ? "极性晶体" : "非极性晶体"));
   hm += kvRow("激子结合能 " + H_EB, fmt(OPT.Eb, 0) + " " + H_MEV);
+  /* 核心区把 α_ex 小于 1e-6 cm⁻¹ 的都显示成 ≈0，精确值留在这里，免得学生以为
+     激子吸收这个机制没实现。 */
+  hm += kvRow("激子项精确值", MM("<span class='m'><i>α</i><sub>ex</sub></span>") + " = <b>" +
+              sciV(c.ax, 2) + "</b> " + H_CMM1 +
+              (c.ax < 1e-6 ? "（当前光子远离激子峰，故核心区显示 ≈0）" : ""));
   hm += kvRow("峰宽 " + MM("<i>σ</i>"), fmt(sigmaX() * 1000, 2) + " " + H_MEV +
               "　离化因子 <b>" + fmt(fIon(), 3) + "</b>");
   hm += kvRow("载流子 " + H_NN + " / " + H_MU, sciH(Ncm3(), 1) + " " + H_CM3 +
@@ -2579,7 +2613,7 @@ function applyPreset(p) {
 /* ================= 挑战任务 ================= */
 const CHAL = [
   {
-    q: "观察本征吸收曲线。<span class='m'><i>h</i><i>ν</i></span> 小于带隙时，吸收系数是多少？大于带隙时，吸收系数如何变化？直接带隙和间接带隙的吸收边形状有什么不同？",
+    q: "观察本征吸收曲线：<span class='m'><i>h</i><i>ν</i></span> 跨过 <span class='m'><i>E</i><sub>g</sub></span> 前后吸收系数怎么变？直接带隙和间接带隙的边形状有什么不同？",
     a: "<span class='m'><i>h</i><i>ν</i> &lt; <i>E</i><sub>g</sub></span> 时 <span class='m'><i>α</i><sub>intr</sub> ≡ 0</span>" +
        " —— 严格为零，不是很小，因为能量守恒不允许。" +
        "跨过 <span class='m'><i>E</i><sub>g</sub></span> 后：直接带隙 " +
@@ -2594,66 +2628,36 @@ const CHAL = [
        "哪一张在带边附近是直线，就对应哪种跃迁。" },
   {
     q: "观察激子吸收峰。它位于带隙以下还是以上？峰的位置与激子结合能有什么关系？改变 <span class='m'><i>E</i><sub>b</sub></span>，峰的位置如何移动？",
-    a: () => {
-      const M = mat(), Eg = EgT(), Eb = OPT.Eb * 1e-3, c = Eg - Eb;
-      const e10 = egAt(10), e300 = egAt(300), sh = (e300 - e10) * 1000;   // meV，负＝红移
-      /* 换到画布像素上再说一次 —— 峰宽只有 1~3 px，而位移是它的好几倍，学生肉眼看得见 */
-      let px = null;
-      const cv = CV.spec;
-      if (cv) { const F = specFrame(cv); px = (uOfHw(e300 - Eb) - uOfHw(e10 - Eb)) * (F.x1 - F.x0); }
-      return "在带隙<b>以下</b>，峰位精确等于 <span class='m'><i>E</i><sub>g</sub> − <i>E</i><sub>b</sub></span>" +
-        "（当前 " + M.n + "：<span class='m'><i>E</i><sub>g</sub><span class='op'>=</span>" + fmt(Eg, 3) +
-        "</span> eV，<span class='m'><i>E</i><sub>b</sub><span class='op'>=</span>" + fmt(OPT.Eb, 0) +
-        "</span> meV ⇒ 峰位 <b>" + fmt(c, 3) + " eV</b>）。" +
-        "物理原因：激子是电子-空穴的<b>束缚态</b>，库仑吸引使它的总能量比自由电子加自由空穴低 " +
+    a: () => "在带隙<b>以下</b>，峰位精确等于 <span class='m'><i>E</i><sub>g</sub> − <i>E</i><sub>b</sub></span>：" +
+        "激子是电子-空穴的<b>束缚态</b>，库仑吸引使它的总能量比自由电子加自由空穴低 " +
         "<span class='m'><i>E</i><sub>b</sub></span>，所以产生激子所需的光子能量比产生自由载流子少 " +
-        "<span class='m'><i>E</i><sub>b</sub></span>。把 <span class='m'><i>E</i><sub>b</sub></span> " +
-        "从 1 meV 调到 100 meV，峰会线性地往低能方向移动，离吸收边越来越远 ——" +
-        "移动量恰好等于 <span class='m'><i>E</i><sub>b</sub></span> 的增量。<b>与温度无关的是「峰相对带边的间距」</b>，" +
+        "<span class='m'><i>E</i><sub>b</sub></span>。<b>与温度无关的是「峰相对带边的间距」</b>，" +
         "它恒等于 <span class='m'><i>E</i><sub>b</sub></span>；" +
-        "但峰的<b>绝对</b>位置并不钉死 —— 带边按 Varshni 随温度下降，激子峰跟着一起走：" +
-        "当前 " + M.n + " 从 10 K 升到 300 K，<span class='m'><i>E</i><sub>g</sub></span> 由 " + fmt(e10, 3) +
-        " eV 降到 " + fmt(e300, 3) + " eV ⇒ 峰位<b>红移 " + fmt(Math.abs(sh), 0) + " meV</b>" +
-        (px === null ? "" : "（图上左移约 " + Math.abs(px).toFixed(1) + " px，比峰本身的宽度还大好几倍，拖温度滑块看得一清二楚）") +
-        "。同一升温过程里峰高按 1/<span class='m'><i>σ</i></span> 下降、峰宽同步增大（振子强度守恒），" +
-        "<span class='m'><i>kT</i> ≫ <i>E</i><sub>b</sub></span> 时还会被热离化抹平 —— " +
-        "所以「不动」的只能是峰<b>相对带边</b>的位置，不是峰的能量本身（右栏「峰位 " +
-        "<span class='m'><i>E</i><sub>g</sub> − <i>E</i><sub>b</sub></span>」那一行会随温度实时变）。";
-    } },
+        "但峰的<b>绝对</b>位置并不钉死 —— 带边按 Varshni 随温度下降，激子峰跟着一起走，" +
+        "所以升温时峰位<b>红移</b>（不是不动）。同一升温过程里峰高按 1/<span class='m'><i>σ</i></span> 下降、" +
+        "峰宽增大（振子强度守恒），<span class='m'><i>kT</i> ≫ <i>E</i><sub>b</sub></span> 时还会被热离化抹平。" +
+        "拖 <span class='m'><i>E</i><sub>b</sub></span> 与温度两个滑块直接看这两条。" },
   {
     q: "切换 Si 和 GaAs，观察晶格吸收曲线。Si 有晶格吸收吗？GaAs 呢？为什么？这与晶格的极性有什么关系？",
-    a: () => {
-      const M = mat(), w = WTO[M.n];
-      return "Si（以及 Ge）<b>完全没有</b>晶格吸收；GaAs、GaN <b>有</b>，" +
-       "峰在 <span class='m'><i>ω</i><sub>TO</sub></span>（当前 <b>" + M.n + "</b>：" +
-       (w > 0 ? fmt(w * 1000, 1) + " meV，对应约 " + fmt(HCEV / w, 0) + " µm" : "非极性晶体 ⇒ 晶格吸收恒为 0") +
-       "）。" +
-       "原因不是没有振动，而是<b>非极性晶体振动时没有偶极矩变化</b>。" +
-       "电磁波是横波，只能通过<b>偶极矩</b>与物质交换能量。Si 是完全共价的同核晶体，" +
-       "两个原子一模一样，相对位移时正负电荷中心始终重合 ⇒ 偶极矩恒为零 ⇒ 红外不活性。" +
-       "GaAs 里 Ga 与 As 电负性不同，键有离子性，正负离子反向位移（TO 模）就产生交变偶极矩 " +
-       "⇒ 与光强耦合，出现强烈的 Reststrahlen 带。" +
-       "这也是为什么 Si 能做红外窗口材料而 GaAs 不能。";
-    }
+    a: () => "Si（以及 Ge）<b>完全没有</b>晶格吸收；GaAs、GaN <b>有</b>，" +
+       "峰在 <span class='m'><i>ω</i><sub>TO</sub></span>。" +
+       "原因不是没有振动，而是<b>非极性晶体振动时没有偶极矩变化</b> ——" +
+       "电磁波是横波，只能通过<b>偶极矩</b>与物质交换能量。Si 是两个相同原子的共价晶体，" +
+       "相对位移时正负电荷中心始终重合 ⇒ 偶极矩恒为零 ⇒ 红外不活性；" +
+       "GaAs 的键有离子性，TO 模的正负离子反向位移产生交变偶极矩，" +
+       "于是出现强烈的 Reststrahlen 带。" +
+       "这也是为什么 Si 能做红外窗口材料而 GaAs 不能。"
   },
   {
     q: "选择全光谱模式，观察四种吸收机制的叠加。在哪个能量区间本征吸收主导？哪个区间自由载流子吸收主导？哪个区间晶格吸收主导？",
-    a: () => {
-      const M = mat(), Eg = EgT();
-      return "沿能量轴从高到低：① <b><span class='m'><i>h</i><i>ν</i> &gt; <i>E</i><sub>g</sub></span></b>" +
-       "（当前 <b>" + M.n + "</b> 在 " + fmt(OPT.T, 0) + " K 为 " + fmt(Eg, 3) + " eV，" +
-       "即 <span class='m'><i>λ</i> &lt; " + fmt(HCEV / Eg, 2) + " µm</span> 的可见—紫外）由<b>本征吸收</b>绝对主导，<span class='m'><i>α</i></span> 高达 " +
+    a: () => "沿能量轴从高到低：① <b><span class='m'><i>h</i><i>ν</i> &gt; <i>E</i><sub>g</sub></span></b>（可见—紫外）由<b>本征吸收</b>绝对主导，<span class='m'><i>α</i></span> 高达 " +
        "10<sup>4</sup>～10<sup>5</sup> cm<sup>−1</sup>，几个微米就吃光 —— 太阳能电池靠的就是这一段。" +
        "② 紧贴 <span class='m'><i>E</i><sub>g</sub></span> 下方 <span class='m'><i>E</i><sub>b</sub></span> 处是<b>激子峰</b>，" +
        "窗口很窄，只在低温高纯样品里看得清。③ 再往下的近—中红外是<b>自由载流子吸收</b>的地盘，" +
        "随 <span class='m'><i>λ</i><sup>2</sup></span> 缓慢爬升，整条曲线的高度正比于掺杂浓度 " +
-       "<span class='m'><i>N</i></span>（本工具固定在轻掺杂量级，点「重掺杂」预设可见它整体上移三个数量级）；" +
-       "这一段是红外探测器与硅基光电子里的主要损耗来源。④ 最后在 " +
+       "<span class='m'><i>N</i></span>；这一段是红外探测器与硅基光电子里的主要损耗来源。④ 最后在 " +
        "<span class='m'><i>ω</i><sub>TO</sub></span> 附近的远红外（几十微米）由<b>晶格吸收</b>收尾，" +
-       "且只有极性晶体才有这份特权" +
-       (WTO[M.n] > 0 ? "（当前 " + M.n + " 是极性晶体，这条带子在 " + fmt(HCEV / WTO[M.n], 0) + " µm 处）" :
-         " —— 当前 " + M.n + " 非极性，这一段整条为零。") + "。";
-    }
+       "且只有极性晶体才有。"
   }
 ];
 /* 答案可以是静态串，也可以是函数（含当前材料 / 温度的数字时用函数，随 render 一起刷新） */
@@ -2685,9 +2689,7 @@ function hintSpec() {
       "<b>本征</b>（实线）在 <span class='m'><i>E</i><sub>g</sub></span> 处<b>陡然升起</b>并一路领跑；" +
       "<b>激子</b>（虚线）是紧贴吸收边下方的一个<b>孤立尖峰</b>；" +
       "<b>自由载流子</b>（点线）在中远红外<b>随 <span class='m'><i>λ</i><sup>2</sup></span> 单调爬升</b>；" +
-      "<b>晶格</b>（点划线）只在极性晶体的 <span class='m'><i>ω</i><sub>TO</sub></span> 附近出现。" +
-      "把鼠标移到图上可以读出任意点的 <span class='m'><i>h</i><i>ν</i></span> 与 " +
-      "<span class='m'><i>α</i><sub>tot</sub></span>；<b>点击曲线</b>可切换模块四所展示的机制。";
+      "<b>晶格</b>（点划线）只在极性晶体的 <span class='m'><i>ω</i><sub>TO</sub></span> 附近出现。";
   } else if (OPT.view === 1) {
     s = M.dir
       ? "直接带隙：<span class='m'><i>α</i> ∝ <span class='sqrt'><span class='rd'>√</span>" +

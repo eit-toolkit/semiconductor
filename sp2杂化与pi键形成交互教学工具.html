@@ -43,6 +43,7 @@
   .chart-wrap { position: relative; }
   .hint { font-size: 12px; color: var(--text-sub); margin-top: 6px; line-height: 1.6; }
   .sec-title { font-size: 13.5px; font-weight: 700; margin: 2px 0 6px; }
+  .unit-note { font-size: 11.5px; color: var(--text-sub); line-height: 1.55; margin-top: 6px; }
   /* 模块编号徽标：只有教学内容模块才带编号；控制面板等辅助面板不是模块，不加 */
   .sec-title .mtag {
     display: inline-block; background: var(--blue); color: #fff;
@@ -185,7 +186,7 @@
       <div class="sec-title"><span class="mtag">模块一</span>三维轨道与成键视图（电子云形状示意）</div>
       <div class="chart-wrap"><canvas id="orb" data-h="440" tabindex="0"></canvas></div>
       <div class="legend" id="legend"></div>
-      <div class="hint">拖动旋转 · 滚轮缩放 · 右键拖动平移 · 悬停轨道看读数 · 方向键旋转 · +/− 缩放　<b style="color:#6b7a8c">（除球形轨道外，各轨道沿自身轴向外错开陈列，细点线的交点即原子核位置）</b></div>
+      <div class="hint">拖动旋转 · 滚轮缩放 · 右键拖动平移 · 悬停轨道看读数　<b style="color:#6b7a8c">（除球形轨道外，各轨道沿自身轴向外错开陈列，细点线的交点即原子核位置）</b></div>
       <div class="mini" style="margin-top:6px;">电子云为示意：轮廓<b>半径按 |<span class="m"><i>ψ</i></span>|<sup>2</sup>（概率密度）画</b>，故每个 sp<sup>2</sup> 的背面小瓣轴向长度只有大瓣的 [(1−<span class="m"><i>λ</i></span>)/(1+<span class="m"><i>λ</i></span>)]<sup>2</sup> ≈ <b>3%</b>（<span class="m"><i>λ</i></span> = <span class="m"><i>a</i>/<i>b</i></span> = 0.707）。图中把小瓣夸大到大瓣的约 40% 并画成矮胖形状，以便看清「一个大瓣 + 一个反号小瓣」的结构。</div>
     </div>
 
@@ -229,9 +230,10 @@
       <div class="sec-title">读数面板</div>
       <div class="kv" id="readout"></div>
       <div class="fold" id="foldRo">
-        <div class="fold-head"><span class="chev">▶</span><span>更多读数（能级、π 能带、晶格与对照）</span></div>
+        <div class="fold-head"><span class="chev">▶</span><span>更多读数（能级、π 能带与石墨烯几何）</span></div>
         <div class="fold-body"><div class="kv" id="readoutMore"></div></div>
       </div>
+      <div class="unit-note" id="roNote"></div>
     </div>
 
     <div class="card">
@@ -614,7 +616,7 @@ var I18N = {
   "xy 平面": "xy plane",
   "π 电子云": "π electron cloud",
   "电子云不透明度": "Electron-cloud opacity",
-  "更多读数（能级、π 能带、晶格与对照）": "More readouts (levels, π band, lattice and comparison)",
+  "更多读数（能级、π 能带、晶格与对照）": "More readouts (levels, π band and graphene geometry)",
   "当前状态": "Current state",
   " 杂化完成": " hybridization complete",
   "杂化类型": "Hybridization type",
@@ -631,7 +633,6 @@ var I18N = {
   "π 电子（每原子）": "π electrons (per atom)",
   "1 个　·　在整个平面非局域": "1　·　delocalized over the whole plane",
   "轨道能级（真空能级为零）": "Orbital energies (vacuum level = zero)",
-  "2s 轨道能": "2s orbital energy",
   "2p 轨道能": "2p orbital energy",
   "单电子轨道能差，不是光谱激发能": "single-particle orbital energy difference, not a spectroscopic excitation energy",
   " 轨道能": " orbital energy",
@@ -826,6 +827,49 @@ var I18N = {
   " eV。（提醒：石墨烯这个单键键能是": " eV for diamond. (Caveat: for graphene this single-bond energy is ",
   "由内聚能恒等式反推": "back-derived from the cohesion identity",
   "的记账值，不是独立测量，只作量级参考。）": " — a bookkeeping value rather than an independent measurement, so read it only as an order of magnitude.)",
+  "拖动旋转 · 滚轮缩放 · 右键拖动平移 · 悬停轨道看读数　": "Drag to rotate · scroll to zoom · right-drag to pan · hover an orbital for readouts　",
+  "内：三个瓣轴的 z 分量全为 0，所以它们严格共面 —— 这正是 sp": ": the z components of the three lobe axes are all 0, so they are strictly coplanar — exactly the most visible difference from sp",
+  " 的四个瓣轴 z 分量都不为 0）。而且共面不是巧合：三个单位向量之和为零时，两两夹角必然是 arccos(−½) = 120°。剩下的 ": " all four lobe axes have a nonzero z component). Nor is the coplanarity a coincidence: when three unit vectors add up to zero, the pairwise angle is necessarily arccos(−½) = 120°. What is left over, the ",
+  "杂化、保持哑铃形 —— 因为它与参与杂化的 ": " hybridization; it keeps its dumbbell shape — because it is orthogonal to the ",
+  " 正交，不会被混进来。": " that hybridize, so it is never mixed in.",
+  "的：石墨烯所有原子严格共面，整个晶体就是一个原子厚的平面，网格是": ": every atom in graphene is strictly coplanar, the whole crystal is a single atom-thick plane, and the mesh is a ",
+  "六角蜂窝": "hexagonal honeycomb",
+  "（键长与晶格常数见读数面板）。": " (for the bond length and the lattice constant see the readout panel).",
+  " 的轨道夹角完全一致": " orbitals — the two angles coincide exactly",
+  " —— 因为 σ 键就是 sp": " — because a σ bond is simply an sp",
+  " 轨道「头碰头」的方向，键的方向被轨道方向锁死了。": " orbital pointing head-on at its partner, so the bond direction is locked by the orbital direction.",
+  " 是哑铃形，一个瓣在平面上方、一个在下方，所以 π 电子云是「平面上下各一片」的两层结构 —— ": " is dumbbell shaped, with one lobe above the plane and one below, so the π electron cloud is a two-layer structure, one sheet above the plane and one below — ",
+  "平面上本身反而是节面": "the plane itself is, on the contrary, the nodal plane",
+  "（电子概率为零，图上橙色是上层、紫色是下层）。为什么能非局域：每个碳的 ": " (the electron probability there is zero; in the figure orange is the upper sheet and purple the lower one). Why it can delocalize: the ",
+  "且垂直于平面，相邻两个是「肩并肩」重叠，而且这种重叠可以向四面八方一直传递下去 —— 于是 π 电子不再属于某一对碳原子，而是属于": " of every carbon is parallel to all the others and perpendicular to the plane, so two neighbors overlap shoulder to shoulder, and that overlap keeps propagating in every direction — the π electrons therefore no longer belong to one particular pair of carbon atoms but to the ",
+  "（成键收益的紧束缚数值见更多读数）。σ 电子不能这样做：σ 键是「头碰头」的定域键，方向沿着两个原子核的连线，它是局域在两个原子之间的，不能像 π 那样在平面里横向铺开。": " (for the tight-binding value of the bonding gain see the readouts). The σ electrons cannot do this: a σ bond is a head-on localized bond whose direction lies along the line joining the two nuclei, so it stays between that one pair of atoms and cannot spread sideways across the plane the way π does.",
+  "4. 缺失的那根键：金刚石里每个碳原子有 4 根 σ 键，石墨烯里只有 3 根 —— 第 4 根键去哪了？为什么 sp": "4. The missing bond: in diamond every carbon atom has 4 σ bonds, in graphene only 3 — where did the 4th bond go? And why does sp",
+  "（两个 p 加一个 s，正好 3 个等价轨道，自然摊在同一个平面内），剩下的 ": " (two p plus one s gives exactly 3 equivalent orbitals, which naturally spread out in one plane), so the remaining ",
+  " 与参与杂化的这两个": " is orthogonal to the two orbitals that",
+  "正交，不会被混进来": " hybridize, so it is never mixed in",
+  "，于是保持哑铃形、": "; it therefore stays dumbbell shaped and",
+  "垂直于平面": "perpendicular to the plane",
+  " —— 它不走 σ 通道，只能走 π 通道。对照 sp": " — it cannot take the σ route, only the π route. By contrast, in sp",
+  "：四个方向全部用成 σ 键，没有剩余 p 轨道（键角与杂化轨道数见更多读数）。": " all four directions are used up as σ bonds and no p orbital is left over (for the bond angle and the number of hybrid orbitals see the readouts).",
+  " 轨道「头碰头」重叠形成的强定域共价键，比金刚石的 sp": " orbitals overlapping head-on, and it is stronger than the sp",
+  " 单键更强 —— 因为石墨烯键更短、s 成分更高（1/3 对 1/4）。": " single bond of diamond, because the graphene bond is shorter and its s fraction is higher (1/3 against 1/4).",
+  "，电子表现得像无质量的相对论粒子，迁移率极高。关键在于两者": "; there the electrons behave like massless relativistic particles and the mobility is extremely high. The key point is that the two",
+  "：σ 骨架锁在平面内、负责把原子钉住；π 电子云悬在平面上下、可以在整个平面自由移动 —— 这就是石墨烯能同时拥有极高力学强度和极高载流子迁移率的原因。（提醒：单键键能是": ": the σ framework is locked into the plane and pins the atoms down, while the π electron cloud hangs above and below the plane and can move freely across the whole plane — that is why graphene can have extreme mechanical strength and extremely high carrier mobility at the same time. (Reminder: the single-bond energy is",
+  "更多读数（能级、π 能带与石墨烯几何）": "More readouts (levels, π band and graphene geometry)",
+  "　·　垂直于杂化平面　·　1 个（留给 π 键）": "　·　perpendicular to the hybridization plane　·　1 (left over for the π bond)",
+  "完全杂化时 = arccos(−1/2)": "at full hybridization = arccos(−1/2)",
+  " 轨道能（含未杂化 ": " orbital energy (including the unhybridized ",
+  " eV（金刚石：": " eV (diamond: ",
+  " eV/原子）": " eV per atom)",
+  "；金刚石：": "; diamond: ",
+  "口径：s–p 能级差是": "Conventions: the s–p level difference is ",
+  "；σ 单键键能由": "; the σ single-bond energy comes from ",
+  "内聚能恒等式反推": "back-derivation from the cohesive-energy identity",
+  "，非独立测量；净额 = −内聚能是": ", not an independent measurement; the net balance = −cohesive energy is ",
+  "记账恒等，不是独立验证": "a bookkeeping identity, not an independent check",
+  "。激发代价取 NIST 多电子光谱值（2s": ". The promotion cost is the NIST many-electron spectroscopic value (2s",
+  "S°），与 sp": "S°), the same number as in the sp",
+  " 工具同一个数。石墨烯的键更短、s 成分更高（1/3 对 1/4），σ 键更强；两者的内聚能差不到 0.1 eV/原子，所以「石墨比金刚石稳定」是能量上非常接近的微弱差别。": " tool. The graphene bond is shorter and has a higher s character (1/3 vs 1/4), so the σ bond is stronger; the two cohesive energies differ by less than 0.1 eV per atom, which means “graphite is more stable than diamond” is a very close call energetically.",
 };
 
 (function () {
@@ -1329,14 +1373,6 @@ const len3 = (a) => Math.sqrt(dot3(a, a));
 const cross3 = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
 const norm3 = (a) => { const L = len3(a) || 1; return [a[0] / L, a[1] / L, a[2] / L]; };
 const fmt = (v, n) => (Math.abs(v) < 5e-3 ? 0 : v).toFixed(n === undefined ? 2 : n);
-/* 角度写成“度 + 分”：109.47° → 109°28′（正四面体键角的标准写法） */
-function angDM(deg) {
-  const neg = deg < 0, a = Math.abs(deg);
-  const d = Math.floor(a), mi = Math.round((a - d) * 60);
-  const dd = mi === 60 ? d + 1 : d, mm = mi === 60 ? 0 : mi;
-  return (neg ? "−" : "") + dd + "°" + (mm < 10 ? "0" + mm : mm) + "′";
-}
-const TET_ANG = Math.acos(-1 / 3) / (Math.PI / 180);   /* 109.4712° = 109°28′ */
 
 function slerp(p, q, t) {
   const d = clamp(dot3(p, q), -1, 1);
@@ -2308,24 +2344,29 @@ function updatePanels() {
     ["模式", modeName],
     ["杂化类型", t > 0.98 ? "sp<sup>2</sup>（s 成分 1/3，p 成分 2/3）" : (t < 0.02 ? "未杂化" : "sp<sup>2</sup> 过渡态")],
     ["参与杂化的轨道", "2s + <span class='m'>2p<sub><i>x</i></sub></span> + <span class='m'>2p<sub><i>y</i></sub></span>"],
-    ["杂化轨道数 / 键角", "3 个　·　" + fmt(angleNow(), 2) + "°　<i style=\"color:#8b97a6;font-style:normal\">= arccos(−1/2) = 120°（完全杂化时）</i>"],
-    ["未杂化轨道", "<span class='m'>2p<sub><i>z</i></sub></span>　·　垂直于杂化平面　·　1 个"],
+    /* 原来把同一个角写了三遍（120.00° = arccos(−1/2) = 120°）⇒ 压成一遍，
+       与 sp³ 那件的「109.47°（= arccos(−1/3)）」同一写法（记忆 §9 成对约束）。 */
+    ["杂化轨道数 / 键角", "3 个　·　" + fmt(angleNow(), 2) + "°　<i style=\"color:#8b97a6;font-style:normal\">完全杂化时 = arccos(−1/2)</i>"],
+    /* 「缺失的那根键」：sp² 只杂化 3 个轨道，第 4 个电子留在 2p_z 形成 π 键
+       ⇒ 括注 4 个字把它点明，别让学生以为这根轨道是多余的。 */
+    ["未杂化轨道", "<span class='m'>2p<sub><i>z</i></sub></span>　·　垂直于杂化平面　·　1 个（留给 π 键）"],
     ["未成对电子", unpairedCount(t) + " 个　<i style=\"color:#8b97a6;font-style:normal\">基态 2 → 杂化后 4</i>"],
     ["π 电子（每原子）", "1 个　·　在整个平面非局域"]
   ]);
   $("readoutMore").innerHTML = kv([
     ["#", "轨道能级（真空能级为零）"],
-    ["2s 轨道能", fmt(C.Es, 2) + " eV"],
-    ["2p 轨道能", fmt(C.Ep, 2) + " eV"],
-    ["s–p 能级差 " + M("Δ<i>E</i><sub>sp</sub>"), fmt(d.dEsp, 2) + " eV　<i style=\"color:#8b97a6;font-style:normal\">单电子轨道能差，不是光谱激发能</i>"],
-    ["sp² 轨道能", fmt(d.Esp2, 2) + " eV　<i style=\"color:#8b97a6;font-style:normal\">= (E<sub>2s</sub> + 2E<sub>2p</sub>)/3</i>"],
-    ["<span class='m'>2p<sub><i>z</i></sub></span> 轨道能", fmt(C.Ep, 2) + " eV　<i style=\"color:#8b97a6;font-style:normal\">未参与杂化，保持原子值</i>"],
+    [M("<i>E</i><sub>2s</sub>") + " 轨道能", fmt(C.Es, 2) + " eV"],
+    /* 2p 与未杂化的 2p_z 数值相同（都是原子值），原占两行 ⇒ 并成一行。 */
+    [M("<i>E</i><sub>2p</sub>") + " 轨道能（含未杂化 " + M("2p<sub><i>z</i></sub>") + "）", fmt(C.Ep, 2) + " eV"],
+    ["s–p 能级差 " + M("Δ<i>E</i><sub>sp</sub>"), fmt(d.dEsp, 2) + " eV"],
+    ["sp² 轨道能", fmt(d.Esp2, 2) + " eV　<span class=\"m\" style=\"color:#8b97a6\"><span class=\"op\">=</span>(<i>E</i><sub>2s</sub> <span class=\"op\">+</span> 2<i>E</i><sub>2p</sub>)/3</span>"],
     ["#", "激发与成键（每原子）"],
-    ["激发/杂化代价", "+" + fmt(C.Epro, 2) + " eV　<i style=\"color:#8b97a6;font-style:normal\">NIST：2s²2p² ³P → 2s2p³ ⁵S°；与 sp³ 工具同一个数</i>"],
-    ["σ 单键键能 " + M("<i>D</i><sub>σ</sub>"), fmt(d.Dsig, 2) + " eV　<i style=\"color:#8b97a6;font-style:normal\">由内聚能恒等式反推，非独立测量</i>"],
+    ["激发/杂化代价", "+" + fmt(C.Epro, 2) + " eV"],
+    /* D_σ 的对照值（金刚石 3.59 eV）并进这一行，省掉「与 sp³ 对照」整组里的一行。 */
+    ["σ 单键键能 " + M("<i>D</i><sub>σ</sub>"), "<b>" + fmt(d.Dsig, 2) + "</b> eV（金刚石：<b>" + C.DbondDia.toFixed(2) + "</b> eV）"],
     ["σ 骨架贡献", fmt(SIGMA_PER_ATOM * d.Dsig, 2) + " eV　<i style=\"color:#8b97a6;font-style:normal\">每原子 3 个键、每键两人分摊 → 1.5 个</i>"],
     ["π 非局域贡献", fmt(-d.Epi, 2) + " eV　<i style=\"color:#8b97a6;font-style:normal\">= t·⟨|f(k)|⟩，布里渊区数值积分</i>"],
-    ["净能量变化", "<b style=\"color:#1976d2\">−" + fmt(C.Ecoh, 2) + " eV</b>　<i style=\"color:#8b97a6;font-style:normal\">= −内聚能（记账恒等，不是独立验证）</i>"],
+    ["净能量变化", "<b style=\"color:#1976d2\">−" + fmt(C.Ecoh, 2) + "</b> eV（金刚石：<b>" + C.EcohDia.toFixed(2) + "</b> eV/原子）"],
     ["#", "π 能带（最近邻紧束缚，t = " + fmt(T_TB, 2) + " eV，本工具固定取值）"],
     [M("⟨|<i>f</i>(<i>k</i>)|⟩") + "（数值积分）", fmt(d.fAvg, 4)],
     ["π 带带宽 " + M("3<i>t</i>"), fmt(d.bw, 2) + " eV"],
@@ -2334,18 +2375,21 @@ function updatePanels() {
     ["带隙", "0 eV　<i style=\"color:#8b97a6;font-style:normal\">π 与 π* 在狄拉克点相接</i>"],
     ["#", "石墨烯几何"],
     ["晶格常数 " + M("<i>a</i>"), C.aG.toFixed(2) + " Å"],
-    ["C–C 键长 " + M("<i>d</i>"), C.dCC.toFixed(3) + " Å　<i style=\"color:#8b97a6;font-style:normal\">= a/√3</i>"],
-    ["键角", "120°"],
-    ["σ 键数（每原子）", "3（每键两人分摊 → 1.5）"],
-    ["#", "与金刚石（sp³）对照"],
-    ["C–C 键长", C.dCC.toFixed(3) + " Å（石墨烯）　vs　" + C.dDia.toFixed(3) + " Å（金刚石）"],
-    ["单键键能", fmt(d.Dsig, 2) + " eV　vs　" + C.DbondDia.toFixed(2) + " eV"],
-    ["内聚能", fmt(C.Ecoh, 2) + " eV/原子　vs　" + C.EcohDia.toFixed(2) + " eV/原子"],
-    ["说明", "<i style=\"color:#8b97a6;font-style:normal\">石墨烯的键更短、s 成分更高（1/3 对 1/4），σ 键更强；两者的内聚能差不到 0.1 eV/原子，所以「石墨比金刚石稳定」是能量上非常接近的微弱差别</i>"]
+    /* 「键角 120°」与核心区重复、「σ 键数」与上面 σ 骨架贡献那行重复 ⇒ 都删；
+       金刚石对照值并进本行，原来单独占 4 行的「与 sp³ 对照」组就此取消
+       （60 字的结论段搬到 roNote，一条信息都没丢）。 */
+    ["C–C 键长 " + M("<i>d</i>"), "<b>" + C.dCC.toFixed(3) + "</b> Å　<i style=\"color:#8b97a6;font-style:normal\">= a/√3；金刚石：<b>" + C.dDia.toFixed(3) + "</b> Å</i>"]
   ]);
+  $("roNote").innerHTML = NOTE;
   $("wfBox").innerHTML = wfHTML();
   buildLegend();
 }
+/* 三条口径声明 + 激发代价的出处 + 石墨 vs 金刚石那句结论：
+   它们都是「说明」不是「读数」，原来挂在读数行的 v 里（有的还占整整一行）⇒ 集中到
+   读数面板底部的 unit-note。⚠️ 与 sp³ 那件必须同步（记忆 §9 成对约束）。 */
+const NOTE = "口径：s–p 能级差是<b>单电子轨道能差，不是光谱激发能</b>；σ 单键键能由<b>内聚能恒等式反推</b>，非独立测量；净额 = −内聚能是<b>记账恒等，不是独立验证</b>。" +
+  "激发代价取 NIST 多电子光谱值（2s²2p² ³P → 2s2p³ ⁵S°），与 sp<sup>3</sup> 工具同一个数。" +
+  "石墨烯的键更短、s 成分更高（1/3 对 1/4），σ 键更强；两者的内聚能差不到 0.1 eV/原子，所以「石墨比金刚石稳定」是能量上非常接近的微弱差别。";
 function angleNow() {
   const t = curT();
   const s1 = orbState(1, t), s2 = orbState(2, t);
@@ -2359,8 +2403,8 @@ function angleNow() {
       还和下面那行 b = √2/√3 = 0.816 自相矛盾。现在系数一律由 b·n̂ 现算。 */
 function wfHTML() {
   const frac = (a, b) => '<span class="frac"><span class="num">' + a + '</span><span class="den">' + b + '</span></span>';
-  const S = "ψ<sub>2s</sub>";
-  const P = ["x", "y"].map(a => "ψ<sub>2p<sub>" + a + "</sub></sub>");
+  const S = "<i>ψ</i><sub>2s</sub>";
+  const P = ["x", "y"].map(a => "<i>ψ</i><sub>2p<sub><i>" + a + "</i></sub></sub>");
   /* 归一化 a² + b² = 1 且三轨两两正交：⟨ψ_i|ψ_j⟩ = a² + b²(n̂_i·n̂_j) = a² − b²/2 = 0
      ⇒ b² = 2a² ⇒ a² = 1/3、b² = 2/3。a/b = 1/√2，即画布用的 LAM2。 */
   const A2 = 1 / 3, B2 = 2 / 3;
@@ -2382,7 +2426,7 @@ function wfHTML() {
   };
   let html = "";
   for (let i = 0; i < 3; i++) {
-    let expr = '<div class="m">ψ<sub>sp²(' + (i + 1) + ')</sub><span class="op">=</span>' + frac(1, "√3") + S;
+    let expr = '<div class="m"><i>ψ</i><sub>sp²(' + (i + 1) + ')</sub><span class="op">=</span>' + frac(1, "√3") + S;
     for (let k = 0; k < 2; k++) {
       const c = coef(rows[i][k]);
       if (!c) continue;
@@ -2407,79 +2451,44 @@ function wfHTML() {
 const CHAL = [
   {
     q: "切到「② sp² 杂化」，旋转三维视图：3 个 sp² 轨道在<b>同一个平面</b>内吗？它们之间的夹角是多少？剩下的 <span class='m'>2p<sub><i>z</i></sub></span> 指向哪里？",
-    a: () => {
-      const d = derived();
-      return "在<b>同一个平面</b>内：三个瓣轴分别是 (1, 0, 0)、(−½, √3/2, 0)、(−½, −√3/2, 0)，" +
-        "z 分量全为 0，所以它们严格共面 —— 这正是 sp² 与 sp³ 最直观的区别（sp³ 的四个瓣轴 z 分量都不为 0）。" +
-        "夹角是 <b>120°</b>：任意两个瓣轴的点积都是 −½，故夹角 = arccos(−½) = 120°。图上量得的当前值是 <b>" +
-        fmt(angleNow(), 2) + "°</b>（未完全杂化时会小于 120°）。" +
-        "剩下的 <span class='m'>2p<sub><i>z</i></sub></span> <b>垂直于这个平面</b>（沿 z 轴），它<b>不参与</b>杂化，保持哑铃形 —— " +
-        "因为它与参与杂化的 <span class='m'>2p<sub><i>x</i></sub></span>、<span class='m'>2p<sub><i>y</i></sub></span> 正交，不会被混进来。" +
-        "共面性不是巧合：三个单位向量之和为零时，两两夹角必然是 arccos(−½) = 120°，这是「三个等价方向」在二维平面里的唯一解。" +
-        "能级上也能看出来：三个 sp² 在 " + fmt(d.Esp2, 2) + " eV，<span class='m'>2p<sub><i>z</i></sub></span> 仍留在 " + fmt(CARBON.Ep, 2) + " eV。";
-    }
+    a: () => "在<b>同一个平面</b>内：三个瓣轴的 z 分量全为 0，所以它们严格共面 —— 这正是 sp² 与 sp³ 最直观的区别（sp³ 的四个瓣轴 z 分量都不为 0）。" +
+        "而且共面不是巧合：三个单位向量之和为零时，两两夹角必然是 arccos(−½) = 120°。" +
+        "剩下的 <span class='m'>2p<sub><i>z</i></sub></span> <b>垂直于这个平面</b>，它<b>不参与</b>杂化、保持哑铃形 —— " +
+        "因为它与参与杂化的 <span class='m'>2p<sub><i>x</i></sub></span>、<span class='m'>2p<sub><i>y</i></sub></span> 正交，不会被混进来。",
   },
   {
     q: "切到「③ 晶格与 π 云」：每个碳原子与几个相邻碳原子形成 σ 键？这些 σ 键在同一个平面内吗？构成了什么形状的网格？",
     a: () => "每个碳原子与 <b>3 个</b>相邻碳原子成 σ 键 —— 碳有 4 个价电子，其中 3 个在 sp² 轨道里，正好对应 3 个 σ 键；" +
       "第 4 个电子在 <span class='m'>2p<sub><i>z</i></sub></span> 上，走的是 π 通道。σ 键是一个不剩地<b>躺在同一个平面内</b>的：" +
-      "石墨烯所有原子严格共面，整个晶体就是一个原子厚的平面。" +
-      "网格形状是<b>六角蜂窝（honeycomb）</b>：不是一整片三角形网格，而是由正六边形拼成的蜂窝，每个顶点坐一个碳原子，" +
-      "每个六边形有 6 个碳原子但每个原子被 3 个六边形共用。" +
-      "键长 " + CARBON.dCC.toFixed(3) + " Å，晶格常数 a = √3 × 键长 = " + CARBON.aG.toFixed(2) + " Å，键角 120° —— " +
-      "键角和 sp² 的轨道夹角完全一致，因为 σ 键就是 sp² 轨道「头碰头」重叠的方向。" +
-      "σ 键是三个方向里最强的一类共价键，石墨烯的力学强度（杨氏模量约 1 TPa）就是它给的。"
+      "石墨烯所有原子严格共面，整个晶体就是一个原子厚的平面，网格是<b>六角蜂窝</b>（键长与晶格常数见读数面板）。" +
+      "<b>键角 120° 与 sp² 的轨道夹角完全一致</b> —— 因为 σ 键就是 sp² 轨道「头碰头」的方向，键的方向被轨道方向锁死了。",
   },
   {
     q: "观察 <span class='m'>2p<sub><i>z</i></sub></span> 轨道和 π 电子云：π 电子云在平面的<b>上方</b>还是<b>下方</b>？为什么 π 电子能非局域到整个平面，而 σ 电子不能？",
-    a: () => {
-      const d = derived();
-      return "<b>上、下都有，而且对称</b>：<span class='m'>2p<sub><i>z</i></sub></span> 是哑铃形，一个瓣在平面上方、一个在下方，" +
-        "所以 π 电子云是「平面上下各一片」的两层结构，平面上本身反而是节面（电子概率为零）。图上用橙色画上层、紫色画下层。" +
-        "为什么能非局域：每个碳的 <span class='m'>2p<sub><i>z</i></sub></span> 都<b>平行</b>且垂直于平面，相邻两个 <span class='m'>2p<sub><i>z</i></sub></span> 之间是「肩并肩」重叠，" +
-        "而且这种重叠可以向四面八方一直传递下去 —— 于是 π 电子不再属于某一对碳原子，而是属于<b>整个二维晶格</b>。" +
-        "本工具用最近邻紧束缚把它算出来：跃迁积分 t = " + fmt(T_TB, 2) + " eV，布里渊区数值积分给出 ⟨|f(k)|⟩ = " +
-        fmt(d.fAvg, 4) + "，π 带平均能量因此比孤立 <span class='m'>2p<sub><i>z</i></sub></span> 低了 <b>" + fmt(-d.Epi, 2) + " eV/原子</b> —— 这就是非局域带来的成键收益。" +
-        "σ 电子不能这样做：σ 键是「头碰头」的定域键，方向沿着两个原子核的连线，换一个方向就得换一对轨道，" +
-        "它是局域在两个原子之间的，不能像 π 那样在平面里横向铺开。这个分工的后果是：σ 骨架给强度，π 电子给导电性。"
-    }
+    a: () => "<b>上、下都有，而且对称</b>：<span class='m'>2p<sub><i>z</i></sub></span> 是哑铃形，一个瓣在平面上方、一个在下方，" +
+        "所以 π 电子云是「平面上下各一片」的两层结构 —— <b>平面上本身反而是节面</b>（电子概率为零，图上橙色是上层、紫色是下层）。" +
+        "为什么能非局域：每个碳的 <span class='m'>2p<sub><i>z</i></sub></span> 都<b>平行</b>且垂直于平面，相邻两个是「肩并肩」重叠，" +
+        "而且这种重叠可以向四面八方一直传递下去 —— 于是 π 电子不再属于某一对碳原子，而是属于<b>整个二维晶格</b>（成键收益的紧束缚数值见更多读数）。" +
+        "σ 电子不能这样做：σ 键是「头碰头」的定域键，方向沿着两个原子核的连线，" +
+        "它是局域在两个原子之间的，不能像 π 那样在平面里横向铺开。",
   },
   {
-    q: "缺失的那根键：金刚石里每个碳原子有 4 根 σ 键，石墨烯里只有 3 根 —— 第 4 根键去哪了？对照模块三的对比表，先说清两边的键角与杂化轨道数，再回答：为什么 sp² 偏偏会留下一个未杂化的 p 轨道？",
-    a: () => {
-      const d = derived();
-      return "<b>先把两组数字摆出来。</b>" +
-        "sp³（金刚石）：键角 <b>" + angDM(TET_ANG) + "</b>（= arccos(−1/3) = " + fmt(TET_ANG, 2) + "°），<b>4 个</b>杂化轨道，" +
-        "四个方向全部用成 σ 键，<b>没有</b>剩余 p 轨道 —— 4 根键、每根被两个原子分摊，平均每原子 <b>2 根 σ 键</b>；" +
-        "石墨烯这边：键角 <b>120°</b>（= arccos(−1/2)），<b>3 个</b>杂化轨道，<b>留下 1 个</b>未杂化的 " +
-        "<span class='m'>2p<sub><i>z</i></sub></span> —— 3 根 σ 键、同样两人分摊，平均每原子只有 <b>1.5 根 σ 键</b>。" +
-        "<b>那第 4 根键去哪了？它压根没长成 σ 键。</b>杂化只能把 2s 与「被选中的 p 轨道」组合：sp² 选了 " +
-        "<span class='m'>2p<sub><i>x</i></sub></span> 与 <span class='m'>2p<sub><i>y</i></sub></span>（两个 p 加一个 s，正好 3 个等价轨道，" +
-        "自然摊在同一个平面里），与这两者正交的 <span class='m'>2p<sub><i>z</i></sub></span> <b>数学上混不进这三个轨道</b>，" +
-        "第 4 个价电子连同它一起被留在 σ 骨架之外，只能悬在平面的上下两侧、非局域地参加 π 成键。" +
-        "一句话：<b>每个碳少了一个 σ 成键方向，换来一条 π 通道</b> —— 缺席的那根键没有消失，它只是换了形式。" +
-        "sp³ 则把三个 p 全选上（1 + 3 = 4），四个方向全投向正四面体的四个顶点，所以金刚石这边<b>没有</b>这种「缺席的键」。" +
-        "想再核一步可以看能量：石墨烯的内聚能是 " + fmt(CARBON.Ecoh, 2) + " eV/原子，金刚石 " +
-        CARBON.EcohDia.toFixed(2) + " eV/原子，两者<b>相当</b> —— 少的那个 σ 方向由更短、s 成分更高（1/3 对 1/4）的 σ 键补了回来：" +
-        "单键键能 " + fmt(d.Dsig, 2) + " eV 对金刚石的 " + CARBON.DbondDia.toFixed(2) + " eV。" +
-        "（提醒：石墨烯这个单键键能是<b>由内聚能恒等式反推</b>的记账值，不是独立测量，只作量级参考。）";
-    }
+    q: "缺失的那根键：金刚石里每个碳原子有 4 根 σ 键，石墨烯里只有 3 根 —— 第 4 根键去哪了？为什么 sp² 偏偏会留下一个未杂化的 p 轨道？",
+    a: () => "<b>那第 4 根键去哪了？它压根没长成 σ 键。</b>杂化只能把 2s 与「被选中的 p 轨道」组合：sp² 选了 " +
+        "<span class='m'>2p<sub><i>x</i></sub></span> 与 <span class='m'>2p<sub><i>y</i></sub></span>（两个 p 加一个 s，正好 3 个等价轨道，自然摊在同一个平面内），" +
+        "剩下的 <span class='m'>2p<sub><i>z</i></sub></span> 与参与杂化的这两个<b>正交，不会被混进来</b>，" +
+        "于是保持哑铃形、<b>垂直于平面</b> —— 它不走 σ 通道，只能走 π 通道。" +
+        "对照 sp³：四个方向全部用成 σ 键，没有剩余 p 轨道（键角与杂化轨道数见更多读数）。",
   },
   {
     q: "结合 σ 骨架和 π 电子云：石墨烯为什么<b>既极硬</b>（力学）又<b>极导电</b>（电学）？σ 键和 π 键各贡献了什么？",
-    a: () => {
-      const d = derived();
-      return "石墨烯的两个极端性质来自两套<b>互不干扰</b>的成键：" +
-        "<b>σ 骨架 → 硬度。</b>每原子 3 个 σ 键，是 sp² 轨道「头碰头」重叠形成的强定域共价键。本工具由内聚能恒等式反推出单键键能 " +
-        fmt(d.Dsig, 2) + " eV，比金刚石的 sp³–sp³ 单键（" + CARBON.DbondDia.toFixed(2) + " eV）更大 ——" +
-        "因为石墨烯键更短（" + CARBON.dCC.toFixed(3) + " Å 对 " + CARBON.dDia.toFixed(3) + " Å）、s 成分更高（1/3 对 1/4）。" +
-        "（提醒：这个 " + fmt(d.Dsig, 2) + " eV 是记账反推值，不是独立测量，只作量级参考。）" +
+    a: () => "石墨烯的两个极端性质来自两套<b>互不干扰</b>的成键：" +
+        "<b>σ 骨架 → 硬度。</b>每原子 3 个 σ 键，是 sp² 轨道「头碰头」重叠形成的强定域共价键，比金刚石的 sp³–sp³ 单键更强 —— 因为石墨烯键更短、s 成分更高（1/3 对 1/4）。" +
         "<b>π 电子 → 导电。</b>每原子 1 个 π 电子在整个平面非局域，形成 π 与 π* 两条能带，" +
-        "它们在狄拉克点<b>相接、带隙为零</b>；紧束缚给出的费米速度是 " + fmt(d.vF / 1e6, 2) + " × 10<sup>6</sup> m/s，" +
-        "电子表现得像无质量的相对论粒子，迁移率极高。" +
-        "关键在于两者<b>在空间上分开</b>：σ 骨架锁在平面内、负责把原子钉住；π 电子云悬在平面上下、可以在整个平面自由移动。" +
-        "所以「把结构撑住」和「让电子跑起来」这两件事由两套不同的轨道分别承担 —— 这就是石墨烯能同时拥有极高力学强度和极高载流子迁移率的原因。"
-    }
+        "它们在狄拉克点<b>相接、带隙为零</b>，电子表现得像无质量的相对论粒子，迁移率极高。" +
+        "关键在于两者<b>在空间上分开</b>：σ 骨架锁在平面内、负责把原子钉住；π 电子云悬在平面上下、可以在整个平面自由移动 —— " +
+        "这就是石墨烯能同时拥有极高力学强度和极高载流子迁移率的原因。" +
+        "（提醒：单键键能是<b>由内聚能恒等式反推</b>的记账值，不是独立测量，只作量级参考。）"
   }
 ];
 let ANS_EL = [];
@@ -2497,12 +2506,13 @@ function buildChal() {
     ANS_EL.push(ans);
     d.querySelector(".btn-row button").onclick = e => {
       e.stopPropagation();
-      if (!ans.innerHTML) ans.innerHTML = CHAL[i].a();
+      if (!ans.innerHTML) ans.innerHTML = ansOf(CHAL[i]);
       ans.classList.toggle("show");
     };
   });
 }
-function refreshAnswers() { ANS_EL.forEach((el, i) => { el.innerHTML = CHAL[i].a(); }); }
+const ansOf = c => (typeof c.a === "function" ? c.a() : c.a);
+function refreshAnswers() { ANS_EL.forEach((el, i) => { el.innerHTML = ansOf(CHAL[i]); }); }
 
 /* ==================================================================
    8. 画布尺寸、交互、主循环

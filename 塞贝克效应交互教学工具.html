@@ -39,6 +39,9 @@
   .layout { display: flex; gap: 14px; align-items: flex-start; max-width: 1500px; margin: 0 auto; }
   .viz { flex: 0 0 64%; min-width: 0; display: flex; flex-direction: column; gap: 12px; }
   .side { flex: 1; min-width: 310px; display: flex; flex-direction: column; gap: 12px; }
+  /* 两个模块并列一行：主列有富余宽度，两块并排比上下堆叠省一半垂直空间 */
+  .duo { display: flex; gap: 12px; align-items: stretch; }
+  .duo > .card { flex: 1 1 0; min-width: 0; }
   .card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; }
   .sec-title { font-size: 13.5px; font-weight: 700; margin: 2px 0 6px; }
   .sec-title .mtag {
@@ -137,6 +140,7 @@
   @media (max-width: 1100px) {
     .layout { flex-direction: column; }
     .viz { flex: 1 1 auto; width: 100%; }
+    .duo { flex-direction: column; }
   }
   .site-foot { max-width: 1500px; margin: 18px auto 0; padding: 12px 16px 24px;
     border-top: 1px solid var(--border); color: var(--text-sub);
@@ -199,6 +203,21 @@
       <div class="chart-wrap"><canvas id="prof" data-h="340" tabindex="0"></canvas></div>
       <div class="legend" id="legProf"></div>
       <div class="hint" id="hintProf"></div>
+    </div>
+
+    <div class="duo">
+      <div class="card">
+        <div class="sec-title"><span class="mtag">模块四</span>塞贝克系数随载流子浓度的变化</div>
+        <div class="chart-wrap"><canvas id="scurve" data-h="250" tabindex="0"></canvas></div>
+        <div class="legend" id="legS"></div>
+        <div class="hint" id="hintS"></div>
+      </div>
+      <div class="card">
+        <div class="sec-title"><span class="mtag">模块五</span>热电优值：<span class="m"><i>S</i></span>、<span class="m"><i>σ</i></span>、<span class="m"><i>κ</i></span> 的三方博弈</div>
+        <div class="chart-wrap"><canvas id="zt" data-h="250" tabindex="0"></canvas></div>
+        <div class="legend" id="legZt"></div>
+        <div class="hint" id="hintZt"></div>
+      </div>
     </div>
 
   </div>
@@ -289,29 +308,15 @@
     </div>
 
     <div class="card">
-      <div class="sec-title"><span class="mtag">模块四</span>塞贝克系数随载流子浓度的变化</div>
-      <div class="chart-wrap"><canvas id="scurve" data-h="250" tabindex="0"></canvas></div>
-      <div class="legend" id="legS"></div>
-      <div class="hint" id="hintS"></div>
-    </div>
-
-    <div class="card">
-      <div class="sec-title"><span class="mtag">模块五</span>热电优值：<span class="m"><i>S</i></span>、<span class="m"><i>σ</i></span>、<span class="m"><i>κ</i></span> 的三方博弈</div>
-      <div class="chart-wrap"><canvas id="zt" data-h="250" tabindex="0"></canvas></div>
-      <div class="legend" id="legZt"></div>
-      <div class="hint" id="hintZt"></div>
-    </div>
-
-    <div class="card">
       <div class="sec-title">读数面板</div>
       <div class="kv" id="readout"></div>
       <div class="fold" id="foldRo">
         <div class="fold-head"><span class="chev">▶</span><span>更多读数（材料、公式分解、载流子与热导）</span></div>
         <div class="fold-body"><div class="kv" id="readoutMore"></div></div>
       </div>
-      <div class="cmp-note">本工具用<b>单带抛物线 + 弛豫时间近似</b>精确数值积分费米–狄拉克函数，未计入能带非抛物性、多谷简并、谷间散射与声子拖拽，
-        因此给出的是<b>量级与趋势正确</b>的估计，不是材料数据库的实测值。真实 <span class="m">Bi<sub>2</sub>Te<sub>3</sub></span> 的
-        <span class="m"><i>ZT</i> ≈ 1</span>，本工具算出的数值与之同量级即属正常。</div>
+      <div class="cmp-note">本工具用<b>单带抛物线 + 弛豫时间近似</b>数值积分费米–狄拉克函数，未计入能带非抛物性、多谷简并、谷间散射与声子拖拽，
+        因此给出的是<b>量级与趋势正确</b>的估计，不是实测值（真实 <span class="m">Bi<sub>2</sub>Te<sub>3</sub></span> 的
+        <span class="m"><i>ZT</i> ≈ 1</span>）。</div>
     </div>
   </div>
 </div>
@@ -1071,6 +1076,25 @@ var I18N = {
   "绑定。切到「预设 → 低热导极限」（": "bound. Switch to the preset \"Low thermal conductivity limit\" (",
   " 压到 0.2 倍）看看。": " to 0.2×) and see.",
   "。想再往上走，唯一的自由是": ". The only free parameter left is ",
+  "绑定。": " bound.",
+  "必然": "necessarily",
+  "⇒ 两根条几乎抵消，这就是重掺杂 ": "⇒ the two bars almost cancel, and that is why heavy doping makes ",
+  "一起涨。两条曲线一交叉，中间就": " upwards. Where the two curves cross there is ",
+  "有个最优掺杂。想再往上走，唯一的自由是": " an optimum doping. The only freedom left is ",
+  "：切到「预设 → 低热导极限」看。": ": switch to the preset \"Low thermal conductivity limit\" and look.",
+  "数值积分费米–狄拉克函数，未计入能带非抛物性、多谷简并、谷间散射与声子拖拽，": "the Fermi–Dirac integrals numerically, without including band non-parabolicity, multi-valley degeneracy, intervalley scattering or phonon drag, ",
+  "因此给出的是": "and therefore gives ",
+  "的估计，不是实测值（真实 ": " estimate rather than a measured value (real ",
+  "各自都不为零 —— 天平符号就是在说这件事。": "neither of them is zero — that is exactly what the balance symbol is saying.",
+  "：n 型搬负电荷，p 型搬正电荷，所以冷端的极性相反、电势差的符号相反，塞贝克系数也就一负一正 —— ": ": n-type carries negative charge and p-type positive charge, so the polarity of the cold end is opposite, the sign of the potential difference is opposite, and the Seebeck coefficient is negative in one case and positive in the other — ",
+  "所以测出 ΔV 的正负就知道材料是 n 型还是 p 型": "so the sign of ΔV tells you whether the material is n-type or p-type",
+  "：掺杂越重，费米能级越靠近（甚至进入）能带，每个载流子平均携带的熵就越小。": ": the heavier the doping, the closer the Fermi level sits to (and eventually enters) the band, and the less entropy each carrier carries on average.",
+  "，剩下的差值才是 |S| —— 这就是重掺杂 |S| 塌下去的机制。": ", and the difference left over is |S| — that is the mechanism by which |S| collapses under heavy doping.",
+  "材料与状态": "Material and state",
+  "输运与热导": "Transport and thermal conduction",
+  "在此温区近似线性": "approximately linear over this temperature range",
+  "非线性，积分与中点差": "nonlinear; the integral and the midpoint value differ by",
+  "电子热导占": "electronic share",
 };
 
 /* 注入点②：画布直写字符串。老工具直接调 g.fillText()（描边文字走 g.strokeText()），这里在原型上兜住。
@@ -2643,18 +2667,20 @@ function drawReadout() {
   let h = "", hm = "";
 
   /* ---- 核心区：S 的符号、大小与热电性能 ---- */
-  h += kvRow(H_SE + " = " + MM("Δ<i>V</i><span class='op'>/</span>Δ<i>T</i>") + "（积分平均）", "<b>" + fmt(sEff() * 1e6, 2) + " " + H_UVK + "</b>" +
-             (Math.abs(st.S - sEff()) * 1e6 > 1 ? "　与中点值差 " +
-               fmt(Math.abs(st.S - sEff()) * 1e6, 2) + "（" + H_S + " 非线性）" : "　（与中点值一致）"));
-  h += kvRow("温差电动势 " + H_DV, "<b>" + fmt(dv * 1e3, 4) + " mV</b>　= ∫" + H_S + "(<span class='m'><i>T</i></span>)d<span class='m'><i>T</i></span>" +
+  /* 折叠区原来的「S（T_avg 处）」是同一个量的中点值，与本行只差 0.02%，已删；
+     本行的括注因此改成自洽说法：直接说 S 随 T 的非线性程度，不再指向另一行。 */
+  h += kvRow(H_SE + " = " + MM("Δ<i>V</i><span class='op'>/</span>Δ<i>T</i>") + "（积分平均）", "<b>" + fmt(sEff() * 1e6, 1) + " " + H_UVK + "</b>" +
+             (Math.abs(st.S - sEff()) * 1e6 > 1 ? "　（" + H_S + " 非线性，积分与中点差 " +
+               fmt(Math.abs(st.S - sEff()) * 1e6, 1) + "）" : "　（" + H_S + " 在此温区近似线性）"));
+  h += kvRow("温差电动势 " + H_DV, "<b>" + fmt(dv * 1e3, 2) + " mV</b>　= ∫" + H_S + "(<span class='m'><i>T</i></span>)d<span class='m'><i>T</i></span>" +
              "（<span class='m'><i>T</i><sub>L</sub></span> → <span class='m'><i>T</i><sub>H</sub></span>，即 <span class='m'><i>V</i><sub>冷</sub></span> − <span class='m'><i>V</i><sub>热</sub></span>）" +
              "　冷端电势更<b>" + (dv < 0 ? "低" : "高") + "</b>");
   h += kvRow("内建电场 " + H_EE, "<b>" + fmt(Math.abs(E), 4) + " " + H_VCM + "</b>　方向 " + (E >= 0 ? "热 → 冷" : "冷 → 热"));
   h += kvRow("冷端积累", OPT.type === 0 ? "<b>电子</b>（带负电，故 " + H_S + " < 0）"
                                         : "<b>空穴</b>（带正电，故 " + H_S + " > 0）");
   h += kvRow("简约费米能级 " + H_ETA, "<b>" + fmt(st.etaM, 3) + "</b>　（" + H_ETA + " < 0 非简并；> 0 已简并）");
-  h += kvRow("电导率 " + H_SIG, "<b>" + fmt(st.sig / 100, 3) + " " + H_SCM + "</b>　= " +
-             fmt(st.sig, 2) + " S/m　电阻率 " + fmt(1 / Math.max(st.sig / 100, 1e-30), 4) + " Ω·cm");
+  h += kvRow("电导率 " + H_SIG, "<b>" + fmt(st.sig / 100, 2) + " " + H_SCM + "</b>　电阻率 " +
+             fmt(1 / Math.max(st.sig / 100, 1e-30), 4) + " Ω·cm");
   h += kvRow("热电优值 " + H_ZT, "<b>" + fmt(st.ZT, st.ZT < 0.01 ? 6 : 4) + "</b>　峰值 " +
              fmt(C.ztmax, 4) + "（在 n = " + sciV(C.nopt, 2) + " " + H_CM3 +
              (OPT.n < C.nopt / 2 ? "，当前偏轻" : OPT.n > C.nopt * 2 ? "，当前偏重" : "，就在峰附近") +
@@ -2662,7 +2688,7 @@ function drawReadout() {
   $("readout").innerHTML = h;
 
   /* ---- 折叠区：材料、公式分解、载流子与热导 ---- */
-  hm += kvRow("── 材料与状态 ──", "");
+  hm += kvRow("材料与状态", "");
   hm += kvRow("材料", "<b>" + M.n + "</b>　" + H_EG + " = " + fmt(M.eg, 3) + " " + H_EVU +
               "　" + H_NC + " = " + sciV(ncT(tAvg()), 2) +
               "　" + H_NV + " = " + sciV(nvT(tAvg()), 2) + " " + H_CM3);
@@ -2673,12 +2699,9 @@ function drawReadout() {
   hm += kvRow("温度", H_TH + " = " + fmt(OPT.TH, 0) + " " + H_KK + "　" + H_TL + " = " +
               fmt(OPT.TL, 0) + " " + H_KK + "　" + H_DT + " = <b>" + fmt(dT(), 0) + " " + H_KK +
               "</b>　" + H_TA + " = " + fmt(tAvg(), 1) + " " + H_KK);
-  /* A 在页首（非简并极限）与这里（含费米积分比值的 A(η)）原本是同一个字母的两个定义，
-     这里显式写成 A(η) 并把数值摆出来；|S|/(k/q) = A(η) − η 只对多数载流子项严格成立。 */
-  hm += kvRow(H_S + "（" + H_TA + " 处）", "<b>" + fmt(st.S * 1e6, 2) + " " + H_UVK + "</b>" +
-              "　= ∓(<span class='m'><i>k</i><sub>B</sub></span>/" + H_QQ + ")[<span class='m'><i>A</i></span>(<span class='m'><i>η</i></span>) − <span class='m'><i>η</i></span>]，" +
-              "<span class='m'><i>A</i></span>(<span class='m'><i>η</i></span>) = <b>" + fmt(AtOf(st.etaM), 3) + "</b>（非简并值 " + fmt(Acf(), 2) +
-              "）、<span class='m'><i>η</i></span> = " + fmt(st.etaM, 3));
+  /* 原「S（T_avg 处）」行已删：它是核心区 S_eff 的中点版本，两者只差 0.02%，
+     且 v 里塞了整个 A(η) − η 公式（η 在核心区已单独给）。A(η) 的两个定义
+     （页首非简并极限 vs 含费米积分比值）仍保留在页首与散射行，不重复。 */
   hm += kvRow("掺杂 / 多数浓度", sciV(OPT.n, 2) + " → <b>" + sciV(st.maj, 3) + " " + H_CM3 + "</b>" +
               (CK.bip && st.maj > OPT.n * 1.02 ? "　（本征激发多出 " +
                 fmt(100 * (st.maj / OPT.n - 1), 1) + "%）" : ""));
@@ -2690,13 +2713,13 @@ function drawReadout() {
   hm += kvRow("迁移率", H_MUN + " = " + fmt(muOf(0), 0) + "　" + H_MUP + " = " + fmt(muOf(1), 0) +
               " " + H_CM2 + "/V·s　（已含重掺杂退化；低掺杂极限 " +
               fmt(M.mun, 0) + " / " + fmt(M.mup, 0) + "）");
-  hm += kvRow("── 输运与热导 ──", "");
-  hm += kvRow("洛伦兹数 " + H_LZ, sciV(st.Lz, 3) + " W·Ω/K²　（非简并极限 <span class='m'><i>A</i></span>·(<span class='m'><i>k</i><sub>B</sub></span>/" +
-              H_QQ + ")² = " + sciV(Acf() * KBQ * KBQ, 3) + "；简并极限 π²/3·(<span class='m'><i>k</i><sub>B</sub></span>/" +
-              H_QQ + ")² = " + sciV(Math.PI * Math.PI / 3 * KBQ * KBQ, 3) + "）");
-  hm += kvRow("热导率 " + H_KAP, "<b>" + fmt(st.kap, 3) + " " + H_WMK + "</b>　= " + H_KL + " " +
-              fmt(st.kl, 3) + " + " + H_KE + " " + fmt(st.ke, 3) + " + " + H_KB + " " + fmt(st.kb, 3) +
-              "　电子热导占比 " + fmt(100 * (st.ke + st.kb) / Math.max(st.kap, 1e-30), 1) + "%" +
+  hm += kvRow("输运与热导", "");
+  /* 非简并 / 简并两个极限是教科书常数，不是本工具的读数 ⇒ 删括注（−50 字）。 */
+  hm += kvRow("洛伦兹数 " + H_LZ, sciV(st.Lz, 3) + " W·Ω/K²");
+  /* 三个分项里 κ_e 与 κ_bip 在硅参数下都≈0（电子热导只占 0.003%），
+     写成「148.000 + 0.005 + 0.000」视觉上像 bug ⇒ 只留 κ_L 与电子热导占比。 */
+  hm += kvRow("热导率 " + H_KAP, "<b>" + fmt(st.kap, 1) + " " + H_WMK + "</b>　（" + H_KL + " " +
+              fmt(st.kl, 1) + "，电子热导占 " + fmt(100 * (st.ke + st.kb) / Math.max(st.kap, 1e-30), 1) + "%）" +
               (st.kb > st.ke ? "　（双极热导已超过普通电子热导！）" : ""));
   hm += kvRow("功率因子 " + H_PF, "<b>" + fmt(st.PF * 1e3, 3) + " mW/(m·K²)</b>　峰值 " +
               fmt(C.pfm * 1e3, 3) + "（在 n = " + sciV(C.nopt, 2) + " 附近）");
@@ -2782,33 +2805,28 @@ const CHAL = [
   { q: "把温差从 0 调到 200 K，观察半导体棒里发生了什么。热端的载流子往哪边跑？冷端积累的是什么电荷？内建电场指向哪边？稳态时扩散流和漂移流是什么关系？",
     a: "载流子从<b>热端跑向冷端</b>（热扩散）。n 型跑的是电子，冷端积累<b>负</b>电荷；p 型跑的是空穴，冷端积累<b>正</b>电荷。" +
        "内建电场的任务永远是<b>把载流子拉回热端</b>：n 型电场由热指向冷（电子受力向热），p 型电场由冷指向热（空穴受力向热）。" +
-       "稳态时两股流<b>等大反向</b>，净电流为零，但各自都不为零 —— 天平符号就是在说这件事。" +
-       "顺带一提：真正驱动扩散的不是浓度差（体内浓度被电中性锁死，见模块二的实线），而是<b>热端载流子更热</b>。" },
+       "稳态时两股流<b>等大反向</b>，净电流为零，但各自都不为零 —— 天平符号就是在说这件事。" },
   { q: "在 n 型和 p 型之间来回切换。两种情况下扩散流的方向变了吗？积累的电荷极性变了吗？塞贝克系数的符号呢？为什么？",
     a: "<b>扩散方向不变</b> —— 无论什么载流子，都是从热端往冷端跑，因为驱动力是温度梯度。" +
        "变的是<b>搬的是什么电荷</b>：n 型搬负电荷，p 型搬正电荷，所以冷端的极性相反、电势差的符号相反，" +
-       "塞贝克系数也就一负一正。这就是 <span class='m'><i>S</i></span> 能当「载流子类型探针」的原因：" +
-       "<b>测出 ΔV 的正负，就知道材料是 n 型还是 p 型</b>。" },
+       "塞贝克系数也就一负一正 —— <b>所以测出 ΔV 的正负就知道材料是 n 型还是 p 型</b>。" },
   { q: "把载流子浓度从 10¹⁵ 拖到 10²¹ cm⁻³，同时盯住模块四的 S 曲线和读数里的 <span class='m'><i>σ</i></span>。|S| 怎么变？<span class='m'><i>σ</i></span> 怎么变？为什么重掺杂「提高 <span class='m'><i>σ</i></span> 却降低 S」？",
     a: "<span class='m'>|<i>S</i>|</span> 近似<b>线性地随 lg n 下降</b>：<b>非简并区</b>每高一个数量级掉约 86·ln10 ≈ 200 μV/K" +
        "（<b>简并端会明显变平</b>：10²⁰ cm⁻³ 附近只剩 −95、10²¹ 只有 −23 μV/K；本征端则被双极项拉向零 —— 模块四图注给出当前工作点的实测斜率）。" +
        "原因是 <span class='m'><i>E</i><sub>C</sub><span class='op'>−</span><i>E</i><sub>F</sub><span class='op'>=</span><i>k</i><sub>B</sub><i>T</i>ln(<i>N</i><sub>C</sub><span class='op'>/</span><i>n</i>)</span>：" +
-       "掺杂越重，费米能级越靠近（甚至进入）能带，每个载流子平均携带的熵就越小。" +
-       "而 <span class='m'><i>σ</i><span class='op'>=</span><i>nqμ</i></span> 随 n 上升（虽然重掺杂会让 <span class='m'><i>μ</i></span> 退化，但乘积仍上升）。" +
-       "两者对 n 的依赖<b>方向相反</b>，这就是热电材料最根本的权衡。" },
+       "掺杂越重，费米能级越靠近（甚至进入）能带，每个载流子平均携带的熵就越小。" },
   { q: "盯住模块三的两根条。拖动载流子浓度，第一项怎么变？切换散射机制，第二项怎么变？在典型掺杂下哪一项说了算？",
     a: "<b>第一项（能级项）</b>随掺杂升高而<b>减小</b>，轻掺杂时可以到 5 以上，重掺杂时压到 1 甚至变负（简并）。" +
        "<b>第二项（输运项）</b>在<b>非简并</b>时只由散射机制定，与浓度<b>无关</b>：声学声子散射 A = 2，常数 <span class='m'><i>τ</i></span> 时 A = 5/2，电离杂质散射 A = 4；" +
        "但<b>简并之后 A(<span class='m'><i>η</i></span>) 会跟着 <span class='m'><i>η</i></span> 一起长</b>，不再是常数（10²⁰ cm⁻³ 附近已到 5 以上）。" +
        "典型掺杂（10¹⁷ ~ 10¹⁹）下第一项通常 2 ~ 5，与 A 同量级，<b>两项都重要</b>；" +
-       "到重掺杂简并区，① 变负、② 同步变长，两根条<b>几乎抵消</b>，剩下的差值才是 |S| —— 这就是重掺杂 |S| 塌下去的机制。" +
-       "（切换散射机构改的是 A 的那个系数，<span class='m'><i>σ</i></span> 不受影响 —— 两条路径是分开的。）" },
+       "到重掺杂简并区，① 变负、② 同步变长，两根条<b>几乎抵消</b>，剩下的差值才是 |S| —— 这就是重掺杂 |S| 塌下去的机制。" },
   { q: "看模块五的 ZT 曲线。ZT 在什么浓度达到峰值？为什么存在一个最优浓度？如果只追求高 S（轻掺杂）或只追求高 <span class='m'><i>σ</i></span>（重掺杂），ZT 会怎样？",
     a: "峰值通常在 <b>10¹⁹ cm⁻³</b> 附近（本工具中 Bi₂Te₃ 约在此处）。" +
        "左侧是<b><span class='m'><i>σ</i></span> 不够</b>：<span class='m'><i>S</i></span> 虽大，但 <span class='m'><i>S</i></span>²<span class='m'><i>σ</i></span> 里的 <span class='m'><i>σ</i></span> 太小；右侧是<b>|<span class='m'><i>S</i></span>| 不够</b>：<span class='m'><i>σ</i></span> 虽大，但 <span class='m'><i>S</i></span>² 掉得更快，" +
        "而且电子热导 <span class='m'><i>κ</i></span><sub>e</sub> 按维德曼–弗兰兹律随 <span class='m'><i>σ</i></span> 一起涨，把增益又吃掉一部分。" +
        "两头都不划算，中间必然有个最优。想突破这个天花板只有一条路 —— <b>降低晶格热导 <span class='m'><i>κ</i></span><sub>L</sub></b>，" +
-       "因为它跟 S、<span class='m'><i>σ</i></span> 都<b>不</b>绑定。切到「预设 → 低热导极限」（<span class='m'><i>κ</i></span><sub>L</sub> 压到 0.2 倍）看看。" }
+       "因为它跟 S、<span class='m'><i>σ</i></span> 都<b>不</b>绑定。" }
 ];
 const ansOf = c => (typeof c.a === "function" ? c.a() : c.a);
 let ANS_EL = [];
@@ -2833,14 +2851,11 @@ function buildChal() {
 /* ================= 提示文案 ================= */
 function hintBar() {
   const h = $("hintBar"); if (!h) return;
-  const st = state();
   h.innerHTML = "棒内颜色是<b>温度</b>，不是浓度。载流子的抖动幅度按 " +
     "<span class='m'>√<i>T</i></span> 定 —— 热端抖得厉害，这就是「更热」的字面意思。" +
     "冷端那几个符号是积累的<b>" + (OPT.type === 0 ? "电子" : "空穴") + "</b>，它们造出内建电场，" +
     "把载流子往回拉，直到扩散与漂移<b>精确抵消</b>。" +
-    "底部四格显示建立过程：真实材料的介电弛豫只有 10<sup>−12</sup> s，这里放慢到 <b>" + fmt(TAU_D, 1) + "</b> s。" +
-    "当前 <span class='m'><i>S</i> = " + fmt(st.S * 1e6, 1) + " " + H_UVK + "</span>，" +
-    "<span class='m'>Δ<i>V</i> = " + fmt(deltaV() * 1e3, 3) + " mV</span>。";
+    "底部四格显示建立过程：真实材料的介电弛豫只有 10<sup>−12</sup> s，这里放慢到 <b>" + fmt(TAU_D, 1) + "</b> s。";
 }
 function hintProf() {
   const h = $("hintProf"); if (!h) return;
@@ -2850,21 +2865,16 @@ function hintProf() {
     "各处只按当地温度 <span class='m'><i>N</i><sub>C</sub>(<i>T</i>)·<i>F</i><sub>1/2</sub></span> 算出的平衡浓度，" +
     "它从热端到冷端差着好几倍。两条线的落差，就是系统<b>想扩散的冲动</b>；" +
     "而实线之所以是平的，正因为电荷重新分布建立起的电场把化学势沿程推着走，" +
-    "把这个冲动<b>立刻抵消了</b>（这条虚线是反事实，所以<b>不含</b>内建电势 <span class='m'>−<i>qV</i>(<i>x</i>)</span> 的能带弯曲 —— " +
-    "把它加进去反而会落回蓝色实线，那时就没有对照了）。" +
-    "下半部分是电势：<span class='m'>Δ<i>V</i></span> 由 <span class='m'><i>S</i>(<i>T</i>)</span> 沿程积分得到，" +
-    "所以温差大时它不是严格线性。";
+    "把这个冲动<b>立刻抵消了</b>。";
 }
 function hintTerms() {
   const h = $("hintTerms"); if (!h) return;
-  const st = state();
   h.innerHTML = "塞贝克系数由<b>两项相加</b>再乘 " +
     "<span class='m'><i>k</i><sub>B</sub><span class='op'>/</span><i>q</i></span> = 86.17 μV/K。" +
     "<b>蓝条</b>是能级项 <span class='m'><span class='op'>−</span><i>η</i></span>（费米能级离带边多远）；" +
     "<b>橙条</b>是输运项 <span class='m'><i>A</i>(<i>η</i>)<span class='op'>=</span><span class='op'>⟨</span><i>E</i><span class='op'>⟩</span><sub>σ</sub><span class='op'>/</span><i>k</i><sub>B</sub><i>T</i></span>：" +
     "<b>非简并</b>时它退化成 <span class='m'><i>r</i><span class='op'>+</span>5<span class='op'>/</span>2</span> = " + fmt(Acf(), 2) +
-    "（只由散射机制定，与浓度无关），<b>简并</b>时它随 <span class='m'><i>η</i></span> 一起长（现在 " +
-    fmt(AtOf(st.etaM), 3) + "，<span class='m'><i>η</i> = " + fmt(st.etaM, 2) + "</span>）⇒ 两根条几乎抵消，" +
+    "（只由散射机制定，与浓度无关），<b>简并</b>时它随 <span class='m'><i>η</i></span> 一起长 ⇒ 两根条几乎抵消，" +
     "这就是重掺杂 <span class='m'>|<i>S</i>|</span> 塌下去的原因。" +
     "教材里常见的「<b>3/2</b>」是<b>另一种加权</b>：按<b>态密度</b>（权重 <span class='m'><i>E</i><sup>1/2</sup></span>）算平均能量得 " +
     "<span class='m'>3<i>k</i><sub>B</sub><i>T</i><span class='op'>/</span>2</span>，没有计入 " +
@@ -2874,23 +2884,18 @@ function hintTerms() {
 }
 function hintS() {
   const h = $("hintS"); if (!h) return;
-  const C = curves();
   h.innerHTML = "两条曲线一正一负，形状几乎<b>镜像</b>：p 型在上（<span class='m'><i>S</i><span class='op'>&gt;</span>0</span>），" +
     "n 型在下（<span class='m'><i>S</i><span class='op'>&lt;</span>0</span>）。" +
     "横轴是对数刻度，所以两条<b>近似直线</b> —— 这正对应" +
     "<span class='m'>|<i>S</i>|<span class='op'>=</span>(<i>k</i><sub>B</sub><span class='op'>/</span><i>q</i>)[ln(<i>N</i><sub>C</sub><span class='op'>/</span><i>n</i>)<span class='op'>+</span><i>A</i>]</span> 的对数依赖。" +
-    "高温时曲线的<b>右端会翘起来</b>（本征激发，双极效应把 S 拉向零）—— 把温度拉到 600 K 看 Bi₂Te₃。" +
-    "峰值 |S| 出现在最轻掺杂处：<b>" + fmt(Math.abs(C.sn[0]) * 1e6, 0) + " μV/K</b>。";
+    "高温时曲线的<b>右端会翘起来</b>（本征激发，双极效应把 S 拉向零）—— 把温度拉到 600 K 看 Bi₂Te₃。";
 }
 function hintZt() {
   const h = $("hintZt"); if (!h) return;
-  const C = curves(), st = state();
   h.innerHTML = "<b>蓝实线是 ZT</b>（左轴有数值），橙虚线与绿点线只画形状（各自归一化，峰值标在图下方）。" +
     "功率因子先升后降 —— 左端 <span class='m'><i>σ</i></span> 不够、右端 |S| 不够；热导率单调上升 —— 电子热导跟着 <span class='m'><i>σ</i></span> 一起涨。" +
-    "两条曲线一交叉就在中间造出一个<b>最优掺杂</b>，这里是 <b>" + sciV(C.nopt, 2) + " cm<sup>−3</sup></b>，" +
-    "<span class='m'><i>ZT</i> = " + fmt(C.ztmax, 4) + "</span>。当前工作点的 ZT 是 <b>" +
-    fmt(st.ZT, st.ZT < 0.01 ? 6 : 4) + "</b>。" +
-    "想再往上走，唯一的自由是<b>晶格热导</b>：切到「预设 → 低热导极限」把 <span class='m'><i>κ</i></span><sub>L</sub> 压到 0.2 倍，ZT 会立刻改观。";
+    "两条曲线一交叉，中间就<b>必然</b>有个最优掺杂。" +
+    "想再往上走，唯一的自由是<b>晶格热导</b>：切到「预设 → 低热导极限」看。";
 }
 function hintAll() { hintBar(); hintProf(); hintTerms(); hintS(); hintZt(); }
 

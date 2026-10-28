@@ -190,14 +190,14 @@
       <div class="chart-wrap"><canvas id="evo" data-h="248" tabindex="0"></canvas></div>
       <div class="btn-row tight" id="qBtns"></div>
       <div class="legend" id="legEvo"></div>
-      <div class="hint">点上面的按钮切换纵轴：<b>峰值</b> <span class="m" id="hintDpm">Δ<i>p</i><sub>max</sub></span>（纯扩散时按 <span class="m"><span class="frac"><span class="num">1</span><span class="den"><span class='sqrt'><span class='rd'>√</span><span class='rdc'><i>t</i></span></span></span></span></span> 衰减）、<b>峰位</b> <span class="m"><i>x</i><sub>max</sub></span>（漂移时按 <span class="m"><i>v</i><sub>d</sub><i>t</i></span> 线性移动）、<b>总量</b> <span class="m"><i>N</i></span>（按 <span class="m"><span class="rm">e</span><sup><span class="op">−</span><i>t</i><span class="sl">/</span><i>τ</i></sup></span> 衰减）。灰虚线是<b>解析参考</b>（理想情况：反射边界、只考虑体复合），数值解（蓝实线）与它重合说明一维有限差分求解是对的；若边界会吞掉载流子（欧姆接触、表面复合），蓝线会掉得更快一些。</div>
+      <div class="hint">点上面的按钮切换纵轴：<b>峰值</b> <span class="m" id="hintDpm">Δ<i>p</i><sub>max</sub></span>（纯扩散时按 <span class="m"><span class="frac"><span class="num">1</span><span class="den"><span class='sqrt'><span class='rd'>√</span><span class='rdc'><i>t</i></span></span></span></span></span> 衰减）、<b>峰位</b> <span class="m"><i>x</i><sub>max</sub></span>（漂移时按 <span class="m"><i>v</i><sub>d</sub><i>t</i></span> 线性移动）、<b>总量</b> <span class="m"><i>N</i></span>（按 <span class="m"><span class="rm">e</span><sup><span class="op">−</span><i>t</i><span class="sl">/</span><i>τ</i></sup></span> 衰减）。灰虚线是<b>解析参考</b>（理想情况：反射边界、只考虑体复合）。</div>
     </div>
 
     <div class="card">
       <div class="sec-title"><span class="mtag">模块三</span>扩散长度 vs 漂移长度 vs 稳态衰减长度</div>
       <div class="chart-wrap"><canvas id="len" data-h="254" tabindex="0"></canvas></div>
       <div class="legend" id="legLen"></div>
-      <div class="hint">三条长度尺的单位都是 µm，可以直接比大小：<span class="m"><i>L</i><span class="op">=</span><span class='sqrt'><span class='rd'>√</span><span class='rdc'><i>Dτ</i></span></span></span> 是<b>复合前能扩散多远</b>，<span class="m"><i>L</i><sub>drift</sub><span class="op">=</span><span class="op">|</span><i>v</i><sub>d</sub><span class="op">|</span><i>τ</i></span> 是<b>复合前能漂移多远</b>，两者之比 <span class="m"><span class="frac"><span class="num"><i>L</i><sub>drift</sub></span><span class="den"><i>L</i></span></span><span class="op">=</span><span class="frac"><span class="num"><i>qEL</i></span><span class="den"><i>kT</i></span></span></span> 决定<b>谁主导</b>；<span class="m"><i>L</i><sub>eff</sub></span> 是漂移与扩散同时作用时<b>稳态光照分布</b> <span class="m">Δ<i>p</i><span class="op">∝</span><span class="rm">e</span><sup><span class="op">−</span><i>x</i><span class="sl">/</span><i>L</i><sub>eff</sub></sup></span> 的衰减长度（电场把少子往体内推时它变长，往表面推时它变短）。下面的尺子是样品长度，用来判断这些长度相对样品有多大。</div>
+      <div class="hint">三条长度尺的单位都是 µm，可以直接比大小：<span class="m"><i>L</i><span class="op">=</span><span class='sqrt'><span class='rd'>√</span><span class='rdc'><i>Dτ</i></span></span></span> 是<b>复合前能扩散多远</b>，<span class="m"><i>L</i><sub>drift</sub><span class="op">=</span><span class="op">|</span><i>v</i><sub>d</sub><span class="op">|</span><i>τ</i></span> 是<b>复合前能漂移多远</b>，两者之比 <span class="m"><span class="frac"><span class="num"><i>L</i><sub>drift</sub></span><span class="den"><i>L</i></span></span><span class="op">=</span><span class="frac"><span class="num"><i>qEL</i></span><span class="den"><i>kT</i></span></span></span> 决定<b>谁主导</b>；<span class="m"><i>L</i><sub>eff</sub></span> 是漂移与扩散同时作用时<b>稳态光照分布</b> <span class="m">Δ<i>p</i><span class="op">∝</span><span class="rm">e</span><sup><span class="op">−</span><i>x</i><span class="sl">/</span><i>L</i><sub>eff</sub></sup></span> 的衰减长度（电场把少子往体内推时它变长，往表面推时它变短）。</div>
     </div>
   </div>
 
@@ -663,7 +663,7 @@ var I18N = {
   "有限 S": "Finite S",
   "抽取": "Extracting",
   "反射": "Reflecting",
-  "∞（欧姆）": "∞ (ohmic)",
+  "∞（欧姆接触）": "∞ (ohmic contact)",
   "）：到达表面的少子立刻被抽走。 两端（": "): carriers reaching the surface are removed at once. Both ends (",
   "）采用同一条件。": ") use the same condition.",
   "时间": "Time",
@@ -912,6 +912,50 @@ var I18N = {
   "）或": ") or ",
   "扩散是": "diffusion is",
   "时，曲线": ", the profile",
+  "（理想情况：反射边界、只考虑体复合）。": " (ideal case: reflecting boundaries, bulk recombination only).",
+  " 的衰减长度（电场把少子往体内推时它变长，往表面推时它变短）。": " decay length (it gets longer when the field pushes the minority carriers into the bulk and shorter when it pushes them toward the surface).",
+  " 增长。注意 ": ". Note that ",
+  " 这么大时，少子基本上也就复合完了 —— 这就是扩散长度的物理意义（": " — by then the minority carriers have essentially all recombined — that is the physical meaning of the diffusion length (",
+  " 三个量读数面板里逐时刻都在）。": " are all updated in the readout panel at every instant).",
+  "，一生的行程就是漂移长度 ": ", and its travel over a whole lifetime is the drift length ",
+  "（读数面板里两个数都在）。": " (both numbers are given in the readout panel).",
+  "，而且和「纯扩散」预设按": ", and it broadens according to ",
+  "展宽 —— 因为扩散从来没被关掉过。之所以叫“漂移主导”，是": " — because diffusion is never switched off. The reason it is called drift-dominated is that ",
+  "平移距离压倒性地大于展宽量": "the drift distance overwhelmingly exceeds the broadening",
+  "（判据是 ": " (the criterion is ",
+  "，读数面板实时给出），视觉上像是整齐列队的行军。把电场调成负值，整团少子": ", which the readout panel gives live), so it looks like a column marching in step. Reverse the sign of the field and the whole packet of minority carriers ",
+  "：>1 平移看得赢展宽，<1 一眼只看得见铺开。换句话说，漂移与扩散不是“二选一”，而是": ": above 1 the drift wins over the broadening, below 1 all you see is the spreading. In other words, drift and diffusion are not an either-or choice, they are ",
+  " —— 漂移只做平移、扩散只做对称展宽，叠加不改变对称性。真正的不对称来自": " — drift only translates, diffusion only broadens symmetrically, and superposing them does not change the symmetry. The real asymmetry comes from ",
+  "，前沿就比后沿陡了（把样品调短或把电场调大，就能看到前沿被削平）。所以“漂移+扩散必然不对称”是个常见误解：": ", the leading edge becomes steeper than the trailing edge (shorten the sample or raise the field and you will see the leading edge flattened off). So the claim that drift + diffusion must be asymmetric is a common misconception: ",
+  " 的位置。再把寿命 ": ". Then increase the lifetime ",
+  "：从表面往里走一个 ": ": at a depth of one ",
+  "，衰减长度 ": ", the decay length ",
+  " 变长；": " becomes longer; ",
+  "，它变短。": ", it becomes shorter.",
+  " 这么厚的一层里浓度被“压低”：": " thick layer in which the concentration is pulled down: ",
+  " 说明整根样品都被表面拖累（两个长度与当前表面浓度读数面板里都有）。钝化工艺要做的，就是把 ": " means the whole sample is dragged down by the surface (both lengths and the present surface concentration are given in the readout panel). What passivation has to do is to push ",
+  " —— 在样品内部曲线始终左右对称，只有漂到背面欧姆接触附近时，前沿才会被接触“吃掉”而变陡。": " — inside the sample the curve stays left–right symmetric all the time; only when the cloud drifts close to the ohmic contact at the back does the contact “eat” the leading edge and steepen it.",
+  " 说明整根样品都被表面拖累（两个长度读数面板里都有）。钝化工艺要做的，就是把 ": " means the whole sample is dragged down by the surface (both lengths are given in the readout panel). What passivation has to do is to push ",
+  " 见读数面板），视觉上像是整齐列队的行军。把电场调成负值，整团少子": " , which the readout panel gives live), so it looks like a column marching in step. Reverse the sign of the field and the whole packet of minority carriers ",
+  " 时，表面浓度介于两者之间，靠表面 ": " , the surface concentration lies between the two, and within a layer of thickness ",
+  "附带一条：": "One more thing: ",
+  "（判据 ": "(criterion ",
+  "两条前提": "Two prerequisites",
+  " —— 多子靠": " — the majority carriers rely on ",
+  " s 就把电荷重新排好了（比当前寿命小 ": " s to rearrange the charge (smaller than the current lifetime by ",
+  " 个数量级），所以只解": " orders of magnitude), so only the ",
+  "这一支；只有": " branch is solved; only ",
+  "才需要联立泊松方程 —— 那属于《PN 结电势、电场与电荷分布》工具。": "do you need to solve the Poisson equation simultaneously — that belongs to the tool 'PN Junction Potential, Electric Field and Charge Distribution'.",
+  " 才与注入无关、复合项才对 Δ": " is independent of injection and the recombination term is linear in Δ",
+  " 线性（本工具注入幅度固定，当前注入水平 ": " (the injection amplitude is fixed in this tool; the current injection level is ",
+  " %）。② 本页 ": " %). ② On this page ",
+  "（方程对 Δ": " (the equation is linear in Δ",
+  " 线性，它取多少都不影响任何动态）；真实 ": " , so whatever value it takes does not affect any dynamics); the real ",
+  " 只有 ": " is only ",
+  " —— 两者差 10 个数量级，别当成同一个数。": " — the two differ by ten orders of magnitude, so do not mistake them for the same number.",
+  "，少子＝": ", minority carriers = ",
+  "温度（固定） ": "Temperature (fixed) ",
+  " 扩散系数 ": " diffusion coefficient ",
 };
 
 /* 注入点②：画布直写字符串。老工具直接调 g.fillText()（描边文字走 g.strokeText()），这里在原型上兜住。
@@ -2335,32 +2379,34 @@ function updateReadout() {
   /* ---- 折叠区：材料与输运参数 / 分布其余量 / 适用条件 ---- */
   let hm = "";
   hm += kvHd("材料与输运参数");
-  hm += kvRow("材料（本工具固定） / 少子类型", "<b>" + MATS[0].name + "</b> / " + CARS[OPT.car].name + "（" + MM("<i>" + sy + "</i>") + "）");
-  hm += kvRow(MM("温度 <i>T</i>（固定） <span class=\"sl\">/</span> <i>kT</i><span class=\"sl\">/</span><i>q</i>"), TFIX + " K / " + fmt(d.kTq, 4) + " V");
-  hm += kvRow(MM("迁移率 <i>μ</i>（固定）"), "<b>" + fmt(d.mu, 0) + "</b> cm<sup>2</sup>/(V·s)");
-  hm += kvRow(MM("扩散系数 <i>D</i><span class=\"op\">=</span>" + FRAC_H("<span class='m'><i>μ</i></span><span class='m'><i>kT</i></span>", "<i>q</i>")),
-    "<b>" + fmt(d.Dcm, 2) + "</b> cm<sup>2</sup>/s（= " + fmt(d.D, 0) + " µm<sup>2</sup>/µs）");
+  /* 4 行压成 2 行：材料/温度/μ/D 全是本工具锁定的常量（控制面板没有它们的滑块），
+     拆成 4 行只是把同一句「这些是固定的」说四遍。 */
+  hm += kvRow("材料（本工具固定）", "<b>" + MATS[0].name + "</b>，少子＝<b>" + CARS[OPT.car].name +
+              "</b>（" + MM("<i>" + sy + "</i>") + "）· " + MM("<i>μ</i>") + " <b>" + fmt(d.mu, 0) + "</b> cm<sup>2</sup>/(V·s)");
+  hm += kvRow(MM("温度（固定） <span class=\"sl\">/</span> 扩散系数 <i>D</i>"), TFIX + " K（" +
+              MM("<i>kT</i><span class='sl'>/</span><i>q</i>") + " = " + fmt(d.kTq, 4) + " V）· <b>" +
+              fmt(d.Dcm, 2) + "</b> cm<sup>2</sup>/s（= " + fmt(d.D, 0) + " µm<sup>2</sup>/µs）");
   hm += kvRow(MM("少子寿命 <i>τ</i>"), "<b>" + fmt(d.tau, 2) + "</b> µs");
   hm += kvRow(MM("电场 <i>E</i>"), "<b>" + fmt(d.E, 1) + "</b> V/cm");
   hm += kvRow(MM("漂移速度 <i>v</i><sub>d</sub><span class=\"op\">=</span><i>μE</i>"),
     "<b>" + fmt(d.vcm, 0) + "</b> cm/s（" + fmt(d.v, 1) + " µm/µs）");
   hm += kvRow(MM("表面复合速度 <i>S</i>"), OPT.bnd === B_S ? "<b>" + sciH(d.S, 1) + "</b> cm/s（固定）"
-    : (OPT.bnd === B_REFL ? "0（反射）" : (OPT.bnd === B_OHMIC ? "∞（欧姆）" : "∞（抽取）")));
+    : (OPT.bnd === B_REFL ? "0（反射）" : (OPT.bnd === B_OHMIC ? "∞（欧姆接触）" : "∞（抽取）")));
   hm += kvRow(MM("样品长度（视窗固定） <span class=\"sl\">/</span> <i>L</i>"), fmt(d.L, 0) + " µm = " + fmt(d.L / Math.max(d.Lp, 1e-9), 2) + " 个扩散长度");
 
   hm += kvHd("当前分布（其余）");
   hm += kvRow(MM("时刻 <i>t</i>"), "<b>" + fmt(TNOW, 2) + "</b> µs（= " + fmt(TNOW / d.tau, 2) + " " + MM("<i>τ</i>") + "）");
-  hm += kvRow(MM("质心 <i>x̄</i> <span class=\"sl\">/</span> 宽度 <i>σ</i>"), fmt(f.xb, 1) + " / <b>" + fmt(f.sg, 1) + "</b> µm");
+  /* 原「质心 x̄ / 宽度 σ」只留质心：σ 在核心区「σ₀ / 当前 σ」里已有；
+     质心才是「扩散不搬质心、漂移才搬」这条判据的数值（记忆 §6），不能并掉。 */
+  hm += kvRow(MM("质心 <i>x̄</i>"), "<b>" + fmt(f.xb, 1) + "</b> µm");
   hm += kvRow(MM("表面浓度 <i>" + sy + "</i><span class=\"op\">(</span><span class='m'><i>x</i></span><span class=\"op\">=</span>0<span class=\"op\">)</span>"),
     "<b>" + sciH(f.ps, 2) + "</b> cm<sup>−3</sup>（" + MM("Δ<i>" + sy + "</i>") + " = " + sciH(Math.max(f.ps - P0C, 0), 2) + "）");
 
   hm += kvHd("适用条件（低注入 · 准电中性）");
   hm += kvRow(MM("平衡浓度 <i>" + sy + "</i><sub>0</sub>（本页作图基线）"),
     "<b>" + sciH(P0C, 1) + "</b> cm<sup>−3</sup>（<b>示意取值</b>）");
-  hm += kvRow(MM("真实 <i>" + sy + "</i><sub>0</sub><span class=\"op\">=</span>" +
-      FRAC_H("<span class='m'><i>n</i><sub>i</sub><sup>2</sup></span>", majLabel())),
-    sciH(d.p0Real, 1) + " cm<sup>−3</sup>（" + MM("<i>n</i><sub>i</sub>") + " = " + sciH(NI_SI, 1) +
-    "、" + MM(majLabel()) + " = " + sciH(NMAJ, 1) + "）");
+  /* 原「真实 p₀ = n_i²/N_D」行已删：它与上一行「本页作图基线 p₀」给出两个差 10 个数量级的
+     p₀，学生一定会问哪个是真的；解释属于注释而不是读数行 ⇒ 已写进 condNote ②。 */
   /* 注入水平 = 当前峰值 Δp 与多子浓度之比。本工具注入幅度固定 Δp(0) = 1×10¹⁴（面板上没有滑块），
      所以这一档恒为 0.1% 上下、余量 3 个数量级 —— 也就是说固定 τ 在本工具全程合法。
      ⚠ 不要给它挂「越界变色警告」：没有任何可达状态能触发，那是死分支。 */
@@ -2370,29 +2416,27 @@ function updateReadout() {
   hm += kvRow(MM("介电弛豫时间 <i>τ</i><sub>d</sub><span class=\"op\">=</span>" + FRAC_H("<span class='m'><i>ε</i></span>", "<i>σ</i>")),
     "<b>" + sciH(d.tauD, 2) + "</b> s（" + MM("<i>σ</i>") + " = " + fmt(d.sgMaj, 1) +
     " S/cm、多子 " + MM("<i>μ</i>") + " = " + fmt(d.muMaj, 0) + "）");
-  hm += kvRow(MM("<i>τ</i><sub>d</sub> <span class=\"sl\">/</span> 当前寿命 <i>τ</i>"),
-    sciH(d.tauD / (d.tau * 1e-6), 1) + "（小 <b>" + fmt(Math.log10(d.tau * 1e-6 / d.tauD), 1) + "</b> 个数量级）");
+  /* 原「τ_d / 当前寿命 τ」行已删：它就是上一行 τ_d 除以 τ，而「≪1 ⇒ 准电中性成立」
+     这条判据 condNote ① 已经说了；数量级差改成按当前 τ 现算写在注释里。 */
   $("readoutMore").innerHTML = hm;
 
   $("readout").innerHTML = h;
 
   $("condNote").innerHTML =
-    "① <b>准电中性</b>：本页只解<b>少子</b>这一支，是因为多子靠<b>介电弛豫</b> " +
+    "① <b>两条前提</b>：<b>准电中性</b> —— 多子靠<b>介电弛豫</b> " +
     MM("<i>τ</i><sub>d</sub><span class='op'>=</span><i>ε</i><span class='sl'>/</span><i>σ</i>") +
-    " ≈ 10<sup>−13</sup> s 就把电荷重新排好了（比本工具最短寿命 0.05 µs 还小约 6 个数量级），" +
-    "所以不必联立泊松方程；只有<b>本征／高阻样品</b>（" + MM("<i>σ</i>") + " 小 ⇒ " + MM("<i>τ</i><sub>d</sub>") +
-    " 变大）或<b>皮秒超快瞬态</b>才需要 —— 那属于《PN 结电势、电场与电荷分布》工具，那里真在解泊松方程。" +
-    "② <b>低注入</b> " + MM("Δ<i>" + sy + "</i><span class='op'>≪</span>" + majLabel()) + "：寿命 " +
-    MM("<i>τ</i>") + " 才与注入无关、复合项 " +
-    MM("<span class='frac'><span class='num'><i>" + sy + "</i><span class='op'>−</span><i>" + sy + "</i><sub>0</sub></span><span class='den'><span class='m'><i>τ</i></span></span></span>") +
-    " 才对 Δ" + sy + " 线性（本工具注入幅度固定 " + MM("Δ<i>" + sy + "</i><span class='op'>(</span>0<span class='op'>)</span><span class='op'>=</span>" + sciH(d.dp, 1)) +
-    "，占 " + MM(majLabel()) + " 不到 0.1 %，余量三个数量级）。真到<b>高注入</b>（" +
-    MM("Δ<i>" + sy + "</i><span class='op'>~</span>" + majLabel()) + "）时 " + MM("<i>τ</i>") +
-    " 会随注入上升、多子也被扰动，必须联立两种载流子的方程 —— 那时本页这条方程不再适用。" +
-    "③ 本页 " + MM("<i>" + sy + "</i><sub>0</sub><span class='op'>=</span>" + sciH(P0C, 1)) +
-    " 只是一条<b>作图基线</b>（方程对 Δ" + sy + " 线性，它取多少都不影响任何动态）：硅 300 K 的少子浓度恒 ≤ " +
-    MM("<i>n</i><sub>i</sub><span class='op'>=</span>" + sciH(NI_SI, 1)) + "，按上面的 " + MM(majLabel()) +
-    " 反推只有 " + sciH(d.p0Real, 1) + " cm<sup>−3</sup>。";
+    " = " + sciH(d.tauD, 1) + " s 就把电荷重新排好了（比当前寿命小 <b>" +
+    fmt(Math.log10(d.tau * 1e-6 / Math.max(d.tauD, 1e-30)), 1) + "</b> 个数量级），" +
+    "所以只解<b>少子</b>这一支；只有<b>本征／高阻样品</b>（" + MM("<i>σ</i>") + " 小 ⇒ " + MM("<i>τ</i><sub>d</sub>") +
+    " 变大）或<b>皮秒超快瞬态</b>才需要联立泊松方程 —— 那属于《PN 结电势、电场与电荷分布》工具。" +
+    "<b>低注入</b> " + MM("Δ<i>" + sy + "</i><span class='op'>≪</span>" + majLabel()) + "：寿命 " + MM("<i>τ</i>") +
+    " 才与注入无关、复合项才对 Δ" + MM("<i>" + sy + "</i>") + " 线性（本工具注入幅度固定，当前注入水平 <b>" +
+    fmt(injPct, injPct < 1 ? 2 : 1) + "</b> %）。" +
+    "② 本页 " + MM("<i>" + sy + "</i><sub>0</sub><span class='op'>=</span>" + sciH(P0C, 1)) +
+    " 只是一条<b>作图基线</b>（方程对 Δ" + MM("<i>" + sy + "</i>") +
+    " 线性，它取多少都不影响任何动态）；真实 " +
+    MM("<span class='frac'><span class='num'><i>n</i><sub>i</sub><sup>2</sup></span><span class='den'>" + majLabel() + "</span></span>") +
+    " 只有 <b>" + sciH(d.p0Real, 1) + "</b> cm<sup>−3</sup> —— 两者差 10 个数量级，别当成同一个数。";
 }
 
 /* ---------------- 13. 图例 ---------------- */
@@ -2423,54 +2467,24 @@ function buildLegends() {
 /* ---------------- 14. 引导探究 ---------------- */
 const CHAL = [
   {
-    q: "点「纯扩散」预设，看模块一。峰值怎么变？宽度怎么变？<b>中心动了吗</b>？再盯住读数面板里的宽度 <span class=\"m\"><i>σ</i></span>，看它是不是按 <span class=\"m\"><span class='sqrt'><span class='rd'>√</span><span class='rdc'><i>σ</i><sub>0</sub><sup>2</sup><span class=\"op\">+</span>2<i>Dt</i></span></span></span> 增长。",
-    a: () => {
-      const d = der(), f = features();
-      return "中心<b>一动不动</b> —— 这是扩散与漂移最本质的区别。峰值按 <span class=\"m\"><span class=\"frac\"><span class=\"num\">1</span><span class=\"den\"><span class='sqrt'><span class='rd'>√</span><span class='rdc'><i>t</i></span></span></span></span></span> 下降（面积要守恒），宽度按 <span class=\"m\"><i>σ</i><span class=\"op\">=</span><span class='sqrt'><span class='rd'>√</span><span class='rdc'><i>σ</i><sub>0</sub><sup>2</sup><span class=\"op\">+</span>2<i>Dt</i></span></span></span> 增长：当前 <span class=\"m\"><i>t</i></span> = " +
-        fmt(TNOW, 2) + " µs，<span class='m'><i>σ</i></span> 已从 " + fmt(OPT.s0, 0) + " µm 长到 <b>" + fmt(f.sg, 1) + " µm</b>（理论 " +
-        fmt(Math.sqrt(OPT.s0 * OPT.s0 + 2 * d.D * TNOW), 1) + " µm）。注意 <span class=\"m\"><i>σ</i><span class=\"op\">∝</span><span class='sqrt'><span class='rd'>√</span><span class='rdc'><i>t</i></span></span></span> 而不是 <span class=\"m\"><span class=\"op\">∝</span><i>t</i></span>：扩散是<b>无规行走</b>，走 4 倍的时间只能多走 2 倍的距离。还有一条：宽度涨到 <span class=\"m\"><i>L</i><span class=\"op\">=</span><span class='sqrt'><span class='rd'>√</span><span class='rdc'><i>D</i><i>τ</i></span></span><span class=\"op\">=</span>" +
-        fmt(d.Lp, 0) + " µm</span> 这么大时，少子基本上也就复合完了 —— 这就是扩散长度的物理意义。";
-    }
+    q: "点「纯扩散」预设，看模块一。峰值怎么变？宽度怎么变？<b>中心动了吗</b>？",
+    a: () => "中心<b>一动不动</b> —— 这是扩散与漂移最本质的区别。峰值按 <span class=\"m\"><span class=\"frac\"><span class=\"num\">1</span><span class=\"den\"><span class='sqrt'><span class='rd'>√</span><span class='rdc'><i>t</i></span></span></span></span></span> 下降（面积要守恒），宽度按 <span class=\"m\"><i>σ</i><span class=\"op\">=</span><span class='sqrt'><span class='rd'>√</span><span class='rdc'><i>σ</i><sub>0</sub><sup>2</sup><span class=\"op\">+</span>2<i>Dt</i></span></span></span> 增长。注意 <span class=\"m\"><i>σ</i><span class=\"op\">∝</span><span class='sqrt'><span class='rd'>√</span><span class='rdc'><i>t</i></span></span></span> 而不是 <span class=\"m\"><span class=\"op\">∝</span><i>t</i></span>：扩散是<b>无规行走</b>，走 4 倍的时间只能多走 2 倍的距离。还有一条：宽度涨到 <span class=\"m\"><i>L</i><span class=\"op\">=</span><span class='sqrt'><span class='rd'>√</span><span class='rdc'><i>D</i><i>τ</i></span></span></span> 这么大时，少子基本上也就复合完了 —— 这就是扩散长度的物理意义（<span class=\"m\"><i>t</i></span>、<span class=\"m\"><i>σ</i></span>、<span class=\"m\"><i>L</i></span> 三个量读数面板里逐时刻都在）。",
   },
   {
-    q: "点「漂移主导」预设（强电场 + 欧姆接触）。峰位 <span class=\"m\"><i>x</i><sub>max</sub></span> 怎么走？宽度 <span class=\"m\"><i>σ</i></span> 真的不变吗？在模块二切到「峰位 <span class=\"m\"><i>x</i><sub>max</sub></span>」验证 <span class=\"m\"><i>x</i><sub>max</sub><span class=\"op\">=</span><i>x</i><sub>0</sub><span class=\"op\">+</span><i>v</i><sub>d</sub><i>t</i></span>，同时盯住读数面板里的 <span class=\"m\"><i>σ</i></span> 看它是不是也在按 <span class=\"m\"><span class='sqrt'><span class='rd'>√</span><span class='rdc'><i>t</i></span></span></span> 长。",
-    a: () => {
-      const d = der(), f = features();
-      const sgTh = Math.sqrt(OPT.s0 * OPT.s0 + 2 * d.D * TNOW);
-      return "峰位<b>匀速直线</b>前进：<span class='m'><i>x</i><sub>max</sub><span class='op'>=</span><i>x</i><sub>0</sub><span class='op'>+</span><i>v</i><sub>d</sub><i>t</i></span>，当前已移动约 <b>" + fmt(Math.max(f.xm - x0Now(), 0), 0) +
-        " µm</b>，而 <span class='m'><i>v</i><sub>d</sub><i>τ</i><span class='op'>=</span></span> <b>" + fmt(d.Ld, 0) + " µm</b> 正是它一生的行程（漂移长度）。<b>但宽度同样在长</b>：<span class='m'><i>σ</i></span> 从 " +
-        fmt(OPT.s0, 0) + " µm 长到 <b>" + fmt(f.sg, 1) + " µm</b>（理论 <span class='m'><span class='sqrt'><span class='rd'>√</span><span class='rdc'><i>σ</i><sub>0</sub><sup>2</sup><span class='op'>+</span>2<i>Dt</i></span></span></span> = " +
-        fmt(sgTh, 1) + " µm），和「纯扩散」预设按<b>完全相同的规律</b>展宽 —— 因为扩散从来没被关掉过。之所以叫“漂移主导”，是此刻 <span class='m'><span class='frac'><span class='num'><i>L</i><sub>drift</sub></span><span class='den'><i>L</i></span></span><span class='op'>=</span>" +
-        fmt(d.ratio, 1) + "</span>，平移距离压倒性地大于展宽量，视觉上像是整齐列队的行军。把电场调成负值，整团少子<b>掉头往回走</b>；而无论正负，展宽都照旧。";
-    }
+    q: "点「漂移主导」预设（强电场 + 欧姆接触）。峰位 <span class=\"m\"><i>x</i><sub>max</sub></span> 怎么走？宽度 <span class=\"m\"><i>σ</i></span> 真的不变吗？在模块二切到「峰位 <span class=\"m\"><i>x</i><sub>max</sub></span>」验证 <span class=\"m\"><i>x</i><sub>max</sub><span class=\"op\">=</span><i>x</i><sub>0</sub><span class=\"op\">+</span><i>v</i><sub>d</sub><i>t</i></span>。",
+    a: () => "峰位<b>匀速直线</b>前进：<span class='m'><i>x</i><sub>max</sub><span class='op'>=</span><i>x</i><sub>0</sub><span class='op'>+</span><i>v</i><sub>d</sub><i>t</i></span>，一生的行程就是漂移长度 <span class='m'><i>v</i><sub>d</sub><i>τ</i></span>（读数面板里两个数都在）。<b>但宽度同样在长</b>，而且和「纯扩散」预设按<b>完全相同的规律</b>展宽 —— 因为扩散从来没被关掉过。之所以叫“漂移主导”，是<b>平移距离压倒性地大于展宽量</b>（判据 <span class='m'><span class='frac'><span class='num'><i>L</i><sub>drift</sub></span><span class='den'><i>L</i></span></span></span> 见读数面板），视觉上像是整齐列队的行军。把电场调成负值，整团少子<b>掉头往回走</b>；而无论正负，展宽都照旧。",
   },
   {
     q: "点「漂移＋扩散」预设，再回头点「漂移主导」，两者的展宽快慢有差别吗？电场大小会改变展宽速率吗？另外：既然两者都有扩散，这两个预设到底在区分什么？",
-    a: () => {
-      const d = der(), f = features();
-      return "宽度 <span class=\"m\"><i>σ</i></span> 的<b>增长一模一样</b>（在读数面板里逐时刻对照即可）：两者 <span class=\"m\"><i>D</i></span> 相同（同一个 <span class=\"m\"><i>μ</i></span>、同一个 <span class=\"m\"><i>T</i></span>），展宽只由 <span class=\"m\">2<i>Dt</i></span> 决定，跟电场<b>毫无关系</b>。电场只决定整团<b>平移多快</b>。所以两个预设真正区分的是 <span class=\"m\"><span class=\"frac\"><span class=\"num\"><i>L</i><sub>drift</sub></span><span class=\"den\"><i>L</i></span></span></span> 这个<b>比值</b>（当前 " +
-        fmt(d.ratio, 2) + "）：&gt;1 平移看得赢展宽，&lt;1 一眼只看得见铺开。换句话说，漂移与扩散不是“二选一”，而是<b>永远同时到场</b>，我们只是在比谁的效果更显眼。<br><br>再回答“什么时候明显不对称”：在样品<b>内部</b>时，曲线<b>仍严格保持高斯、左右对称</b> —— 漂移只做平移、扩散只做对称展宽，叠加不改变对称性（可对照灰虚线的解析参考）。真正的不对称来自<b>边界</b>：当这团少子漂到背面欧姆接触附近，<b>前沿被接触“吃掉”</b>，前沿就比后沿陡了。当前峰位 " +
-        fmt(f.xm, 0) + " µm、样品长 " + fmt(d.L, 0) + " µm、漂移长度 " + fmt(d.Ld, 0) +
-        " µm —— 把样品调短或把电场调大，就能看到前沿被削平。所以“漂移+扩散必然不对称”是个常见误解：<b>不对称的根源是边界，不是漂移本身</b>。";
-    }
+    a: () => "宽度 <span class=\"m\"><i>σ</i></span> 的<b>增长一模一样</b>（在读数面板里逐时刻对照即可）：两者 <span class=\"m\"><i>D</i></span> 相同（同一个 <span class=\"m\"><i>μ</i></span>、同一个 <span class=\"m\"><i>T</i></span>），展宽只由 <span class=\"m\">2<i>Dt</i></span> 决定，跟电场<b>毫无关系</b>。电场只决定整团<b>平移多快</b>。所以两个预设真正区分的是 <span class=\"m\"><span class=\"frac\"><span class=\"num\"><i>L</i><sub>drift</sub></span><span class=\"den\"><i>L</i></span></span></span> 这个<b>比值</b>：&gt;1 平移看得赢展宽，&lt;1 一眼只看得见铺开。换句话说，漂移与扩散不是“二选一”，而是<b>永远同时到场</b>，我们只是在比谁的效果更显眼。<br>附带一条：<b>不对称的根源是边界，不是漂移本身</b> —— 在样品内部曲线始终左右对称，只有漂到背面欧姆接触附近时，前沿才会被接触“吃掉”而变陡。",
   },
   {
-    q: "点「稳态光照」预设。分布动不动？在模块一上找出过剩浓度 <span class=\"m\">Δ<i>p</i><span class=\"op\">=</span><i>p</i><span class=\"op\">−</span><i>p</i><sub>0</sub></span> 降到表面值 <span class=\"m\">1<span class=\"op\">/</span><span class='rm'>e</span></span> 的位置，与读数面板里的 <span class=\"m\"><i>L</i></span> 比一比。再把寿命 <span class=\"m\"><i>τ</i></span> 调大 4 倍，衰减长度变几倍？",
-    a: () => {
-      const d = der();
-      return "分布<b>稳稳不动</b>（左端在持续注入，体复合在持续消耗，达到动态平衡），形状就是 <span class=\"m\">Δ<i>p</i><span class=\"op\">(</span><i>x</i><span class=\"op\">)</span><span class=\"op\">=</span>Δ<i>p</i><span class=\"op\">(</span>0<span class=\"op\">)</span><span class=\"rm\">e</span><sup><span class=\"op\">−</span><i>x</i><span class=\"sl\">/</span><i>L</i></sup></span>：当前 <span class=\"m\"><i>L</i><span class=\"op\">=</span><span class='sqrt'><span class='rd'>√</span><span class='rdc'><i>D</i><i>τ</i></span></span><span class=\"op\">=</span></span> <b>" +
-        fmt(d.Lp, 1) + " µm</b>，也就是说从表面往里走 " + fmt(d.Lp, 0) + " µm，浓度就掉到 <span class=\"m\"><span class=\"frac\"><span class=\"num\">1</span><span class=\"den\"><i>e</i></span></span><span class=\"op\">≈</span></span> 37%（再走一个 <span class=\"m\"><i>L</i></span> 掉到 13%）。<span class=\"m\"><i>τ</i></span> 调大 4 倍，<span class=\"m\"><i>L</i><span class=\"op\">=</span><span class='sqrt'><span class='rd'>√</span><span class='rdc'><i>D</i><i>τ</i></span></span></span> 只变 <b>2 倍</b> —— 平方根关系是扩散长度的标志（这也是实验上测少子寿命的依据）。加个电场试试：<b>把少子往体内推</b>会让衰减长度变长（当前 <span class=\"m\"><i>L</i><sub>eff</sub><span class=\"op\">=</span></span> " +
-        fmt(d.Leff, 1) + " µm），<b>往表面推</b>会让它变短。";
-    }
+    q: "点「稳态光照」预设。分布动不动？在模块一上找出过剩浓度 <span class=\"m\">Δ<i>p</i><span class=\"op\">=</span><i>p</i><span class=\"op\">−</span><i>p</i><sub>0</sub></span> 降到表面值 <span class=\"m\">1<span class=\"op\">/</span><span class='rm'>e</span></span> 的位置。再把寿命 <span class=\"m\"><i>τ</i></span> 调大 4 倍，衰减长度变几倍？",
+    a: () => "分布<b>稳稳不动</b>（左端在持续注入，体复合在持续消耗，达到动态平衡），形状就是 <span class=\"m\">Δ<i>p</i><span class=\"op\">(</span><i>x</i><span class=\"op\">)</span><span class=\"op\">=</span>Δ<i>p</i><span class=\"op\">(</span>0<span class=\"op\">)</span><span class=\"rm\">e</span><sup><span class=\"op\">−</span><i>x</i><span class=\"sl\">/</span><i>L</i></sup></span>：从表面往里走一个 <span class=\"m\"><i>L</i></span>，浓度就掉到 <span class=\"m\"><span class=\"frac\"><span class=\"num\">1</span><span class=\"den\"><i>e</i></span></span><span class=\"op\">≈</span></span> 37%（再走一个 <span class=\"m\"><i>L</i></span> 掉到 13%）。<span class=\"m\"><i>τ</i></span> 调大 4 倍，<span class=\"m\"><i>L</i><span class=\"op\">=</span><span class='sqrt'><span class='rd'>√</span><span class='rdc'><i>D</i><i>τ</i></span></span></span> 只变 <b>2 倍</b> —— 平方根关系是扩散长度的标志（这也是实验上测少子寿命的依据）。加个电场试试：<b>把少子往体内推</b>，衰减长度 <span class=\"m\"><i>L</i><sub>eff</sub></span> 变长；<b>往表面推</b>，它变短。",
   },
   {
     q: "点「表面复合」预设（均匀注入 + 有限 <span class=\"m\"><i>S</i></span>），再依次把边界条件切到<b>反射</b>与<b>欧姆接触</b>。三种情况下表面浓度分别是多少？靠表面那段曲线的形状各有什么特点？",
-    a: () => {
-      const d = der(), f = features(), S = SNow();
-      return "<span class=\"m\"><i>S</i><span class=\"op\">=</span>0</span>（反射）时表面通量为零，<b>表面浓度 = 体内浓度</b>，曲线在 <span class=\"m\"><i>x</i><span class=\"op\">=</span>0</span> 处是<b>平的</b>（<span class=\"m\"><span class=\"frac\"><span class=\"num\"><span class=\"op\">∂</span><i>p</i></span><span class=\"den\"><span class=\"op\">∂</span><i>x</i></span></span><span class=\"op\">=</span>0</span>）。<span class=\"m\"><i>S</i><span class=\"op\">→</span><span class=\"op\">∞</span></span>（欧姆接触）时表面浓度被钉在 <b><span class=\"m\"><i>p</i><sub>0</sub></span></b>，复合极快，曲线在表面附近<b>陡得几乎垂直</b>。中等 <span class=\"m\"><i>S</i></span>（本工具固定 10<sup>3</sup> cm/s）时，表面浓度介于两者之间，靠表面 <span class=\"m\"><span class=\"frac\"><span class=\"num\"><i>D</i></span><span class=\"den\"><i>S</i></span></span></span> 这么厚的一层里浓度被“压低”：当前 <span class=\"m\"><i>S</i><span class=\"op\">=</span></span> " +
-        sciH(S, 1) + " cm/s ⇒ <span class=\"m\"><span class=\"frac\"><span class=\"num\"><i>D</i></span><span class=\"den\"><i>S</i></span></span><span class=\"op\">=</span></span> <b>" + fmt(d.Dcm * 100 / (S * 0.01), 0) + " µm</b>（与扩散长度 " + fmt(d.Lp, 0) +
-        " µm 比一比：<span class=\"m\"><span class=\"frac\"><span class=\"num\"><i>D</i></span><span class=\"den\"><i>S</i></span></span><span class=\"op\">≪</span><i>L</i></span> 说明表面复合只是薄薄一层，<span class=\"m\"><span class=\"frac\"><span class=\"num\"><i>D</i></span><span class=\"den\"><i>S</i></span></span><span class=\"op\">≫</span><i>L</i></span> 说明整根样品都被表面拖累）。当前表面浓度 " + sciH(f.ps, 2) + " cm<sup>−3</sup>。钝化工艺要做的，就是把 <span class=\"m\"><i>S</i></span> 往 0 的方向压。";
-    }
+    a: () => "<span class=\"m\"><i>S</i><span class=\"op\">=</span>0</span>（反射）时表面通量为零，<b>表面浓度 = 体内浓度</b>，曲线在 <span class=\"m\"><i>x</i><span class=\"op\">=</span>0</span> 处是<b>平的</b>（<span class=\"m\"><span class=\"frac\"><span class=\"num\"><span class=\"op\">∂</span><i>p</i></span><span class=\"den\"><span class=\"op\">∂</span><i>x</i></span></span><span class=\"op\">=</span>0</span>）。<span class=\"m\"><i>S</i><span class=\"op\">→</span><span class=\"op\">∞</span></span>（欧姆接触）时表面浓度被钉在 <b><span class=\"m\"><i>p</i><sub>0</sub></span></b>，复合极快，曲线在表面附近<b>陡得几乎垂直</b>。中等 <span class=\"m\"><i>S</i></span> 时，表面浓度介于两者之间，靠表面 <span class=\"m\"><span class=\"frac\"><span class=\"num\"><i>D</i></span><span class=\"den\"><i>S</i></span></span></span> 这么厚的一层里浓度被“压低”：<span class=\"m\"><span class=\"frac\"><span class=\"num\"><i>D</i></span><span class=\"den\"><i>S</i></span></span><span class=\"op\">≪</span><i>L</i></span> 说明表面复合只是薄薄一层，<span class=\"m\"><span class=\"frac\"><span class=\"num\"><i>D</i></span><span class=\"den\"><i>S</i></span></span><span class=\"op\">≫</span><i>L</i></span> 说明整根样品都被表面拖累（两个长度读数面板里都有）。钝化工艺要做的，就是把 <span class=\"m\"><i>S</i></span> 往 0 的方向压。"
   }
 ];
 
@@ -2490,7 +2504,8 @@ function buildChal() {
     el.querySelector(".btn-row button").onclick = e => { e.stopPropagation(); ans.classList.toggle("show"); };
   });
 }
-function refreshAnswers() { ANS_EL.forEach((el, i) => { el.innerHTML = CHAL[i].a(); }); }
+const ansOf = c => (typeof c.a === "function" ? c.a() : c.a);
+function refreshAnswers() { ANS_EL.forEach((el, i) => { el.innerHTML = ansOf(CHAL[i]); }); }
 
 /* ---------------- 15. 同步与渲染 ---------------- */
 function markActive() {

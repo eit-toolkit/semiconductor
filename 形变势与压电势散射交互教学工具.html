@@ -189,7 +189,7 @@
       <div class="chart-wrap"><canvas id="chain" data-h="452" tabindex="0"></canvas></div>
       <div class="legend" id="legChain"></div>
       <div class="hint">
-        <b>上半幅（形变势）</b>：灰球是原子，竖箭头是声学声子造成的位移 <span class="m"><i>u</i>(<i>x</i>)</span>；原子挤在一起的段落（<span class="m"><span class="frac"><span class="num">Δ<i>V</i></span><span class="den"><i>V</i></span></span><span class="op">&lt;</span>0</span>，红色底）带边<b>往下</b>走，拉开的段落（蓝色底）带边<b>往上</b>走。<br>
+        <b>上半幅（形变势）</b>：灰球是原子，竖箭头是声学位移 <span class="m"><i>u</i>(<i>x</i>)</span>；原子挤紧的段落（<span class="m"><span class="frac"><span class="num">Δ<i>V</i></span><span class="den"><i>V</i></span></span><span class="op">&lt;</span>0</span>，红色底）带边<b>往下</b>走，拉开的段落（蓝色底）带边<b>往上</b>走。<br>
         <b>下半幅（压电）</b>：非中心对称晶体里两种原子（<span class="m"><span class="op">+</span></span> 蓝 / <span class="m"><span class="op">−</span></span> 红）位移量不同 ⇒ 出现极化 <span class="m"><i>P</i></span>；切到 <b>Si / Ge</b>（中心对称）压电张量恒为零 ⇒ <span class="m"><i>P</i><span class="op">≡</span>0</span>，压电散射消失。
       </div>
     </div>
@@ -261,15 +261,14 @@
       <div class="kv" id="readout"></div>
       <div class="warn" id="freezeWarn" style="display:none"></div>
       <div class="fold" id="foldRo">
-        <div class="fold-head"><span class="chev">▶</span><span>更多读数（材料对称性、工作点与声子）</span></div>
+        <div class="fold-head"><span class="chev">▶</span><span>更多读数（材料常数、工作点与声子）</span></div>
         <div class="fold-body">
           <div class="kv" id="readoutMore"></div>
         </div>
       </div>
       <div class="unit-note">
         <b>固定量</b>：<span class="m"><i>n</i><span class="op">=</span><i>N</i><sub>I</sub><span class="op">=</span>10<sup>16</sup> cm<sup>−3</sup></span>，声子波长 <span class="m"><i>λ</i><span class="op">=</span>12<i>a</i></span>、振幅 <span class="m"><i>A</i><span class="op">=</span>0.040<i>a</i></span>（视觉放大，仅示意）。
-        <b>只计这三种机制</b>（未计光学声子与谷间散射），重点看<b>标度与机制竞争</b>；因此这里的 <span class="m"><i>μ</i><sub>total</sub></span> 普遍<b>高于</b>同条件下的实测值，缺的那部分正是未计入的这两种机制（见「半导体中的声子」工具）。
-      </div>
+        <b>只计这三种机制</b>（未计光学声子与谷间散射），重点看<b>标度与机制竞争</b>；因此这里的 <span class="m"><i>μ</i><sub>total</sub></span> 普遍<b>高于</b>同条件下的实测值，缺的那部分正是未计入的这两种机制（见「半导体中的声子」工具）。<b>合成规则</b>：三种散射率按马西森规则<b>相加</b>（<span class="m">1<i>/τ</i> = Σ 1<i>/τ</i><sub>i</sub></span>），不是取最小的那个。</div>
       </div>
   </div>
 </div>
@@ -881,6 +880,36 @@ var I18N = {
   "交点在 ": "crossing point at ",
   "正负电荷中心错开 ⇒ 出现宏观极化 ": "the centers of positive and negative charge are pulled apart ⇒ a macroscopic polarization appears ",
   "正负电荷中心错开 ⇒ 出现宏观极化": "the centers of positive and negative charge are pulled apart ⇒ a macroscopic polarization appears",
+  "：灰球是原子，竖箭头是声学位移 ": ": the gray balls are atoms and the vertical arrows are the acoustic displacement ",
+  "；原子挤紧的段落（": "; where the atoms are squeezed together (",
+  "？电离杂质散射属于哪一类？": "? Which class does ionized-impurity scattering belong to?",
+  "变化 —— ": " — ",
+  "本参数下 1–1000 K 内两线未相交": "With the present parameters the two lines do not cross between 1 and 1000 K",
+  "，可按同一规律外推：": ", and the same rule can be extrapolated: ",
+  "低于交点压电主导": "Below the crossing point piezoelectric scattering dominates",
+  "（升温时它涨得最凶）。切到 GaN / ZnO 看交点被推到多高。": " (it rises fastest as the temperature climbs). Switch to GaN / ZnO to see how high the crossing point is pushed.",
+  "掉（德拜屏蔽长度见更多读数，屏蔽因子 ": " away (the Debye screening length is given in the readouts and the screening factor ",
+  " 见读数面板） ⇒ ": " in the readout panel) ⇒ ",
+  "」的原因 —— 电离杂质散射与压电同属": "\" — ionized-impurity scattering and piezoelectric scattering both belong to ",
+  "（同样会被屏蔽），形变势是": " (both are screened), and the deformation potential is ",
+  "唯一治不了": "the only one that cannot",
+  "的那个。": " be cured at all.",
+  "材料，压电散射特别强：": " material, so piezoelectric scattering is especially strong: ",
+  "（各分迁移率与总迁移率见读数面板）。": " (the individual mobilities and the total mobility are listed in the readout panel).",
+  "治得了电离杂质、治不了压电": "cures the ionized-impurity scattering but not the piezoelectric ",
+  "的原因。": "scattering.",
+  "两条线的交点就是主导机制的切换温度": "Where the two lines cross is exactly the temperature at which the dominant mechanism switches",
+  "（读数面板实时给出）：": " (given live in the readout panel): ",
+  "更多读数（材料常数、工作点与声子）": "More readouts (material constants, operating point, phonon)",
+  "（有反演中心 ⇒ 无压电）": " (has an inversion center, so no piezoelectric effect)",
+  "（无反演中心 ⇒ 有压电）": " (no inversion center, so piezoelectric scattering exists)",
+  "材料与常数": "Material and constants",
+  "常数 ": "Constants ",
+  "：三种散射率按马西森规则": ": the three scattering rates are added by Matthiessen's rule (",
+  "相加": "added",
+  "合成规则": "Combination rule",
+  " 决定": " sets it",
+  "），不是取最小的那个。": "), not the smallest one.",
 };
 
 /* 注入点②：画布直写字符串。老工具直接调 g.fillText()，这里在原型上兜住。
@@ -1631,28 +1660,15 @@ function screenF(E, T) {
   return clamp(f, 1e-6, 1);
 }
 
-/* 静态（零频）介电屏蔽因子：对<b>这一支声子自己的波矢</b> q 求值，
-   ε(q) = 1 + (qλ_D)⁻² ⇒ 极化场被压到 q²/(q²+λ_D⁻²) = 1/ε(q)。
-   与上面的 screenF() <b>不同源</b>：后者是 q = 2k·sin(θ/2) 在散射球面上
-   做角平均得到的散射率削弱因子。模块一里那条「按 f 缩比」的实线用的
-   是 screenF()，只是把「被屏蔽削弱」这件事画出来，两者量值通常差很远。 */
-function phononQ() { return 2 * Math.PI / (lamOf(OPT.lamS) * mat().a * NM); }
-function staticScr(T) {
-  const ld = lamDebye(T);
-  if (!isFinite(ld) || ld <= 0) return 1;
-  const x = phononQ() * ld;
-  return x * x / (1 + x * x);
-}
-
 /* 电离杂质散射的最大瞄准距离：max(λ_D, ½d_I)。
-   因为 λ_D ∝ √T（n 固定），两条分支的切换温度可直接解析给出。 */
+   λ_D ∝ √T（n 固定），两条分支谁接管随温度翻转 —— 读数行只报当前由谁决定，
+   不再把切换温度也写上去（核心区的「主导机制」那一行已经在讲交叉温度）。 */
 function bmaxInfo(T) {
   const NI = NIV(), ld = lamDebye(T);
   if (!(NI > 0)) return null;
   const halfI = 0.5 * Math.pow(1 / NI, 1 / 3);
   const useLam = ld > halfI;
-  return { ld: ld, halfI: halfI, bmax: Math.max(ld, halfI), useLam: useLam,
-    Tsw: (isFinite(ld) && ld > 0) ? T * Math.pow(halfI / ld, 2) : Infinity };
+  return { ld: ld, halfI: halfI, bmax: Math.max(ld, halfI), useLam: useLam };
 }
 
 /* 低温杂质冻结：n = √(N_c·N_D/2)·e^(−E_d/2kT)（未补偿、轻度冻结近似）。
@@ -2256,44 +2272,16 @@ function buildLegends() {
   }
 }
 
-/* 压电的温区扫描：给「压电什么时候偏离 T^(1/2)」一个可直接核对的定量答案。
-   局部斜率 = d ln(1/τ_pz) / d ln T，理想未屏蔽时为 1/2。 */
-function pzScan() {
-  const TS = [1000, 300, 100, 30, 10, 3];
-  const rows = TS.map(T => ({ T: T, f: screenF(1.5 * KB * T, T), rate: 1 / avgTau(ratePz, T) }));
-  for (let i = 1; i < rows.length; i++)
-    rows[i].slope = (Math.log10(rows[i].rate) - Math.log10(rows[i - 1].rate)) /
-      (Math.log10(rows[i].T) - Math.log10(rows[i - 1].T));
-  return rows;
-}
-/* 把上面那张表说成一句话：f 序列 + 斜率序列（只列斜率偏离 ≥ 0.15 的区段） */
-function pzScanTxt(rows) {
-  const fs = rows.map(r => r.T + " K → " + r.f.toFixed(3)).join("、");
-  const sl = [];
-  for (let i = 1; i < rows.length; i++)
-    sl.push(rows[i - 1].T + "→" + rows[i].T + " K：" + rows[i].slope.toFixed(2));
-  return fs + "；相对 " + MM(VI("T") + WU("1⁄2")) + " 参考线的局部斜率：" + sl.join("、") +
-    "（0.50 = 正好落在参考线上，越大说明相对参考线被压得越低）。";
-}
-
 /* ---------------- 挑战任务 ---------------- */
 const CHAL = [
   {
     q: "观察上半幅：原子挤得最紧的地方，<span class='m'><i>E</i><sub>c</sub></span> 是往上还是往下？依次把材料切到 <b>GaAs、GaN、ZnO</b>，<span class='m'><i>E</i><sub>c</sub></span> 的起伏幅度怎么变？为什么？",
-    a: () => {
-      const d = phys();
-      let Smax = 0;
-      for (let i = 0; i < NAT; i++) Smax = Math.max(Smax, Math.abs(chainAt(i, PH.phase).S));
-      return "声学声子让原子一会儿挤紧（" + MM(FRAC("Δ" + VI("V"), VI("V")) + OPR("<") + "0") + "）、一会儿拉开。" +
+    a: () => "声学声子让原子一会儿挤紧（" + MM(FRAC("Δ" + VI("V"), VI("V")) + OPR("<") + "0") + "）、一会儿拉开。" +
         "带边的移动量就是 " + MM("Δ" + WSUB("E", "c") + OPR("=") + VI("Ξ") + OPR("·") + FRAC("Δ" + VI("V"), VI("V"))) + "，" +
         "所以<b>压缩处（红底）" + M_EC + " 往下走、膨胀处（蓝底）" + M_EC + " 往上走</b>，两条曲线<b>同相位</b>（因为都正比于同一个应变）。" +
-        "起伏幅度<b>线性正比于材料的形变势常数</b> " + M_XI + "：当前 " + mat().name + " " + MM(VI("Ξ") + OPR("=") + fmt(d.xi, 1) + " eV") + "，最大应变 " +
-        (Smax * 100).toFixed(2) + "%，带边起伏 " + MM(OPR("±") + (d.xi * Smax * 1000).toFixed(0) + " meV") +
-        " —— 换到 " + MM(VI("Ξ")) + " 更小的材料（如 ZnO " + fmt(MATS[4].xi, 1) + " eV），起伏按比例缩小；" +
-        "而散射率 " + MM(FRAC("1", VI("τ")) + OPR("∝") + VI("Ξ") + WU("2")) +
-        " 按<b>平方</b>变化，" + M_XI + " 差 2 倍 ⇒ 散射率差 4 倍。" +
-        "注意：为了看得清，这里的振幅取到了百分之几（真实热声子的应变只有 " + MM("10" + WU("−4") + "～10" + WU("−3")) + "），<b>幅度数值只作比例示意</b>。";
-    }
+        "起伏幅度<b>线性正比于材料的形变势常数</b> " + M_XI + "，而散射率 " + MM(FRAC("1", VI("τ")) + OPR("∝") + VI("Ξ") + WU("2")) +
+        " 按<b>平方</b>变化 —— " + M_XI + " 差 2 倍 ⇒ 散射率差 4 倍。" +
+        "注意：为了看得清，这里的振幅取到了百分之几（真实热声子的应变只有 " + MM("10" + WU("−4") + "～10" + WU("−3")) + "），<b>幅度数值只作比例示意</b>。",
   },
   {
     q: "在材料里切换 Si ↔ GaAs（或 GaN），看下半幅的离子链。两次的原子位移有什么本质差别？为什么中心对称晶体「不可能」有压电效应？",
@@ -2313,65 +2301,35 @@ const CHAL = [
   {
     q: "选 GaAs（或 GaN），看模块二的两条曲线：谁的斜率大？交点在哪里？低于交点温度和高于交点温度，各是谁说了算？",
     a: () => {
-      const d = phys();
-      const t = d.tx;
+      const t = phys().tx;
       return "双对数图上<b>斜率就是温度指数</b>：形变势 " + MM(FRAC("1", VI("τ")) + OPR("∝") + WUI("T", "3⁄2")) + "（陡），" +
         "压电 " + MM(FRAC("1", VI("τ")) + OPR("∝") + WUI("T", "1⁄2")) + "（缓）。" +
         "物理原因：" + MM(VI("k") + VI("T")) + " 越大，声子数越多（" + MM(OPR("∝") + VI("T")) + "），同时电子跑得越快、末态越多 —— 形变势两个因素都占（" +
         MM(OPR("∝") + VI("T") + OPR("×") + OPR("√") + VI("T")) + "），" +
         "压电因为矩阵元带 " + MM(FRAC("1", VI("q"))) + " 而少占一个 " + MM(OPR("√") + VI("T")) + "。" +
-        (t ? "当前参数下两条曲线的<b>交点在 " + t.toFixed(0) + " K</b>：" : "当前参数下在 1–1000 K 内两线未相交：") +
-        "<b>低于交点，压电主导</b>（它随温度降得慢，降温时最后一个退场的反而是它）；<b>高于交点，形变势主导</b>（升温时它涨得最凶）。" +
-        "换成 GaN / ZnO（" + M_E14 + " 大、" + MM(VI("ε")) + " 小）交点会推到很高的温度，几乎<b>整个温区都是压电说了算</b>。" +
-        "还有一个容易被忽略的细节：温度继续往降，" + MM(WSUB("λ", "D") + OPR("∝") + OPR("√") + VI("T")) +
-        " 变短、电子波数也变小，压电这种<b>长程</b>相互作用被屏蔽得越来越厉害，曲线会明显低于 " +
-        MM(VI("T") + WU("1⁄2")) + " 参考线 —— <b>压电反而被压了回去</b>（这正是挑战四的内容）。" +
-        "具体落在哪个温区由 " + MM(VI("n")) + " 决定，这里不写死一个数字，直接由当前参数算出：当前 <b>" +
-        mat().name + "</b>（" + MM(VI("n") + OPR("=") + sciH(nOf(OPT.niS), 1) + M_CM3) + "）的屏蔽因子序列 " +
-        pzScanTxt(pzScan()) +
-        "可见偏离从<b>一百 K 上下</b>就开始了（远早于十 K 这个量级），<b>30 K 以下</b>才彻底失守 —— " +
-        "把温度滑块拖到这些点，读数面板的 " + MM(VI("f")) + " 值就是佐证。";
+        (t ? "<b>两条线的交点就是主导机制的切换温度</b>（读数面板实时给出）：" :
+         "<b>本参数下 1–1000 K 内两线未相交</b>，可按同一规律外推：") +
+        "<b>低于交点压电主导</b>（它随温度降得慢，降温时最后一个退场的反而是它）；<b>高于交点形变势主导</b>（升温时它涨得最凶）。" +
+        "切到 GaN / ZnO 看交点被推到多高。";
     }
   },
   {
-    q: "为什么自由载流子能把<b>压电散射</b>屏蔽掉，却屏蔽不了<b>形变势散射</b>（看模块一 <span class='m'><i>P</i>(<i>x</i>)</span> 的虚线与实线、以及读数面板里的屏蔽因子 <span class='m'><i>f</i></span>）？电离杂质散射属于哪一类？",
-    a: () => {
-      const d = phys();
-      const nm = isFinite(d.ld) ? d.ld * 1e9 : Infinity;
-      return "判据是<b>散射势是不是长程库仑场</b>。压电散射的散射势来自极化电场，是<b>长程</b>的，自由载流子会把它<b>屏蔽</b>掉：" +
-        "德拜屏蔽长度 " + MM(WSUB("λ", "D") + OPR("=") + OPR("√") + FRAC(VI("ε") + VI("k") + VI("T"), VI("q") + WU("2") + VI("n"))) +
-        "（本工具固定 " + MM(VI("n") + OPR("=") + VI("N") + "<sub>I</sub>" + OPR("=") + "10" + WU("16") + M_CM3) +
-        "，当前 " + MM(VI("T") + OPR("=") + d.T.toFixed(0) + " K") + " ⇒ " + M_LAMD + OPR("=") +
-        (nm > 999 ? (nm / 1000).toFixed(2) + " μm" : nm.toFixed(1) + " nm") + "），" +
-        "对压电矩阵元积分后得到屏蔽因子 " + MM(VI("f") + OPR("=") + d.fs.toFixed(3)) + "（1 = 完全没有屏蔽）" +
+    q: "为什么自由载流子能把<b>压电散射</b>屏蔽掉，却屏蔽不了<b>形变势散射</b>？电离杂质散射属于哪一类？",
+    a: () => "判据是<b>散射势是不是长程库仑场</b>。压电散射的散射势来自极化电场，是<b>长程</b>的，自由载流子会把它<b>屏蔽</b>掉" +
+        "（德拜屏蔽长度见更多读数，屏蔽因子 " + MM(VI("f")) + " 见读数面板）" +
         " ⇒ <b>压电散射被削弱</b>（虚线是未屏蔽、实线是屏蔽后的 " + MM(VI("P") + "(" + VI("x") + ")") + "）。" +
         "而<b>形变势散射完全不受影响</b> —— 它来自<b>短程的带边畸变</b>（原子间距一变带边就动，" +
         MM("Δ" + WSUB("E", "c") + OPR("=") + VI("Ξ") + OPR("·") + FRAC("Δ" + VI("V"), VI("V"))) + "），不涉及长程库仑场，电子气屏蔽不了它。" +
-        "这就是「<b>重掺杂能治压电散射，治不了形变势散射</b>」的原因。" +
-        "电离杂质散射与压电同属<b>长程库仑型</b>（同样会被屏蔽），所以 " + M_MU_II + " 也会随 " + MM(VI("n")) + " 增大而下降 —— " +
-        "这就是判断一个散射机制<b>是不是库仑型</b>的试金石。" +
-        "补充一点：降温时 " + MM(WSUB("λ", "D") + OPR("∝") + OPR("√") + VI("T")) + " 变短、电子波数也变小，" +
-        "压电这种<b>长程</b>相互作用被屏蔽得越来越厉害（呼应挑战三），" +
-        "当前参数下的定量序列是：" + pzScanTxt(pzScan()) +
-        "另外注意读数面板里还有一个对该声子波矢求的<b>静态屏蔽因子</b>：它通常接近 1，" +
-        "与这里的 " + MM(VI("f")) + "（散射率角平均）<b>不同源</b>，别混为一谈。";
-    }
+        "这就是「<b>重掺杂能治压电散射，治不了形变势散射</b>」的原因 —— " +
+        "电离杂质散射与压电同属<b>长程库仑型</b>（同样会被屏蔽），形变势是<b>唯一治不了</b>的那个。",
   },
   {
     q: "切到 GaN（或 ZnO），看模块三的迁移率曲线：低温端被谁限制？高温端呢？这跟 GaN HEMT 为什么要把电子「挪到」异质结界面有什么关系？",
-    a: () => {
-      const d = phys();
-      const mp = isFinite(d.mupz) ? fmtN(d.mupz) : "∞（无压电）";
-      return "GaN 是<b>强极性</b>材料（" + MM(WSUB("e", "14") + OPR("=") + fmt(mat().e14, 3) + " C/m" + WU("2")) + "、" +
-        MM(WSUB("ε", "r") + OPR("=") + fmt(mat().eps, 1)) + "），压电散射特别强：<b>低温端（" + M_T + " 几十 K）迁移率主要被电离杂质和压电压住</b>，" +
-        "<b>高温端被形变势（以及实际器件里更强的光学声子）压住</b>。当前 " + MM(VI("T") + OPR("=") + d.T.toFixed(0) + " K") + "：" +
-        MM(WSUB("μ", "dp") + OPR("=") + fmtN(d.mudp)) + "、" + MM(WSUB("μ", "pz") + OPR("=") + mp) +
-        "、" + MM(WSUB("μ", "ii") + OPR("=") + fmtN(d.muii)) + " " + M_CM2VS + "，总迁移率 " +
-        MM(VI("μ") + OPR("=") + fmtN(d.mutot) + M_CM2VS) + "。" +
+    a: () => "GaN 是<b>强极性</b>材料，压电散射特别强：<b>低温端（" + M_T + " 几十 K）迁移率主要被电离杂质和压电压住</b>，" +
+        "<b>高温端被形变势（以及实际器件里更强的光学声子）压住</b>（各分迁移率与总迁移率见读数面板）。" +
         "<b>HEMT 的思路</b>：用 AlGaN/GaN 异质结，靠<b>极化不连续</b>在界面感生出二维电子气，电子<b>远离电离杂质</b>（电离杂质散射几乎归零），" +
         "于是低温/室温迁移率大幅提高。但电子仍然待在极性晶体里，<b>压电散射（还有合金无序、界面粗糙度）还在</b>，" +
-        "这就是为什么 GaN HEMT 的室温迁移率能做到 1500–2000 cm²/V·s，却<b>远达不到 GaAs 的 8000</b>。";
-    }
+        "这就是 GaN HEMT <b>治得了电离杂质、治不了压电</b>的原因。",
   }
 ];
 let ANS_EL = [], ANS_SHOWN = false;
@@ -2390,7 +2348,8 @@ function buildChal() {
     el.querySelector(".btn-row button").onclick = e => { e.stopPropagation(); ANS_SHOWN = true; ans.classList.toggle("show"); refreshAnswers(); };
   });
 }
-function refreshAnswers() { if (!ANS_SHOWN) return; ANS_EL.forEach((el, i) => { el.innerHTML = CHAL[i].a(); }); }
+const ansOf = c => (typeof c.a === "function" ? c.a() : c.a);
+function refreshAnswers() { if (!ANS_SHOWN) return; ANS_EL.forEach((el, i) => { el.innerHTML = ansOf(CHAL[i]); }); }
 
 /* ---------------- 读数 ---------------- */
 function kvRow(k, v) { return '<div class="row"><span class="k">' + k + '</span><span class="v">' + v + "</span></div>"; }
@@ -2402,7 +2361,7 @@ function updateReadout() {
   const h = [];
   h.push(hd("散射率（迁移率平均 " + MM(FRAC("1", "⟨" + VI("τ") + "⟩")) + "）"));
   h.push(kvRow("形变势 " + M_TAU_DP, sci(d.rdp, 2) + M_S1));
-  h.push(kvRow("压电 " + M_TAU_PZ, d.rpz > 0 ? sci(d.rpz, 2) + M_S1 : "<b>0</b>（中心对称）"));
+  h.push(kvRow("压电 " + M_TAU_PZ, d.rpz > 0 ? sci(d.rpz, 2) + M_S1 : "<b>0</b>"));
   h.push(kvRow("电离杂质 " + M_TAU_II, sci(d.rii, 2) + M_S1));
   h.push(kvRow("└ 总散射率（马西森）", "<b>" + sci(d.rtot, 2) + "</b>" + M_S1));
   h.push(kvRow(MM(WSUB("μ", "total")) + "（三种机制合成）",
@@ -2413,38 +2372,31 @@ function updateReadout() {
 
   /* ---- 折叠区：材料对称性 / 工作点 / 声子参数 ---- */
   const hm = [];
-  hm.push(hd("材料与晶体对称性"));
-  hm.push(kvRow("材料 / 结构", "<b>" + m.name + "</b>　" + m.struct));
-  hm.push(kvRow("中心对称？", d.centro ? "<b>是 ⇒ 无压电散射</b>" : "<b>否 ⇒ 有压电散射</b>"));
-  hm.push(kvRow("形变势 " + M_XI + " / 压电 " + M_E14,
-    fmt(d.xi, 1) + " eV　" + (d.centro ? "0（对称性禁戒）" : fmt(d.e14, 3) + " C/m" + WU("2"))));
-  hm.push(kvRow(MM(FRAC(VI("m") + WU("*"), WSUB("m", "0")) + OPR("·") + VI("ρ") + OPR("·") + WSUB("v", "s") + OPR("·") + WSUB("ε", "r")),
+  hm.push(hd("材料与常数"));
+  hm.push(kvRow("材料 / 结构", "<b>" + m.name + "</b>　<b>" + m.struct + "</b>" +
+    (d.centro ? "（有反演中心 ⇒ 无压电）" : "（无反演中心 ⇒ 有压电）")));
+  hm.push(kvRow("常数 " + MM(FRAC(VI("m") + WU("*"), WSUB("m", "0")) + OPR("·") + VI("ρ") + OPR("·") + WSUB("v", "s") + OPR("·") + WSUB("ε", "r")),
     fmt(d.m, 3) + "　" + fmt(d.rho, 2) + " g/cm" + WU("3") + "　" + fmt(d.vs, 0) + " m/s　" + fmt(d.eps, 1)));
+  hm.push(kvRow("形变势 " + M_XI + " / 压电 " + M_E14,
+    fmt(d.xi, 1) + " eV　" + (d.centro ? "<b>0</b>" : fmt(d.e14, 3) + " C/m" + WU("2"))));
   hm.push(hd("当前工作点"));
-  hm.push(kvRow(MM(VI("n") + OPR("/") + WSUB("N", "I")) + "（固定）", sci(d.n, 1) + "　" + sci(d.NI, 1) + M_CM3));
   hm.push(kvRow("德拜屏蔽长度 " + M_LAMD,
     isFinite(d.ld) ? (d.ld * 1e9 > 999 ? (d.ld * 1e-6).toFixed(2) + " μm" : (d.ld * 1e9).toFixed(1) + " nm") : "∞"));
   hm.push(kvRow("压电屏蔽因子 " + MM(VI("f")) + "（散射率角平均）", "<b>" + d.fs.toFixed(3) + "</b>（1 = 无屏蔽）"));
-  /* 同一件事的两种口径：① 上面的 f —— 电子在散射球面上的角平均（q = 2k·sin(θ/2)）；
-     ② 该支声子自己的波矢 q 处的静态介电屏蔽。模块一那条实线是「按 f 缩比」的示意画法。 */
-  hm.push(kvRow("该声子波矢的静态屏蔽 " + MM(FRAC("1", VI("ε") + OPR("(") + VI("q") + OPR(")"))),
-    "<b>" + staticScr(d.T).toFixed(3) + "</b>　（与上面 " + MM(VI("f")) + " 不同源，图上实线用的是 " + MM(VI("f")) + "）"));
+  /* 静态屏蔽 1/ε(q) 那行删掉：它只用来辩解「和上面的 f 不是同一个源」，
+     而本件（散射率角平均）用的是 f —— 这句自辩对读者没有信息。 */
   const bi = bmaxInfo(d.T);
   if (bi) {
     hm.push(kvRow(MM(WSUB("b", "max")) + "（电离杂质瞄准上限）",
       (bi.bmax * 1e9 > 999 ? (bi.bmax * 1e-6).toFixed(2) + " μm" : (bi.bmax * 1e9).toFixed(1) + " nm") + "　" +
-      (bi.useLam ? "由 " + M_LAMD + " 决定" : "由 " + MM(FRAC(WSUB("d", "I"), "2")) + " 决定") +
-      (isFinite(bi.Tsw) ? "（两支在 " + bi.Tsw.toFixed(0) + " K 交接）" : "")));
+      (bi.useLam ? "由 " + M_LAMD + " 决定" : "由 " + MM(FRAC(WSUB("d", "I"), "2")) + " 决定")));
   }
   hm.push(hd("迁移率 " + MM(VI("μ") + OPR("=") + FRAC(VI("q") + "⟨" + VI("τ") + "⟩", VI("m") + WU("*")))));
   hm.push(kvRow(MM(FRAC(WSUB("μ", "dp"), WSUB("μ", "pz"))),
     fmtN(d.mudp) + "　" + (isFinite(d.mupz) ? fmtN(d.mupz) : "∞") + M_CM2VS));
   hm.push(kvRow(M_MU_II, fmtN(d.muii) + M_CM2VS));
-  /* 「马西森倒数和」与直观的「取最小者」差多少（两机制相等处恰为一半） */
-  const mus = [d.mudp, d.mupz, d.muii].filter(v => isFinite(v) && v > 0);
-  const mmin = mus.length ? Math.min.apply(null, mus) : Infinity;
-  hm.push(kvRow(MM(WSUB("μ", "total") + OPR("/") + "min" + WSUB("μ", "i")) + "（合成规则）",
-    isFinite(mmin) ? "<b>" + (d.mutot / mmin).toFixed(3) + "</b>　（取极小的极限 ≈ 1，两机制相等处 ≈ 0.5）" : "—"));
+  /* 「μ_total / min μ_i」自检行删掉：它恒在 0.5~1 之间，只用来说明
+     「马西森是倒数和、不是取最小」—— 这条判据搬到 unit-note 里说一次就够。 */
   hm.push(hd("声子（固定 " + MM(VI("λ") + OPR("=") + lamOf(OPT.lamS).toFixed(1) + VI("a")) + "、" +
     MM(VI("A") + OPR("=") + ampOf(OPT.ampS).toFixed(3) + VI("a")) + "）"));
   hm.push(kvRow("波长 / 频率", (d.lam * 1e9).toFixed(2) + " nm　" + (d.fq / 1e12).toFixed(3) + " THz"));
