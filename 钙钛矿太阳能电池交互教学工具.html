@@ -1625,6 +1625,12 @@ const LAYERS = [
   { key: "met", name: "金属背电极", role: "收集空穴、把没吸收的光反射回去", fill: "#c8ccd4", edge: "#7a8290" }
 ];
 let PARTS = [], ANIM_T = 0, ANIM_RAF = null;
+/* 2026-10-29 动画的时间基准：本工具原本「每帧走固定像素」，
+   于是 120/144 Hz 高刷屏上看上去会比 60 Hz 快一倍多。这里改成按墙钟时间推进——
+   每过 ANIM_MS（＝ 1/60 s）算一个「虚拟帧」，60 Hz 下逐帧步长仍恰好是 1，
+   观感与改动前完全一致；刷新率再高也只是把同一段时间切得更细。 */
+const ANIM_MS = 1000 / 60;
+let ANIM_TS = 0;               /* 上一帧的时间戳；0 表示重启后的第一帧走默认步长 */
 
 /* 代表性光子的能量：取带隙之上 0.8 eV（可见光主体），据此决定"光被吃到多深" */
 const ILL_E = 0.8;
@@ -1666,19 +1672,22 @@ function spawnPair(s, geo) {
   PARTS.push(mk("e", pvk.y - 6, pE));
   PARTS.push(mk("h", pvk.y + pvk.h + 6, pH));
 }
-function stepParts(s, geo) {
-  const pvk = geo.B.pvk, sp = 0.55 + Math.random() * 0.35;
+function stepParts(s, geo, k) {
+  const pvk = geo.B.pvk, sp = (0.55 + Math.random() * 0.35) * k;
   for (let i = PARTS.length - 1; i >= 0; i--) {
     const p = PARTS[i];
-    if (p.fade > 0) { p.fade -= 1; if (p.fade <= 0) PARTS.splice(i, 1); continue; }
+    if (p.fade > 0) { p.fade -= k; if (p.fade <= 0) PARTS.splice(i, 1); continue; }
     const dir = Math.sign(p.target - p.y0);
     p.y += dir * sp * 1.35;
     const atDeath = p.recY !== null && ((dir > 0 && p.y >= p.recY) || (dir < 0 && p.y <= p.recY));
     if (atDeath) { p.fade = 9; continue; }
     if ((dir > 0 && p.y >= p.target) || (dir < 0 && p.y <= p.target)) PARTS.splice(i, 1);
   }
-  if (PARTS.length < 34 && Math.random() < 0.34) spawnPair(s, geo);
-  if (PARTS.length < 34 && Math.random() < 0.22) spawnPair(s, geo);
+  /* 产生也要按时间换算：单帧产生率 p ⇒ 这段时间 k 个虚拟帧里至少出现一次的概率
+     是 1 − (1 − p)^k。不换算的话，高刷屏上单位时间产生的粒子对会跟着变密。 */
+  const once = (p) => Math.random() < 1 - Math.pow(1 - p, k);
+  if (PARTS.length < 34 && once(0.34)) spawnPair(s, geo);
+  if (PARTS.length < 34 && once(0.22)) spawnPair(s, geo);
 }
 function drawDev() {
   const v = DV, g = v.g;
@@ -2603,18 +2612,24 @@ function render() {
   updatePanels();
   if (ANS_EL.length) refreshAnswers();
 }
-function loop() {
+function loop(ts) {
   ANIM_RAF = null;
   if (!OPT.anim) return;
-  ANIM_T++;
+  /* 虚拟帧数 = 真实经过的时间 / 16.7 ms。上限 3 帧：切走标签页再回来时
+     performance.now 会跳好几秒，不夹上限粒子会「瞬移」整屏。 */
+  const now = (typeof ts === "number" && ts > 0) ? ts : performance.now();
+  const k = ANIM_TS ? clamp((now - ANIM_TS) / ANIM_MS, 0, 3) : 1;
+  ANIM_TS = now;
+  ANIM_T += k;
   const s = S();
-  stepParts(s, devBoxes(s));
+  stepParts(s, devBoxes(s), k);
   drawDev();
   ANIM_RAF = requestAnimationFrame(loop);
 }
 function startAnim() {
   if (!OPT.anim) return;
   if (ANIM_RAF) return;
+  ANIM_TS = 0;                 /* 重新起步：第一帧按默认步长，别用暂停前的时间戳 */
   ANIM_RAF = requestAnimationFrame(loop);
 }
 function fitAll() {
