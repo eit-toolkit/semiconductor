@@ -989,6 +989,7 @@ const AUTO_SUB = { "₀": "0", "₁": "1", "₂": "2", "₃": "3", "₄": "4", "
   "₇": "7", "₈": "8", "₉": "9", "₊": "+", "₋": "−", "₌": "=", "₍": "(", "₎": ")",
   "ₐ": "a", "ₑ": "e", "ₒ": "o", "ₓ": "x", "ₔ": "ə", "ₕ": "h", "ₖ": "k", "ₗ": "l",
   "ₘ": "m", "ₙ": "n", "ₚ": "p", "ₛ": "s", "ₜ": "t", "ᵣ": "r", "ᵤ": "u", "ᵥ": "v" };
+const MATH_IDCH = /[A-Za-z\u0370-\u03ff]/;
 const NEED_MATH = /[\u2070-\u209C\u00B2\u00B3\u00B9]|_\{?[A-Za-z0-9\u0370-\u03ff]|\^\{?[\d(\-]|\d(\.\d+)?[eE][+\-]\d|Δ[A-Za-z\u0370-\u03ff]|(?<![A-Za-z0-9\u0370-\u03ff])[αβγδεζηθικλμνξρστυφχψωΦΨΘΞ](?![A-Za-z0-9\u0370-\u03ff])|(?<![A-Za-z0-9])kT(?![A-Za-z0-9])|hν/;
 function AUTO(s) {
   const out = []; let buf = "", mode = 0;
@@ -1058,7 +1059,14 @@ function AUTO(s) {
   emit(buf, mode);
   return out;
 }
+/* 2026-10-29 重入锁：进了分段排版之后，内部对每段的 measure / fill / stroke 必须走原生实现。
+   不锁的话：AUTO() 切出的段（如 {s:"ψ", i:true}）自身又命中 NEED_MATH 的新模式，
+   于是 mathSegs → measureText 钩子 → mathSegs → … 无限套娃（RangeError 爆栈）。 */
 function mathSegs(g, s) {
+  window.__HM_IN = 1;
+  try { return mathSegsRaw(g, s); } finally { window.__HM_IN = 0; }
+}
+function mathSegsRaw(g, s) {
   const f = String(g.font || "");
   const size = (function () { const m = /(\d+(?:\.\d+)?)px/.exec(f); return m ? parseFloat(m[1]) : 12; })();
   const family = f.replace(/^(?:\s*(?:italic|oblique|bold|[1-9]00)\s*)*\d+(?:\.\d+)?px\s*/, "");
@@ -1112,7 +1120,7 @@ function mathSegs(g, s) {
     draw(_stroke, this, s, x, y, Array.prototype.slice.call(arguments, 3));
   };
   P.measureText = function (s) {
-    if (typeof s !== "string" || !NEED_MATH.test(s)) return _measure.call(this, s);
+    if (window.__HM_IN || typeof s !== "string" || !NEED_MATH.test(s)) return _measure.call(this, s);
     const save = this.font;
     const info = mathSegs(this, s);
     this.font = save;

@@ -762,7 +762,14 @@ const NEED_MATH_HM = /[\u2070-\u209C\u00B2\u00B3\u00B9]|_\{?[A-Za-z0-9\u0370-\u0
    否则 measureText 被钩子接管后会 self-recursion（RangeError）。 */
 var _mRawHM = null;
 function measureRawHM(g, s) { return (_mRawHM ? _mRawHM : g.measureText).call(g, s).width; }
+/* 2026-10-29 重入锁：进了分段排版之后，内部对每段的 measure / fill / stroke 必须走原生实现。
+   不锁的话：AUTO() 切出的段（如 {s:"ψ", i:true}）自身又命中 NEED_MATH 的新模式，
+   于是 mathSegs → measureText 钩子 → mathSegs → … 无限套娃（RangeError 爆栈）。 */
 function mathSegsHM(g, s) {
+  window.__HM_IN = 1;
+  try { return mathSegsHMRaw(g, s); } finally { window.__HM_IN = 0; }
+}
+function mathSegsHMRaw(g, s) {
   const f = String(g.font || "");
   const mm = /(\d+(?:\.\d+)?)px/.exec(f);
   const size = mm ? parseFloat(mm[1]) : 12;
