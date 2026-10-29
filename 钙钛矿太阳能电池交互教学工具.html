@@ -1627,9 +1627,10 @@ const LAYERS = [
 let PARTS = [], ANIM_T = 0, ANIM_RAF = null;
 /* 2026-10-29 动画的时间基准：本工具原本「每帧走固定像素」，
    于是 120/144 Hz 高刷屏上看上去会比 60 Hz 快一倍多。这里改成按墙钟时间推进——
-   每过 ANIM_MS（＝ 1/60 s）算一个「虚拟帧」，60 Hz 下逐帧步长仍恰好是 1，
-   观感与改动前完全一致；刷新率再高也只是把同一段时间切得更细。 */
-const ANIM_MS = 1000 / 60;
+   每过 ANIM_MS 算一个「虚拟帧」，刷新率再高也只是把同一段时间切得更细。
+   虚拟帧率＝ 1000/ANIM_MS，直接决定动画快慢：1000/60 与改动前逐帧观感一致；
+   现取 1000/20（每秒 20 虚拟帧）＝ 三分之一速，位移、淡出、产生率都随之放慢。 */
+const ANIM_MS = 1000 / 20;
 let ANIM_TS = 0;               /* 上一帧的时间戳；0 表示重启后的第一帧走默认步长 */
 
 /* 代表性光子的能量：取带隙之上 0.8 eV（可见光主体），据此决定"光被吃到多深" */
@@ -2615,7 +2616,7 @@ function render() {
 function loop(ts) {
   ANIM_RAF = null;
   if (!OPT.anim) return;
-  /* 虚拟帧数 = 真实经过的时间 / 16.7 ms。上限 3 帧：切走标签页再回来时
+  /* 虚拟帧数 = 真实经过的时间 / ANIM_MS。上限 3 帧：切走标签页再回来时
      performance.now 会跳好几秒，不夹上限粒子会「瞬移」整屏。 */
   const now = (typeof ts === "number" && ts > 0) ? ts : performance.now();
   const k = ANIM_TS ? clamp((now - ANIM_TS) / ANIM_MS, 0, 3) : 1;
