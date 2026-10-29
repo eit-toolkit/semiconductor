@@ -173,7 +173,7 @@
 <header>
   <button id="langBtn" class="lang-btn" data-noi18n title="中文 / English">EN</button>
   <h1>玻耳兹曼方程交互教学工具</h1>
-  <div class="formula"><span class="m"><span class="frac"><span class="num">∂<i>f</i></span><span class="den">∂<i>t</i></span></span><span class="op">+</span><i>v</i><span class="op">·</span>∇<sub><span class="rm">r</span></sub><i>f</i><span class="op">+</span><span class="frac"><span class="num"><i>F</i></span><span class="den"><i>ℏ</i></span></span><span class="op">·</span>∇<sub><span class="rm">k</span></sub><i>f</i><span class="op">=</span><span class="frac"><span class="num">∂<i>f</i></span><span class="den">∂<i>t</i></span></span><sub><span class="rm">scatt</span></sub></span>　·　<span class="m"><span class="frac"><span class="num">∂<i>f</i></span><span class="den">∂<i>t</i></span></span><sub><span class="rm">scatt</span></sub><span class="op">=</span><span class="op">−</span><span class="frac"><span class="num"><i>f</i><span class="op">−</span><i>f</i><sub>0</sub></span><span class="den"><i>τ</i></span></span></span></div>
+  <div class="formula"><span class="m"><span class="frac"><span class="num">∂<i>f</i></span><span class="den">∂<i>t</i></span></span><span class="op">+</span><i>v</i><span class="op">·</span>∇<sub><span class="rm">r</span></sub><i>f</i><span class="op">+</span><span class="frac"><span class="num"><i>F</i></span><span class="den"><span class='rm'>ℏ</span></span></span><span class="op">·</span>∇<sub><span class="rm">k</span></sub><i>f</i><span class="op">=</span><span class="frac"><span class="num">∂<i>f</i></span><span class="den">∂<i>t</i></span></span><sub><span class="rm">scatt</span></sub></span>　·　<span class="m"><span class="frac"><span class="num">∂<i>f</i></span><span class="den">∂<i>t</i></span></span><sub><span class="rm">scatt</span></sub><span class="op">=</span><span class="op">−</span><span class="frac"><span class="num"><i>f</i><span class="op">−</span><i>f</i><sub>0</sub></span><span class="den"><i>τ</i></span></span></span></div>
 </header>
 <div class="sub-note">
   分布函数 <span class="m"><i>f</i>(<i>r</i>,&nbsp;<i>k</i>,&nbsp;<i>t</i>)</span> 是半导体输运的"总账本"，玻耳兹曼方程说的只有一句话：<b>净变化 = 外场搬进来的 − 散射搬走的</b>。
@@ -982,7 +982,7 @@ function setLang(l) {
    有些标注不走 txt() 而是直接 g.fillText()（状态徽标、能带边等），
    这里在原型层统一处理：含数学记法的字符串先按 LaTeX 规则拆段再绘制，
    measureText 同步返回拆段总宽，白底框长度自动跟着变。 */
-const NEED_MATH_HM = /[\u2070-\u209C\u00B2\u00B3\u00B9]|_\{?[A-Za-z0-9\u0370-\u03ff]|\^\{?[\d(\-]|\d(\.\d+)?[eE][+\-]\d|\u221A/;
+const NEED_MATH_HM = /[\u2070-\u209C\u00B2\u00B3\u00B9]|_\{?[A-Za-z0-9\u0370-\u03ff]|\^\{?[\d(\-]|\d(\.\d+)?[eE][+\-]\d|\u221A|Δ[A-Za-z\u0370-\u03ff]|(?<![A-Za-z0-9\u0370-\u03ff])[αβγδεζηθικλμνξρστυφχψωΦΨΘΞ](?![A-Za-z0-9\u0370-\u03ff])|(?<![A-Za-z0-9])kT(?![A-Za-z0-9])|hν/;
 /* 原生 measureText：mathSegsHM 内部量宽必须走这一条，
    否则 measureText 被钩子接管后会 self-recursion（RangeError）。 */
 var _mRawHM = null;
@@ -997,7 +997,14 @@ function mathSegsHM(g, s) {
   let w = 0;
   for (const p of parts) {
     const small = !!(p.sup || p.sub);
-    const fs = style + (small ? (size * 0.74).toFixed(2) : size.toFixed(2)) + "px " + family;
+    /* ⚠️ 2026-10-29 修：AUTO() 给主符号打过 i（斜体），旧代码只沿用调用方的 style，
+       把 i 丢了 ⇒ lbl() 画出的 I_D / T_WKB 主符号一直是正体。这里补上 p.i；
+       调用方若已设 italic 就不再重复加（font 简写里两次 italic 会让整条 font 失效）。 */
+    const hasIt = /italic|oblique/.test(style);
+    /* rm = 显式正体（Δ 算符 / π 常数 / 轨道 σ·π / 高对称点 Γ Λ Δ Σ）：
+       调用方给的 font 自带 italic 时也要剥掉，否则整段跟着斜。 */
+    const pre = p.rm ? style.replace(/italic|oblique/g, "") : (hasIt ? style : ((p.i ? "italic " : "") + style));
+    const fs = pre + (small ? (size * 0.74).toFixed(2) : size.toFixed(2)) + "px " + family;
     g.font = fs;
     const tw = measureRawHM(g, p.s);
     laid.push({ s: p.s, w: tw, fs: fs, dy: small ? (p.sup ? -size * 0.40 : size * 0.22) : 0 });
@@ -1201,7 +1208,7 @@ const SUBMAP = { "₀": "0", "₁": "1", "₂": "2", "₃": "3", "₄": "4", "�
   "ₐ": "a", "ₑ": "e", "ₒ": "o", "ₓ": "x", "ₔ": "ə", "ₕ": "h", "ₖ": "k", "ₗ": "l",
   "ₘ": "m", "ₙ": "n", "ₚ": "p", "ₛ": "s", "ₜ": "t", "ᵣ": "r", "ᵤ": "u", "ᵥ": "v" };
 const MATH_IDCH = /[A-Za-z\u0370-\u03ff]/;
-const NEED_MATH = /[\u2070-\u209C\u00B2\u00B3\u00B9]|_\{?[A-Za-z0-9\u0370-\u03ff]|\^\{?[\d(\-]|\d(\.\d+)?[eE][+\-]\d/;
+const NEED_MATH = /[\u2070-\u209C\u00B2\u00B3\u00B9]|_\{?[A-Za-z0-9\u0370-\u03ff]|\^\{?[\d(\-]|\d(\.\d+)?[eE][+\-]\d|Δ[A-Za-z\u0370-\u03ff]|(?<![A-Za-z0-9\u0370-\u03ff])[αβγδεζηθικλμνξρστυφχψωΦΨΘΞ](?![A-Za-z0-9\u0370-\u03ff])|(?<![A-Za-z0-9])kT(?![A-Za-z0-9])|hν/;
 function AUTO(s) {
   const out = [];
   let buf = "", mode = 0;
@@ -1217,6 +1224,29 @@ function AUTO(s) {
     if (SUPMAP[ch] !== undefined) { if (mode !== 1) { emit(buf, mode); buf = ""; mode = 1; } buf += SUPMAP[ch]; i++; continue; }
     if (SUBMAP[ch] !== undefined) { if (mode !== -1) { emit(buf, mode); buf = ""; mode = -1; } buf += SUBMAP[ch]; i++; continue; }
     if (mode) { emit(buf, mode); buf = ""; mode = 0; }
+    /* ▼ Δ+量字母 / kT / hν / 孤立希腊字母：这四类没有下标，旧 NEED_MATH 抓不到，整串会正体落笔 */
+    if (ch === "\u0394" && i + 1 < s.length && MATH_IDCH.test(s[i + 1])) {
+      if (s[i + 2] === "_" || s[i + 2] === "^") { emit(buf, 0); buf = ""; i++; continue; }
+      emit(buf, 0); buf = "";
+      out.push({ s: "\u0394", rm: true }); out.push({ s: s[i + 1], i: true });
+      i += 2; continue;
+    }
+    if ((ch === "k" && s[i + 1] === "T") || (ch === "h" && s[i + 1] === "\u03bd")) {
+      const pv = i > 0 ? s[i - 1] : "", nx2 = s[i + 2] || "";
+      if (!MATH_IDCH.test(pv) && !/[0-9]/.test(pv) && !MATH_IDCH.test(nx2) && !/[0-9]/.test(nx2)) {
+        emit(buf, 0); buf = "";
+        out.push({ s: ch, i: true }); out.push({ s: s[i + 1], i: true });
+        i += 2; continue;
+      }
+    }
+    if ("αβγδεζηθικλμνξρστυφχψωΦΨΘΞ".indexOf(ch) >= 0) {
+      const pv = i > 0 ? s[i - 1] : "", nx2 = s[i + 1] || "";
+      if (!MATH_IDCH.test(pv) && !/[0-9]/.test(pv) && !MATH_IDCH.test(nx2) && !/[0-9]/.test(nx2)) {
+        emit(buf, 0); buf = "";
+        out.push({ s: ch, i: true });
+        i++; continue;
+      }
+    }
     const rest = s.slice(i);
     const sc = /^\d(\.\d+)?[eE][+\-]\d{1,3}/.exec(rest);       /* ASCII 伪科学计数 2.5e+8 */
     if (sc) {
@@ -1358,7 +1388,7 @@ function segRuns(s) {
 }
 function pFont(q, fp, bd, cjk) {
   const sz = fp * ((q.sub || q.sup) ? SUBR : 1);
-  return (bd ? "bold " : "") + (!cjk && q.i ? "italic " : "") + sz.toFixed(2) + "px " + (cjk ? FONT : FONTM);
+  return (bd ? "bold " : "") + (!cjk && q.i && !q.rm ? "italic " : "") + sz.toFixed(2) + "px " + (cjk ? FONT : FONTM);
 }
 /* 允许整体传字符串（"0"、"拖动可旋转视角" 这类纯文本），不必到处写 [{s:…}] */
 /* i18n 注入点①：画布 token。带 i / sub / sup / un 标记的是物理量、下标与单位，一律不动；
@@ -1733,7 +1763,7 @@ const H_TAU = MM("<i>τ</i>"),         H_MS  = MM("<i>m</i><sup>*</sup>");
 const H_M0U = MM("<i>m</i><sub>0</sub>"), H_EE = MM("<i>E</i>");
 const H_TT  = MM("<i>T</i>"),         H_KK  = MM("<i>k</i>");
 const H_VV  = MM("<i>v</i>"),         H_FF  = MM("<i>F</i>");
-const H_HB  = MM("<i>ℏ</i>"),         H_NN  = MM("<i>n</i>");
+const H_HB  = MM("<span class='rm'>ℏ</span>"),         H_NN  = MM("<i>n</i>");
 const H_SG  = MM("<i>σ</i>"),         H_MU  = MM("<i>μ</i>");
 const H_DD  = MM("<i>D</i>"),        H_SS  = MM("<i>S</i>");
 const H_PI  = MM("<i>Π</i>"),         H_JJ  = MM("<i>J</i>");
@@ -1799,7 +1829,7 @@ const TERM_PARTS = [
 const TERM_HINT = [
   "分布函数的<b>净变化率</b>。它等于「外场搬进来的」减去「散射搬走的」。稳态时它恒等于零 —— 这就是稳态的定义，也是解出 <span class='m'><i>δf</i></span> 的出发点。",
   "载流子<b>从一处跑到另一处</b>带来的变化：<span class='m'><i>v</i><span class='op'>·</span>∇<sub><span class='rm'>r</span></sub><i>f</i></span>。存在温度梯度 <span class='m'>∇<i>T</i></span> 时它不为零，这就是热扩散电流的来源；材料均匀（<span class='m'>∇<sub><span class='rm'>r</span></sub><i>f</i> = 0）时它自动消失。",
-  "外力使载流子在 <span class='m'><i>k</i></span> 空间整体<b>平移</b>：<span class='m'>(<i>F</i><span class='op'>/</span><i>ℏ</i>)<span class='op'>·</span>∇<sub><span class='rm'>k</span></sub><i>f</i></span>。电场 <span class='m'><i>E</i></span> 完全通过它起作用 —— 所以这一项的系数里必然出现 <span class='m'><i>τ</i></span>。",
+  "外力使载流子在 <span class='m'><i>k</i></span> 空间整体<b>平移</b>：<span class='m'>(<i>F</i><span class='op'>/</span><span class='rm'>ℏ</span>)<span class='op'>·</span>∇<sub><span class='rm'>k</span></sub><i>f</i></span>。电场 <span class='m'><i>E</i></span> 完全通过它起作用 —— 所以这一项的系数里必然出现 <span class='m'><i>τ</i></span>。",
   "碰撞把分布<b>拉回平衡</b>的趋势。弛豫时间近似把它写成 <span class='m'><span class='op'>−</span>(<i>f</i> <span class='op'>−</span> <i>f</i><sub>0</sub>)<span class='op'>/</span><i>τ</i></span>：偏离越大、<span class='m'><i>τ</i></span> 越小，回拉越快 —— 它就是方程里的「阻尼项」。"
 ];
 let BTE_BOX = [];
@@ -2228,7 +2258,7 @@ function drawReadout() {
   /* ---- 核心读数（7 行）：方程四项 + 输运结果 ---- */
   let h = "";
   h += '<div class="hd">方程四项（在典型输运能量处求值）</div>';
-  h += kvRow("漂移项 " + MM("(<i>F</i><span class='op'>/</span><i>ℏ</i>)<span class='op'>·</span>∇<sub><span class='rm'>k</span></sub><i>f</i></span>"),
+  h += kvRow("漂移项 " + MM("(<i>F</i><span class='op'>/</span><span class='rm'>ℏ</span>)<span class='op'>·</span>∇<sub><span class='rm'>k</span></sub><i>f</i></span>"),
         sciV(s.Dr, 2) + " s<sup>−1</sup>");
   h += kvRow("扩散项 " + MM("<i>v</i><span class='op'>·</span>∇<sub><span class='rm'>r</span></sub><i>f</i></span>"),
         sciV(s.Df, 2) + " s<sup>−1</sup>");
@@ -2383,7 +2413,7 @@ const CHAL = [
         "稳态 ⇒ <span class='m'>∂<i>f</i><span class='op'>/</span>∂<i>t</i> = 0</span>；材料均匀 ⇒ " +
         "<span class='m'>∇<sub><span class='rm'>r</span></sub><i>f</i> = 0</span>。" +
         "于是方程只剩 " +
-        MM("(<i>F</i><span class='op'>/</span><i>ℏ</i>)<span class='op'>·</span>∇<sub><span class='rm'>k</span></sub><i>f</i> <span class='op'>=</span> <span class='op'>−</span>(<i>f</i> <span class='op'>−</span> <i>f</i><sub>0</sub>)<span class='op'>/</span><i>τ</i>") +
+        MM("(<i>F</i><span class='op'>/</span><span class='rm'>ℏ</span>)<span class='op'>·</span>∇<sub><span class='rm'>k</span></sub><i>f</i> <span class='op'>=</span> <span class='op'>−</span>(<i>f</i> <span class='op'>−</span> <i>f</i><sub>0</sub>)<span class='op'>/</span><i>τ</i>") +
         "：<b>外场推多少，散射就还多少</b>。" +
         "<br>⚠️ 这里有两种尺，别看混：前四条按<b>当前驱动强度</b>归一（条长除以 " +
         MM("max(|<i>D</i><sub>r</sub>|,|<i>D</i><sub>f</sub>|,|<i>S</i><sub>c</sub>|,|<i>T</i><sub>t</sub>|)") +
@@ -2492,7 +2522,7 @@ function syncTexts() {
   $("gVal").innerHTML = fmt(OPT.G, 0) + " K/cm";
 
   $("eSub").innerHTML = "驱动漂移项 " +
-    MM("(<i>F</i><span class='op'>/</span><i>ℏ</i>)<span class='op'>·</span>∇<sub><span class='rm'>k</span></sub><i>f</i>") +
+    MM("(<i>F</i><span class='op'>/</span><span class='rm'>ℏ</span>)<span class='op'>·</span>∇<sub><span class='rm'>k</span></sub><i>f</i>") +
     "；当前使分布偏离平衡 <b>" +
     (s.f0 > 1e-30 ? fmt(100 * Math.abs(s.gNow) / s.f0, 2) : "—") + "%</b>。";
   $("gSub").innerHTML = "驱动扩散项 " + MM("<i>v</i><span class='op'>·</span>∇<sub><span class='rm'>r</span></sub><i>f</i>") +

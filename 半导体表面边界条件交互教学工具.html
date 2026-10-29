@@ -170,7 +170,7 @@
 <header>
   <button id="langBtn" class="lang-btn" data-noi18n title="中文 / English">EN</button>
   <h1>半导体表面边界条件交互教学工具</h1>
-  <div class="formula"><span class="m"><span class="op">−</span>(<i>ℏ</i><sup>2</sup><span class="sl">/</span>2<i>m</i><sup>*</sup>)<i>ψ</i>″<span class="op">+</span><i>V</i>(<i>x</i>)<i>ψ</i><span class="op">=</span><i>Eψ</i></span>　·　<span class="m"><i>V</i>(<i>x</i><span class="op">+</span><i>d</i>)<span class="op">=</span><i>V</i>(<i>x</i>)　（体内：周期势）</span>　·　<span class="m"><i>ψ</i><span class="op">∝</span><span class="rm">e</span><sup><span class="op">−</span><i>x</i><span class="sl">/</span><i>ξ</i></sup>　（表面态：局域）</span>　·　<span class="m"><i>N</i><sub>s</sub><span class="op">=</span>2<span class="sl">/</span><i>a</i><sup>2</sup><span class="op">=</span>6.8<span class="op">×</span>10<sup>14</sup> cm<sup><span class="op">−</span>2</sup></span></div>
+  <div class="formula"><span class="m"><span class="op">−</span>(<span class="rm">ℏ</span><sup>2</sup><span class="sl">/</span>2<i>m</i><sup>*</sup>)<i>ψ</i>″<span class="op">+</span><i>V</i>(<i>x</i>)<i>ψ</i><span class="op">=</span><i>Eψ</i></span>　·　<span class="m"><i>V</i>(<i>x</i><span class="op">+</span><i>d</i>)<span class="op">=</span><i>V</i>(<i>x</i>)　（体内：周期势）</span>　·　<span class="m"><i>ψ</i><span class="op">∝</span><span class="rm">e</span><sup><span class="op">−</span><i>x</i><span class="sl">/</span><i>ξ</i></sup>　（表面态：局域）</span>　·　<span class="m"><i>N</i><sub>s</sub><span class="op">=</span>2<span class="sl">/</span><i>a</i><sup>2</sup><span class="op">=</span>6.8<span class="op">×</span>10<sup>14</sup> cm<sup><span class="op">−</span>2</sup></span></div>
 </header>
 <div class="sub-note">
   晶体在这里<b>到头了</b>。表面原子外侧少了邻居，剩下一根<b>没有对手的悬挂键</b>，键上那个未配对电子在体内的能带里找不到位置，只能待在<b>禁带</b>中 —— 这就是<b>表面态</b>。本工具用<b>两幅图讲同一件事</b>：模块一是<b>原子图像</b>（谁少了近邻），模块二是<b>一维势能函数</b>（周期量子阱在表面被切断），后者的能级与波函数由<b>一维薛定谔方程的数值解</b>给出，不是示意画法。两图各自独立回答的是同一个问题：<b>表面态为什么会存在</b>；它们的<b>方位也一致</b> —— 真空都在左、晶体都朝右，读图时不用换算方向。至于表面态存了电荷之后如何把能带掰弯（<span class="m"><i>Q</i><sub>ss</sub><span class="op">+</span><i>Q</i><sub>sc</sub><span class="op">=</span>0</span> 的自洽解），请看同系列的《MIS 结构偏压与表面势》工具。
@@ -201,7 +201,7 @@
         <div class="ctrl-head"><span>悬挂键面密度 <span class="m"><i>N</i><sub>db</sub></span>（作用于模块一）</span><span class="val" id="ditVal">6.8×10<sup>14</sup> cm<sup>−2</sup></span></div>
         <input type="range" id="ditSlider" min="0" max="500" step="1" value="500">
         <div class="sub" id="ditSub"></div>
-        <div class="ctrl-head" style="margin-top:6px;"><span>表面切割量 <span class="m"><i>Δ</i></span>（作用于模块二）</span><span class="val" id="cutVal">0.15 nm</span></div>
+        <div class="ctrl-head" style="margin-top:6px;"><span>表面切割量 <span class="m"><span class="op">Δ</span></span>（作用于模块二）</span><span class="val" id="cutVal">0.15 nm</span></div>
         <input type="range" id="cutSlider" min="0" max="300" step="5" value="150">
         <div class="sub" id="cutSub"></div>
       </div>
@@ -1005,7 +1005,7 @@ function setLang(l) {
    有些标注不走 txt() 而是直接 g.fillText()（状态徽标、能带边等），
    这里在原型层统一处理：含数学记法的字符串先按 LaTeX 规则拆段再绘制，
    measureText 同步返回拆段总宽，白底框长度自动跟着变。 */
-const NEED_MATH_HM = /[\u2070-\u209C\u00B2\u00B3\u00B9]|_\{?[A-Za-z0-9\u0370-\u03ff]|\^\{?[\d(\-]|\d(\.\d+)?[eE][+\-]\d|\u221A/;
+const NEED_MATH_HM = /[\u2070-\u209C\u00B2\u00B3\u00B9]|_\{?[A-Za-z0-9\u0370-\u03ff]|\^\{?[\d(\-]|\d(\.\d+)?[eE][+\-]\d|\u221A|Δ[A-Za-z\u0370-\u03ff]|(?<![A-Za-z0-9\u0370-\u03ff])[αβγδεζηθικλμνξρστυφχψωΦΨΘΞ](?![A-Za-z0-9\u0370-\u03ff])|(?<![A-Za-z0-9])kT(?![A-Za-z0-9])|hν/;
 /* 原生 measureText：mathSegsHM 内部量宽必须走这一条，
    否则 measureText 被钩子接管后会 self-recursion（RangeError）。 */
 var _mRawHM = null;
@@ -1020,7 +1020,14 @@ function mathSegsHM(g, s) {
   let w = 0;
   for (const p of parts) {
     const small = !!(p.sup || p.sub);
-    const fs = style + (small ? (size * 0.74).toFixed(2) : size.toFixed(2)) + "px " + family;
+    /* ⚠️ 2026-10-29 修：AUTO() 给主符号打过 i（斜体），旧代码只沿用调用方的 style，
+       把 i 丢了 ⇒ lbl() 画出的 I_D / T_WKB 主符号一直是正体。这里补上 p.i；
+       调用方若已设 italic 就不再重复加（font 简写里两次 italic 会让整条 font 失效）。 */
+    const hasIt = /italic|oblique/.test(style);
+    /* rm = 显式正体（Δ 算符 / π 常数 / 轨道 σ·π / 高对称点 Γ Λ Δ Σ）：
+       调用方给的 font 自带 italic 时也要剥掉，否则整段跟着斜。 */
+    const pre = p.rm ? style.replace(/italic|oblique/g, "") : (hasIt ? style : ((p.i ? "italic " : "") + style));
+    const fs = pre + (small ? (size * 0.74).toFixed(2) : size.toFixed(2)) + "px " + family;
     g.font = fs;
     const tw = measureRawHM(g, p.s);
     laid.push({ s: p.s, w: tw, fs: fs, dy: small ? (p.sup ? -size * 0.40 : size * 0.22) : 0 });
@@ -1221,7 +1228,7 @@ const SUBMAP = { "₀": "0", "₁": "1", "₂": "2", "₃": "3", "₄": "4", "�
   "ₐ": "a", "ₑ": "e", "ₒ": "o", "ₓ": "x", "ₔ": "ə", "ₕ": "h", "ₖ": "k", "ₗ": "l",
   "ₘ": "m", "ₙ": "n", "ₚ": "p", "ₛ": "s", "ₜ": "t", "ᵣ": "r", "ᵤ": "u", "ᵥ": "v" };
 const MATH_IDCH = /[A-Za-z\u0370-\u03ff]/;
-const NEED_MATH = /[\u2070-\u209C\u00B2\u00B3\u00B9]|_\{?[A-Za-z0-9\u0370-\u03ff]|\^\{?[\d(\-]|\d(\.\d+)?[eE][+\-]\d/;
+const NEED_MATH = /[\u2070-\u209C\u00B2\u00B3\u00B9]|_\{?[A-Za-z0-9\u0370-\u03ff]|\^\{?[\d(\-]|\d(\.\d+)?[eE][+\-]\d|Δ[A-Za-z\u0370-\u03ff]|(?<![A-Za-z0-9\u0370-\u03ff])[αβγδεζηθικλμνξρστυφχψωΦΨΘΞ](?![A-Za-z0-9\u0370-\u03ff])|(?<![A-Za-z0-9])kT(?![A-Za-z0-9])|hν/;
 function AUTO(s) {
   const out = [];
   let buf = "", mode = 0;
@@ -1237,6 +1244,29 @@ function AUTO(s) {
     if (SUPMAP[ch] !== undefined) { if (mode !== 1) { emit(buf, mode); buf = ""; mode = 1; } buf += SUPMAP[ch]; i++; continue; }
     if (SUBMAP[ch] !== undefined) { if (mode !== -1) { emit(buf, mode); buf = ""; mode = -1; } buf += SUBMAP[ch]; i++; continue; }
     if (mode) { emit(buf, mode); buf = ""; mode = 0; }
+    /* ▼ Δ+量字母 / kT / hν / 孤立希腊字母：这四类没有下标，旧 NEED_MATH 抓不到，整串会正体落笔 */
+    if (ch === "\u0394" && i + 1 < s.length && MATH_IDCH.test(s[i + 1])) {
+      if (s[i + 2] === "_" || s[i + 2] === "^") { emit(buf, 0); buf = ""; i++; continue; }
+      emit(buf, 0); buf = "";
+      out.push({ s: "\u0394", rm: true }); out.push({ s: s[i + 1], i: true });
+      i += 2; continue;
+    }
+    if ((ch === "k" && s[i + 1] === "T") || (ch === "h" && s[i + 1] === "\u03bd")) {
+      const pv = i > 0 ? s[i - 1] : "", nx2 = s[i + 2] || "";
+      if (!MATH_IDCH.test(pv) && !/[0-9]/.test(pv) && !MATH_IDCH.test(nx2) && !/[0-9]/.test(nx2)) {
+        emit(buf, 0); buf = "";
+        out.push({ s: ch, i: true }); out.push({ s: s[i + 1], i: true });
+        i += 2; continue;
+      }
+    }
+    if ("αβγδεζηθικλμνξρστυφχψωΦΨΘΞ".indexOf(ch) >= 0) {
+      const pv = i > 0 ? s[i - 1] : "", nx2 = s[i + 1] || "";
+      if (!MATH_IDCH.test(pv) && !/[0-9]/.test(pv) && !MATH_IDCH.test(nx2) && !/[0-9]/.test(nx2)) {
+        emit(buf, 0); buf = "";
+        out.push({ s: ch, i: true });
+        i++; continue;
+      }
+    }
     const rest = s.slice(i);
     const sc = /^\d(\.\d+)?[eE][+\-]\d{1,3}/.exec(rest);       /* ASCII 伪科学计数 2.5e+8 */
     if (sc) {
@@ -1377,7 +1407,7 @@ function segRuns(s) {
 }
 function pFont(q, fp, bd, cjk) {
   const sz = fp * ((q.sub || q.sup) ? SUBR : 1);
-  return (bd ? "bold " : "") + (!cjk && q.i ? "italic " : "") + sz.toFixed(2) + "px " + (cjk ? FONT : FONTM);
+  return (bd ? "bold " : "") + (!cjk && q.i && !q.rm ? "italic " : "") + sz.toFixed(2) + "px " + (cjk ? FONT : FONTM);
 }
 /* i18n 注入点①：画布 token。带 i / sub / sup / un 标记的是物理量、下标与单位，一律不动；
    没有这些标记的 token 才是自然语言，交给 T() —— 所以这里的判断只看标记，不看内容。 */

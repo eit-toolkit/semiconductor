@@ -414,7 +414,8 @@ var I18N = {
   "① 杂化前　3s（球）+ 3 个 3p（哑铃）": "① before hybridization　3s (sphere) + three 3p (dumbbells)",
   "② 杂化后　4 个等价 sp": "② after hybridization　4 equivalent sp",
   "（s 成分 25%）": " (25% s character)",
-  "能量 E (eV，真空为零)": "Energy E (eV, vacuum = 0)",
+  "能量 ": "Energy ",
+  " (eV，真空为零)": " (eV, vacuum = 0)",
   "① 基态原子 3s": "① free atom 3s",
   "② 杂化态原子 (sp": "② hybridized atom (sp",
   "③ 一个 σ 键（两原子）": "③ one σ bond (two atoms)",
@@ -895,7 +896,7 @@ const AUTO_SUB = { "₀": "0", "₁": "1", "₂": "2", "₃": "3", "₄": "4", "
   "₇": "7", "₈": "8", "₉": "9", "₊": "+", "₋": "−", "₌": "=", "₍": "(", "₎": ")",
   "ₐ": "a", "ₑ": "e", "ₒ": "o", "ₓ": "x", "ₔ": "ə", "ₕ": "h", "ₖ": "k", "ₗ": "l",
   "ₘ": "m", "ₙ": "n", "ₚ": "p", "ₛ": "s", "ₜ": "t", "ᵣ": "r", "ᵤ": "u", "ᵥ": "v" };
-const NEED_MATH = /[\u2070-\u209C\u00B2\u00B3\u00B9]|_\{?[A-Za-z0-9\u0370-\u03ff]|\^\{?[\d(\-]|\d(\.\d+)?[eE][+\-]\d/;
+const NEED_MATH = /[\u2070-\u209C\u00B2\u00B3\u00B9]|_\{?[A-Za-z0-9\u0370-\u03ff]|\^\{?[\d(\-]|\d(\.\d+)?[eE][+\-]\d|Δ[A-Za-z\u0370-\u03ff]|(?<![A-Za-z0-9\u0370-\u03ff])[αβγδεζηθικλμνξρστυφχψωΦΨΘΞ](?![A-Za-z0-9\u0370-\u03ff])|(?<![A-Za-z0-9])kT(?![A-Za-z0-9])|hν/;
 function AUTO(s) {
   const out = []; let buf = "", mode = 0;
   const emit = (t, kind) => {
@@ -910,6 +911,29 @@ function AUTO(s) {
     if (AUTO_SUP[ch] !== undefined) { if (mode !== 1) { emit(buf, mode); buf = ""; mode = 1; } buf += AUTO_SUP[ch]; i++; continue; }
     if (AUTO_SUB[ch] !== undefined) { if (mode !== -1) { emit(buf, mode); buf = ""; mode = -1; } buf += AUTO_SUB[ch]; i++; continue; }
     if (mode) { emit(buf, mode); buf = ""; mode = 0; }
+    /* ▼ Δ+量字母 / kT / hν / 孤立希腊字母：这四类没有下标，旧 NEED_MATH 抓不到，整串会正体落笔 */
+    if (ch === "\u0394" && i + 1 < s.length && MATH_IDCH.test(s[i + 1])) {
+      if (s[i + 2] === "_" || s[i + 2] === "^") { emit(buf, 0); buf = ""; i++; continue; }
+      emit(buf, 0); buf = "";
+      out.push({ s: "\u0394", rm: true }); out.push({ s: s[i + 1], i: true });
+      i += 2; continue;
+    }
+    if ((ch === "k" && s[i + 1] === "T") || (ch === "h" && s[i + 1] === "\u03bd")) {
+      const pv = i > 0 ? s[i - 1] : "", nx2 = s[i + 2] || "";
+      if (!MATH_IDCH.test(pv) && !/[0-9]/.test(pv) && !MATH_IDCH.test(nx2) && !/[0-9]/.test(nx2)) {
+        emit(buf, 0); buf = "";
+        out.push({ s: ch, i: true }); out.push({ s: s[i + 1], i: true });
+        i += 2; continue;
+      }
+    }
+    if ("αβγδεζηθικλμνξρστυφχψωΦΨΘΞ".indexOf(ch) >= 0) {
+      const pv = i > 0 ? s[i - 1] : "", nx2 = s[i + 1] || "";
+      if (!MATH_IDCH.test(pv) && !/[0-9]/.test(pv) && !MATH_IDCH.test(nx2) && !/[0-9]/.test(nx2)) {
+        emit(buf, 0); buf = "";
+        out.push({ s: ch, i: true });
+        i++; continue;
+      }
+    }
     const rest = s.slice(i);
     const sc = /^\d(\.\d+)?[eE][+\-]\d{1,3}/.exec(rest);
     if (sc) {
@@ -950,7 +974,14 @@ function mathSegs(g, s) {
   let w = 0;
   for (const p of parts) {
     const small = !!(p.sup || p.sub);
-    const fs = style + (small ? (size * 0.74).toFixed(2) : size.toFixed(2)) + "px " + family;
+    /* ⚠️ 2026-10-29 修：AUTO() 给主符号打过 i（斜体），旧代码只沿用调用方的 style，
+       把 i 丢了 ⇒ lbl() 画出的 I_D / T_WKB 主符号一直是正体。这里补上 p.i；
+       调用方若已设 italic 就不再重复加（font 简写里两次 italic 会让整条 font 失效）。 */
+    const hasIt = /italic|oblique/.test(style);
+    /* rm = 显式正体（Δ 算符 / π 常数 / 轨道 σ·π / 高对称点 Γ Λ Δ Σ）：
+       调用方给的 font 自带 italic 时也要剥掉，否则整段跟着斜。 */
+    const pre = p.rm ? style.replace(/italic|oblique/g, "") : (hasIt ? style : ((p.i ? "italic " : "") + style));
+    const fs = pre + (small ? (size * 0.74).toFixed(2) : size.toFixed(2)) + "px " + family;
     g.font = fs;
     const tw = g.measureText(p.s).width;
     laid.push({ s: p.s, w: tw, fs: fs, dy: small ? (p.sup ? -size * 0.40 : size * 0.22) : 0 });
@@ -1019,7 +1050,7 @@ function segRuns(s) {
 }
 function pFont(q, fp, bd, cjk) {
   const sz = fp * ((q.sub || q.sup) ? SUBR : 1);
-  return (bd ? "bold " : "") + (!cjk && q.i ? "italic " : "") + sz.toFixed(2) + "px " + (cjk ? FONT : FONTM);
+  return (bd ? "bold " : "") + (!cjk && q.i && !q.rm ? "italic " : "") + sz.toFixed(2) + "px " + (cjk ? FONT : FONTM);
 }
 /* i18n 注入点①：画布 token。带 i / sub / sup / un 标记的是物理量、下标与单位，一律不动；
    没有这些标记的 token 才是自然语言，交给 T() —— 所以这里的判断只看标记，不看内容。 */
@@ -1684,8 +1715,8 @@ function drawEn() {
   }
   g.save();
   g.translate(15, (T + H - B) / 2); g.rotate(-Math.PI / 2);
-  g.textAlign = "center"; g.fillStyle = "#6b7a8c"; g.font = "600 11.5px 'Segoe UI',sans-serif";
-  g.fillText("能量 E (eV，真空为零)", 0, 0);
+  g.textAlign = "center"; g.fillStyle = "#6b7a8c";
+  mtxt(g, TX("能量 <span class='m'><i>E</i></span> (eV，真空为零)"), 0, 0, "#6b7a8c", 11.5, "center", true);
   g.restore();
 
   /* 标题：两行（主 + 副），与 sp² 工具同一版式（同字号、同颜色、同基准位置）。
@@ -1774,8 +1805,8 @@ function drawEn() {
     g.textAlign = "center"; g.textBaseline = "middle";
     g.fillText("空", cx[2].xc, yE(d.EsigmaStar) - 8);
   }
-  mtxt(g, TX("<i>σ</i>"), cx[2].xc - lw / 2 - 6, yE(d.Esigma), "#0f9b8e", 12, "right", true);
-  mtxt(g, TX("<i>σ</i>*"), cx[2].xc - lw / 2 - 6, yE(d.EsigmaStar), "#6b7a8c", 12, "right", true);
+  mtxt(g, TX("<span class='rm'>σ</span>"), cx[2].xc - lw / 2 - 6, yE(d.Esigma), "#0f9b8e", 12, "right", true);
+  mtxt(g, TX("<span class='rm'>σ</span>*"), cx[2].xc - lw / 2 - 6, yE(d.EsigmaStar), "#6b7a8c", 12, "right", true);
   g.font = "11px 'Segoe UI',sans-serif"; g.fillStyle = "#6b7a8c"; g.textAlign = "left";
   g.fillText(evNum(d.Esigma, 2), cx[2].xc + lw / 2 + 5, yE(d.Esigma));
   g.fillText(evNum(d.EsigmaStar, 2), cx[2].xc + lw / 2 + 5, yE(d.EsigmaStar));
@@ -2121,7 +2152,7 @@ const CHALS = [
     q: "在 C、Si、Ge 之间切换，比较它们的 s–p 能级差、激发代价与内聚能。三者为什么都能 sp³ 杂化？如果把不同主量子数的轨道（例如 Si 的 3s 与 2p）放在一起，还能杂化吗？",
     a: "杂化要满足三个条件：① <b>能量相近</b> —— C/Si/Ge 的 s–p 差属同一量级（数值见读数面板），若相差几十 eV，组合出的轨道仍几乎就是纯 s 与纯 p；" +
        "② <b>同一壳层（同一主量子数 n）</b> —— ns 与 np 径向分布重叠大、角向正交；跨壳层（如 3s 与 2p）径向节点数不同、空间重合差，且能量相差上百 eV，无法有效混合；教材里写 sp³ 时默认同一个 n。" +
-       "③ <b>成键环境有利</b> —— 四面体配位让 4 个 sp³ 都能与近邻“头碰头”重叠成 <span class='m'><i>σ</i></span> 键，收益足以覆盖代价。" +
+       "③ <b>成键环境有利</b> —— 四面体配位让 4 个 sp³ 都能与近邻“头碰头”重叠成 <span class='m'><span class='rm'>σ</span></span> 键，收益足以覆盖代价。" +
        "还要注意：<b>杂化是一种表象变换</b>（把 <span class='m'>{s, p<sub><i>x</i></sub>, p<sub><i>y</i></sub>, p<sub><i>z</i></sub>}</span> 这组正交基旋转成 4 个 sp³），本身不改变体系总能量；真正要付出能量的是 s → p 的激发。" +
        "本工具把「杂化前 / 杂化后」画成两幅<b>静态对照图</b>而不是连续动画，正是为了强调这一点：中间的“过渡形态”只是数学上的连续基变换，并非原子实际经历的某个稳定状态。"
   }

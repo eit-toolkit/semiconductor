@@ -525,7 +525,7 @@ var I18N = {
   "区中的电子": " electrons in the region",
   "N 区中的空穴 ": "Holes in the N region ",
   "区中的空穴": " holes in the region",
-  "耗尽区 W = ": "Depletion region W = ",
+  "耗尽区 ": "Depletion region ",
   "位置 x —— 与模块一同一横轴，可上下对照（⟊ 为比例断点）": "Position x — the same horizontal axis as module 1, so the two can be read against each other (⟊ marks a scale break)",
   "少子浓度 (cm": "Minority concentration (cm",
   "少子浓度": "Minority concentration",
@@ -555,7 +555,6 @@ var I18N = {
   "电子准费米能级 ": "Electron quasi-Fermi level ",
   "空穴准费米能级 ": "Hole quasi-Fermi level ",
   "内建电场（漂移）": "Built-in field (drift)",
-  "耗尽区 W": "Depletion region W",
   "\n        横轴做了": "\n        The horizontal axis is ",
   "分段压缩": "piecewise-compressed",
   "：中间 40% 画耗尽区（宽度 ": ": the middle 40 % shows the depletion region (width ",
@@ -625,16 +624,16 @@ var I18N = {
   "材料与掺杂": "Material and doping",
   "平衡 / 当前状态": "Equilibrium / present state",
   "内建电势 ": "Built-in potential ",
-  "偏压 V / 势垒 ": "Bias V / barrier ",
-  "耗尽区宽度 W": "Depletion width W",
+  " / 势垒 ": " / barrier ",
+  "耗尽区宽度 ": "Depletion width ",
   "峰值电场 ": "Peak field ",
   "少子与扩散": "Minority carriers and diffusion",
   "反向饱和电流 ": "Reverse saturation current ",
   "复合电流 ": "Recombination current ",
   "└ 总电流 ": "└ Total current ",
-  "理想因子 n（局部）": "Ideality factor n (local)",
+  "理想因子 ": "Ideality factor ",
   "主导电流机制": "Dominant current mechanism",
-  "理想因子 n（局部）+ 主导机制": "Ideality factor n (local) + dominant mechanism",
+  "（局部）+ 主导机制": " (local) + dominant mechanism",
   "总电流 ": "Total current ",
   "（扩散 ": "(diffusion ",
   " + 复合 ": " + recombination ",
@@ -955,7 +954,7 @@ function setLang(l) {
    有些标注不走 txt() 而是直接 g.fillText()（状态徽标、能带边等），
    这里在原型层统一处理：含数学记法的字符串先按 LaTeX 规则拆段再绘制，
    measureText 同步返回拆段总宽，白底框长度自动跟着变。 */
-const NEED_MATH_HM = /[\u2070-\u209C\u00B2\u00B3\u00B9]|_\{?[A-Za-z0-9\u0370-\u03ff]|\^\{?[\d(\-]|\d(\.\d+)?[eE][+\-]\d|\u221A/;
+const NEED_MATH_HM = /[\u2070-\u209C\u00B2\u00B3\u00B9]|_\{?[A-Za-z0-9\u0370-\u03ff]|\^\{?[\d(\-]|\d(\.\d+)?[eE][+\-]\d|\u221A|Δ[A-Za-z\u0370-\u03ff]|(?<![A-Za-z0-9\u0370-\u03ff])[αβγδεζηθικλμνξρστυφχψωΦΨΘΞ](?![A-Za-z0-9\u0370-\u03ff])|(?<![A-Za-z0-9])kT(?![A-Za-z0-9])|hν/;
 /* 原生 measureText：mathSegsHM 内部量宽必须走这一条，
    否则 measureText 被钩子接管后会 self-recursion（RangeError）。 */
 var _mRawHM = null;
@@ -970,7 +969,14 @@ function mathSegsHM(g, s) {
   let w = 0;
   for (const p of parts) {
     const small = !!(p.sup || p.sub);
-    const fs = style + (small ? (size * 0.74).toFixed(2) : size.toFixed(2)) + "px " + family;
+    /* ⚠️ 2026-10-29 修：AUTO() 给主符号打过 i（斜体），旧代码只沿用调用方的 style，
+       把 i 丢了 ⇒ lbl() 画出的 I_D / T_WKB 主符号一直是正体。这里补上 p.i；
+       调用方若已设 italic 就不再重复加（font 简写里两次 italic 会让整条 font 失效）。 */
+    const hasIt = /italic|oblique/.test(style);
+    /* rm = 显式正体（Δ 算符 / π 常数 / 轨道 σ·π / 高对称点 Γ Λ Δ Σ）：
+       调用方给的 font 自带 italic 时也要剥掉，否则整段跟着斜。 */
+    const pre = p.rm ? style.replace(/italic|oblique/g, "") : (hasIt ? style : ((p.i ? "italic " : "") + style));
+    const fs = pre + (small ? (size * 0.74).toFixed(2) : size.toFixed(2)) + "px " + family;
     g.font = fs;
     const tw = measureRawHM(g, p.s);
     laid.push({ s: p.s, w: tw, fs: fs, dy: small ? (p.sup ? -size * 0.40 : size * 0.22) : 0 });
@@ -1171,7 +1177,7 @@ const SUBMAP = { "₀": "0", "₁": "1", "₂": "2", "₃": "3", "₄": "4", "�
   "ₐ": "a", "ₑ": "e", "ₒ": "o", "ₓ": "x", "ₔ": "ə", "ₕ": "h", "ₖ": "k", "ₗ": "l",
   "ₘ": "m", "ₙ": "n", "ₚ": "p", "ₛ": "s", "ₜ": "t", "ᵣ": "r", "ᵤ": "u", "ᵥ": "v" };
 const MATH_IDCH = /[A-Za-z\u0370-\u03ff]/;
-const NEED_MATH = /[\u2070-\u209C\u00B2\u00B3\u00B9]|_\{?[A-Za-z0-9\u0370-\u03ff]|\^\{?[\d(\-]|\d(\.\d+)?[eE][+\-]\d/;
+const NEED_MATH = /[\u2070-\u209C\u00B2\u00B3\u00B9]|_\{?[A-Za-z0-9\u0370-\u03ff]|\^\{?[\d(\-]|\d(\.\d+)?[eE][+\-]\d|Δ[A-Za-z\u0370-\u03ff]|(?<![A-Za-z0-9\u0370-\u03ff])[αβγδεζηθικλμνξρστυφχψωΦΨΘΞ](?![A-Za-z0-9\u0370-\u03ff])|(?<![A-Za-z0-9])kT(?![A-Za-z0-9])|hν/;
 function AUTO(s) {
   const out = [];
   let buf = "", mode = 0;
@@ -1187,6 +1193,29 @@ function AUTO(s) {
     if (SUPMAP[ch] !== undefined) { if (mode !== 1) { emit(buf, mode); buf = ""; mode = 1; } buf += SUPMAP[ch]; i++; continue; }
     if (SUBMAP[ch] !== undefined) { if (mode !== -1) { emit(buf, mode); buf = ""; mode = -1; } buf += SUBMAP[ch]; i++; continue; }
     if (mode) { emit(buf, mode); buf = ""; mode = 0; }
+    /* ▼ Δ+量字母 / kT / hν / 孤立希腊字母：这四类没有下标，旧 NEED_MATH 抓不到，整串会正体落笔 */
+    if (ch === "\u0394" && i + 1 < s.length && MATH_IDCH.test(s[i + 1])) {
+      if (s[i + 2] === "_" || s[i + 2] === "^") { emit(buf, 0); buf = ""; i++; continue; }
+      emit(buf, 0); buf = "";
+      out.push({ s: "\u0394", rm: true }); out.push({ s: s[i + 1], i: true });
+      i += 2; continue;
+    }
+    if ((ch === "k" && s[i + 1] === "T") || (ch === "h" && s[i + 1] === "\u03bd")) {
+      const pv = i > 0 ? s[i - 1] : "", nx2 = s[i + 2] || "";
+      if (!MATH_IDCH.test(pv) && !/[0-9]/.test(pv) && !MATH_IDCH.test(nx2) && !/[0-9]/.test(nx2)) {
+        emit(buf, 0); buf = "";
+        out.push({ s: ch, i: true }); out.push({ s: s[i + 1], i: true });
+        i += 2; continue;
+      }
+    }
+    if ("αβγδεζηθικλμνξρστυφχψωΦΨΘΞ".indexOf(ch) >= 0) {
+      const pv = i > 0 ? s[i - 1] : "", nx2 = s[i + 1] || "";
+      if (!MATH_IDCH.test(pv) && !/[0-9]/.test(pv) && !MATH_IDCH.test(nx2) && !/[0-9]/.test(nx2)) {
+        emit(buf, 0); buf = "";
+        out.push({ s: ch, i: true });
+        i++; continue;
+      }
+    }
     const rest = s.slice(i);
     const sc = /^\d(\.\d+)?[eE][+\-]\d{1,3}/.exec(rest);       /* ASCII 伪科学计数 2.5e+8 */
     if (sc) {
@@ -1327,7 +1356,7 @@ function segRuns(s) {
 }
 function pFont(q, fp, bd, cjk) {
   const sz = fp * ((q.sub || q.sup) ? SUBR : 1);
-  return (bd ? "bold " : "") + (!cjk && q.i ? "italic " : "") + sz.toFixed(2) + "px " + (cjk ? FONT : FONTM);
+  return (bd ? "bold " : "") + (!cjk && q.i && !q.rm ? "italic " : "") + sz.toFixed(2) + "px " + (cjk ? FONT : FONTM);
 }
 /* i18n 注入点①：画布 token。带 i / sub / sup / un 标记的是物理量、下标与单位，一律不动；
    没有这些标记的 token 才是自然语言，交给 T() —— 所以这里的判断只看标记，不看内容。 */
@@ -1940,7 +1969,10 @@ function drawMinor() {
     (x0 + XB) / 2, ytop - 14, CM.n, 11.5, "center", true);
   mtxt(g, [{ s: "N 区中的空穴 " }, { s: "p", i: 1 }, { s: "n", sub: 1 }, { s: "(x)" }],
     (XN + x1) / 2, ytop - 14, CM.p, 11.5, "center", true);
-  chipC3(g, "耗尽区 W = " + fmtLen(d.W), (XB + XN) / 2, ytop + 12, "#6b7a8c", "10px " + FONT, "center", W);
+  /* W 是耗尽区宽度（物理量）⇒ 斜体。它是裸符号，AUTO() 不认，
+     必须走 chipM2 + parts（白底「数学」标签），否则画布上一直是正体。 */
+  chipM2(g, [{ s: "耗尽区 " }, { s: "W", i: 1 }, { s: " = " + fmtLen(d.W) }],
+    (XB + XN) / 2, ytop + 12, "#6b7a8c", 10, "center", W);
 
   /* 轴说明（⟊ 表示横轴在这里换比例，与模块一同一个位置） */
   txt(g, "⟊", XB - 1, ybot + 8, "#b9c3ce", "10px " + FONT, "right", "middle");
@@ -1968,7 +2000,7 @@ const LEGS = {
   legBand: [
     ["#1565c0", "导带底 E_c(x)"], ["#2f4a6b", "价带顶 E_v(x)"],
     ["#1976d2", "电子准费米能级 E_Fn"], ["#d94a3d", "空穴准费米能级 E_Fp"],
-    ["#ef8c1a", "内建电场（漂移）"], ["#8d9bab", "耗尽区 W"]
+    ["#ef8c1a", "内建电场（漂移）"], ["#8d9bab", "耗尽区 " + MM("<i>W</i>")]
   ],
   legMinor: [
     ["#1976d2", "P 区电子 n_p(x)"], ["#d94a3d", "N 区空穴 p_n(x)"],
@@ -2063,15 +2095,15 @@ function updateReadout() {
   h.push(kvRow("内建电势 V_bi", "<b>" + fmt(d.Vbi, 4) + "</b> V　（" +
     MM("<i>kT</i><span class='op'>/</span><i>q</i>·ln(<i>N</i><sub>A</sub><i>N</i><sub>D</sub><span class='op'>/</span>" +
        "<i>n</i><sub>i</sub><sup>2</sup>)") + "）"));
-  h.push(kvRow("偏压 V / 势垒 V_bi−V", fmt(d.V, 2) + " V / <b>" + fmt(d.Vj, 4) + "</b> V" +
+  h.push(kvRow("偏压 " + MM("<i>V</i>") + " / 势垒 " + MM("<i>V</i><sub>bi</sub>−<i>V</i>"), fmt(d.V, 2) + " V / <b>" + fmt(d.Vj, 4) + "</b> V" +
     (d.clamped ? "　<span class='bad'>已钳位</span>" : "")));
-  h.push(kvRow("耗尽区宽度 W", "<b>" + fmtLen(d.W) + "</b>（x_p " + fmtLen(d.xp) + "，x_n " + fmtLen(d.xn) + "）"));
+  h.push(kvRow("耗尽区宽度 " + MM("<i>W</i>"), "<b>" + fmtLen(d.W) + "</b>（x_p " + fmtLen(d.xp) + "，x_n " + fmtLen(d.xn) + "）"));
   h.push(kvRow("Δn_p(0) / Δp_n(0)", "<b>" + sci(d.dnp, 2) + " / " + sci(d.dpn, 2) + "</b> cm⁻³" +
     "　＝ " + MM("<i>n</i><sub>p0</sub>(e<sup><i>qV</i><span class='op'>/</span><i>kT</i></sup>−1)") + " 等"));
   h.push(kvRow("反向饱和电流 " + MM("<i>I</i><sub>0</sub>"), "<b>" + fmtI(d.I0) + "</b>"));
   h.push(kvRow("总电流 " + MM("<i>I</i>"), "<b>" + fmtI(d.Itot) + "</b>　（扩散 " + fmtI(d.Idif) +
     " + 复合 " + fmtI(d.Irec) + "）"));
-  h.push(kvRow("理想因子 n（局部）+ 主导机制", d.neff ? "<b>" + d.neff.toFixed(2) + "</b>　主导：<b>" +
+  h.push(kvRow("理想因子 " + MM("<i>n</i>") + "（局部）+ 主导机制", d.neff ? "<b>" + d.neff.toFixed(2) + "</b>　主导：<b>" +
     (Math.abs(d.Irec) > Math.abs(d.Idif) ? "耗尽区复合（n→2）" : "扩散（n→1）") + "</b>" : "—"));
   $("readout").innerHTML = h.join("");
 
@@ -2123,8 +2155,10 @@ function syncInputs() {
   $("naSlider").value = OPT.naS; $("naVal").innerHTML = sci(NAof(OPT.naS), 1) + " cm⁻³";
   $("ndSlider").value = OPT.ndS; $("ndVal").innerHTML = sci(NDof(OPT.ndS), 1) + " cm⁻³";
   $("tSlider").value = OPT.T; $("tVal").innerHTML = OPT.T + " K";
-  $("tSub").innerHTML = "E_g = " + fmt(EgT(OPT.T), 3) + " eV　n_i = " + sci(niT(OPT.T), 2) + " cm⁻³　kT/q = " +
-    (VtT(OPT.T) * 1000).toFixed(2) + " mV";
+  /* kT/q 是裸符号（没有下标）⇒ AUTO/TEXH 不认，必须手工进排版层，否则正体。
+     同行的 E_g / n_i 有下标，AUTO 会自己处理（E 斜、g 正体）。 */
+  $("tSub").innerHTML = "E_g = " + fmt(EgT(OPT.T), 3) + " eV　n_i = " + sci(niT(OPT.T), 2) + " cm⁻³　" +
+    MM("<i>kT</i><span class='op'>/</span><i>q</i>") + " = " + (VtT(OPT.T) * 1000).toFixed(2) + " mV";
   $("tnVal").innerHTML = sci(TAU_N * 1e6, 2) + " / " + sci(TAU_P * 1e6, 2) + " μs";
   /* 「更多参数」收起时也要能看到当前取值（隐藏旋钮必须披露）。
      单位与分隔符一律非中文，避免为拼接值新增 i18n 词条。 */

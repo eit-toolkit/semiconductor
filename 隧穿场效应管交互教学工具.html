@@ -416,7 +416,7 @@ var I18N = {
   " ⇒ 也决定隧穿面积。当前 ": " ⇒ and hence the tunneling area. Currently ",
   "带间隧穿：冷电子直接穿禁带，斜率不由 ": "Band-to-band tunneling: cold electrons cross the forbidden gap directly, and the slope is not set by ",
   " 决定。": " .",
-  "温度 / kT/q": "Temperature / kT/q",
+  "温度 / ": "Temperature / ",
   "理想亚阈值摆幅 SS": "Ideal subthreshold swing SS",
   "平带电压 ": "Flat-band voltage ",
   "源区掺杂 ": "Source doping ",
@@ -480,9 +480,9 @@ var I18N = {
   "栅控效率 ": "Gate-control efficiency ",
   "源结内建电势 ": "Source junction built-in Vbi ",
   "/2q，掺杂决定）": "/2q, set by the doping)",
-  "沟道电势 ψ": "Channel potential ψ",
+  "沟道电势 ": "Channel potential ",
   "能带弯曲 qψ": "Band bending qψ",
-  "隧穿窗口 ΔE": "Tunneling window ΔE",
+  "隧穿窗口 ": "Tunneling window ",
   "隧穿": "Tunneling",
   " 有效质量": " effective mass",
   "源结峰值电场 ": "Source junction peak field ",
@@ -545,7 +545,7 @@ var I18N = {
   "源价带占据（硬边）": "Source valence-band occupancy (hard edge)",
   "热尾（这边用不上）": "Thermal tail (not used here)",
   "电流谱（平顶）": "Current spectrum (flat top)",
-  "窗口 ΔE = ": "Window ΔE = ",
+  "窗口 ": "Window ",
   "供给是硬边不是热尾 ⇒ 没有 60 mV/dec 这道墙": "Hard edge, not a thermal tail ⇒ no 60 mV/dec wall",
   "本工具是 EIT-SP（半导体物理交互式教学工具箱）的一部分（武汉大学物理学院《半导体物理》智慧课程），以 MIT 协议开源，可自由使用与二次开发；转载请保留出处。反馈意见 ": "This tool is part of EIT-SP (Interactive Toolkit for Semiconductor Physics), a smart-course resource of the School of Physics and Technology, Wuhan University (Semiconductor Physics). It is open source under the MIT license and free to use and modify; please keep the attribution when redistributing. Feedback ",
   "热发射": "Thermionic emission",
@@ -989,7 +989,7 @@ const AUTO_SUB = { "₀": "0", "₁": "1", "₂": "2", "₃": "3", "₄": "4", "
   "₇": "7", "₈": "8", "₉": "9", "₊": "+", "₋": "−", "₌": "=", "₍": "(", "₎": ")",
   "ₐ": "a", "ₑ": "e", "ₒ": "o", "ₓ": "x", "ₔ": "ə", "ₕ": "h", "ₖ": "k", "ₗ": "l",
   "ₘ": "m", "ₙ": "n", "ₚ": "p", "ₛ": "s", "ₜ": "t", "ᵣ": "r", "ᵤ": "u", "ᵥ": "v" };
-const NEED_MATH = /[\u2070-\u209C\u00B2\u00B3\u00B9]|_\{?[A-Za-z0-9\u0370-\u03ff]|\^\{?[\d(\-]|\d(\.\d+)?[eE][+\-]\d/;
+const NEED_MATH = /[\u2070-\u209C\u00B2\u00B3\u00B9]|_\{?[A-Za-z0-9\u0370-\u03ff]|\^\{?[\d(\-]|\d(\.\d+)?[eE][+\-]\d|Δ[A-Za-z\u0370-\u03ff]|(?<![A-Za-z0-9\u0370-\u03ff])[αβγδεζηθικλμνξρστυφχψωΦΨΘΞ](?![A-Za-z0-9\u0370-\u03ff])|(?<![A-Za-z0-9])kT(?![A-Za-z0-9])|hν/;
 function AUTO(s) {
   const out = []; let buf = "", mode = 0;
   const emit = (t, kind) => {
@@ -1004,6 +1004,29 @@ function AUTO(s) {
     if (AUTO_SUP[ch] !== undefined) { if (mode !== 1) { emit(buf, mode); buf = ""; mode = 1; } buf += AUTO_SUP[ch]; i++; continue; }
     if (AUTO_SUB[ch] !== undefined) { if (mode !== -1) { emit(buf, mode); buf = ""; mode = -1; } buf += AUTO_SUB[ch]; i++; continue; }
     if (mode) { emit(buf, mode); buf = ""; mode = 0; }
+    /* ▼ Δ+量字母 / kT / hν / 孤立希腊字母：这四类没有下标，旧 NEED_MATH 抓不到，整串会正体落笔 */
+    if (ch === "\u0394" && i + 1 < s.length && MATH_IDCH.test(s[i + 1])) {
+      if (s[i + 2] === "_" || s[i + 2] === "^") { emit(buf, 0); buf = ""; i++; continue; }
+      emit(buf, 0); buf = "";
+      out.push({ s: "\u0394", rm: true }); out.push({ s: s[i + 1], i: true });
+      i += 2; continue;
+    }
+    if ((ch === "k" && s[i + 1] === "T") || (ch === "h" && s[i + 1] === "\u03bd")) {
+      const pv = i > 0 ? s[i - 1] : "", nx2 = s[i + 2] || "";
+      if (!MATH_IDCH.test(pv) && !/[0-9]/.test(pv) && !MATH_IDCH.test(nx2) && !/[0-9]/.test(nx2)) {
+        emit(buf, 0); buf = "";
+        out.push({ s: ch, i: true }); out.push({ s: s[i + 1], i: true });
+        i += 2; continue;
+      }
+    }
+    if ("αβγδεζηθικλμνξρστυφχψωΦΨΘΞ".indexOf(ch) >= 0) {
+      const pv = i > 0 ? s[i - 1] : "", nx2 = s[i + 1] || "";
+      if (!MATH_IDCH.test(pv) && !/[0-9]/.test(pv) && !MATH_IDCH.test(nx2) && !/[0-9]/.test(nx2)) {
+        emit(buf, 0); buf = "";
+        out.push({ s: ch, i: true });
+        i++; continue;
+      }
+    }
     const rest = s.slice(i);
     const sc = /^\d(\.\d+)?[eE][+\-]\d{1,3}/.exec(rest);
     if (sc) {
@@ -1044,7 +1067,16 @@ function mathSegs(g, s) {
   let w = 0;
   for (const p of parts) {
     const small = !!(p.sup || p.sub);
-    const fs = style + (small ? (size * 0.74).toFixed(2) : size.toFixed(2)) + "px " + family;
+    /* ⚠️ 2026-10-29 修：AUTO() 已经给主符号打过 i（斜体）标记，但旧代码只沿用调用方的
+       style，把 i 丢掉了 —— 于是 lbl() 这类「字体本身不带 italic」的调用画出来的
+       I_D / T_WKB，主符号一直是正体（只有 mtxt()/parts 那条路是对的）。
+       这里补上 p.i；调用方若已设 italic 就不再重复加（font 简写里出现两次 italic
+       会让整条 font 解析失败、静默退回默认字体）。 */
+    const hasIt = /italic|oblique/.test(style);
+    /* rm = 显式正体（Δ 算符 / π 常数 / 轨道 σ·π / 高对称点 Γ Λ Δ Σ）：
+       调用方给的 font 自带 italic 时也要剥掉，否则整段跟着斜。 */
+    const pre = p.rm ? style.replace(/italic|oblique/g, "") : (hasIt ? style : ((p.i ? "italic " : "") + style));
+    const fs = pre + (small ? (size * 0.74).toFixed(2) : size.toFixed(2)) + "px " + family;
     g.font = fs;
     const tw = g.measureText(p.s).width;
     laid.push({ s: p.s, w: tw, fs: fs, dy: small ? (p.sup ? -size * 0.40 : size * 0.22) : 0 });
@@ -1113,7 +1145,7 @@ function segRuns(s) {
 }
 function pFont(q, fp, bd, cjk) {
   const sz = fp * ((q.sub || q.sup) ? SUBR : 1);
-  return (bd ? "bold " : "") + (!cjk && q.i ? "italic " : "") + sz.toFixed(2) + "px " + (cjk ? FONT : FONTM);
+  return (bd ? "bold " : "") + (!cjk && q.i && !q.rm ? "italic " : "") + sz.toFixed(2) + "px " + (cjk ? FONT : FONTM);
 }
 /* i18n 注入点①：画布 token。带 i / sub / sup / un 标记的是物理量、下标与单位，一律不动；
    没有这些标记的 token 才是自然语言，交给 T() —— 所以这里的判断只看标记，不看内容。 */
@@ -1578,7 +1610,8 @@ function drawDev() {
   const xr = pad + lW + gap;
 
   lbl(g, "器件剖面与隧穿窗口", pad + 2, 11, C_SUB, 11.5, "left", true);
-  lbl(g, "转移特性 I_D–V_GS", xr + 2, 11, C_SUB, 11.5, "left", true);
+  mtxt(g, TX("转移特性 <span class=\"m\"><i>I</i><sub>D</sub></span>–<span class=\"m\"><i>V</i><sub>GS</sub></span>"),
+    xr + 2, 11, C_SUB, 11.5, "left", true);
 
   g.save();
   g.translate(pad, yTop);
@@ -1896,7 +1929,10 @@ function drawSpec(g, d, xMid, x1, y0, y1, yOf) {
       XPL - 30, yOf(0) - 26, C_SUB, 10.5, "left", true);
   }
   /* ④ 脚注：一串能记的数字 */
-  lblN(g, "窗口 ΔE = ", win.toFixed(2) + " eV ≈ " + (win / ktq).toFixed(0) + " kT",
+  /* ΔE 与 kT 都是裸符号（没有下标）⇒ 连 NEED_MATH 都匹配不上，AUTO 根本不会碰它们，
+     必须走 mtxt + 排版层，否则画布上永远是正体（Δ 是差分算符 ⇒ 保持正体，只有 E 斜体）。 */
+  mtxt(g, TX("窗口 <span class=\"m\">Δ<i>E</i></span> = " + win.toFixed(2) + " eV ≈ " +
+    (win / ktq).toFixed(0) + " <span class=\"m\"><i>kT</i></span>"),
     XPL - 32, y1 + 15, C_TUN, 10.5, "left", true);
   lbl(g, "供给是硬边不是热尾 ⇒ 没有 60 mV/dec 这道墙", XPL - 32, y1 + 29, C_TUN, 10.5, "left", true);
 }
@@ -1981,7 +2017,7 @@ function drawTherm(v, g, d, x0, x1, y0, y1, xOf) {
     XPL - 6, y1 + 4, C_SUB, 10, "right", true);
   /* kT 参照：让「热尾只有 kT 量级」这件事量得出来 */
   line(g, XPL, yE(ktq), XPR, yE(ktq), "rgba(239,140,26,0.5)", 1, [5, 4]);
-  lbl(g, "kT", XPL - 6, yE(ktq), "#b06a10", 10, "right", true);
+  mtxt(g, TX("<span class=\"m\"><i>kT</i></span>"), XPL - 6, yE(ktq), "#b06a10", 10, "right", true);
   /* 高过势垒的那一小撮：就是势垒线以上、分布线左边的那个三角形 */
   if (phi > 0.02) {
     poly(g, [[XPL, y0], [xN(phi), yE(phi)], [XPL, yE(phi)]], "rgba(239,140,26,0.55)", null, 0);
@@ -2132,6 +2168,10 @@ const H_KT = "<span class=\"m\"><i>kT</i>/<i>q</i></span>";
 const H_EOX = "<span class=\"m\"><i>ε</i><sub>ox</sub></span>";
 const H_TOX = "<span class=\"m\"><i>t</i><sub>ox</sub></span>";
 const H_GB = "<span class=\"m\"><i>G</i><sub>BTBT</sub></span>";
+/* 沟道电势 ψ 与隧穿窗口 ΔE：两个都没有下标 ⇒ AUTO() 不认，必须手工进排版层。
+   Δ 是「差分」算符 ⇒ 正体，只有 E 斜体（与钙钛矿的 H_EC = ΔE_C 同一口径）。 */
+const H_PSI = "<span class=\"m\"><i>ψ</i></span>";
+const H_DE = "<span class=\"m\">Δ<i>E</i></span>";
 
 const EQ_SS = "<span class=\"m\">SS<span class=\"op\">=</span><span class=\"frac\"><span class=\"num\"><i>kT</i></span><span class=\"den\"><i>q</i></span></span>ln 10</span>";
 const EQ_WKB = "<span class=\"m\"><i>T</i><sub>WKB</sub><span class=\"op\">≈</span>exp<span class=\"op\">(</span><span class=\"op\">−</span><span class=\"frac\"><span class=\"num\">4<span class=\"sqrt\"><span class=\"rd\">√</span><span class=\"rdc\">2<i>m</i><sup>*</sup></span></span><i>E</i><sub>g</sub><sup>3/2</sup></span><span class=\"den\">3<i>q</i><i>ħE</i></span></span><span class=\"op\">)</span></span>";
@@ -2217,8 +2257,8 @@ function buildReadout() {
        栅控效率 η、V_bi、m*、A_t 都是中间量（移到更多读数）；「能带弯曲 qψ」就是 ψ
        换了个单位，删；「隧穿类型」并进 WKB 行、理想 SS 并进 SS 行。 */
     { hd: "栅控与能带" },
-    ["沟道电势 ψ", d.psi.toFixed(3) + " V"],
-    ["隧穿窗口 ΔE", d.open ? d.win.toFixed(3) + " eV" : "0（未开启）"],
+    ["沟道电势 " + H_PSI, d.psi.toFixed(3) + " V"],
+    ["隧穿窗口 " + H_DE, d.open ? d.win.toFixed(3) + " eV" : "0（未开启）"],
     { hd: "隧穿" },
     ["源结峰值电场 E_max", (d.Emax / 1e8).toFixed(2) + " MV/cm"],
     ["隧穿宽度 W_t", isFinite(d.WtNm) ? d.WtNm.toFixed(2) + " nm" : "—"],
@@ -2440,7 +2480,7 @@ function syncInputs() {
 
   const fv = $("fixVal");
   if (fv) fv.innerHTML = kvHTML([
-    ["温度 / kT/q", TEMP + " K ／ " + (d.ktq * 1e3).toFixed(2) + " mV"],
+    ["温度 / " + H_KT, TEMP + " K ／ " + (d.ktq * 1e3).toFixed(2) + " mV"],
     ["理想亚阈值摆幅 SS", (d.SSmos * 1e3).toFixed(1) + " mV/dec"],
     ["平带电压 V_FB", VFB.toFixed(2) + " V"],
     ["源区掺杂 N_A", "1×10<sup>20</sup> cm<sup>−3</sup>"],

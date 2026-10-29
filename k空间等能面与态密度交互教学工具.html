@@ -152,10 +152,10 @@
 <header>
   <button id="langBtn" class="lang-btn" data-noi18n title="中文 / English">EN</button>
   <h1><span class="m"><i>k</i></span> 空间等能面与态密度交互教学工具</h1>
-  <div class="formula"><span class="m"><i>k</i><span class="op">=</span><span class="frac"><span class="num">2<i>π</i></span><span class="den"><i>L</i></span></span>(<i>n<sub>x</sub></i>, <i>n<sub>y</sub></i>, <i>n<sub>z</sub></i>)　·　<i>E</i>(<i>k</i>)　·　<i>g</i>(<i>E</i>)<span class="op">=</span><span class="frac"><span class="num">d<i>N</i></span><span class="den">d<i>E</i></span></span>　·　<i>E</i><span class="op">&lt;</span><i>E<sub>F</sub></i></span> 全占据</div>
+  <div class="formula"><span class="m"><i>k</i><span class="op">=</span><span class="frac"><span class="num">2<span class='rm'>π</span></span><span class="den"><i>L</i></span></span>(<i>n<sub>x</sub></i>, <i>n<sub>y</sub></i>, <i>n<sub>z</sub></i>)　·　<i>E</i>(<i>k</i>)　·　<i>g</i>(<i>E</i>)<span class="op">=</span><span class="frac"><span class="num">d<i>N</i></span><span class="den">d<i>E</i></span></span>　·　<i>E</i><span class="op">&lt;</span><i>E<sub>F</sub></i></span> 全占据</div>
 </header>
 <div class="sub-note">
-  有限晶体 → <span class="m"><i>k</i></span> 点离散化（间距 <span class="m">2<i>π</i><span class="sl">/</span><i>L</i></span>）→ 费米面（= 能量为 <span class="m"><i>E</i><sub>F</sub></span> 的等能面，面内全占据）→ 态密度 <span class="m"><i>g</i>(<i>E</i>)</span> → 维度效应（3D / 2D / 1D）　<b>全图为示意图：长度单位 <span class="m"><i>Δk</i></span>，能量单位 <span class="m"><i>E</i><sub>1</sub></span></b>
+  有限晶体 → <span class="m"><i>k</i></span> 点离散化（间距 <span class="m">2<span class='rm'>π</span><span class="sl">/</span><i>L</i></span>）→ 费米面（= 能量为 <span class="m"><i>E</i><sub>F</sub></span> 的等能面，面内全占据）→ 态密度 <span class="m"><i>g</i>(<i>E</i>)</span> → 维度效应（3D / 2D / 1D）　<b>全图为示意图：长度单位 <span class="m"><span class='op'>Δ</span><i>k</i></span>，能量单位 <span class="m"><i>E</i><sub>1</sub></span></b>
 </div>
 
 <div class="layout">
@@ -197,7 +197,7 @@
         <div class="chk-row">
           <label><input type="checkbox" id="ckPts" checked> <span class="m"><i>k</i></span> 点</label>
           <label><input type="checkbox" id="ckFermi" checked> 费米面</label>
-          <label><input type="checkbox" id="ckCells" checked> <span class="m"><i>Δk</i></span> 晶胞</label>
+          <label><input type="checkbox" id="ckCells" checked> <span class="m"><span class='op'>Δ</span><i>k</i></span> 晶胞</label>
         </div>
       </div>
 
@@ -684,7 +684,7 @@ function setLang(l) {
    有些标注不走 txt() 而是直接 g.fillText()（状态徽标、能带边等），
    这里在原型层统一处理：含数学记法的字符串先按 LaTeX 规则拆段再绘制，
    measureText 同步返回拆段总宽，白底框长度自动跟着变。 */
-const NEED_MATH_HM = /[\u2070-\u209C\u00B2\u00B3\u00B9]|_\{?[A-Za-z0-9\u0370-\u03ff]|\^\{?[\d(\-]|\d(\.\d+)?[eE][+\-]\d|\u221A/;
+const NEED_MATH_HM = /[\u2070-\u209C\u00B2\u00B3\u00B9]|_\{?[A-Za-z0-9\u0370-\u03ff]|\^\{?[\d(\-]|\d(\.\d+)?[eE][+\-]\d|\u221A|Δ[A-Za-z\u0370-\u03ff]|(?<![A-Za-z0-9\u0370-\u03ff])[αβγδεζηθικλμνξρστυφχψωΦΨΘΞ](?![A-Za-z0-9\u0370-\u03ff])|(?<![A-Za-z0-9])kT(?![A-Za-z0-9])|hν/;
 /* 原生 measureText：mathSegsHM 内部量宽必须走这一条，
    否则 measureText 被钩子接管后会 self-recursion（RangeError）。 */
 var _mRawHM = null;
@@ -699,7 +699,14 @@ function mathSegsHM(g, s) {
   let w = 0;
   for (const p of parts) {
     const small = !!(p.sup || p.sub);
-    const fs = style + (small ? (size * 0.74).toFixed(2) : size.toFixed(2)) + "px " + family;
+    /* ⚠️ 2026-10-29 修：AUTO() 给主符号打过 i（斜体），旧代码只沿用调用方的 style，
+       把 i 丢了 ⇒ lbl() 画出的 I_D / T_WKB 主符号一直是正体。这里补上 p.i；
+       调用方若已设 italic 就不再重复加（font 简写里两次 italic 会让整条 font 失效）。 */
+    const hasIt = /italic|oblique/.test(style);
+    /* rm = 显式正体（Δ 算符 / π 常数 / 轨道 σ·π / 高对称点 Γ Λ Δ Σ）：
+       调用方给的 font 自带 italic 时也要剥掉，否则整段跟着斜。 */
+    const pre = p.rm ? style.replace(/italic|oblique/g, "") : (hasIt ? style : ((p.i ? "italic " : "") + style));
+    const fs = pre + (small ? (size * 0.74).toFixed(2) : size.toFixed(2)) + "px " + family;
     g.font = fs;
     const tw = measureRawHM(g, p.s);
     laid.push({ s: p.s, w: tw, fs: fs, dy: small ? (p.sup ? -size * 0.40 : size * 0.22) : 0 });
@@ -900,7 +907,7 @@ const SUBMAP = { "₀": "0", "₁": "1", "₂": "2", "₃": "3", "₄": "4", "�
   "ₐ": "a", "ₑ": "e", "ₒ": "o", "ₓ": "x", "ₔ": "ə", "ₕ": "h", "ₖ": "k", "ₗ": "l",
   "ₘ": "m", "ₙ": "n", "ₚ": "p", "ₛ": "s", "ₜ": "t", "ᵣ": "r", "ᵤ": "u", "ᵥ": "v" };
 const MATH_IDCH = /[A-Za-z\u0370-\u03ff]/;
-const NEED_MATH = /[\u2070-\u209C\u00B2\u00B3\u00B9]|_\{?[A-Za-z0-9\u0370-\u03ff]|\^\{?[\d(\-]|\d(\.\d+)?[eE][+\-]\d/;
+const NEED_MATH = /[\u2070-\u209C\u00B2\u00B3\u00B9]|_\{?[A-Za-z0-9\u0370-\u03ff]|\^\{?[\d(\-]|\d(\.\d+)?[eE][+\-]\d|Δ[A-Za-z\u0370-\u03ff]|(?<![A-Za-z0-9\u0370-\u03ff])[αβγδεζηθικλμνξρστυφχψωΦΨΘΞ](?![A-Za-z0-9\u0370-\u03ff])|(?<![A-Za-z0-9])kT(?![A-Za-z0-9])|hν/;
 function AUTO(s) {
   const out = [];
   let buf = "", mode = 0;
@@ -916,6 +923,29 @@ function AUTO(s) {
     if (SUPMAP[ch] !== undefined) { if (mode !== 1) { emit(buf, mode); buf = ""; mode = 1; } buf += SUPMAP[ch]; i++; continue; }
     if (SUBMAP[ch] !== undefined) { if (mode !== -1) { emit(buf, mode); buf = ""; mode = -1; } buf += SUBMAP[ch]; i++; continue; }
     if (mode) { emit(buf, mode); buf = ""; mode = 0; }
+    /* ▼ Δ+量字母 / kT / hν / 孤立希腊字母：这四类没有下标，旧 NEED_MATH 抓不到，整串会正体落笔 */
+    if (ch === "\u0394" && i + 1 < s.length && MATH_IDCH.test(s[i + 1])) {
+      if (s[i + 2] === "_" || s[i + 2] === "^") { emit(buf, 0); buf = ""; i++; continue; }
+      emit(buf, 0); buf = "";
+      out.push({ s: "\u0394", rm: true }); out.push({ s: s[i + 1], i: true });
+      i += 2; continue;
+    }
+    if ((ch === "k" && s[i + 1] === "T") || (ch === "h" && s[i + 1] === "\u03bd")) {
+      const pv = i > 0 ? s[i - 1] : "", nx2 = s[i + 2] || "";
+      if (!MATH_IDCH.test(pv) && !/[0-9]/.test(pv) && !MATH_IDCH.test(nx2) && !/[0-9]/.test(nx2)) {
+        emit(buf, 0); buf = "";
+        out.push({ s: ch, i: true }); out.push({ s: s[i + 1], i: true });
+        i += 2; continue;
+      }
+    }
+    if ("αβγδεζηθικλμνξρστυφχψωΦΨΘΞ".indexOf(ch) >= 0) {
+      const pv = i > 0 ? s[i - 1] : "", nx2 = s[i + 1] || "";
+      if (!MATH_IDCH.test(pv) && !/[0-9]/.test(pv) && !MATH_IDCH.test(nx2) && !/[0-9]/.test(nx2)) {
+        emit(buf, 0); buf = "";
+        out.push({ s: ch, i: true });
+        i++; continue;
+      }
+    }
     const rest = s.slice(i);
     const sc = /^\d(\.\d+)?[eE][+\-]\d{1,3}/.exec(rest);       /* ASCII 伪科学计数 2.5e+8 */
     if (sc) {
@@ -1065,7 +1095,7 @@ function segRuns(s) {
 }
 function pFont(q, fp, bd, cjk) {
   const sz = fp * ((q.sub || q.sup) ? SUBR : 1);
-  return (bd ? "bold " : "") + (!cjk && q.i ? "italic " : "") + sz.toFixed(2) + "px " + (cjk ? FONT : FONTM);
+  return (bd ? "bold " : "") + (!cjk && q.i && !q.rm ? "italic " : "") + sz.toFixed(2) + "px " + (cjk ? FONT : FONTM);
 }
 /* i18n 注入点①：画布 token。带 i / sub / sup / un 标记的是物理量、下标与单位，一律不动；
    没有这些标记的 token 才是自然语言，交给 T() —— 所以这里的判断只看标记，不看内容。 */
@@ -1508,10 +1538,10 @@ function drawK3DPanel(v, g, PN, split) {
     const lx = OPT.dim === 2 ? xr - 12 : clamp(lp.x + 8, PN.x + 10, Math.max(PN.x + 10, xr - 160));
     const ly = OPT.dim === 2 ? PN.y + 26 : clamp(lp.y - 8, PN.y + 28, PN.y + PN.h - (nCell >= 0 ? 48 : 34));
     const lal = OPT.dim === 2 ? "right" : "left";
-    mtxtHalo(g, [{ s: "Δk", i: 1 }, " = ", { n: ["2", { s: "π", i: 1 }], d: [{ s: "L", i: 1 }] }, "（示意间距）"], lx, ly, "#5b7aa6", 10.5, lal, true);
+    mtxtHalo(g, [{ s: "Δ", rm: true }, { s: "k", i: 1 }, " = ", { n: ["2", { s: "π", rm: true }], d: [{ s: "L", i: 1 }] }, "（示意间距）"], lx, ly, "#5b7aa6", 10.5, lal, true);
     if (nCell >= 0) {
       mtxtHalo(g, ["第一象限 " + nCell + " 个完整格（整格不越出费米圆）"], lx, ly + 14, "#5b7aa6", 10.5, lal, true);
-      mtxtHalo(g, [{ n: [{ s: "π", i: 1 }, { s: "k", i: 1 }, { s: "F", sub: 1 }, { s: "2", sup: 1 }], d: ["4"] },
+      mtxtHalo(g, [{ n: [{ s: "π", rm: true }, { s: "k", i: 1 }, { s: "F", sub: 1 }, { s: "2", sup: 1 }], d: ["4"] },
         " ≈ " + nArea.toFixed(1) + " 格（连续近似，略多一圈边界）"], lx, ly + 28, "#8794a8", 10, lal, true);
     }
   }
@@ -1522,7 +1552,7 @@ function drawK3DPanel(v, g, PN, split) {
     g.strokeStyle = C_FERMI; g.lineWidth = 2.4; g.lineCap = "round";
     g.beginPath(); g.moveTo(T1.x, T1.y); g.lineTo(T2.x, T2.y); g.stroke();
     const lx = OPT.dim === 1 ? Math.max(LP.x - 86, PN.x + 8) : Math.min(LP.x + 7, xr - 96), ly = OPT.dim === 1 ? LP.y + 22 : LP.y - 10;
-    mtxtHalo(g, [{ s: "k", i: 1 }, { s: "F", sub: 1 }, " = " + kf.toFixed(1) + " ", { s: "Δk", i: 1 }], lx, ly, C_FERMI, 11, "left", true);
+    mtxtHalo(g, [{ s: "k", i: 1 }, { s: "F", sub: 1 }, " = " + kf.toFixed(1) + " ", { s: "Δ", rm: true }, { s: "k", i: 1 }], lx, ly, C_FERMI, 11, "left", true);
   }
 
   /* --- 晶轴 --- */
@@ -1557,8 +1587,8 @@ function drawK3DPanel(v, g, PN, split) {
 /* 悬停气泡（画在最上层，不受面板裁剪限制） */
 function drawHoverK3D(g, W, H, h) {
   const lines = [
-    [{ s: "k", i: 1 }, " = (" + h.n[0] + ", " + h.n[1] + ", " + h.n[2] + ") · ", { s: "Δk", i: 1 }],
-    ["|", { s: "k", i: 1 }, "| = " + Math.hypot(h.n[0], h.n[1], h.n[2]).toFixed(2) + " ", { s: "Δk", i: 1 }],
+    [{ s: "k", i: 1 }, " = (" + h.n[0] + ", " + h.n[1] + ", " + h.n[2] + ") · ", { s: "Δ", rm: true }, { s: "k", i: 1 }],
+    ["|", { s: "k", i: 1 }, "| = " + Math.hypot(h.n[0], h.n[1], h.n[2]).toFixed(2) + " ", { s: "Δ", rm: true }, { s: "k", i: 1 }],
     h.occ
       ? ["已占据（", { s: "E", i: 1 }, " < ", { s: "E", i: 1 }, { s: "F", sub: 1 }, "）"]
       : ["空态（", { s: "E", i: 1 }, " > ", { s: "E", i: 1 }, { s: "F", sub: 1 }, "）"]
@@ -1625,7 +1655,7 @@ function drawSection() {
   if (OPT.cells) {
     g.strokeStyle = C_CELL; g.lineWidth = 1.4;
     g.strokeRect(X(0), Y(1), sc, sc);
-    mtxtHalo(g, [{ s: "Δk", i: 1 }], X(1) + 5, Y(1) - 6, "#5b7aa6", 10.5, "left", true);
+    mtxtHalo(g, [{ s: "Δ", rm: true }, { s: "k", i: 1 }], X(1) + 5, Y(1) - 6, "#5b7aa6", 10.5, "left", true);
   }
 
   /* k_F 标注 */
@@ -1633,10 +1663,10 @@ function drawSection() {
   g.strokeStyle = C_FERMI; g.lineWidth = 1.4;
   g.beginPath(); g.moveTo(xa, yk); g.lineTo(xb, yk); g.stroke();
   arrowHead(g, xb, yk, 1, 0, C_FERMI); arrowHead(g, xa, yk, -1, 0, C_FERMI);
-  mtxtHalo(g, [{ s: "k", i: 1 }, { s: "F", sub: 1 }, " = " + kf.toFixed(1) + " ", { s: "Δk", i: 1 }], (xa + xb) / 2, yk - 9, C_FERMI, 11, "center", true);
+  mtxtHalo(g, [{ s: "k", i: 1 }, { s: "F", sub: 1 }, " = " + kf.toFixed(1) + " ", { s: "Δ", rm: true }, { s: "k", i: 1 }], (xa + xb) / 2, yk - 9, C_FERMI, 11, "center", true);
 
   /* 角标 */
-  mtxt(g, [{ s: "k", i: 1 }, { s: "z", sub: 1 }, " = 0 截面　·　1 格 = ", { s: "Δk", i: 1 }], 12, 16, C_REF, 11, "left", true);
+  mtxt(g, [{ s: "k", i: 1 }, { s: "z", sub: 1 }, " = 0 截面　·　1 格 = ", { s: "Δ", rm: true }, { s: "k", i: 1 }], 12, 16, C_REF, 11, "left", true);
 }
 function axisFlat(g, x0, y0, x1, y1, col, lab, X, Y) {
   g.strokeStyle = col; g.lineWidth = 1.8; g.lineCap = "round";
@@ -1675,7 +1705,7 @@ function drawBand1D(g, W, H) {
     const x = L + (W - R - L) * i / 4, k = -K + 2 * K * i / 4;
     mtxt(g, [k.toFixed(0)], x, H - Bt + 12, C_REF, 10.5, "center");
   }
-  mtxt(g, [{ s: "k", i: 1 }, { s: "x", sub: 1 }, "（单位 ", { s: "Δk", i: 1 }, "）"], (L + W - R) / 2, H - 12, C_REF, 10.5, "center");
+  mtxt(g, [{ s: "k", i: 1 }, { s: "x", sub: 1 }, "（单位 ", { s: "Δ", rm: true }, { s: "k", i: 1 }, "）"], (L + W - R) / 2, H - 12, C_REF, 10.5, "center");
   mtxt(g, [{ s: "E", i: 1 }, " / ", { s: "E", i: 1 }, { s: "1", sub: 1 }], L - 6, 8, C_REF, 10.5, "right");
 
   /* 允许态 ladder（每格一个 k 态，容纳 2 个电子） */
@@ -1698,8 +1728,8 @@ function drawBand1D(g, W, H) {
   g.save(); g.strokeStyle = C_FERMI; g.lineWidth = 1.6; g.setLineDash([6, 4]);
   g.beginPath(); g.moveTo(L, Y(eF)); g.lineTo(W - R, Y(eF)); g.stroke(); g.restore();
   mtxtHalo(g, [{ s: "E", i: 1 }, { s: "F", sub: 1 }, " = " + eF.toFixed(1) + " ", { s: "E", i: 1 }, { s: "1", sub: 1 }], W - R - 4, Y(eF) - 10, C_FERMI, 11, "right", true);
-  mtxtHalo(g, [{ s: "k", i: 1 }, { s: "F", sub: 1 }, " = " + kf.toFixed(1) + " ", { s: "Δk", i: 1 }], X(kf), H - Bt - 10, C_FERMI, 11, "center", true);
-  mtxt(g, ["每级台阶 = 一个允许的 ", { s: "k", i: 1 }, " 态（容纳 2 个电子），台阶间距 = ", { s: "Δk", i: 1 }], L + 4, T + 2, C_REF, 10.5, "left");
+  mtxtHalo(g, [{ s: "k", i: 1 }, { s: "F", sub: 1 }, " = " + kf.toFixed(1) + " ", { s: "Δ", rm: true }, { s: "k", i: 1 }], X(kf), H - Bt - 10, C_FERMI, 11, "center", true);
+  mtxt(g, ["每级台阶 = 一个允许的 ", { s: "k", i: 1 }, " 态（容纳 2 个电子），台阶间距 = ", { s: "Δ", rm: true }, { s: "k", i: 1 }], L + 4, T + 2, C_REF, 10.5, "left");
 }
 
 /* ==================================================================
@@ -1709,8 +1739,8 @@ const MM = h => '<span class="m">' + h + '</span>';
 const FR = (num, den) => '<span class="frac"><span class="num">' + num + '</span><span class="den">' + den + '</span></span>';
 /* 常用符号的快捷写法 */
 const K_X = '<span class="m"><i>k</i><sub><i>x</i></sub></span>', K_Y = '<span class="m"><i>k</i><sub><i>y</i></sub></span>', K_Z = '<span class="m"><i>k</i><sub><i>z</i></sub></span>', K_F = '<span class="m"><i>k</i><sub>F</sub></span>';
-const E_F = '<span class="m"><i>E</i><sub>F</sub></span>', E_1 = '<span class="m"><i>E</i><sub>1</sub></span>', D_K = '<span class="m"><i>Δk</i></span>';
-const FR_2PI_L = FR("2<span class='m'><i>π</i></span>", "<i>L</i>");
+const E_F = '<span class="m"><i>E</i><sub>F</sub></span>', E_1 = '<span class="m"><i>E</i><sub>1</sub></span>', D_K = '<span class="m"><span class="op">Δ</span><i>k</i></span>';
+const FR_2PI_L = FR("2<span class='m'><span class='rm'>π</span></span>", "<i>L</i>");
 const DOS_HOV = { on: false, E: 0, g: 0 };
 function drawDOS() {
   const c = CV["dos"]; if (!c) return;
@@ -1739,7 +1769,7 @@ function drawDOS() {
   g.beginPath(); g.moveTo(xa, ya); g.lineTo(xb, ya); g.stroke();
   g.beginPath(); g.moveTo(xa, yb); g.lineTo(xa, ya); g.stroke();
   mtxt(g, [{ s: "E", i: 1 }, "（单位 ", { s: "E", i: 1 }, { s: "1", sub: 1 }, " = ",
-    { n: [{ s: "ℏ", i: 1 }, { s: "2", sup: 1 }, { s: "Δk", i: 1 }, { s: "2", sup: 1 }], d: ["2", { s: "m", i: 1 }, { s: "0", sub: 1 }] }, "）"],
+    { n: [{ s: "ℏ", rm: true }, { s: "2", sup: 1 }, { s: "Δ", rm: true }, { s: "k", i: 1 }, { s: "2", sup: 1 }], d: ["2", { s: "m", i: 1 }, { s: "0", sub: 1 }] }, "）"],
     (xa + xb) / 2, H - 10, C_REF, 10.5, "center");
   mtxt(g, [{ s: "g", i: 1 }, "(", { s: "E", i: 1 }, ")　相对单位（曲线下面积 = 态的份额）"], 6, yb - 12, C_REF, 10.5, "left");
 
@@ -1839,7 +1869,7 @@ function buildStaticUI() {
 }
 function updateStatic() {
   $("dimVal").textContent = OPT.dim + "D";
-  $("fillVal").innerHTML = MM(K_F + "<span class=\"op\">=</span>" + kFschem().toFixed(1) + "<span class=\"un\"><span class='m'><i>Δk</i></span></span>");
+  $("fillVal").innerHTML = MM(K_F + "<span class=\"op\">=</span>" + kFschem().toFixed(1) + "<span class=\"un\"><span class='m'><span class='op'>Δ</span><i>k</i></span></span>");
   $("dimBtns").querySelectorAll("button").forEach(b => b.classList.toggle("active", +b.dataset.d === OPT.dim));
   $("dimSub").innerHTML = OPT.dim === 3
     ? "三维体材料：" + MM("<i>k</i>") + " 空间三维，每个 " + MM("<i>k</i>") + " 态占体积 " + MM("(" + FR_2PI_L + ")<sup>3</sup>") + "，等能面为球面。"
@@ -1864,9 +1894,9 @@ function updateStatic() {
      图例「面积 = 占据份额」和挑战三答案各已说过一遍，这里不必再说第三遍。 */
   const cl = $("lgCell");
   if (cl) cl.innerHTML = '<i class="swatch" style="color:' + C_CELL + '"></i>'
-    + (OPT.dim === 3 ? MM("<i>Δk</i>") + " 晶胞（" + MM(K_X) + " 第一层 · 整格不越出费米球）"
-      : OPT.dim === 2 ? MM("<i>Δk</i>") + " 晶胞（第一象限 · 整格不越出费米圆，随 " + MM(K_F) + " 胀缩）"
-        : MM("<i>Δk</i>") + " 晶胞（正 " + MM(K_X) + " 轴上的相邻两格）");
+    + (OPT.dim === 3 ? MM("<span class='op'>Δ</span><i>k</i>") + " 晶胞（" + MM(K_X) + " 第一层 · 整格不越出费米球）"
+      : OPT.dim === 2 ? MM("<span class='op'>Δ</span><i>k</i>") + " 晶胞（第一象限 · 整格不越出费米圆，随 " + MM(K_F) + " 胀缩）"
+        : MM("<span class='op'>Δ</span><i>k</i>") + " 晶胞（正 " + MM(K_X) + " 轴上的相邻两格）");
   /* 图例里凡是「只在某个维度才存在」的条目：跟着 dim 显隐，
      否则 2D / 1D 下会留下「1/8 球壳（右图）」「k_z 轴」等指不到实物的色标。 */
   const vis = (id, on) => { const e = $(id); if (e) e.style.display = on ? "" : "none"; };
@@ -1970,7 +2000,7 @@ const CHALS = [
        MM("<i>L</i>") + " 加倍 → " + MM(D_K) + " 减半 → 同样半径的球内格点数变为 " + MM("2<sup>3</sup><span class=\"op\">=</span>8") + " 倍；" +
        MM("<i>L</i><span class=\"op\">→</span><span class=\"op\">∞</span>") + " 时 " + MM(D_K + "<span class=\"op\">→</span>0") + "，" + MM("<i>k</i>") + " 趋于连续，" +
        "求和 " + MM("<span class=\"op\">Σ</span><sub>k</sub>") + " 也就过渡为积分 " +
-       MM(FR("<i>V</i>", "(2<span class='m'><i>π</i></span>)<sup>3</sup>") + "<span class=\"op\">∫</span><span class=\"un\">d</span><sup>3</sup><i>k</i>") + " —— 这正是固体物理里那个替换项的来历。"
+       MM(FR("<i>V</i>", "(2<span class='m'><span class='rm'>π</span></span>)<sup>3</sup>") + "<span class=\"op\">∫</span><span class=\"un\">d</span><sup>3</sup><i>k</i>") + " —— 这正是固体物理里那个替换项的来历。"
   },
   {
     t: "挑战二 · 费米面与填充",

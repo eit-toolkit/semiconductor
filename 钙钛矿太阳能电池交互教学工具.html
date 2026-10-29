@@ -194,7 +194,7 @@
     </div>
 
     <div class="card">
-      <div class="sec-title"><span class="mtag">模块三</span>J–V 曲线与效率（AM1.5 总量 100 mW/cm²，画的是 −J）</div>
+      <div class="sec-title"><span class="mtag">模块三</span><span class="m"><i>J</i>–<i>V</i></span> 曲线与效率（AM1.5 总量 100 mW/cm²，画的是 −J）</div>
       <div class="chart-wrap"><canvas id="jv" data-h="330" tabindex="0"></canvas></div>
       <div class="legend" id="legJv"></div>
       <div class="hint" id="hintJv"></div>
@@ -262,7 +262,7 @@
         <div class="ck-row" id="ckRow">
           <label><input type="checkbox" id="ckAnim" checked>载流子动画</label>
           <label><input type="checkbox" id="ckRec" checked>复合事件</label>
-          <label><input type="checkbox" id="ckDark" checked>暗态 J–V</label>
+          <label><input type="checkbox" id="ckDark" checked>暗态 <span class="m"><i>J</i>–<i>V</i></span></label>
           <label><input type="checkbox" id="ckOff" checked>能带偏移标注</label>
         </div>
       </div>
@@ -389,7 +389,7 @@ var I18N = {
   /* ---- 模块标题 ---- */
   "器件结构与载流子的一生（层状三明治俯瞰）": "Device stack and the life of a carrier (a top-down view of the sandwich)",
   "能带对齐与选择性接触（能量零点＝真空能级）": "Band alignment and selective contacts (zero of energy = vacuum level)",
-  "J–V 曲线与效率（AM1.5 总量 100 mW/cm²，画的是 −J）": "J–V curve and the efficiency (AM1.5 total 100 mW/cm²; the plot shows −J)",
+  " 曲线与效率（AM1.5 总量 100 mW/cm²，画的是 −J）": " curve and the efficiency (AM1.5 total 100 mW/cm²; the plot shows −J)",
   "材料本征：缺陷容忍与": "Material fundamentals: defect tolerance and",
   "晶胞（两张参考图，不随旋钮变化）": "unit cell (two reference panels, unaffected by the controls)",
 
@@ -403,7 +403,7 @@ var I18N = {
   "电子传输层 ETL": "Electron transport layer (ETL)",
   "载流子动画": "Carrier animation",
   "复合事件": "Recombination events",
-  "暗态 J–V": "Dark J–V",
+  "暗态 ": "Dark ",
   "能带偏移标注": "Band-offset annotations",
   "典型 MAPbI₃": "Typical MAPbI₃",
   "宽带隙（叠层顶电池）": "Wide gap (tandem top cell)",
@@ -416,7 +416,7 @@ var I18N = {
   "吸收边": "Absorption edge",
   " nm；比边更长的光子基本不吸收，": " nm: photons beyond the edge are barely absorbed, while ",
   "比边短的按 √(hν − E_g) 越吸越狠": "shorter ones are absorbed ever more strongly, as √(hν − E_g)",
-  "本档的 1/α ≈ ": "Here 1/α ≈ ",
+  "本档的 1/": "Here 1/",
   " nm，厚薄就难在这里：": " nm — and that is the dilemma: ",
   "太薄吃不完光，太厚来不及抽": "too thin leaves light unabsorbed, too thick leaves carriers unable to get out",
   "由爱因斯坦关系反推寿命 τ = ": "Lifetime back-derived from the Einstein relation, τ = ",
@@ -450,12 +450,12 @@ var I18N = {
   "空穴（向 HTL 走）": "Hole (heading to the HTL)",
   "入射光 / 吸收位置": "Incoming light / where it is absorbed",
   "复合事件（消失的那一个）": "Recombination event (the one that disappears)",
-  "光照 J–V": "J–V under illumination",
+  "光照 ": "Illuminated ",
   "最大功率矩形（FF）": "Maximum-power rectangle (FF)",
   "A 位：MA⁺ / FA⁺ / Cs⁺": "A site: MA⁺ / FA⁺ / Cs⁺",
   "B 位：Pb²⁺": "B site: Pb²⁺",
   "X 位：I⁻（六个面心）": "X site: I⁻ (the six face centers)",
-  "入射光 hν": "Incoming light hν",
+  "入射光 ": "Incoming light ",
   "电子流向负载": "Electrons flow to the load",
   "空穴被挡": "Holes blocked",
   "电子被挡": "Electrons blocked",
@@ -470,7 +470,8 @@ var I18N = {
   /* ---- 模块二：能带图 ---- */
   "钙钛矿": "Perovskite",
   "平带近似：这里不画能带弯曲，只看三层能级怎么对齐": "Flat-band approximation: no band bending is drawn — only how the three layers line up",
-  "电子能量 E（eV，真空为 0）": "Electron energy E (eV, vacuum = 0)",
+  "电子能量 ": "Electron energy ",
+  "（eV，真空为 0）": " (eV, vacuum = 0)",
   "电子注入": "Electron injection",
   "空穴注入": "Hole injection",
   "势垒 |ΔE_C|：抽取受阻": "Barrier |ΔE_C|: extraction blocked",
@@ -488,11 +489,13 @@ var I18N = {
   " 和 FF 先垮。所以「对齐」不是越平越好。": " and FF collapse first. Alignment, then, is not “the flatter the better”.",
 
   /* ---- 模块三：J–V ---- */
-  "偏压 V（V）": "Bias V (V)",
-  "J（mA/cm²，发电方向为正）": "J (mA/cm², positive in the generating direction)",
+  "偏压 ": "Bias ",
+  "（V）": " (V)",
+  "（mA/cm²，发电方向为正）": " (mA/cm², positive in the generating direction)",
   "当前瓶颈：": "Current bottleneck: ",
   "同 E_g 的 SQ 极限 ": "SQ limit for the same E_g: ",
-  "蓝色实线是光照下的 J–V，灰色虚线是同一只二极管在暗态的曲线（两者之差就是被收集的光生电流）。": "The solid blue line is the J–V under illumination, the gray dashed line the same diode in the dark (the gap between them is the collected photocurrent). ",
+  "蓝色实线是光照下的 ": "The solid blue line is the ",
+  "，灰色虚线是同一只二极管在暗态的曲线（两者之差就是被收集的光生电流）。": ", the gray dashed line the same diode in the dark (the gap between them is the collected photocurrent). ",
   "虚线方框的面积是 ": "The area of the dashed box is ",
   "，橙色实矩形是实际最大功率 ": "; the solid orange rectangle is the actual maximum power ",
   "，两者之比即填充因子 FF。鼠标移到曲线上可以读出该点的 V、J 与功率。": "; their ratio is the fill factor FF. Hover the curve to read off V, J and the power at that point.",
@@ -559,7 +562,7 @@ var I18N = {
   "扩散系数 D = µkT/q": "Diffusion coefficient D = µkT/q",
   " cm²/s，反推寿命 τ = ": " cm²/s, which gives a lifetime τ = ",
   "（越接近 1，越省着用扩散长度）": " (the closer to 1, the less the diffusion length is strained)",
-  "1/α（代表性光子）": "1/α (representative photon)",
+  "（代表性光子）": " (representative photon)",
   " nm，层厚是它的 ": " nm; the layer is ",
   " 倍": " times thicker",
   " 与激子结合能": " and the exciton binding energy",
@@ -742,7 +745,7 @@ var I18N = {
   " 边界条件下的解析解）": " as the boundary condition)",
   "开路电压": "Open-circuit voltage",
   "　（后一项即接触电势上限）": "　 (the second term is the contact-potential ceiling)",
-  "J–V 与效率": "J–V and efficiency",
+  " 与效率": " and efficiency",
   "　（每个 V 用二分法解出 J）；": "　 (each V is solved for J by bisection); ",
   " 主要由 Pb–X 骨架决定：换 A 位只是微调（键角微变、带隙略动），换 X 位（I → Br）才是大改。": " is set mainly by the Pb–X framework: swapping the A site is only a fine adjustment (bond angles shift slightly and the gap moves a little), whereas swapping the X site (I → Br) is the big change.",
   " 是往上涨的 —— 涨回来的那部分补不上丢掉的那部分，所以单结效率会降（这也是叠层要用宽带隙顶电池去接高能光子的原因；本工具只算单结）。拖带隙滑块直接看 ": " rises — what comes back does not make up for what is lost, so the single-junction efficiency falls (this is also why a tandem puts a wide-gap cell on top to catch the energetic photons; this tool models a single junction only). Drag the band-gap slider to watch directly how ",
@@ -1045,7 +1048,7 @@ const AUTO_SUB = { "₀": "0", "₁": "1", "₂": "2", "₃": "3", "₄": "4", "
   "₇": "7", "₈": "8", "₉": "9", "₊": "+", "₋": "−", "₌": "=", "₍": "(", "₎": ")",
   "ₐ": "a", "ₑ": "e", "ₒ": "o", "ₓ": "x", "ₔ": "ə", "ₕ": "h", "ₖ": "k", "ₗ": "l",
   "ₘ": "m", "ₙ": "n", "ₚ": "p", "ₛ": "s", "ₜ": "t", "ᵣ": "r", "ᵤ": "u", "ᵥ": "v" };
-const NEED_MATH = /[\u2070-\u209C\u00B2\u00B3\u00B9]|_\{?[A-Za-z0-9\u0370-\u03ff]|\^\{?[\d(\-]|\d(\.\d+)?[eE][+\-]\d/;
+const NEED_MATH = /[\u2070-\u209C\u00B2\u00B3\u00B9]|_\{?[A-Za-z0-9\u0370-\u03ff]|\^\{?[\d(\-]|\d(\.\d+)?[eE][+\-]\d|Δ[A-Za-z\u0370-\u03ff]|(?<![A-Za-z0-9\u0370-\u03ff])[αβγδεζηθικλμνξρστυφχψωΦΨΘΞ](?![A-Za-z0-9\u0370-\u03ff])|(?<![A-Za-z0-9])kT(?![A-Za-z0-9])|hν/;
 function AUTO(s) {
   const out = []; let buf = "", mode = 0;
   const emit = (t, kind) => {
@@ -1060,6 +1063,29 @@ function AUTO(s) {
     if (AUTO_SUP[ch] !== undefined) { if (mode !== 1) { emit(buf, mode); buf = ""; mode = 1; } buf += AUTO_SUP[ch]; i++; continue; }
     if (AUTO_SUB[ch] !== undefined) { if (mode !== -1) { emit(buf, mode); buf = ""; mode = -1; } buf += AUTO_SUB[ch]; i++; continue; }
     if (mode) { emit(buf, mode); buf = ""; mode = 0; }
+    /* ▼ Δ+量字母 / kT / hν / 孤立希腊字母：这四类没有下标，旧 NEED_MATH 抓不到，整串会正体落笔 */
+    if (ch === "\u0394" && i + 1 < s.length && MATH_IDCH.test(s[i + 1])) {
+      if (s[i + 2] === "_" || s[i + 2] === "^") { emit(buf, 0); buf = ""; i++; continue; }
+      emit(buf, 0); buf = "";
+      out.push({ s: "\u0394", rm: true }); out.push({ s: s[i + 1], i: true });
+      i += 2; continue;
+    }
+    if ((ch === "k" && s[i + 1] === "T") || (ch === "h" && s[i + 1] === "\u03bd")) {
+      const pv = i > 0 ? s[i - 1] : "", nx2 = s[i + 2] || "";
+      if (!MATH_IDCH.test(pv) && !/[0-9]/.test(pv) && !MATH_IDCH.test(nx2) && !/[0-9]/.test(nx2)) {
+        emit(buf, 0); buf = "";
+        out.push({ s: ch, i: true }); out.push({ s: s[i + 1], i: true });
+        i += 2; continue;
+      }
+    }
+    if ("αβγδεζηθικλμνξρστυφχψωΦΨΘΞ".indexOf(ch) >= 0) {
+      const pv = i > 0 ? s[i - 1] : "", nx2 = s[i + 1] || "";
+      if (!MATH_IDCH.test(pv) && !/[0-9]/.test(pv) && !MATH_IDCH.test(nx2) && !/[0-9]/.test(nx2)) {
+        emit(buf, 0); buf = "";
+        out.push({ s: ch, i: true });
+        i++; continue;
+      }
+    }
     const rest = s.slice(i);
     const sc = /^\d(\.\d+)?[eE][+\-]\d{1,3}/.exec(rest);
     if (sc) {
@@ -1100,7 +1126,14 @@ function mathSegs(g, s) {
   let w = 0;
   for (const p of parts) {
     const small = !!(p.sup || p.sub);
-    const fs = style + (small ? (size * 0.74).toFixed(2) : size.toFixed(2)) + "px " + family;
+    /* ⚠️ 2026-10-29 修：AUTO() 给主符号打过 i（斜体），旧代码只沿用调用方的 style，
+       把 i 丢了 ⇒ lbl() 画出的 I_D / T_WKB 主符号一直是正体。这里补上 p.i；
+       调用方若已设 italic 就不再重复加（font 简写里两次 italic 会让整条 font 失效）。 */
+    const hasIt = /italic|oblique/.test(style);
+    /* rm = 显式正体（Δ 算符 / π 常数 / 轨道 σ·π / 高对称点 Γ Λ Δ Σ）：
+       调用方给的 font 自带 italic 时也要剥掉，否则整段跟着斜。 */
+    const pre = p.rm ? style.replace(/italic|oblique/g, "") : (hasIt ? style : ((p.i ? "italic " : "") + style));
+    const fs = pre + (small ? (size * 0.74).toFixed(2) : size.toFixed(2)) + "px " + family;
     g.font = fs;
     const tw = g.measureText(p.s).width;
     laid.push({ s: p.s, w: tw, fs: fs, dy: small ? (p.sup ? -size * 0.40 : size * 0.22) : 0 });
@@ -1169,7 +1202,7 @@ function segRuns(s) {
 }
 function pFont(q, fp, bd, cjk) {
   const sz = fp * ((q.sub || q.sup) ? SUBR : 1);
-  return (bd ? "bold " : "") + (!cjk && q.i ? "italic " : "") + sz.toFixed(2) + "px " + (cjk ? FONT : FONTM);
+  return (bd ? "bold " : "") + (!cjk && q.i && !q.rm ? "italic " : "") + sz.toFixed(2) + "px " + (cjk ? FONT : FONTM);
 }
 /* i18n 注入点①：画布 token。带 i / sub / sup / un 标记的是物理量、下标与单位，一律不动；
    没有这些标记的 token 才是自然语言，交给 T() —— 所以这里的判断只看标记，不看内容。 */
@@ -1697,7 +1730,7 @@ function drawDev() {
       g.beginPath(); g.arc(x, yEnd, 3 + 2 * Math.sin(ANIM_T * 0.12 + i), 0, 6.2832); g.stroke();
     }
   }
-  label(g, "入射光 hν", geo.B.fto.x + 6, 14, "#a8791a", 11.5, "left", true);
+  mtxt(g, TX("入射光 <span class=\"m\"><i>hν</i></span>"), geo.B.fto.x + 6, 14, "#a8791a", 11.5, "left", true);
   /* 载流子 */
   for (const p of PARTS) {
     const inLayer = p.target < p.y0 ? B.etl : B.htl;
@@ -1747,10 +1780,11 @@ function drawDev() {
   const ex = Math.min(geo.xb + 44, W - 8 - g.measureText(T(eTxt)).width);
   label(g, eTxt, ex, yT - 10, "#1976d2", 10.5, "left", true);
   /* −J 读数挂在负载右侧：实测宽度后夹回画布，否则末位（cm² 的上标）会被裁掉。 */
-  const jTxt = "−J = " + s.jsc.toFixed(1) + " mA/cm²";
-  g.font = "600 11px " + FONT;
-  const jx = Math.min(xw + 12, W - 14 - g.measureText(jTxt).width);
-  label(g, jTxt, jx, ym + 26, "#33465c", 11, "left", true);
+  /* −J 是裸符号（没有下标）⇒ AUTO 不认，必须走 mtxt，否则 J 一直是正体。
+     宽度用 mMeasure（按分段实算），不能沿用 g.measureText 整串。 */
+  const jParts = TX("<span class=\"m\">−<i>J</i></span> = " + s.jsc.toFixed(1) + " mA/cm²");
+  const jx = Math.min(xw + 12, W - 14 - mMeasure(g, jParts, 11, true));
+  mtxt(g, jParts, jx, ym + 26, "#33465c", 11, "left", true);
   /* 悬停信息 */
   if (DV.hover >= 0) {
     const L = LAYERS.find(o => o.key === geo.order[DV.hover]);
@@ -1863,7 +1897,7 @@ function drawBand() {
     g.fillRect(xv - cw / 2 - 3, cy2 - 8, cw + 6, 16);
     label(g, capTxt, xv, cy2, "#8e5bd0", 11, "center", true);
   }
-  label(g, "电子能量 E（eV，真空为 0）", 6, top - 14, "#6b7a8c", 11.5, "left", true);
+  mtxt(g, TX("电子能量 <span class=\"m\"><i>E</i></span>（eV，真空为 0）"), 6, top - 14, "#6b7a8c", 11.5, "left", true);
   label(g, "平带近似：这里不画能带弯曲，只看三层能级怎么对齐", xb, bot + 34, "#6b7a8c", 11, "right", false);
   g.setTransform(1, 0, 0, 1, 0, 0);
 }
@@ -1901,8 +1935,8 @@ function drawJv() {
     const J = jmax * i / 5;
     label(g, J.toFixed(0), x0 - 6, y1 + (y0 - y1) * (1 - i / 5), "#6b7a8c", 10.5, "right");
   }
-  label(g, "偏压 V（V）", (x0 + x1) / 2, H - 10, "#33465c", 11.5, "center", true);
-  label(g, "J（mA/cm²，发电方向为正）", 12, mT - 6, "#33465c", 11.5, "left", true);
+  mtxt(g, TX("偏压 <span class=\"m\"><i>V</i></span>（V）"), (x0 + x1) / 2, H - 10, "#33465c", 11.5, "center", true);
+  mtxt(g, TX(H_J + "（mA/cm²，发电方向为正）"), 12, mT - 6, "#33465c", 11.5, "left", true);
   /* FF：外框 + 实际功率矩形 */
   if (s.voc > 0.01 && s.jsc > 0.01) {
     dashLine(g, X(0), Y(0), X(s.voc), Y(0), "#9aa5b1", 1, [4, 3]);
@@ -2227,7 +2261,15 @@ const H_VOC = "<span class=\"m\"><i>V</i><sub>OC</sub></span>";
 const H_LAM = "<span class=\"m\"><i>λ</i><sub>g</sub></span>";
 const H_LD = "<span class=\"m\"><i>L</i><sub>D</sub></span>";
 const H_J0 = "<span class=\"m\"><i>J</i><sub>0</sub></span>";
+/* 裸的 J / V 与「J–V」：电流密度与电压都是物理量 ⇒ 斜体。
+   ⚠️ 这两个没有下标，AUTO() 不认，说明文字里不手工包就会一直是正体。 */
+const H_J = "<span class=\"m\"><i>J</i></span>";
+const H_V = "<span class=\"m\"><i>V</i></span>";
+const H_JV = "<span class=\"m\"><i>J</i>–<i>V</i></span>";
 const H_KT = "<span class=\"m\"><i>kT</i></span>";
+/* 吸收系数 α：没有下标 ⇒ AUTO() 不认，必须手工进排版层（1/α 是穿透深度，
+   与 H_KT / H_LD 同为面板上反复出现的裸符号）。 */
+const H_ALPHA = "<span class=\"m\"><i>α</i></span>";
 const pct = (v) => (v * 100).toFixed(1) + " %";
 function rowsTo(el, rows) {
   el.innerHTML = rows.map(r => {
@@ -2247,8 +2289,8 @@ function buildLegend() {
   ].map(t => "<span>" + t + "</span>").join("");
   const lj = $("legJv");
   if (lj) lj.innerHTML = [
-    swatch("#1976d2") + "光照 J–V",
-    swatch("#9aa5b1", "dash") + "暗态 J–V",
+    swatch("#1976d2") + "光照 " + H_JV,
+    swatch("#9aa5b1", "dash") + "暗态 " + H_JV,
     swatch("#ef8c1a", "sq") + "最大功率矩形（FF）"
   ].map(t => "<span>" + t + "</span>").join("");
   const ll = $("legLat");
@@ -2278,7 +2320,7 @@ function buildHints() {
     " 从 0 往上推，<span class=\"m\"><i>J</i><sub>SC</sub></span> 一动不动而 <span class=\"m\"><i>V</i><sub>OC</sub></span> 往下掉；" +
     "推到 0 以下，电子要爬一个势垒，<span class=\"m\"><i>J</i><sub>SC</sub></span> 和 FF 先垮。所以「对齐」不是越平越好。" +
     "<span class=\"eq\">开压取两者中的小者：" + EQ_VOC + " —— 后一项就是左边那条紫色竖线。</span>");
-  set("hintJv", "蓝色实线是光照下的 J–V，灰色虚线是同一只二极管在暗态的曲线（两者之差就是被收集的光生电流）。" +
+  set("hintJv", "蓝色实线是光照下的 " + H_JV + "，灰色虚线是同一只二极管在暗态的曲线（两者之差就是被收集的光生电流）。" +
     "虚线方框的面积是 <span class=\"m\"><i>J</i><sub>SC</sub><i>V</i><sub>OC</sub></span>，橙色实矩形是实际最大功率 " +
     "<span class=\"m\"><i>P</i><sub>max</sub></span>，两者之比即填充因子 FF。" +
     "鼠标移到曲线上可以读出该点的 V、J 与功率。");
@@ -2366,7 +2408,7 @@ function updatePanels() {
   put("egSub", "吸收边 " + H_LAM + " = " + s.lamG.toFixed(0) + " nm；比边更长的光子基本不吸收，" +
     "比边短的按 √(hν − E_g) 越吸越狠");
   put("dVal", OPT.d + " nm");
-  put("dSub", "本档的 1/α ≈ " + (1e7 / alphaRep(s.Eg)).toFixed(0) + " nm，厚薄就难在这里：" +
+  put("dSub", "本档的 1/" + H_ALPHA + " ≈ " + (1e7 / alphaRep(s.Eg)).toFixed(0) + " nm，厚薄就难在这里：" +
     "太薄吃不完光，太厚来不及抽");
   put("ldVal", OPT.ld + " nm");
   put("ldSub", "由爱因斯坦关系反推寿命 τ = " + H_LD + "²/D = " + fmtTau(s.tau) + "（迁移率固定）");
@@ -2413,7 +2455,7 @@ function updatePanels() {
     /* D → τ → L_D 是同一条链（L_D = √(Dτ)），原来拆成两行 ⇒ 合成一行。 */
     [H_LD + " / D / τ", PSciArr(s.D) + " cm²/s　·　" + fmtTau(s.tau) + "　·　" +
       H_LD + " / d = " + (s.ld / s.d).toFixed(2)],
-    ["1/α（代表性光子）", (1e7 / alphaRep(s.Eg)).toFixed(0) + " nm，层厚是它的 " + (OPT.d / (1e7 / alphaRep(s.Eg))).toFixed(1) + " 倍"],
+    ["1/" + H_ALPHA + "（代表性光子）", (1e7 / alphaRep(s.Eg)).toFixed(0) + " nm，层厚是它的 " + (OPT.d / (1e7 / alphaRep(s.Eg))).toFixed(1) + " 倍"],
     [H_KT + " 与激子结合能", "<span class=\"m\"><i>E</i><sub>b</sub>/<i>kT</i></span> = " + (EB / s.vt).toFixed(2) +
       "，远小于 1 ⇒ 室温自发解离；热电压 " + H_KT + " = " + s.vt.toFixed(4) + " eV"],
     /* 「折算成 Br 含量」行已删：它是 E_g 滑块的附会反推，且 E_g < 1.55 eV 时直接说
@@ -2430,7 +2472,7 @@ function updatePanels() {
     [H_JSC, EQ_JSC],
     ["收集效率", EQ_COLL + "　（扩散方程 + <span class=\"m\"><i>S</i></span> 边界条件的解析解）"],
     ["开路电压", EQ_VOC + "　（后一项即接触电势上限）"],
-    ["J–V 与效率", EQ_DIODE + "；" + EQ_PCE],
+    [H_JV + " 与效率", EQ_DIODE + "；" + EQ_PCE],
     ["固定假设"],
     ["固定假设", "入射光功率 <span class=\"m\"><i>P</i><sub>in</sub></span> = 100 mW/cm²（AM1.5）　·　理想因子 = 1（本工具只有复合中心一条复合通道）　·　界面抽取速度 <span class=\"m\"><i>S</i></span> 取热速度量级 <b>" + PSciArr(ESL) + "</b> cm/s"]
   ]);
