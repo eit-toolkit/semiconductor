@@ -2209,7 +2209,7 @@ function init() {
   });
 
   $("btnPlay").onclick = () => { OPT.playing = !OPT.playing; syncInputs(); };
-  $("btnReset").onclick = () => { resetSim(); render(); };
+  $("btnReset").onclick = () => { resetSim(); SUB_ACC = 0; ANIM_TS = 0; render(); };
 
   bindHover("sim", "sim"); bindHover("conc", "conc");
   /* 折叠区（.fold）：事件委托，新增折叠块不用再逐个绑定。
@@ -2227,14 +2227,27 @@ function init() {
 }
 
 /* ---------------- 11. 动画循环 ---------------- */
+/* 时间基准：原本「每帧固定 nsub 个子步」，120/144 Hz 高刷屏上模拟时间会跑快一倍多。
+   现按墙钟时间推进 —— 每过 ANIM_MS 算一个「虚拟帧」（k＝1），把 k 个虚拟帧该走的子步数
+   累加进 SUB_ACC，整数部分立刻执行、小数部分留到下一帧（子步长 DT 不变 ⇒ 物理步进大小不变）。
+   60 Hz 下累加器每帧恰好取出整数 nsub ⇒ 与改动前逐帧一致。 */
+const ANIM_MS = 1000 / 60;
+let ANIM_TS = 0, SUB_ACC = 0;
 let FRAME = 0;
-function loop() {
+function loop(ts) {
   if (OPT.playing) {
-    const nsub = Math.max(1, Math.round(SUB_BASE * OPT.speed));
-    for (let i = 0; i < nsub; i++) stepSim(DT);
+    const now = (typeof ts === "number" && ts > 0) ? ts : performance.now();
+    const k = ANIM_TS ? clamp((now - ANIM_TS) / ANIM_MS, 0, 3) : 1;
+    ANIM_TS = now;
+    const perFrame = Math.max(1, Math.round(SUB_BASE * OPT.speed));
+    SUB_ACC += perFrame * k;
+    /* 上限：k 已被夹到 3 帧，这里再兜一层，防长时间卡顿后狂补影响观感 */
+    const MAXSUB = perFrame * 3 + 2;
+    let guard = 0;
+    while (SUB_ACC >= 1 && guard++ < MAXSUB) { SUB_ACC -= 1; stepSim(DT); }
     FRAME++;
     drawSim(); drawConc(); updateReadout();
-  }
+  } else ANIM_TS = 0;            /* 暂停时不累积时间，恢复后不会一次补跑 */
   requestAnimationFrame(loop);
 }
 

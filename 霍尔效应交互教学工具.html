@@ -1469,6 +1469,7 @@ function syncKinds() {
 let PARTS = [];
 let ETA = 0;              // 霍尔电场的建立程度 0→1
 let LAST_SGN = 0;
+let TRAIL_ACC = 0;        // 拖尾采样累加器（单位：虚拟帧），见 stepSim
 let QUO = 1e-3;           // 定额：一枚 ⊕/⊖ 代表的霍尔电压（V），随「场景参数」重标
 let QUOKEY = "";
 
@@ -1502,7 +1503,9 @@ function resetSim() {
   LAST_SGN = Math.sign(vHallAt(OPT.B));
   syncKinds();
 }
-function stepSim() {
+function stepSim(kIn) {
+  /* k = 这一帧折合多少个「虚拟帧」（1/60 s）。缺省 1 ⇒ 单独调用时行为与改动前一致。 */
+  const k = (typeof kIn === "number" && isFinite(kIn) && kIn > 0) ? kIn : 1;
   const s = state();
   const sgn = Math.sign(s.VH);
   if (sgn !== LAST_SGN) { ETA = 0; LAST_SGN = sgn; }   // 霍尔电压反号 ⇒ 重新建立
@@ -1510,14 +1513,14 @@ function stepSim() {
     ETA = 0;                                       // 反事实：霍尔场被屏蔽，永远不建立
   } else {
     const tar = Math.abs(OPT.B) > 1e-9 ? 1 : 0;
-    ETA += (tar - ETA) * ETA_RATE * OPT.speed;
+    ETA += (tar - ETA) * Math.min(1, ETA_RATE * OPT.speed * k);
     if (Math.abs(ETA - tar) < 1e-4) ETA = tar;
   }
 
   syncKinds();
 
   const sp = OPT.speed;
-  const vstep = 0.0045 * sp;                       // 主载流子沿长度的步长（归一化）
+  const vstep = 0.0045 * sp * k;                   // 主载流子沿长度的步长（归一化）× 虚拟帧数
   const dirX = OPT.I >= 0 ? 1 : -1;                // 电流方向
   const muRef = muDrift();                         // 步长基准（SI）
 
@@ -1534,6 +1537,11 @@ function stepSim() {
   const den = s.p * s.mup + s.n * s.mun;
   const TH = den > 0 ? (s.p * s.mup * s.mup - s.n * s.mun * s.mun) / den : 0;
   const Bv = OPT.B;
+  /* 拖尾按「虚拟帧」采样：k<1 时（≥120 Hz）不必每帧都采点，否则点数不变但时间跨度变短，
+     拖尾会显得比 60 Hz 更短。累加器每满 1 才采一次 ⇒ 时间跨度与刷新率无关。 */
+  TRAIL_ACC += k;
+  const doTrail = TRAIL_ACC >= 0.999;
+  if (doTrail) TRAIL_ACC -= 1;
   for (const p of PARTS) {
     const muK = p.kind > 0 ? s.mup : s.mun;
     const du = dirX * p.kind * vstep * (muRef > 0 ? muK / muRef : 1);   // 空穴顺电流、电子逆电流
@@ -1548,10 +1556,10 @@ function stepSim() {
       if (OPT.shield) p.w = p.w > 0 ? 0.5 : -0.5;
       else { p.w = (Math.random() - 0.5) * 0.86; p.trail.length = 0; }
     }
-    if (OPT.ckTrail) {
+    if (OPT.ckTrail && doTrail) {
       p.trail.push(p.u, p.w);
       if (p.trail.length > TRAIL_MAX * 2) p.trail.splice(0, p.trail.length - TRAIL_MAX * 2);
-    } else if (p.trail.length) p.trail.length = 0;
+    } else if (!OPT.ckTrail && p.trail.length) p.trail.length = 0;
   }
 }
 /* 侧壁积累符号枚数（示意）：按定额折算当前霍尔电压 */
@@ -2362,11 +2370,20 @@ function init() {
 }
 
 /* ---------------- 15. 动画循环 ---------------- */
-function loop() {
+/* 时间基准：本工具原本「每帧走固定步长」（vstep 与 ETA 逼近都写死每帧一次），
+   120/144 Hz 高刷屏上会等比加速。现按墙钟时间推进 —— 每过 ANIM_MS 算一个「虚拟帧」
+   （k＝1），实际一帧推进 k 个虚拟帧。60 Hz 下 k ≡ 1 ⇒ 观感与改动前逐帧一致；
+   刷新率再高只是把同一段时间切得更细。 */
+const ANIM_MS = 1000 / 60;
+let ANIM_TS = 0;
+function loop(ts) {
   if (OPT.playing) {
-    stepSim();
+    const now = (typeof ts === "number" && ts > 0) ? ts : performance.now();
+    const k = ANIM_TS ? clamp((now - ANIM_TS) / ANIM_MS, 0, 3) : 1;
+    ANIM_TS = now;
+    stepSim(k);
     drawSamp();
-  }
+  } else ANIM_TS = 0;            /* 暂停时不累积时间，恢复后不会一次补跑 */
   requestAnimationFrame(loop);
 }
 
