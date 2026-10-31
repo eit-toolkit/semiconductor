@@ -1252,7 +1252,7 @@ function mathSegsRaw(g, s) {
   const size = (function () { const m = /(\d+(?:\.\d+)?)px/.exec(f); return m ? parseFloat(m[1]) : 12; })();
   const family = f.replace(/^(?:\s*(?:italic|oblique|bold|[1-9]00)\s*)*\d+(?:\.\d+)?px\s*/, "");
   const style = /italic|oblique/.test(f) ? "italic " : (/bold|[6-9]00/.test(f) ? "bold " : "");
-  const parts = AUTO(s), laid = [];
+  const parts = AUTO(T(s)), laid = [];
   let w = 0;
   for (const p of parts) {
     const small = !!(p.sup || p.sub);
@@ -1292,16 +1292,16 @@ function mathSegsRaw(g, s) {
   }
   P.fillText = function (s, x, y) {
     if (typeof s !== "string" || !NEED_MATH.test(s)) return _fill.apply(this, arguments);
-    draw(_fill, this, s, x, y, Array.prototype.slice.call(arguments, 3));
+    draw(_fill, this, T(s), x, y, Array.prototype.slice.call(arguments, 3));
   };
   P.strokeText = function (s, x, y) {
     if (typeof s !== "string" || !NEED_MATH.test(s)) return _stroke.apply(this, arguments);
-    draw(_stroke, this, s, x, y, Array.prototype.slice.call(arguments, 3));
+    draw(_stroke, this, T(s), x, y, Array.prototype.slice.call(arguments, 3));
   };
   P.measureText = function (s) {
     if (window.__HM_IN || typeof s !== "string" || !NEED_MATH.test(s)) return _measure.call(this, s);
     const save = this.font;
-    const info = mathSegs(this, s);
+    const info = mathSegs(this, T(s));
     this.font = save;
     return { width: info.w, get actualBoundingBoxLeft() { return 0; }, get actualBoundingBoxRight() { return info.w; } };
   };

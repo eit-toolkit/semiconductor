@@ -890,7 +890,7 @@ function mathSegsHMRaw(g, s) {
   const size = mm ? parseFloat(mm[1]) : 12;
   const family = f.replace(/^(?:\s*(?:italic|oblique|bold|[1-9]00)\s*)*\d+(?:\.\d+)?px\s*/, "");
   const style = /italic|oblique/.test(f) ? "italic " : (/bold|[6-9]00/.test(f) ? "bold " : "");
-  const parts = AUTO(s), laid = [];
+  const parts = AUTO(T(s)), laid = [];
   let w = 0;
   for (const p of parts) {
     const small = !!(p.sup || p.sub);
@@ -930,11 +930,11 @@ function mathSegsHMRaw(g, s) {
   }
   P.fillText = function (s, x, y) {
     if (typeof s !== "string" || !NEED_MATH_HM.test(s)) return _fill.apply(this, arguments);
-    draw(_fill, this, s, x, y, Array.prototype.slice.call(arguments, 3));
+    draw(_fill, this, T(s), x, y, Array.prototype.slice.call(arguments, 3));
   };
   P.strokeText = function (s, x, y) {
     if (typeof s !== "string" || !NEED_MATH_HM.test(s)) return _stroke.apply(this, arguments);
-    draw(_stroke, this, s, x, y, Array.prototype.slice.call(arguments, 3));
+    draw(_stroke, this, T(s), x, y, Array.prototype.slice.call(arguments, 3));
   };
   if (!_mRawHM) _mRawHM = _measure;
   P.measureText = function (s) {
@@ -942,7 +942,7 @@ function mathSegsHMRaw(g, s) {
     window.__HM_IN = 1;
     const save = this.font;
     let info;
-    try { info = mathSegsHM(this, s); } finally { window.__HM_IN = 0; }
+    try { info = mathSegsHM(this, T(s)); } finally { window.__HM_IN = 0; }
     this.font = save;
     return { width: info.w, get actualBoundingBoxLeft() { return 0; }, get actualBoundingBoxRight() { return info.w; } };
   };
@@ -1260,7 +1260,7 @@ function txt(g, s, x, y, col, font, align, base) {
   g.textAlign = align || "left"; g.textBaseline = base || "middle";
   if (typeof s === "string" && NEED_MATH.test(s)) {
     const fi = fontInfo(font, 12);
-    mRun(g, AUTO(s), x, y, fi.fp, fi.bd, align || "left", false);
+    mRun(g, AUTO(T(s)), x, y, fi.fp, fi.bd, align || "left", false);
     return;
   }
   g.fillText(s, x, y);
