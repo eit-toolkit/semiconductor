@@ -342,6 +342,9 @@ var I18N = {
   "模块一": "Module 1",
   " 空间与费米面（示意图）": " space and the Fermi surface (schematic)",
   "已占据 ": "Occupied ",
+  /* 悬停气泡里这两条是画布 token（mtxt），得整段命中；DOM 那几处走的是更长的 key */
+  "已占据（": "Occupied (",
+  "空态（": "Empty state (",
   " 点（": " points (",
   "空 ": "Empty ",
   "费米面（": "Fermi surface (",
@@ -1109,9 +1112,17 @@ function pFont(q, fp, bd, cjk) {
 const partsOf = p => p.map(q => {
   const o = (typeof q === "string" ? { s: q } : q);
   const natural = !(o.i || o.sub || o.sup || o.un);
-  if (LANG === "en" && natural && typeof o.s === "string" && /[\u4E00-\u9FFF]/.test(o.s)) {
-    const t = T(o.s);
-    return t === o.s ? o : Object.assign({}, o, { s: t });
+  if (LANG === "en" && natural && typeof o.s === "string") {
+    /* ① 词典里有精确项的直接用（须抢在 T() 之前）。全角标点（"）" "。" "，"…）
+       在画布里是独立 token，而 T() 对「不含汉字」的串直接放行 ⇒ 不给它们单开这道门，
+       英文态就会留下半个中文括号，例如 已占据（E < E_F）这种半吊子样子。 */
+    if (Object.prototype.hasOwnProperty.call(I18N, o.s)) {
+      return Object.assign({}, o, { s: I18N[o.s] });
+    }
+    if (/[\u4E00-\u9FFF]/.test(o.s)) {
+      const t = T(o.s);
+      return t === o.s ? o : Object.assign({}, o, { s: t });
+    }
   }
   return o;
 });

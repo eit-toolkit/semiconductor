@@ -261,7 +261,7 @@
       <div class="kv" id="readoutMore"></div>
       <div class="unit-note">从<b>模式</b>到<b>声子</b>：本页画的是<b>经典</b>简正模式（实数 <span class="m"><i>ω</i></span>、确定相位）。把每个模式<b>量子化</b>即得声子 —— 能量量子 <span class="m"><i>ħω</i></span>，平均占有数 <span class="m"><i>n&#772;</i><span class="op">=</span>1<span class="sl">/</span><span class="op">(</span><span class="rm">exp</span><span class="op">(</span><i>ħω</i><span class="sl">/</span><i>kT</i><span class="op">)</span><span class="op">−</span>1<span class="op">)</span></span>（玻色分布）。本工具频率取示意单位，不直接给出 <span class="m"><i>ħω</i></span>；以 Si 作锚点：Γ 点光学声子 ≈ 520 cm<sup>−1</sup>（15.6 THz、64 meV），德拜温度 <span class="m"><i>θ</i><sub>D</sub> ≈ 645 K</span>。
       <!-- 2026-10-18 简化：删掉原尾句（把两类声子分别接到另两个散射工具、并点出极性材料
-       那一类散射的整句）。前两项在第 6 道挑战的答案里已带着机制讲过一遍。 -->
+       那一类散射的整句）。前两项在最后一道挑战的答案里已带着机制讲过一遍。 -->
         </div>
     </div>
   </div>
@@ -436,7 +436,6 @@ var I18N = {
   "怎么变？": " of the charge piled up on the walls change?",
   "宽度": "width",
   "消失": "disappears",
-  "。注意": ". Note that the ",
   "本工具是 EIT-SP（半导体物理交互式教学工具箱）的一部分（武汉大学物理学院《半导体物理》智慧课程），以 MIT 协议开源，可自由使用与二次开发；转载请保留出处。反馈意见": "This tool is part of EIT-SP, the Educational Interactive Toolkit for Semiconductor Physics (School of Physics and Technology, Wuhan University). Released under the MIT license: free to use, modify and redistribute, including commercially. Please keep this attribution. Feedback",
   "本工具是": "This tool is part of",
   "（半导体物理交互式教学工具箱）的一部分（武汉大学物理学院《半导体物理》智慧课程），以": ", the Educational Interactive Toolkit for Semiconductor Physics (School of Physics and Technology, Wuhan University). Released under the",
@@ -455,10 +454,6 @@ var I18N = {
   "（横向耦合更软），所以": "(the transverse coupling is softer), so",
   "整体低于": "lie below",
   "。代价要说明：本模型里": "overall. The price must be stated: in this model",
-  "拖动「质量比」从 1 拉到 10，看模块二的灰色禁带带。禁带宽度怎么变？质量比恰好": "Drag “Mass ratio” from 1 to 10 and watch the gray forbidden band in module 2. How does the gap width change? When the mass ratio is exactly",
-  "拖动「质量比」从": "Drag “Mass ratio” from",
-  "拉到": "to",
-  "，看模块二的灰色禁带带。禁带宽度怎么变？质量比恰好": "and watch the gray forbidden band in module 2. How does the gap width change? When the mass ratio is exactly",
   "示意极端情形：重原子几乎不动，轻原子独自振动，两支几乎合并成一条平带。": "An extreme case: the heavy atom almost stands still while the light atom vibrates on its own, and the two branches almost merge into a single flat band.",
   "上图：灰色点是平衡位置，圆球是当前位置，橙色箭头给出位移方向与大小——": "Top: the gray dots are the equilibrium positions, the spheres are the current positions, and the orange arrows give the direction and size of the displacement —",
   "：该频率区间不存在任何振动模式，其相对宽度只随质量比增大（绝对宽度还随": ": no vibrational mode exists in that frequency interval, and its relative width grows only with the mass ratio (the absolute width also grows with",
@@ -558,7 +553,6 @@ var I18N = {
   "声学支（": "acoustic branch (",
   "是一条过原点的直线": "is a straight line through the origin",
   "的振幅更大（当前": "has the larger amplitude (currently",
-  "时还存在禁带吗？": "does the gap still exist when",
   "真实晶体沿同一个": "A real crystal along the same",
   "是有限值，低温下": "is a finite value, and at low temperature",
   "整体缩放，所以拖": "scaled as a whole, so dragging",
@@ -588,7 +582,6 @@ var I18N = {
   "（当前偏振）": " (current polarization)",
   "原胞内两原子": "Two atoms in the cell",
   "有什么差别？": "what is the difference?",
-  "，绝对宽度随": ", the absolute width grows with",
   "，平均占有数": ", the mean occupation number",
   "⇒ 占有数按": "⇒ the occupation number goes as",
   "占有数按": "the occupation number goes as",
@@ -717,18 +710,14 @@ var I18N = {
   "（当前 ": " (currently ",
   " 0.680）：波长趋于无穷、原子整体缓慢平移 ⇒ 宏观弹性波 / 声波；": " 0.680): the wavelength tends to infinity and the atoms translate slowly as a whole ⇒ a macroscopic elastic wave / sound wave;",
   "（当前 1.846）：原胞内两个原子反向振动、质心不动 ⇒ 可被电磁波直接激发的局域相对振动（极性材料中就是红外吸收的那支）。": " (currently 1.846): the two atoms in the cell vibrate against each other with the center of mass at rest ⇒ a localized relative vibration that an electromagnetic wave can excite directly (in polar materials, the branch responsible for infrared absorption).",
-  " 缩放，但": " scaled, but",
-  " 只由质量比决定": " is set only by the mass ratio",
-  "（两支在区边界简并，等价于折叠的单原子链）；": " (the two branches are degenerate at the zone boundary, equivalent to a folded monatomic chain);",
-  " 只整体缩放频率（拖它会看到灰带变宽变窄），": " only rescales the frequency as a whole (drag it and the gray band widens and narrows),",
   "不改变": "without changing",
   "禁带的相对宽度。": "the relative width of the gap.",
-  "4. 切换": "4. Switch",
+  "3. 切换": "3. Switch",
   "：原子的振动方向怎么变？它们与「声学 / 光学」这两支是什么关系？": ": how does the vibration direction of the atoms change? What is their relation to the “acoustic / optical” pair?",
   "纵波把回复方向取在链方向上（压缩—膨胀），横波取在垂直方向上（剪切），所以": "A longitudinal wave takes its restoring direction along the chain (compression–expansion), a transverse wave perpendicular to it (shear), so",
   "偏振与分支是两个独立的标签": "polarization and branch are two independent labels",
   " 四种模式。当前是 ": " four modes. Currently ",
-  "5. 本工具只有一维链，给出": "5. This tool has only a one-dimensional chain and gives",
+  "4. 本工具只有一维链，给出": "4. This tool has only a one-dimensional chain and gives",
   "两支": "two branches",
   "色散。推广到三维晶体：一共几支声学、几支光学？偏振分别是什么？": " dispersion. Generalize to a three-dimensional crystal: how many acoustic and how many optical branches are there, and what are their polarizations?",
   " 3 支光学：": " 3 optical branches: ",
@@ -745,7 +734,7 @@ var I18N = {
   "3 ×（原胞原子数 N）": "3 × (number of atoms per cell N)",
   " 支光学。": " optical branches.",
   "本页只画了同一偏振下的 2 支（1 声学 + 1 光学）；真实晶体沿同一个 ": "This page draws only the 2 branches of one polarization (1 acoustic + 1 optical); a real crystal along the same ",
-  "6. 本页画的是": "6. What is drawn on this page is",
+  "5. 本页画的是": "5. What is drawn on this page is",
   "（实数频率、确定相位）。把它接到半导体的散射上：为什么升温时": " (real frequency, definite phase). Connect it now to scattering in semiconductors: why does",
   "散射越来越强（": " scattering grow stronger and stronger as the temperature rises (",
   "），而": "), while ",
@@ -778,7 +767,6 @@ var I18N = {
   " 的振幅更大（实时比值见读数面板），质心基本不动。这就是「声学 / 光学」这两个名字的唯一本质区别。": " has the larger amplitude (see the readout panel for the live ratio), and the center of mass barely moves. That is the only essential difference behind the names “acoustic” and “optical”.",
   "，激发不出光学声子，散射被「冻死」（Si 的锚点数值见读数面板）。": ", no optical phonon can be excited and the scattering is “frozen out” (for the Si anchor values, see the readout panel).",
   "：波长趋于无穷、原子整体缓慢平移 ⇒ 宏观弹性波 / 声波；": ": the wavelength tends to infinity and the atoms translate slowly as a whole ⇒ a macroscopic elastic wave / sound wave;",
-  "禁带的相对宽度 —— 实时宽度就写在模块二的灰带上。": "the relative width of the gap — the live width is written right on the gray band in module 2.",
   "支数通式就一句：3 ×（原胞原子数 N）": "The general rule for the number of branches is one line: 3 × (number of atoms per cell N)",
   " 四种模式。教学近似取 ": " four modes. The teaching approximation takes ",
   "两条曲线反号（反向、轻原子振幅大）。": "the two curves have opposite signs (opposite directions, the light atom has the larger amplitude).",
@@ -1943,11 +1931,6 @@ function phaseText() {
   if (Math.abs(st.Ah) < 1e-9 || Math.abs(st.Al) < 1e-9) return "—（区边界，一支静止）";
   return st.Ah * st.Al > 0 ? "同向" : "反向";
 }
-function gapFor(r) {
-  const K = Kr();
-  return Math.sqrt(2 * K) - Math.sqrt(2 * K / Math.max(r, 1e-9));
-}
-
 function kvHd(s) { return '<div class="hd">' + s + "</div>"; }
 function kvRow(k, v) { return '<div class="row"><span class="k">' + k + '</span><span class="v">' + v + "</span></div>"; }
 
@@ -2012,13 +1995,6 @@ const CHAL = [
     q: "把 " + M_Q + " 拖到接近 0，比较两支的频率读数。哪一支趋于 0？哪一支停在有限值 " + M_OM0 + "？这两种极限各对应什么物理图像？",
     a: () => "<b>声学支 " + MM(VI("ω") + OPR("→") + "0") + "</b>：波长趋于无穷、原子整体缓慢平移 ⇒ 宏观弹性波 / 声波；<b>光学支 " + MM(VI("ω") + OPR("→") + WSUB("ω", "0")) + "</b>：原胞内两个原子反向振动、质心不动 ⇒ 可被电磁波直接激发的局域相对振动（极性材料中就是红外吸收的那支）。",
     h: "提示：留意动画速度——光学支始终快得多，因为它的频率高。"
-  },
-  {
-    q: "拖动「质量比」从 1 拉到 10，看模块二的灰色禁带带。禁带宽度怎么变？质量比恰好 " + MM(OPR("=") + "1") + " 时还存在禁带吗？",
-    a: () => MM("Δ" + VI("ω") + OPR("=") + OPR("√") + FRAC("2" + VI("K"), WSUB("m", "2")) + OPR("−") + OPR("√") + FRAC("2" + VI("K"), WSUB("m", "1"))) +
-      "，绝对宽度随 " + MM(OPR("√") + VI("K")) + " 缩放，但<b>相对宽度 " + MM("Δ" + VI("ω") + SL() + WSUB("ω", "0")) + " 只由质量比决定</b>：" + M_M1 + " = " + M_M2 + " 时 " + MM("Δ" + VI("ω") + OPR("=")) + " <b>0</b>（两支在区边界简并，等价于折叠的单原子链）；" +
-      MM(WSUB("m", "1") + SL() + WSUB("m", "2") + OPR("=") + "10") + " 时 " + MM("Δ" + VI("ω") + OPR("≈")) + " " +
-      fmt(gapFor(10), 3) + "。注意 " + M_K + " 只整体缩放频率（拖它会看到灰带变宽变窄），<b>不改变</b>禁带的相对宽度 —— 实时宽度就写在模块二的灰带上。"
   },
   {
     q: "切换<b>纵波 / 横波</b>：原子的振动方向怎么变？它们与「声学 / 光学」这两支是什么关系？",
