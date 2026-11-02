@@ -591,6 +591,7 @@ var I18N = {
   "长波参考（虚线 + 波长）": "long-wavelength guide (dashed line + λ)",
   "：本页画的是": ": what is drawn on this page is",
   "只有重原子": "Only the heavy atom",
+  "只有原子": "Only atom",
   "只有轻原子": "Only the light atom",
   "（归一化）": " (normalized)",
   "区边界 π": "Zone boundary π",
@@ -1373,6 +1374,8 @@ let PHASE = 0;      // 动画相位 ωt
 /* ---------------- 2. 物理内核 ---------------- */
 const Kr = () => OPT.K * (OPT.pol === "L" ? 1 : KT_RATIO);   // 当前偏振下的力常数
 const mass = () => ({ m1: OPT.r, m2: 1 });                   // m₁ 重、m₂ 轻
+/* 同种原子（r=1）：两球等大、标签去掉「重/轻、大球/小球」；不同原子保持原状 */
+const sameAtoms = () => Math.abs(OPT.r - 1) < 1e-9;
 
 /* 两支频率 ω（示意单位）；q 以 π/a 为单位时先乘 π */
 function omAt(q) {
@@ -1417,10 +1420,14 @@ function state() {
   let Ah, Al, note = null;
   if (!isFinite(ar) || ar > 300) {
     Ah = 1; Al = 0;
-    note = ["只有重原子 ", { s: "m", i: 1 }, { s: "1", sub: 1 }, " 振动"];
+    note = sameAtoms()
+      ? ["只有原子 ", { s: "m", i: 1 }, { s: "1", sub: 1 }, " 振动"]
+      : ["只有重原子 ", { s: "m", i: 1 }, { s: "1", sub: 1 }, " 振动"];
   } else if (ar < 1 / 300) {
     Ah = 0; Al = 1;
-    note = ["只有轻原子 ", { s: "m", i: 1 }, { s: "2", sub: 1 }, " 振动"];
+    note = sameAtoms()
+      ? ["只有原子 ", { s: "m", i: 1 }, { s: "2", sub: 1 }, " 振动"]
+      : ["只有轻原子 ", { s: "m", i: 1 }, { s: "2", sub: 1 }, " 振动"];
   }
   else if (ar >= 1) { Ah = Math.sign(ratio); Al = 1 / ar; }
   else { Ah = ratio; Al = 1; }
@@ -1682,12 +1689,12 @@ function drawChain() {
     }
   }
   for (const at of atoms) {
-    const rr = at.heavy ? 11.5 : 8.5;
+    const rr = sameAtoms() ? 10 : (at.heavy ? 11.5 : 8.5);
     g.beginPath(); g.arc(at.x, at.y, rr, 0, 6.2832);
     g.fillStyle = at.heavy ? C_HEAVY : C_LIGHT; g.fill();
     g.lineWidth = 1.2; g.strokeStyle = at.heavy ? "#24384f" : "#5b8dc2"; g.stroke();
     mtxt(g, at.heavy ? [{ s: "m", i: 1 }, { s: "1", sub: 1 }] : [{ s: "m", i: 1 }, { s: "2", sub: 1 }],
-      at.x, at.y + 0.5, "#fff", at.heavy ? 9.5 : 8.5, "center", true);
+      at.x, at.y + 0.5, "#fff", sameAtoms() ? 9.5 : (at.heavy ? 9.5 : 8.5), "center", true);
   }
 
   /* --- 子格 u(x) 曲线 --- */
@@ -1706,7 +1713,7 @@ function drawChain() {
     if (Math.abs(st.Ah) > 1e-4) curve(st.Ah, C_HEAVY, 2.2);
     if (Math.abs(st.Al) > 1e-4) curve(st.Al, C_LIGHT, 2.2);
     for (const at of atoms) {
-      const rr = at.heavy ? 3.4 : 2.8;
+      const rr = sameAtoms() ? 3.1 : (at.heavy ? 3.4 : 2.8);
       g.beginPath(); g.arc(at.x0, yB - at.u * simAmp, rr, 0, 6.2832);
       g.fillStyle = at.heavy ? C_HEAVY : C_LIGHT; g.fill();
     }
@@ -1724,9 +1731,11 @@ function drawChain() {
     }
     if (best && bd < 22) {
       const deg = ((best.i * st.qa2 - PHASE) * 180 / Math.PI % 360 + 360) % 360;
-      const p1 = (best.heavy
-        ? ["重原子 ", { s: "m", i: 1 }, { s: "1", sub: 1 }]
-        : ["轻原子 ", { s: "m", i: 1 }, { s: "2", sub: 1 }])
+      const p1 = (sameAtoms()
+        ? ["原子 ", { s: "m", i: 1 }, { s: best.heavy ? "1" : "2", sub: 1 }]
+        : best.heavy
+          ? ["重原子 ", { s: "m", i: 1 }, { s: "1", sub: 1 }]
+          : ["轻原子 ", { s: "m", i: 1 }, { s: "2", sub: 1 }])
         .concat([{ s: " = " }, { s: fmt(best.heavy ? st.m1 : st.m2, 2) }]);
       const p2 = ["位移 ", { s: "u", i: 1 }, { s: " = " + (best.u >= 0 ? "+" : "−") + fmt(Math.abs(best.u), 2) + "（归一化）" }];
       const p3 = ["相位 ", { s: "q", i: 1 }, { s: "x", i: 1 }, { s: " − " }, { s: "ω", i: 1 }, { s: "t", i: 1 },
@@ -1968,9 +1977,10 @@ function updateReadout() {
 
 /* ---------------- 8. 图例 ---------------- */
 function buildLegends() {
+  const same = sameAtoms();
   $("legChain").innerHTML = [
-    '<span><span class="swatch sq" style="background:' + C_HEAVY + '"></span>重原子 ' + M_M1 + '（大球）</span>',
-    '<span><span class="swatch sq" style="background:' + C_LIGHT + '"></span>轻原子 ' + M_M2 + '（小球）</span>',
+    '<span><span class="swatch sq" style="background:' + C_HEAVY + '"></span>' + (same ? "原子 " : "重原子 ") + M_M1 + (same ? "" : "（大球）") + '</span>',
+    '<span><span class="swatch sq" style="background:' + C_LIGHT + '"></span>' + (same ? "原子 " : "轻原子 ") + M_M2 + (same ? "" : "（小球）") + '</span>',
     '<span><span class="swatch" style="border-color:' + C_ARROW + '"></span>当前位移（箭头）</span>',
     '<span><span class="swatch dash" style="border-color:#c3cedb"></span>平衡位置</span>',
     '<span><span class="swatch" style="border-color:#8a97a6"></span>一个波长 ' + M_LAM + '</span>'
@@ -2064,6 +2074,7 @@ function markActive() {
   Array.prototype.forEach.call($("polBtns").children, b => b.classList.toggle("active", b.dataset.p === OPT.pol));
 }
 function syncInputs() {
+  buildLegends();
   $("rSlider").value = Math.round(OPT.r * 100);
   $("kSlider").value = Math.round(OPT.K * 100);
   $("qSlider").value = Math.round(OPT.qf * 1000);
