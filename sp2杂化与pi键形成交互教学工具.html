@@ -307,7 +307,19 @@ function trimMap() {
   return m;
 }
 /* eslint-disable no-use-before-define */
+/* 2026-11-05 R8：英文态全角标点兜底。T() 的「无汉字即放行」让单独成节点的
+   中文标点漏进英文页；返回前统一换成半角，不动词典与匹配逻辑。
+   与「光生电导效应」「半导体表面边界条件」两件同一实现，并额外归一全角空格。 */
+var FWP = /[\u3000\u3001\u3002\uFF01\uFF0C\uFF0F\uFF1A\uFF1B\uFF1F\uFF08\uFF09\uFF1D]/g;
+var FWP_M = { "\u3000": " ", "\u3001": ", ", "\u3002": ". ", "\uFF01": "! ",
+              "\uFF0C": ", ", "\uFF0F": " / ", "\uFF1A": ": ", "\uFF1B": "; ", "\uFF1F": "? ",
+              "\uFF08": " (", "\uFF09": ")", "\uFF1D": " = " };
 function T(s) {
+  var v = _T(s);
+  if (LANG !== "en" || typeof v !== "string") return v;
+  return v.replace(FWP, function (c) { return FWP_M[c]; });
+}
+function _T(s) {
   if (LANG !== "en" || typeof s !== "string" || !s) return s;
   if (!/[一-鿿]/.test(s)) return s;
   if (Object.prototype.hasOwnProperty.call(I18N, s)) return I18N[s];
@@ -422,7 +434,7 @@ var I18N = {
   "了 ": " ",
   "参数": "parameters",
   "相对": "relative",
-  "还是": "or",
+  "还是": "or ",
   " eV）": " eV in all)",
   "恒": "always",
   "平移": "Shift",
@@ -432,7 +444,7 @@ var I18N = {
   "三角形": "triangle",
   "常数": "constant",
   "参考": "reference",
-  "上方": "above",
+  "上方": "above ",
   "价": "valence",
   "顶": "top",
   "，因为": ", because ",
@@ -672,7 +684,7 @@ var I18N = {
   " 上。": ".",
   "1. 切到「② sp": "1. Switch to '② sp",
   " 杂化」，旋转三维视图：3 个 sp": " hybridization' and rotate the 3D view: are the 3 sp",
-  " 轨道在": " orbitals in",
+  " 轨道在": " orbitals in ",
   "同一个平面": "the same plane",
   "内吗？它们之间的夹角是多少？剩下的 2p": "? What is the angle between them? Where does the remaining 2p",
   " 指向哪里？": " point?",
@@ -801,7 +813,7 @@ var I18N = {
   "三重简并（洪特规则）": "triply degenerate (Hund's rule)",
   "σ 满 2e（键级 1）": "σ full 2e (bond order 1)",
   "4. 缺失的那根键：金刚石里每个碳原子有 4 根 σ 键，石墨烯里只有 3 根 —— 第 4 根键去哪了？对照模块三的对比表，先说清两边的键角与杂化轨道数，再回答：为什么 sp": "4. The Missing Bond: every carbon atom has 4 σ bonds in diamond but only 3 in graphene — where did the 4th bond go? Read the Module 3 comparison table first: set out the bond angles and the number of hybrid orbitals on both sides, then answer why sp",
-  " 偏偏会留下一个未杂化的 p 轨道？": " in particular leaves one p orbital unhybridized?",
+  " 偏偏会留下一个未杂化的 p 轨道？": " in particular leave one p orbital unhybridized?",
   "先把两组数字摆出来。": "Start by setting out the two sets of numbers. ",
   "杂化轨道，四个方向全部用成 σ 键，": " hybrid orbitals, with all four directions used as σ bonds, ",
   "剩余 p 轨道 —— 4 根键、每根被两个原子分摊，平均每原子 ": " p orbital left over — 4 bonds, each shared between two atoms, so on average ",

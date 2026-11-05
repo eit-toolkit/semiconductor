@@ -359,7 +359,19 @@ function trimMap() {
   return m;
 }
 /* eslint-disable no-use-before-define */
+/* 2026-11-05 R8：英文态全角标点兜底。T() 的「无汉字即放行」让单独成节点的
+   中文标点漏进英文页；返回前统一换成半角，不动词典与匹配逻辑。
+   与「光生电导效应」「半导体表面边界条件」两件同一实现，并额外归一全角空格。 */
+var FWP = /[\u3000\u3001\u3002\uFF01\uFF0C\uFF0F\uFF1A\uFF1B\uFF1F\uFF08\uFF09\uFF1D]/g;
+var FWP_M = { "\u3000": " ", "\u3001": ", ", "\u3002": ". ", "\uFF01": "! ",
+              "\uFF0C": ", ", "\uFF0F": " / ", "\uFF1A": ": ", "\uFF1B": "; ", "\uFF1F": "? ",
+              "\uFF08": " (", "\uFF09": ")", "\uFF1D": " = " };
 function T(s) {
+  var v = _T(s);
+  if (LANG !== "en" || typeof v !== "string") return v;
+  return v.replace(FWP, function (c) { return FWP_M[c]; });
+}
+function _T(s) {
   if (LANG !== "en" || typeof s !== "string" || !s) return s;
   if (!/[一-鿿]/.test(s)) return s;
   if (Object.prototype.hasOwnProperty.call(I18N, s)) return I18N[s];
@@ -503,7 +515,7 @@ var I18N = {
   "阈值与当前倍数记在读数面板；低于阈值时只能看到进动被“拖慢”（临界慢化），把电流继续加上去才会真的翻过去。": "The threshold and the current multiple are listed in the readout panel; below threshold you only see the precession being “dragged out” (critical slowing down) — keep raising the current and it really does switch.",
   "面内场把磁矩掰离易轴、势垒变浅，STT 的阈值随之下降（本工具里 ": "The in-plane field bends the moment off the easy axis and shallows the barrier, so the STT threshold falls (in this tool ",
   " 只按 α 现算，": " is computed from α alone; ",
-  " 的作用请直接看轨迹曲线的翻转时间）。": " shows its effect directly in the switching time on the trajectory curve).",
+  " 的作用请直接看轨迹曲线的翻转时间）。": " shows its effect directly in the switching time on the trajectory curve). ",
   "自由层厚度 / ": "Free-layer thickness / ",
   "自旋霍尔角 ": "Spin Hall angle ",
   "（1 nm 平行态）": " (1 nm, parallel state)",
@@ -2420,7 +2432,7 @@ function bindAll() {
     const h = e.target.closest ? e.target.closest(".fold-head") : null;
     if (h) h.parentNode.classList.toggle("open");
   });
-  window.addEventListener("resize", () => fitAll());
+  window.addEventListener("resize", () => { fitAll(); render(); }); /* 2026-11-05：fitAll 清屏后必须立刻重绘全部三张画布 */
 }
 function render() {
   try {

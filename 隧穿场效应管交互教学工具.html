@@ -2549,7 +2549,7 @@ function bindAll() {
     const h = e.target.closest ? e.target.closest(".fold-head") : null;
     if (h) h.parentNode.classList.toggle("open");
   });
-  window.addEventListener("resize", () => fitAll());
+  window.addEventListener("resize", () => { fitAll(); render(); }); /* 2026-11-05：fitAll 清屏后必须立刻重绘两张画布（含动画关闭时） */
 }
 function render() {
   try {
