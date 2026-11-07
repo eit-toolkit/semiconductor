@@ -364,7 +364,7 @@ function T(s) {
 }
 
 var I18N = {
-  /* ---- 词典：中文原文 → 英文。key 禁含运行时数字（换个参数就漏），数字前后要拆开 ---- */
+  "† 理想栅控极限口径；实测量测常见 70–90 mV/dec（见模块二热发射）。": " † Ideal gate-control limit; measured devices typically give 70–90 mV/dec (see Module 2, thermionic emission). ", /* ---- 词典：中文原文 → 英文。key 禁含运行时数字（换个参数就漏），数字前后要拆开 ---- */
   "隧穿场效应管交互教学工具": "Tunnel FET — Interactive Toolkit",
   "模块一": "Module 1",
   "器件剖面与隧穿窗口（左）· 转移特性（右）": "Device cross section and tunneling window (left) · Transfer characteristics (right)",
@@ -494,7 +494,7 @@ var I18N = {
   "器件": "Device",
   "漏极电流 ": "Drain current ",
   "同栅压 MOSFET ": "MOSFET at same gate voltage ",
-  "亚阈值摆幅 SS（本点）": "Subthreshold swing SS (this point)",
+  "亚阈值摆幅 SS†（本点）": "Subthreshold swing SS† (this point)",
   "中间量": "Intermediate quantities",
   " 与理想 SS": " and ideal SS",
   "开启栅压 ": "Turn-on gate voltage ",
@@ -709,14 +709,14 @@ var I18N = {
   "（三档离散）；一律 300 K，不展开变温与双极性漏电；ψ 在整段栅压量程内恒 > 0（模型不进入积累区）。电流 I ∝ ": " (three discrete options); the temperature is always 300 K, with no variable-temperature or ambipolar leakage model; ψ stays positive over the whole gate-voltage range (the model never enters accumulation). The current I ∝ ",
   "，前因子按 Si 参考点标定，绝对量只看量级。": ", with the prefactor calibrated against a Si reference point, so only the order of magnitude of the absolute value is meaningful.",
   " mV/dec（MOSFET 室温极限 ": " mV/dec (the room-temperature MOSFET limit is ",
-  "最陡 SS / 开启栅压 ": "Steepest SS / turn-on gate voltage ",
+  "最陡 SS† / 开启栅压 ": "Steepest SS† / turn-on gate voltage ",
   " mV/dec @ ": " mV/dec at ",
   "（点隧穿 PTBT）": " (point tunneling, PTBT)",
   "（线隧穿 LTBT）": " (line tunneling, LTBT)",
   " / 结区宽 ": " / junction width ",
   "/2q）": "/2q)",
   "（对照）": " (for comparison)",
-};
+}; /* 英文态全角兜底（第 9/10 轮）：照自旋/sp² 的 FWP 口径包一层 T()，只改英文态；本行夹在词典闭合(719)与下一抽取段(720)之间且**不增行** ⇒ 不扰动 _pg_build.js 的 seg() 边界。 */ (function () { var FW = /[\u3000\u3001\u3002\uFF01\uFF0C\uFF0F\uFF1A\uFF1B\uFF1F\uFF08\uFF09\uFF1D]/g, FWM = { "\u3000": " ", "\u3001": ", ", "\u3002": ". ", "\uFF01": "! ", "\uFF0C": ", ", "\uFF0F": " / ", "\uFF1A": ": ", "\uFF1B": "; ", "\uFF1F": "? ", "\uFF08": " (", "\uFF09": ")", "\uFF1D": " = " }, _T0 = T; T = function (s) { var v = _T0(s); return (LANG === "en" && typeof v === "string") ? v.replace(/\s*\uFF0F\s*/g, " / ").replace(FW, function (c) { return FWM[c]; }) : v; }; })();
 (function () {
   if (typeof CanvasRenderingContext2D === "undefined") return;
   var ft = CanvasRenderingContext2D.prototype.fillText;
@@ -2105,7 +2105,7 @@ function drawIVPane(g, d, W, H) {
     lbl(g, V.toFixed(1), xOf(V), y1 + 14, C_SUB, 10.5, "center");
   }
   line(g, x0, y0, x0, y1, C_AX, 1);
-  mtxt(g, TX("<span class=\"m\"><i>I</i><sub>D</sub> (µA/µm)</span>"), x0 - 8, y0 - 12, C_SUB, 11, "right", true);
+  mtxt(g, TX("<span class=\"m\"><i>I</i><sub>D</sub> (µA/µm)</span>"), x0 + 4, y0 + 12, C_SUB, 11, "left", true); /* 纵轴单位移到绘图区内左上，给外上方的斜率题注让出整行 */
   lbl(g, "栅压 V_GS（V）", (x0 + x1) / 2, y1 + 30, C_SUB, 11, "center", true);
 
   const clampLg = (I) => Math.max(IV_LO - 0.5, Math.min(IV_HI + 0.5, Math.log10(Math.max(I, 1e-30))));
@@ -2150,9 +2150,9 @@ function drawIVPane(g, d, W, H) {
     /* 两条段的说明合成一行放在顶部，省得在窄栏里跟曲线叠在一起 */
     lblSeq(g, ["斜率参考（每十进位）：灰 ", (dV60 * 1e3).toFixed(0), " ／ 绿 ",
       (isFinite(dVnow) ? (dVnow * 1e3).toFixed(0) : "—"), " mV/dec"],
-      x1, y0 - 11, C_SUB, 10.5, true);
+      x1 - 4, y0 - 11, C_SUB, 10.5, true);
   }
-  lbl(g, "TFET", x1 - 6, yOf(clampLg(withOpt({ vg: VMAXG }).Id)) + 14, C_TUN, 11.5, "right", true);
+  (function () { const ty = Math.max(y0 + 12, yOf(clampLg(withOpt({ vg: VMAXG }).Id)) - 12), tx = x1 - 6; g.save(); g.fillStyle = "#fbfcfe"; g.fillRect(tx - 30, ty - 13, 36, 18); g.restore(); lbl(g, "TFET", tx, ty, C_TUN, 11.5, "right", true); })(); /* 曲线终点上方加底色托板：竖直工作点虚线会随栅压扫过整个右栏，纯文字标签必被穿字 */
   lbl(g, "MOSFET（理想 60 mV/dec）", x1 - 6, y1 - 10, C_MOS, 11, "right", true);
 }
 
@@ -2274,7 +2274,7 @@ function buildReadout() {
       "（" + typeName(d) + "）" : "—"],
     { hd: "器件" },
     ["漏极电流 I_D", d.Id > 1e-3 ? d.Id.toFixed(3) + " µA/µm" : d.Id.toExponential(2) + " µA/µm"],
-    ["亚阈值摆幅 SS（本点）", isFinite(ssNow) ? "<b>" + (ssNow * 1e3).toFixed(1) + "</b> mV/dec（MOSFET 室温极限 <b>" +
+    ["亚阈值摆幅 SS†（本点）", isFinite(ssNow) ? "<b>" + (ssNow * 1e3).toFixed(1) + "</b> mV/dec（MOSFET 室温极限 <b>" +
       (d.SSmos * 1e3).toFixed(1) + "</b> mV/dec）" : "—（未开启）"]
   ]);
   const rm = $("readoutMore");
@@ -2287,7 +2287,7 @@ function buildReadout() {
     [H_MS + " 有效质量", OPT.ms.toFixed(3) + " m<sub>0</sub>"],
     ["隧穿长度 A_t", d.open ? d.AtNm.toFixed(2) + " nm" : "0 nm"],
     ["同栅压 MOSFET I_D（对照）", d.Imos > 1e-3 ? d.Imos.toFixed(1) + " µA/µm" : d.Imos.toExponential(2) + " µA/µm"],
-    ["最陡 SS / 开启栅压 V_th", isFinite(sb.ss) ? "<b>" + (sb.ss * 1e3).toFixed(1) + "</b> mV/dec @ <b>" +
+    ["最陡 SS† / 开启栅压 V_th", isFinite(sb.ss) ? "<b>" + (sb.ss * 1e3).toFixed(1) + "</b> mV/dec @ <b>" +
       vthOf(d).toFixed(2) + "</b> V" : "—（全程未开启）"],
     ["栅特征长度 λ_g / 结区宽 W_d", (d.lamG / 1e-9).toFixed(2) + " nm ／ " +
       (isFinite(d.WdNm) ? d.WdNm.toFixed(2) + " nm" : "—")],
@@ -2298,7 +2298,7 @@ function buildReadout() {
      ⇒ 搬到下面的 unit-note 压成一段。**一条都不能真删**：换材料仍取 Si 的 ε、
      栅叠层三档离散、一律 300 K、ψ 恒 > 0 —— 这些都是隐藏建模选择的披露（记忆 §3）。 */
   const rn = $("roNote");
-  if (rn) rn.innerHTML = "模型边界：势垒取三角势垒近似（场取耗尽近似峰值并视为常量）；源区按简并极限、沟道按本征处理 ⇒ V_bi = E_g/2q；换材料时沟道介电常数仍取 Si 的 11.7；栅叠层 t_ox = " + OPT.tox.toFixed(1) + " nm / ε_ox = <b>" + OPT.eox + "</b>（三档离散）；一律 300 K，不展开变温与双极性漏电；ψ 在整段栅压量程内恒 > 0（模型不进入积累区）。电流 I ∝ A_t·ΔE·E²·T_WKB，前因子按 Si 参考点标定，绝对量只看量级。";
+  if (rn) rn.innerHTML = "模型边界：势垒取三角势垒近似（场取耗尽近似峰值并视为常量）；源区按简并极限、沟道按本征处理 ⇒ V_bi = E_g/2q；换材料时沟道介电常数仍取 Si 的 11.7；栅叠层 t_ox = " + OPT.tox.toFixed(1) + " nm / ε_ox = <b>" + OPT.eox + "</b>（三档离散）；一律 300 K，不展开变温与双极性漏电；ψ 在整段栅压量程内恒 > 0（模型不进入积累区）。电流 I ∝ A_t·ΔE·E²·T_WKB，前因子按 Si 参考点标定，绝对量只看量级。† 理想栅控极限口径；实测量测常见 70–90 mV/dec（见模块二热发射）。";
 }
 
 /* ==================================================================
