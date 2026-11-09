@@ -338,6 +338,7 @@ function T(s) {
   return v;
 }
 var I18N = {
+  "看看答案": "Show answer",
   /* ---- 词典：中文原文 → 英文。key 禁含运行时数字（换个参数就漏），数字前后要拆开 ---- */
   /* ---- 标题与页脚 ---- */
   "半导体晶格交互教学工具（金刚石 / 闪锌矿 / 纤锌矿 / NaCl）": "Semiconductor Crystal Lattices (diamond / zinc blende / wurtzite / NaCl) — Interactive Toolkit",
@@ -418,7 +419,6 @@ var I18N = {
   /* ---- 引导探究与挑战 ---- */
   "引导探究（点击展开，先自己试一试再看答案）": "Guided inquiry (click to expand — try it yourself before opening the answers)",
   "挑战任务": "Challenges",
-  "显示答案": "Show answer",
   "挑战一 · 数一数配位数": "Challenge 1 · Count the coordination number",
   "选择「金刚石 / Si」，把超胞切到 2×2×2，旋转视图找到内部的一个 Si 原子，单击它。它周围有几个最近邻？键长是多少？": "Select “diamond / Si”, switch the supercell to 2×2×2, rotate the view to find a Si atom well inside, and click it. How many nearest neighbors surround it, and how long are the bonds?",
   "配位数 4，最近邻距离 ": "Coordination number 4; the nearest-neighbor distance is ",
@@ -503,6 +503,7 @@ var I18N = {
 
 
 /* ---- DOM 文本节点 ---- */
+var FWN = (function () { var r = /[\u3000\u3001\u3002\u300C\u300D\uFF01\uFF08\uFF09\uFF0B\uFF0C\uFF0E\uFF0F\uFF1A\uFF1B\uFF1D\uFF1E\uFF1F\uFF5E]/g, m = {"\u3000":" ", "\u3001":", ", "\u3002":". ", "\u300C":" \"", "\u300D":"\"", "\uFF01":"! ", "\uFF08":" (", "\uFF09":")", "\uFF0B":"+", "\uFF0C":", ", "\uFF0E":".", "\uFF0F":" / ", "\uFF1A":": ", "\uFF1B":"; ", "\uFF1D":"=", "\uFF1E":">", "\uFF1F":"? ", "\uFF5E":"~"}; return function (s) { if (typeof s !== "string") return s; return s.replace(/\s*\uFF0F\s*/g, " / ").replace(r, function (c) { return m[c]; }); }; })();
 function i18nNode(n) {
   var el = n.parentElement;
   if (!el) return;
@@ -511,7 +512,7 @@ function i18nNode(n) {
   if (el.closest && el.closest("[data-noi18n]")) return;
   var cur = n.nodeValue;
   if (n.__orig === undefined || (cur !== n.__last && cur !== n.__orig)) n.__orig = cur;
-  var want = LANG === "en" ? T(n.__orig) : n.__orig;
+  var want = LANG === "en" ? FWN(T(n.__orig)) : n.__orig;
   if (want !== cur) n.nodeValue = want;
   n.__last = want;
 }
@@ -572,7 +573,9 @@ function setLang(l) {
   document.title = l === "en" ? T(ORIG_TITLE) : ORIG_TITLE;
   i18nWalk(document.body);
   if (typeof syncInputs === "function") syncInputs();
-  if (typeof render === "function") render();
+  /* render(view) 需要具体视图，无参调用会在 view.g 解构处抛异常；
+     统一走 requestDraw() 标脏，由 rAF 循环用 render(v) 重绘，画布标签随 DOM 一起换语言。 */
+  if (typeof requestDraw === "function") requestDraw();
 }
 "use strict";
 
@@ -2274,15 +2277,11 @@ function buildChals() {
     const d = document.createElement("div");
     d.className = "chal";
     d.innerHTML =
-      '<div class="chal-head"><b>' + c.t + '</b><span class="chev">▶</span></div>' +
-      '<div class="chal-body"><div class="q">' + c.q + '</div>' +
-      '<div class="btn-row"><button class="primary">显示答案</button></div>' +
-      '<div class="ans">' + c.a + '</div></div>';
+      '<div class="chal-head"><b>' + c.t + '<span> — </span>' + c.q + '</b><span class="chev">▶</span></div>' +
+      '<div class="chal-body"><div class="ans"></div>' +
+      '<div class="btn-row"><button>看看答案</button></div></div>';
     d.querySelector(".chal-head").onclick = () => d.classList.toggle("open");
-    d.querySelector(".btn-row button").onclick = () => {
-      const ans = d.querySelector(".ans");
-      ans.classList.toggle("show");
-    };
+    d.querySelector(".btn-row button").onclick = () => { const ans = d.querySelector(".ans"); ans.innerHTML = typeof c.a === "function" ? c.a() : c.a; ans.classList.toggle("show"); };
     grid.appendChild(d);
   });
 }
@@ -2362,8 +2361,8 @@ function init() {
   })();
 }
 if (typeof window !== "undefined" && window.document) init();
-/* i18n 启动必须在 init() 之后：setLang() 会重跑 syncInputs()/render()，
-   放到 init() 之前会在 fitAll() 之前触发绘制，一旦抛异常整个 init() 就跑不到（挑战与画布会空）。 */
+/* i18n 启动必须在 init() 之后：setLang() 里的 requestDraw() 依赖已初始化的 VIEWS，
+   放到 init() 之前会踩到 const 的暂时性死区（挑战与画布会空）。 */
 (function () {
   try {
     i18nWatch();

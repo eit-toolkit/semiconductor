@@ -585,7 +585,7 @@ var I18N = {
   " —— 这一方波是后面两行三角形的 ": " — this square wave is the sole source of the triangular ",
   " 和抛物线的 ": " and of the parabolic ",
   " 的唯一源头。": " in the two rows below.",
-  "看看答案": "Show the answer",
+  "看看答案": "Show answer",
   " 那一行：为什么是": " row: why is it a ",
   "三角形": "triangle",
   "？峰值 ": "? Why is the peak ",
@@ -745,6 +745,7 @@ var I18N = {
 })();
 
 /* ---- DOM 文本节点 ---- */
+var FWN = (function () { var r = /[\u3000\u3001\u3002\u300C\u300D\uFF01\uFF08\uFF09\uFF0B\uFF0C\uFF0E\uFF0F\uFF1A\uFF1B\uFF1D\uFF1E\uFF1F\uFF5E]/g, m = {"\u3000":" ", "\u3001":", ", "\u3002":". ", "\u300C":" \"", "\u300D":"\"", "\uFF01":"! ", "\uFF08":" (", "\uFF09":")", "\uFF0B":"+", "\uFF0C":", ", "\uFF0E":".", "\uFF0F":" / ", "\uFF1A":": ", "\uFF1B":"; ", "\uFF1D":"=", "\uFF1E":">", "\uFF1F":"? ", "\uFF5E":"~"}; return function (s) { if (typeof s !== "string") return s; return s.replace(/\s*\uFF0F\s*/g, " / ").replace(r, function (c) { return m[c]; }); }; })();
 function i18nNode(n) {
   var el = n.parentElement;
   if (!el) return;
@@ -753,7 +754,7 @@ function i18nNode(n) {
   if (el.closest && el.closest("[data-noi18n]")) return;
   var cur = n.nodeValue;
   if (n.__orig === undefined || (cur !== n.__last && cur !== n.__orig)) n.__orig = cur;
-  var want = LANG === "en" ? T(n.__orig) : n.__orig;
+  var want = LANG === "en" ? FWN(T(n.__orig)) : n.__orig;
   if (want !== cur) n.nodeValue = want;
   n.__last = want;
 }

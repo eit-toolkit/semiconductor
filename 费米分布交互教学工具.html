@@ -394,6 +394,7 @@ function T(s) {
   return v;
 }
 var I18N = {
+  "看看答案": "Show answer",
   /* ---- 词典：中文原文 → 英文。key 禁含运行时数字（换个参数就漏），数字前后要拆开 ---- */
   "费米分布交互教学工具（金属 / 半导体）": "Fermi-Dirac Distribution (metals / semiconductors) — Interactive Toolkit",
   "费米分布交互教学工具": "Fermi-Dirac Distribution — Interactive Toolkit",
@@ -510,7 +511,6 @@ var I18N = {
   "常见金属：Cu ≈ 7.0 eV · Ag ≈ 5.5 eV · Al ≈ 11.7 eV": "Common metals: Cu ≈ 7.0 eV · Ag ≈ 5.5 eV · Al ≈ 11.7 eV",
   "引导探究（点击展开，先自己试一试再看答案）": "Guided inquiry (click to expand — try it yourself before opening the answers)",
   "挑战任务": "Challenges",
-  "显示答案": "Show answer",
   "挑战一 · 温度怎样「抹平」费米面": "Challenge 1 · How temperature \"smears out\" the Fermi surface",
   "切到「模块二 · 温度对比」，把温度滑块从 1000 K 慢慢拉到 100 K，观察 ": "Switch to \"module 2 · temperature comparison\" and slowly drag the temperature slider from 1000 K down to 100 K: watch how ",
   " 三条曲线的陡峭程度如何变化，以及它们始终在哪一点相交。": " the steepness of the three curves changes, and at which point they always intersect.",
@@ -643,6 +643,7 @@ var I18N = {
 
 
 /* ---- DOM 文本节点 ---- */
+var FWN = (function () { var r = /[\u3000\u3001\u3002\u300C\u300D\uFF01\uFF08\uFF09\uFF0B\uFF0C\uFF0E\uFF0F\uFF1A\uFF1B\uFF1D\uFF1E\uFF1F\uFF5E]/g, m = {"\u3000":" ", "\u3001":", ", "\u3002":". ", "\u300C":" \"", "\u300D":"\"", "\uFF01":"! ", "\uFF08":" (", "\uFF09":")", "\uFF0B":"+", "\uFF0C":", ", "\uFF0E":".", "\uFF0F":" / ", "\uFF1A":": ", "\uFF1B":"; ", "\uFF1D":"=", "\uFF1E":">", "\uFF1F":"? ", "\uFF5E":"~"}; return function (s) { if (typeof s !== "string") return s; return s.replace(/\s*\uFF0F\s*/g, " / ").replace(r, function (c) { return m[c]; }); }; })();
 function i18nNode(n) {
   var el = n.parentElement;
   if (!el) return;
@@ -651,7 +652,7 @@ function i18nNode(n) {
   if (el.closest && el.closest("[data-noi18n]")) return;
   var cur = n.nodeValue;
   if (n.__orig === undefined || (cur !== n.__last && cur !== n.__orig)) n.__orig = cur;
-  var want = LANG === "en" ? T(n.__orig) : n.__orig;
+  var want = LANG === "en" ? FWN(T(n.__orig)) : n.__orig;
   if (want !== cur) n.nodeValue = want;
   n.__last = want;
 }
@@ -2048,14 +2049,11 @@ function buildChals() {
     const d = document.createElement("div");
     d.className = "chal";
     d.innerHTML =
-      '<div class="chal-head"><b>' + c.t + '</b><span class="chev">▶</span></div>' +
-      '<div class="chal-body"><div class="q">' + c.q + '</div>' +
-      '<div class="btn-row"><button class="primary">显示答案</button></div>' +
-      '<div class="ans">' + c.a + '</div></div>';
+      '<div class="chal-head"><b>' + c.t + '<span> — </span>' + c.q + '</b><span class="chev">▶</span></div>' +
+      '<div class="chal-body"><div class="ans"></div>' +
+      '<div class="btn-row"><button>看看答案</button></div></div>';
     d.querySelector(".chal-head").onclick = () => d.classList.toggle("open");
-    d.querySelector(".btn-row button").onclick = () => {
-      d.querySelector(".ans").classList.toggle("show");
-    };
+    d.querySelector(".btn-row button").onclick = () => { const a = d.querySelector(".ans"); a.innerHTML = typeof c.a === "function" ? c.a() : c.a; a.classList.toggle("show"); };
     grid.appendChild(d);
   });
 }

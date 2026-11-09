@@ -683,7 +683,7 @@ var I18N = {
   "画成波浪形的光子箭头": "photon arrow drawn as a wavy line",
   "表示什么？它的能量有多少？既然曲线定律都是 ": " — what does it stand for? How much energy does it carry? Since all curves obey the law ",
   "，为什么硅几乎不发光？": ", why does silicon hardly emit light?",
-  "看看答案": "Show the answer",
+  "看看答案": "Show answer",
   "2. 切到「间接（陷阱）」。本工具把陷阱能级固定在": "2. Switch to 'Indirect (trap)'. This tool pins the trap level at ",
   "禁带中央": "mid-gap",
   "）。为什么这是最“毒”的复合中心？如果把它移向带边，SRH 分母里的 ": "). Why is this the most 'poisonous' recombination center? If it is moved toward a band edge, what happens to the ",
@@ -887,6 +887,7 @@ var I18N = {
 })();
 
 /* ---- DOM 文本节点 ---- */
+var FWN = (function () { var r = /[\u3000\u3001\u3002\u300C\u300D\uFF01\uFF08\uFF09\uFF0B\uFF0C\uFF0E\uFF0F\uFF1A\uFF1B\uFF1D\uFF1E\uFF1F\uFF5E]/g, m = {"\u3000":" ", "\u3001":", ", "\u3002":". ", "\u300C":" \"", "\u300D":"\"", "\uFF01":"! ", "\uFF08":" (", "\uFF09":")", "\uFF0B":"+", "\uFF0C":", ", "\uFF0E":".", "\uFF0F":" / ", "\uFF1A":": ", "\uFF1B":"; ", "\uFF1D":"=", "\uFF1E":">", "\uFF1F":"? ", "\uFF5E":"~"}; return function (s) { if (typeof s !== "string") return s; return s.replace(/\s*\uFF0F\s*/g, " / ").replace(r, function (c) { return m[c]; }); }; })();
 function i18nNode(n) {
   var el = n.parentElement;
   if (!el) return;
@@ -895,7 +896,7 @@ function i18nNode(n) {
   if (el.closest && el.closest("[data-noi18n]")) return;
   var cur = n.nodeValue;
   if (n.__orig === undefined || (cur !== n.__last && cur !== n.__orig)) n.__orig = cur;
-  var want = LANG === "en" ? T(n.__orig) : n.__orig;
+  var want = LANG === "en" ? FWN(T(n.__orig)) : n.__orig;
   if (want !== cur) n.nodeValue = want;
   n.__last = want;
 }

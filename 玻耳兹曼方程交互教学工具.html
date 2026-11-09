@@ -361,6 +361,7 @@ function T(s) {
   return v;
 }
 var I18N = {
+  "看看答案": "Show answer",
   /* ---- 词典：中文原文 → 英文。key 禁含运行时数字（换个参数就漏），数字前后要拆开 ---- */
   /* ---- 单字词条一律不收：会把别处的句子逐字切碎；整串进画布前已整体翻译 ---- */
   "模块一": "Module 1",
@@ -433,7 +434,6 @@ var I18N = {
   "有效质量": "Effective mass",
   "↺ 重置": "↺ Reset",
   "弛豫时间 ": "Relaxation time ",
-  "显示参考答案": "Show reference answer",
   "漂移电流": "Drift current",
   "热扩散": "thermal diffusion",
   "温度梯度": "temperature gradient",
@@ -485,7 +485,6 @@ var I18N = {
   "面积": "area",
   "（相对": "(relative to",
   "乘积": "Product",
-  "参考答案": "Reference answer",
   "载流子": "carrier",
   "阴影": "shading",
   "）的": ") has the largest",
@@ -857,6 +856,7 @@ var I18N = {
 })();
 
 /* ---- DOM 文本节点 ---- */
+var FWN = (function () { var r = /[\u3000\u3001\u3002\u300C\u300D\uFF01\uFF08\uFF09\uFF0B\uFF0C\uFF0E\uFF0F\uFF1A\uFF1B\uFF1D\uFF1E\uFF1F\uFF5E]/g, m = {"\u3000":" ", "\u3001":", ", "\u3002":". ", "\u300C":" \"", "\u300D":"\"", "\uFF01":"! ", "\uFF08":" (", "\uFF09":")", "\uFF0B":"+", "\uFF0C":", ", "\uFF0E":".", "\uFF0F":" / ", "\uFF1A":": ", "\uFF1B":"; ", "\uFF1D":"=", "\uFF1E":">", "\uFF1F":"? ", "\uFF5E":"~"}; return function (s) { if (typeof s !== "string") return s; return s.replace(/\s*\uFF0F\s*/g, " / ").replace(r, function (c) { return m[c]; }); }; })();
 function i18nNode(n) {
   var el = n.parentElement;
   if (!el) return;
@@ -865,7 +865,7 @@ function i18nNode(n) {
   if (el.closest && el.closest("[data-noi18n]")) return;
   var cur = n.nodeValue;
   if (n.__orig === undefined || (cur !== n.__last && cur !== n.__orig)) n.__orig = cur;
-  var want = LANG === "en" ? T(n.__orig) : n.__orig;
+  var want = LANG === "en" ? FWN(T(n.__orig)) : n.__orig;
   if (want !== cur) n.nodeValue = want;
   n.__last = want;
 }
@@ -2466,15 +2466,15 @@ function buildChals() {
     d.innerHTML =
       '<div class="chal-head"><b>挑战' + "一二三四五六七八九"[i] + "　" + c.q + "</b>" +
       '<span class="chev">▶</span></div>' +
-      '<div class="chal-body"><div class="btn-row"><button class="ansBtn">显示参考答案</button></div><div class="ans"></div></div>';
+      '<div class="chal-body"><div class="ans"></div><div class="btn-row"><button>看看答案</button></div></div>';
     const head = d.querySelector(".chal-head");
     head.onclick = () => d.classList.toggle("open");
-    const ab = d.querySelector(".ansBtn");
+    const ab = d.querySelector(".btn-row button");
     ab.onclick = e => {
       e.stopPropagation();
       const a = d.querySelector(".ans");
-      a.innerHTML = c.a();
-      a.classList.add("show");
+      a.innerHTML = typeof c.a === "function" ? c.a() : c.a;
+      a.classList.toggle("show");
     };
     box.appendChild(d);
   });

@@ -341,6 +341,7 @@ function T(s) {
   return v;
 }
 var I18N = {
+  "看看答案": "Show answer",
   /* ---- 词典：中文原文 → 英文。key 禁含运行时数字（换个参数就漏），数字前后要拆开 ---- */
   "半导体掺杂的类氢模型交互教学工具": "Hydrogenic Model of Semiconductor Doping — Interactive Toolkit",
   "\n  把氢原子搬进晶体里：库仑势被 ": "\n  Move a hydrogen atom into a crystal: the Coulomb potential is weakened by the ",
@@ -442,7 +443,6 @@ var I18N = {
   "Si 原始参数": "Si original parameters",
   "引导探究（点击展开，先自己试一试再看答案）": "Guided inquiry (click to expand — try it yourself before opening the answers)",
   "挑战任务": "Challenges",
-  "显示答案": "Show answer",
   "挑战一 · 氢原子 vs 类氢杂质：数量级": "Challenge 1 · Hydrogen atom vs hydrogenic impurity: orders of magnitude",
   "保持默认的「Si 施主」。查一下下面的材料参数表：": "Keep the default “Si donor”. Look up in the material parameter table below: ",
   " 是多少 meV？": " in meV? And what is ",
@@ -630,6 +630,7 @@ var I18N = {
 
 
 /* ---- DOM 文本节点 ---- */
+var FWN = (function () { var r = /[\u3000\u3001\u3002\u300C\u300D\uFF01\uFF08\uFF09\uFF0B\uFF0C\uFF0E\uFF0F\uFF1A\uFF1B\uFF1D\uFF1E\uFF1F\uFF5E]/g, m = {"\u3000":" ", "\u3001":", ", "\u3002":". ", "\u300C":" \"", "\u300D":"\"", "\uFF01":"! ", "\uFF08":" (", "\uFF09":")", "\uFF0B":"+", "\uFF0C":", ", "\uFF0E":".", "\uFF0F":" / ", "\uFF1A":": ", "\uFF1B":"; ", "\uFF1D":"=", "\uFF1E":">", "\uFF1F":"? ", "\uFF5E":"~"}; return function (s) { if (typeof s !== "string") return s; return s.replace(/\s*\uFF0F\s*/g, " / ").replace(r, function (c) { return m[c]; }); }; })();
 function i18nNode(n) {
   var el = n.parentElement;
   if (!el) return;
@@ -638,7 +639,7 @@ function i18nNode(n) {
   if (el.closest && el.closest("[data-noi18n]")) return;
   var cur = n.nodeValue;
   if (n.__orig === undefined || (cur !== n.__last && cur !== n.__orig)) n.__orig = cur;
-  var want = LANG === "en" ? T(n.__orig) : n.__orig;
+  var want = LANG === "en" ? FWN(T(n.__orig)) : n.__orig;
   if (want !== cur) n.nodeValue = want;
   n.__last = want;
 }
@@ -2121,16 +2122,11 @@ function buildChals() {
     const d = document.createElement("div");
     d.className = "chal";
     d.innerHTML =
-      '<div class="chal-head"><b>' + c.t + '</b><span class="chev">▶</span></div>' +
-      '<div class="chal-body"><div class="q">' + c.q + '</div>' +
-      '<div class="btn-row"><button class="primary">显示答案</button></div>' +
-      '<div class="ans"></div></div>';
+      '<div class="chal-head"><b>' + c.t + '<span> — </span>' + c.q + '</b><span class="chev">▶</span></div>' +
+      '<div class="chal-body"><div class="ans"></div>' +
+      '<div class="btn-row"><button>看看答案</button></div></div>';
     d.querySelector(".chal-head").onclick = () => d.classList.toggle("open");
-    d.querySelector(".btn-row button").onclick = () => {
-      const box = d.querySelector(".ans");
-      if (!box.classList.contains("show")) box.innerHTML = typeof c.a === "function" ? c.a() : c.a;
-      box.classList.toggle("show");
-    };
+    d.querySelector(".btn-row button").onclick = () => { const box = d.querySelector(".ans"); box.innerHTML = typeof c.a === "function" ? c.a() : c.a; box.classList.toggle("show"); };
     grid.appendChild(d);
   });
 }

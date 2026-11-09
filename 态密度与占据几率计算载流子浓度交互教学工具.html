@@ -369,6 +369,7 @@ function T(s) {
   return v;
 }
 var I18N = {
+  "看看答案": "Show answer",
   /* ---- 词典：中文原文 → 英文。key 禁含运行时数字（换个参数就漏），数字前后要拆开 ---- */
   " 态": " state",
   "模块一": "Module 1",
@@ -567,7 +568,6 @@ var I18N = {
   "态密度曲线": "Density-of-states curve",
   "乘积峰值": "Product peak",
   "材料对比": "Material comparison",
-  "收起答案": "Hide answer",
   "参考答案": "Reference answer",
   "显示项目": "Display items",
   "放大插图": "Zoomed inset",
@@ -680,6 +680,7 @@ function i18nHookCanvas() {
 
 
 /* ---- DOM 文本节点 ---- */
+var FWN = (function () { var r = /[\u3000\u3001\u3002\u300C\u300D\uFF01\uFF08\uFF09\uFF0B\uFF0C\uFF0E\uFF0F\uFF1A\uFF1B\uFF1D\uFF1E\uFF1F\uFF5E]/g, m = {"\u3000":" ", "\u3001":", ", "\u3002":". ", "\u300C":" \"", "\u300D":"\"", "\uFF01":"! ", "\uFF08":" (", "\uFF09":")", "\uFF0B":"+", "\uFF0C":", ", "\uFF0E":".", "\uFF0F":" / ", "\uFF1A":": ", "\uFF1B":"; ", "\uFF1D":"=", "\uFF1E":">", "\uFF1F":"? ", "\uFF5E":"~"}; return function (s) { if (typeof s !== "string") return s; return s.replace(/\s*\uFF0F\s*/g, " / ").replace(r, function (c) { return m[c]; }); }; })();
 function i18nNode(n) {
   var el = n.parentElement;
   if (!el) return;
@@ -688,7 +689,7 @@ function i18nNode(n) {
   if (el.closest && el.closest("[data-noi18n]")) return;
   var cur = n.nodeValue;
   if (n.__orig === undefined || (cur !== n.__last && cur !== n.__orig)) n.__orig = cur;
-  var want = LANG === "en" ? T(n.__orig) : n.__orig;
+  var want = LANG === "en" ? FWN(T(n.__orig)) : n.__orig;
   if (want !== cur) n.nodeValue = want;
   n.__last = want;
 }
@@ -2024,14 +2025,14 @@ const CHALS = [
 
 function buildChal() {
   $("chalGrid").innerHTML = CHALS.map((c, i) =>
-    '<div class="chal"><div class="chal-head"><b>挑战 ' + (i + 1) + '：' + mm(c.q) + '</b><span class="chev">▶</span></div>' +
-    '<div class="chal-body"><div>' + mm(c.t) + '</div><div class="ans">' + mm(c.a) + '</div>' +
-    '<div style="margin-top:8px;"><button data-a="' + i + '">参考答案</button></div></div></div>').join("");
+    '<div class="chal"><div class="chal-head"><b>挑战 ' + (i + 1) + '：' + mm(c.q) + '<span> — </span>' + mm(c.t) + '</b><span class="chev">▶</span></div>' +
+    '<div class="chal-body"><div class="ans"></div>' +
+    '<div class="btn-row"><button data-a="' + i + '">看看答案</button></div></div></div>').join("");
   $("chalGrid").querySelectorAll(".chal-head").forEach(h => h.onclick = () => h.parentElement.classList.toggle("open"));
   $("chalGrid").querySelectorAll("button[data-a]").forEach(b => b.onclick = () => {
-    const ans = b.parentElement.previousElementSibling;
+    const ans = b.closest(".chal").querySelector(".ans"), c = CHALS[+b.dataset.a];
+    ans.innerHTML = mm(typeof c.a === "function" ? c.a() : c.a);
     ans.classList.toggle("show");
-    b.textContent = ans.classList.contains("show") ? "收起答案" : "参考答案";
   });
 }
 

@@ -738,7 +738,7 @@ var I18N = {
   "无规行走": "random walk",
   "，走 4 倍的时间只能多走 2 倍的距离。还有一条：宽度涨到 ": ": four times the time buys only twice the distance. One more thing: once the width has grown to ",
   " 这么大时，少子基本上也就复合完了 —— 这就是扩散长度的物理意义。": " the minority carriers have essentially recombined — that is the physical meaning of the diffusion length.",
-  "看看答案": "Show the answer",
+  "看看答案": "Show answer",
   "2. 点「漂移主导」预设（强电场 + 欧姆接触）。峰位 ": "2. Pick the 'Drift-dominated' preset (strong field + ohmic contact). How does the peak position ",
   " 怎么走？宽度 ": " move? Does the width ",
   " 真的不变吗？在模块二切到「峰位 ": " really stay put? Switch module 2 to 'Peak position ",
@@ -1004,6 +1004,7 @@ var I18N = {
 })();
 
 /* ---- DOM 文本节点 ---- */
+var FWN = (function () { var r = /[\u3000\u3001\u3002\u300C\u300D\uFF01\uFF08\uFF09\uFF0B\uFF0C\uFF0E\uFF0F\uFF1A\uFF1B\uFF1D\uFF1E\uFF1F\uFF5E]/g, m = {"\u3000":" ", "\u3001":", ", "\u3002":". ", "\u300C":" \"", "\u300D":"\"", "\uFF01":"! ", "\uFF08":" (", "\uFF09":")", "\uFF0B":"+", "\uFF0C":", ", "\uFF0E":".", "\uFF0F":" / ", "\uFF1A":": ", "\uFF1B":"; ", "\uFF1D":"=", "\uFF1E":">", "\uFF1F":"? ", "\uFF5E":"~"}; return function (s) { if (typeof s !== "string") return s; return s.replace(/\s*\uFF0F\s*/g, " / ").replace(r, function (c) { return m[c]; }); }; })();
 function i18nNode(n) {
   var el = n.parentElement;
   if (!el) return;
@@ -1012,7 +1013,7 @@ function i18nNode(n) {
   if (el.closest && el.closest("[data-noi18n]")) return;
   var cur = n.nodeValue;
   if (n.__orig === undefined || (cur !== n.__last && cur !== n.__orig)) n.__orig = cur;
-  var want = LANG === "en" ? T(n.__orig) : n.__orig;
+  var want = LANG === "en" ? FWN(T(n.__orig)) : n.__orig;
   if (want !== cur) n.nodeValue = want;
   n.__last = want;
 }

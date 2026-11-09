@@ -311,6 +311,7 @@ function T(s) {
   return v;
 }
 var I18N = {
+  "看看答案": "Show answer",
   /* ---- 词典：中文原文 → 英文。key 禁含运行时数字（换个参数就漏），数字前后要拆开 ---- */
   /* ---- 标题与页脚 ---- */
   "半导体能带交互教学工具（布里渊区 / E–k 能带）": "Semiconductor Energy Bands (Brillouin zone / E–k bands) — Interactive Toolkit",
@@ -399,7 +400,6 @@ var I18N = {
   /* ---- 引导探究与挑战 ---- */
   "引导探究（点击展开，先自己试一试再看答案）": "Guided inquiry (click to expand — try it yourself before opening the answers)",
   "挑战任务": "Challenges",
-  "显示答案": "Show answer",
   "挑战一 · 识别高对称点与配位环境": "Challenge 1 · High-symmetry points and their coordination",
   "旋转布里渊区，找出 Γ、X、L、W、K 的位置：它们分别在什么方向？哪几个点位于截角八面体的面上？": "Rotate the Brillouin zone and locate Γ, X, L, W and K: in which directions do they lie, and which of them sit on faces of the truncated octahedron?",
   "Γ 在中心 (0,0,0)；X 在 ⟨100⟩ 方向的 6 个正方形面心，如 (0,1,0)；L 在 ⟨111⟩ 方向的 8 个正六边形面心，如 (½,½,½)；W 在 ⟨110⟩ 方向的 24 个顶点，如 (½,1,0)；K 是两个六边形面交棱的中点，如 (¾,¾,0)；U 是正方形面棱的中点，如 (¼,1,¼)。位于面上的是 X（正方形面）与 L（六边形面）；W 是顶点，K、U 在棱上。截角八面体共 14 个面：6 个正方形 + 8 个正六边形。": "Γ is at the center (0,0,0); X is at the centers of the 6 square faces along ⟨100⟩, e.g. (0,1,0); L is at the centers of the 8 regular hexagonal faces along ⟨111⟩, e.g. (½,½,½); W is at the 24 vertices along ⟨110⟩, e.g. (½,1,0); K is the midpoint of the edge where two hexagonal faces meet, e.g. (¾,¾,0); and U is the midpoint of an edge of a square face, e.g. (¼,1,¼). The points on faces are X (square faces) and L (hexagonal faces); W is a vertex, and K and U lie on edges. The truncated octahedron has 14 faces in all: 6 squares + 8 regular hexagons.",
@@ -522,6 +522,7 @@ var I18N = {
 
 
 /* ---- DOM 文本节点 ---- */
+var FWN = (function () { var r = /[\u3000\u3001\u3002\u300C\u300D\uFF01\uFF08\uFF09\uFF0B\uFF0C\uFF0E\uFF0F\uFF1A\uFF1B\uFF1D\uFF1E\uFF1F\uFF5E]/g, m = {"\u3000":" ", "\u3001":", ", "\u3002":". ", "\u300C":" \"", "\u300D":"\"", "\uFF01":"! ", "\uFF08":" (", "\uFF09":")", "\uFF0B":"+", "\uFF0C":", ", "\uFF0E":".", "\uFF0F":" / ", "\uFF1A":": ", "\uFF1B":"; ", "\uFF1D":"=", "\uFF1E":">", "\uFF1F":"? ", "\uFF5E":"~"}; return function (s) { if (typeof s !== "string") return s; return s.replace(/\s*\uFF0F\s*/g, " / ").replace(r, function (c) { return m[c]; }); }; })();
 function i18nNode(n) {
   var el = n.parentElement;
   if (!el) return;
@@ -530,7 +531,7 @@ function i18nNode(n) {
   if (el.closest && el.closest("[data-noi18n]")) return;
   var cur = n.nodeValue;
   if (n.__orig === undefined || (cur !== n.__last && cur !== n.__orig)) n.__orig = cur;
-  var want = LANG === "en" ? T(n.__orig) : n.__orig;
+  var want = LANG === "en" ? FWN(T(n.__orig)) : n.__orig;
   if (want !== cur) n.nodeValue = want;
   n.__last = want;
 }
@@ -2493,12 +2494,11 @@ function buildChals() {
     const d = document.createElement("div");
     d.className = "chal";
     d.innerHTML =
-      '<div class="chal-head"><b>' + c.t + '</b><span class="chev">▶</span></div>' +
-      '<div class="chal-body"><div class="q">' + c.q + '</div>' +
-      '<div class="btn-row"><button class="primary">显示答案</button></div>' +
-      '<div class="ans">' + c.a + '</div></div>';
+      '<div class="chal-head"><b>' + c.t + '<span> — </span>' + c.q + '</b><span class="chev">▶</span></div>' +
+      '<div class="chal-body"><div class="ans"></div>' +
+      '<div class="btn-row"><button>看看答案</button></div></div>';
     d.querySelector(".chal-head").onclick = () => d.classList.toggle("open");
-    d.querySelector(".btn-row button").onclick = () => d.querySelector(".ans").classList.toggle("show");
+    d.querySelector(".btn-row button").onclick = () => { const a = d.querySelector(".ans"); a.innerHTML = typeof c.a === "function" ? c.a() : c.a; a.classList.toggle("show"); };
     grid.appendChild(d);
   });
 }

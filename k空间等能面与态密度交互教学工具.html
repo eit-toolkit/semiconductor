@@ -308,6 +308,7 @@ function T(s) {
   return v;
 }
 var I18N = {
+  "看看答案": "Show answer",
   /* ---- 词典：中文原文 → 英文。key 禁含运行时数字（换个参数就漏），数字前后要拆开 ---- */
   "k 空间等能面与态密度交互教学工具": "Constant-Energy Surfaces and Density of States in k-Space — Interactive Toolkit",
   " 空间等能面与态密度交互教学工具": " -space: Constant-Energy Surfaces and Density of States — Interactive Toolkit",
@@ -394,8 +395,6 @@ var I18N = {
   "，面积 = 占据份额）": "; the area is the occupied fraction)",
   "引导探究（点击展开，先自己试一试再看答案）": "Guided inquiry (click to expand — try it yourself before opening the answers)",
   "挑战任务": "Challenges",
-  "查看答案": "Show answer",
-  "收起答案": "Hide answer",
   "挑战一 · ": "Challenge 1 · ",
   " 点为什么是离散的": " points: why are they discrete?",
   "为什么 ": "Why is ",
@@ -560,6 +559,7 @@ var I18N = {
 
 
 /* ---- DOM 文本节点 ---- */
+var FWN = (function () { var r = /[\u3000\u3001\u3002\u300C\u300D\uFF01\uFF08\uFF09\uFF0B\uFF0C\uFF0E\uFF0F\uFF1A\uFF1B\uFF1D\uFF1E\uFF1F\uFF5E]/g, m = {"\u3000":" ", "\u3001":", ", "\u3002":". ", "\u300C":" \"", "\u300D":"\"", "\uFF01":"! ", "\uFF08":" (", "\uFF09":")", "\uFF0B":"+", "\uFF0C":", ", "\uFF0E":".", "\uFF0F":" / ", "\uFF1A":": ", "\uFF1B":"; ", "\uFF1D":"=", "\uFF1E":">", "\uFF1F":"? ", "\uFF5E":"~"}; return function (s) { if (typeof s !== "string") return s; return s.replace(/\s*\uFF0F\s*/g, " / ").replace(r, function (c) { return m[c]; }); }; })();
 function i18nNode(n) {
   var el = n.parentElement;
   if (!el) return;
@@ -568,7 +568,7 @@ function i18nNode(n) {
   if (el.closest && el.closest("[data-noi18n]")) return;
   var cur = n.nodeValue;
   if (n.__orig === undefined || (cur !== n.__last && cur !== n.__orig)) n.__orig = cur;
-  var want = LANG === "en" ? T(n.__orig) : n.__orig;
+  var want = LANG === "en" ? FWN(T(n.__orig)) : n.__orig;
   if (want !== cur) n.nodeValue = want;
   n.__last = want;
 }
@@ -2069,16 +2069,15 @@ const CHALS = [
 function buildChals() {
   const grid = $("chalGrid");
   grid.innerHTML = CHALS.map((c, i) =>
-    '<div class="chal"><div class="chal-head"><b>' + c.t + '</b><span class="chev">▶</span></div>' +
-    '<div class="chal-body"><div class="q">' + c.q + '</div>' +
-    '<div class="ans" id="ans' + i + '">' + c.a + '</div>' +
-    '<div class="btn-row tight"><button data-a="' + i + '">查看答案</button></div></div></div>').join("");
+    '<div class="chal"><div class="chal-head"><b>' + c.t + '<span> — </span>' + c.q + '</b><span class="chev">▶</span></div>' +
+    '<div class="chal-body"><div class="ans" id="ans' + i + '"></div>' +
+    '<div class="btn-row tight"><button data-a="' + i + '">看看答案</button></div></div></div>').join("");
   grid.querySelectorAll(".chal-head").forEach(h => h.onclick = () => h.parentNode.classList.toggle("open"));
   grid.querySelectorAll("button[data-a]").forEach(b => {
     b.onclick = () => {
-      const el = $("ans" + b.dataset.a);
-      const on = el.classList.toggle("show");
-      b.textContent = on ? "收起答案" : "查看答案";
+      const el = $("ans" + b.dataset.a), c = CHALS[+b.dataset.a];
+      el.innerHTML = typeof c.a === "function" ? c.a() : c.a;
+      el.classList.toggle("show");
     };
   });
 }

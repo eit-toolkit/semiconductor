@@ -313,6 +313,7 @@ function T(s) {
   return v;
 }
 var I18N = {
+  "看看答案": "Show answer",
   /* ---- 词典：中文原文 → 英文。key 禁含运行时数字（换个参数就漏），数字前后要拆开 ---- */
   /* ---- 标题与页脚 ---- */
   "一维方形势阱交互教学工具": "One-Dimensional Square Well — Interactive Toolkit",
@@ -547,6 +548,7 @@ var I18N = {
 
 
 /* ---- DOM 文本节点 ---- */
+var FWN = (function () { var r = /[\u3000\u3001\u3002\u300C\u300D\uFF01\uFF08\uFF09\uFF0B\uFF0C\uFF0E\uFF0F\uFF1A\uFF1B\uFF1D\uFF1E\uFF1F\uFF5E]/g, m = {"\u3000":" ", "\u3001":", ", "\u3002":". ", "\u300C":" \"", "\u300D":"\"", "\uFF01":"! ", "\uFF08":" (", "\uFF09":")", "\uFF0B":"+", "\uFF0C":", ", "\uFF0E":".", "\uFF0F":" / ", "\uFF1A":": ", "\uFF1B":"; ", "\uFF1D":"=", "\uFF1E":">", "\uFF1F":"? ", "\uFF5E":"~"}; return function (s) { if (typeof s !== "string") return s; return s.replace(/\s*\uFF0F\s*/g, " / ").replace(r, function (c) { return m[c]; }); }; })();
 function i18nNode(n) {
   var el = n.parentElement;
   if (!el) return;
@@ -555,7 +557,7 @@ function i18nNode(n) {
   if (el.closest && el.closest("[data-noi18n]")) return;
   var cur = n.nodeValue;
   if (n.__orig === undefined || (cur !== n.__last && cur !== n.__orig)) n.__orig = cur;
-  var want = LANG === "en" ? T(n.__orig) : n.__orig;
+  var want = LANG === "en" ? FWN(T(n.__orig)) : n.__orig;
   if (want !== cur) n.nodeValue = want;
   n.__last = want;
 }
@@ -1647,17 +1649,16 @@ const CHALS = [
 ];
 function buildChals() {
   $("chalGrid").innerHTML = CHALS.map((c, i) =>
-    '<div class="chal" data-i="' + i + '"><div class="chal-head"><b>' + c.t + '</b><span class="chev">›</span></div>' +
-    '<div class="chal-body"><div class="q">' + c.q + '</div>' +
-    '<div class="btn-row"><button data-act="ans" data-i="' + i + '">看答案</button></div>' +
-    '<div class="ans" id="ans' + i + '"></div></div></div>').join("");
+    '<div class="chal" data-i="' + i + '"><div class="chal-head"><b>' + c.t + '<span> — </span>' + c.q + '</b><span class="chev">›</span></div>' +
+    '<div class="chal-body"><div class="ans" id="ans' + i + '"></div>' +
+    '<div class="btn-row"><button data-act="ans" data-i="' + i + '">看看答案</button></div></div></div>').join("");
   document.querySelectorAll(".chal-head").forEach(h =>
     h.addEventListener("click", () => h.parentElement.classList.toggle("open")));
   document.querySelectorAll('.chal-body button[data-act="ans"]').forEach(b =>
     b.addEventListener("click", () => {
       const i = +b.dataset.i;
       const box = $("ans" + i);
-      box.innerHTML = CHALS[i].a();
+      box.innerHTML = typeof CHALS[i].a === "function" ? CHALS[i].a() : CHALS[i].a;
       box.classList.toggle("show");
     }));
 }
