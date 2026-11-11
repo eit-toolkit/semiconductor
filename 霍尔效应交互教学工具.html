@@ -179,11 +179,10 @@
     </div>
 
     <div class="card">
-      <div class="sec-title"><span class="mtag">模块二</span><span id="rhTitleMinor">霍尔系数：<span class="m"><i>R</i><sub>H</sub></span> 随电子浓度 <span class="m"><i>n</i></span> 的变化（空穴浓度 <span class="m"><i>p</i></span> 固定）</span><span id="rhTitleMajor" style="display:none">霍尔系数：<span class="m"><i>R</i><sub>H</sub></span> 随多数载流子浓度 <span class="m"><i>N</i></span> 的变化（单载流子标度）</span></div>
+      <div class="sec-title"><span class="mtag">模块二</span><span id="rhTitleN">霍尔系数：<span class="m"><i>R</i><sub>H</sub></span> 随电子浓度 <span class="m"><i>n</i></span> 的变化（空穴浓度 <span class="m"><i>p</i></span> 固定）</span><span id="rhTitleP" style="display:none">霍尔系数：<span class="m"><i>R</i><sub>H</sub></span> 随掺入空穴浓度 <span class="m"><i>p</i></span> 的变化（电子浓度 <span class="m"><i>n</i></span> 固定）</span></div>
       <div class="chart-wrap"><canvas id="rh" data-h="240" tabindex="0"></canvas></div>
       <div class="legend" id="legRh"></div>
-      <div class="hint" id="rhHintMinor"><span>只有一种载流子时，霍尔系数不会过零，也没有补偿点；下面的平方权重、过零与补偿点都只在双载流子模式出现：</span>电子项带 <span class="m"><i>μ</i><sub>n</sub><sup>2</sup></span> 权重、空穴项带 <span class="m"><i>μ</i><sub>p</sub><sup>2</sup></span> 权重：迁移率大的那一方<b>话语权被平方放大</b>，所以即使 <span class="m"><i>n</i><span class="op">≪</span><i>p</i></span>，少子电子也能把 <span class="m"><i>R</i><sub>H</sub></span> 拉过零、甚至主导符号 —— 这就是「p 型材料测出 n 型霍尔系数」的由来。曲线与零点相交处是<b>补偿点</b>。</div>
-      <div class="hint" id="rhHintMajor" style="display:none"><span>横轴改为多数载流子浓度，纵轴把正号与负号分置上下、按绝对值取对数。</span> <span class="m">|<i>R</i><sub>H</sub>| = <i>r</i><sub>H</sub>/(<i>N</i><i>q</i>)</span> <span>两条单载流子标度线严格镜像；每向右一个数量级，绝对值就降一个数量级。双载流子的实测点会偏离这两条线，过零时落到中央零带。</span></div>
+      <div class="hint"><span>横轴按导电类型切换：n 型与双载流子扫描电子浓度 n，p 型扫描空穴浓度 p（此时单载流子样品的电子浓度 n = 0）。只有一种载流子时，霍尔系数不会过零，也没有补偿点；下面的平方权重、过零与补偿点都只在双载流子模式出现：</span>电子项带 <span class="m"><i>μ</i><sub>n</sub><sup>2</sup></span> 权重、空穴项带 <span class="m"><i>μ</i><sub>p</sub><sup>2</sup></span> 权重：迁移率大的那一方<b>话语权被平方放大</b>，所以即使 <span class="m"><i>n</i><span class="op">≪</span><i>p</i></span>，少子电子也能把 <span class="m"><i>R</i><sub>H</sub></span> 拉过零、甚至主导符号 —— 这就是「p 型材料测出 n 型霍尔系数」的由来。曲线与零点相交处是<b>补偿点</b>。</div>
     </div>
   </div>
 
@@ -205,15 +204,6 @@
           <button data-t="two">双载流子</button>
         </div>
         <div class="sub" id="typeSub"></div>
-      </div>
-
-      <div class="ctrl">
-        <div class="ctrl-head"><span>模块二视图</span><span class="val" id="rhViewVal"><span id="rhViewValMinor">扫描少子 n</span><span id="rhViewValMajor" style="display:none">扫描多子 N</span></span></div>
-        <div class="mode-switch" id="rhViewBtns">
-          <button data-v="minor" class="active">扫描少子 n</button>
-          <button data-v="major">扫描多子 N</button>
-        </div>
-        <div class="sub" id="rhViewSub"><span id="rhViewSubMinor">少子扫描：固定空穴浓度，看电子项何时把霍尔系数拉过零。</span><span id="rhViewSubMajor" style="display:none">多子扫描：看单载流子标度线与当前样品的位置。</span></div>
       </div>
 
       <div class="ctrl">
@@ -359,24 +349,12 @@ function T(s) {
 }
 var I18N = {
   /* ---- 标题与页脚 ---- */
-  " 随多数载流子浓度 ": " versus majority carrier concentration ",
-  " 的变化（单载流子标度）": " (single-carrier scaling)",
-  "横轴改为多数载流子浓度，纵轴把正号与负号分置上下、按绝对值取对数。": "The horizontal axis now sweeps the majority carrier concentration; the vertical axis splits positive and negative signs above and below using a log scale of the absolute value. ",
-  "两条单载流子标度线严格镜像；每向右一个数量级，绝对值就降一个数量级。双载流子的实测点会偏离这两条线，过零时落到中央零带。": "The two single-carrier scaling lines are exact mirror images; each decade to the right drops the magnitude by one decade. A two-carrier sample falls off these lines and lands in the central zero band when it crosses zero. ",
-  "模块二视图": "Module 2 view",
-  "扫描少子 n": "Sweep minority n",
-  "扫描多子 N": "Sweep majority N",
-  "少子扫描：固定空穴浓度，看电子项何时把霍尔系数拉过零。": "Minority sweep: fix the hole concentration and watch the electron term pull the Hall coefficient through zero. ",
-  "多子扫描：看单载流子标度线与当前样品的位置。": "Majority sweep: compare the single-carrier scaling lines with the present sample. ",
-  "单载流子标度 ": "Single-carrier scaling ",
-  "当前样品": "present sample",
-  "双载流子偏离标度线": "Two-carrier samples fall off the scaling lines",
+  "横轴按导电类型切换：n 型与双载流子扫描电子浓度 n，p 型扫描空穴浓度 p（此时单载流子样品的电子浓度 n = 0）。只有一种载流子时，霍尔系数不会过零，也没有补偿点；下面的平方权重、过零与补偿点都只在双载流子模式出现：": "The horizontal axis switches with the conduction type: n-type and two-carrier mode sweep the electron concentration n, while p-type sweeps the hole concentration p (where the electron concentration of the single-carrier sample is n = 0). With only one carrier type, the Hall coefficient never crosses zero and there is no compensation point; the squared-weight argument, the zero crossing and the compensation point below apply only to two-carrier mode: ",
+  " 随掺入空穴浓度 ": " versus doped hole concentration ",
+  " 的变化（电子浓度 ": " (electron concentration ",
   "霍尔系数：": "Hall coefficient: ",
-  "只有一种载流子时，霍尔系数不会过零，也没有补偿点；下面的平方权重、过零与补偿点都只在双载流子模式出现：": "With only one carrier type, the Hall coefficient never crosses zero and there is no compensation point; the squared-weight argument, the zero crossing and the compensation point below apply only to two-carrier mode: ",
   "p 型单载流子：": "p-type, single carrier: ",
   "n 型单载流子：": "n-type, single carrier: ",
-  " 与电子浓度无关（水平线）": " is independent of electron concentration (flat line)",
-  " 就是这条水平线，不会过零": " is this flat line, which never crosses zero",
   "霍尔效应交互教学工具": "Hall Effect — Interactive Toolkit",
   "本工具是 EIT-SP（半导体物理交互式教学工具箱）的一部分（武汉大学物理学院《半导体物理》智慧课程），以 MIT 协议开源，可自由使用与二次开发；转载请保留出处。": "This tool is part of EIT-SP, the Educational Interactive Toolkit for Semiconductor Physics (School of Physics and Technology, Wuhan University). Released under the MIT license: free to use, modify and redistribute, including commercially. Please keep this attribution.",
   "反馈意见": " Feedback",
@@ -417,11 +395,11 @@ var I18N = {
   "渐近线 −": "Asymptote −",
   "电子项带 ": "The electron term carries ",
   " 权重、空穴项带 ": " weight and the hole term ",
-  " 权重：迁移率大的那一方": " weight: whichever carrier is more mobile",
+  " 权重：迁移率大的那一方": " weight: whichever carrier is more mobile ",
   "话语权被平方放大": "gets its say squared",
   "，所以即使 ": ", so even when ",
   "，少子电子也能把 ": ", the minority electrons can pull ",
-  " 拉过零、甚至主导符号 —— 这就是「p 型材料测出 n 型霍尔系数」的由来。曲线与零点相交处是": " through zero and even dominate its sign — this is why a p-type sample can return an n-type Hall coefficient. The crossing point is the",
+  " 拉过零、甚至主导符号 —— 这就是「p 型材料测出 n 型霍尔系数」的由来。曲线与零点相交处是": " through zero and even dominate its sign — this is why a p-type sample can return an n-type Hall coefficient. The crossing point is the ",
   "补偿点": "compensation point",
   /* ---- 控制面板 ---- */
   "控制面板": "Control Panel",
@@ -658,8 +636,6 @@ var I18N = {
   " 被屏蔽）": " shielded)",
   "已达稳态（横向电流相消）": "Steady state reached (transverse currents cancel)",
   "已达稳态（横向速度 0）": "Steady state reached (transverse velocity 0)",
-  "当前：p 型单载流子，": "p-type, single carrier: ",
-  " = 0 在横轴左端之外 ⇒ 当前 ": " = 0 lies beyond the left end of the axis, so the present value ",
   " 就落在橙色渐近线": " falls exactly on the orange asymptote",
   "双载流子（": "Two carriers (",
   "电子": "electrons",
@@ -1393,7 +1369,6 @@ const QUOTA_N = 10;                   // 侧壁积累符号的目标满格枚数
 
 const OPT = {
   type: "n",                 // n / p / two
-  rhView: "minor",           // 模块二视图：minor = 扫少子 n（服务挑战五）/ major = 扫多子 N（1/N 标度）
   lgNmaj: 16,                // 多数载流子浓度 log10(cm⁻³)
   lgNmin: 15,                // 电子（少子）浓度 log10(cm⁻³)，仅双载流子用
   I: 1.0,                    // mA（带符号，负 = 反向）
@@ -1899,7 +1874,7 @@ function drawSign(g, x, y, sgn, alpha) {
   g.restore();
 }
 
-/* ---------------- 7. 模块二：R_H 随电子浓度 n ---------------- */
+/* ---------------- 7. 模块二：R_H 浓度扫描（横轴随导电类型切换） ---------------- */
 
 const LG_LO = 12, LG_HI = 18;
 function rhOfN(n_cm3) {
@@ -1916,18 +1891,16 @@ function drawRh() {
   const g = c.g, W = c.W, H = c.H, s = state();
   g.clearRect(0, 0, W, H);
   g.fillStyle = "#fff"; g.fillRect(0, 0, W, H);
-  /* 视图 B 走独立绘制：视图 A 的坐标、量程、文案与像素基线因此一行都不用动 */
-  if (OPT.rhView === "major") { drawRhMajor(g, W, H, s); return; }
   const L = 66, R = W - 16, T = 24, B = H - 36;
   const pw = R - L, ph = B - T;
   const X = lg => L + (lg - LG_LO) / (LG_HI - LG_LO) * pw;
-  /* 单载流子只画自己那一种：n 型 R_H = −r_H/(nq)，p 型 R_H = +r_H/(pq) 是常数
-     （横轴 n 是「假想掺入的电子浓度」，单载流子模型里没有电子 ⇒ 不变）。
+  /* 横轴按导电类型切换：n 型 / 双载流子扫电子浓度 n，p 型扫空穴浓度 p
+     （p 型单载流子样品电子浓度 n = 0，写在右上角副标题里）。
+     单载流子各自画 ±r_H/(Nq) 的 1/N 曲线，两者关于零线严格镜像；
      只有双载流子模式才画两项之争的曲线、渐近线与补偿点。 */
   const curveOf = (lg) => {
     if (s.isTwo) return rhOfN(Math.pow(10, lg));
-    if (s.isP) return RH_FIX / (Q_E * s.p);
-    return -RH_FIX / (Q_E * Math.pow(10, lg) * 1e6);
+    return (s.isP ? 1 : -1) * RH_FIX / (Q_E * Math.pow(10, lg) * 1e6);
   };
   /* 量程：本段曲线极值 */
   let vmax = 0;
@@ -1951,13 +1924,14 @@ function drawRh() {
   }
   line(g, L, Y(0), R, Y(0), "#9aa5b1", 1.3);
   mtxt(g, cat(P_RH, [{ s: " (" }], U_RH, [{ s: ")" }]), L - 8, T - 12, C_SUB, 11, "left");
-  mtxt(g, cat([{ s: "电子浓度 " }], P_NN), (L + R) / 2, B + 28, C_SUB, 11.5, "center");
+  mtxt(g, s.isP ? cat([{ s: "空穴浓度 " }], P_PP) : cat([{ s: "电子浓度 " }], P_NN),
+    (L + R) / 2, B + 28, C_SUB, 11.5, "center");
   /* 副标题按模式说清这张图画的是哪一套物理：单载流子页上不出现补偿点说明 */
   const subRh = s.isTwo
     ? cat([{ s: "（空穴浓度 " }], P_PP, [{ s: " = " }], PSci(s.p / 1e6, 1), U_CM3, [{ s: "，固定）" }])
     : (s.isP
       ? cat([{ s: "p 型单载流子：" }], P_NN, [{ s: " = 0 ⇒ " }], P_RH,
-        [{ s: " 与电子浓度无关（水平线）" }])
+        [{ s: " = +" }], P_RHF, [{ s: "/(" }], P_PP, [{ s: "q)" }])
       : cat([{ s: "n 型单载流子：" }], P_PP, [{ s: " = 0 ⇒ " }], P_RH,
         [{ s: " = −" }], P_RHF, [{ s: "/(" }], P_NN, [{ s: "q)" }]));
   mtxt(g, subRh, R, T - 12, C_SUB, 10.5, "right");
@@ -2003,12 +1977,11 @@ function drawRh() {
         xx, Y(0) - 14, C_EH, 10.5, "center", W);
     }
   }
-  /* 当前工作点：只在「状态里真的有电子」时画。
-     p 型 s.n = 0 落在横轴左端之外，硬把点钉在 10¹² 上会与曲线差一大截
-     （p = 10¹² 时曲线在左端已是 −3.2×10⁶，而 R_H(n=0) = +6.2×10⁶，差 150%），
-     此时当前值恰好等于橙色渐近线 +r_H/(pq)，用文字说明即可。 */
-  if (s.n > 0) {
-    const lgNow = Math.log10(Math.max(s.n / 1e6, Math.pow(10, LG_LO)));
+  /* 当前工作点：单载流子取自己那一种浓度，双载流子取电子浓度。
+     p 型横轴已换成空穴浓度 p，当前点同样落在 +r_H/(pq) 曲线上。 */
+  const nNow = (s.isP ? s.p : s.n) / 1e6;
+  if (nNow > 0) {
+    const lgNow = Math.log10(Math.max(nNow, Math.pow(10, LG_LO)));
     const xNow = X(clamp(lgNow, LG_LO, LG_HI));
     const yNow = Y(s.RH);
     g.beginPath(); g.arc(xNow, yNow, 5, 0, 6.2832);
@@ -2016,16 +1989,12 @@ function drawRh() {
     g.strokeStyle = col; g.lineWidth = 2.2; g.stroke();
     chipM(g, cat([{ s: "当前 " }], P_RH, [{ s: " = " }], [{ s: fmt(s.RH * 1e6, s.RH * 1e6 < 100 ? 1 : 0) }], U_RH),
       clamp(xNow, L + 70, R - 70), clamp(yNow + 18, T + 8, B - 8), col, 11, "center", W);
-  } else {
-    chipM(g, cat([{ s: "当前：p 型单载流子，" }], P_NN, [{ s: " = 0 在横轴左端之外 ⇒ 当前 " }],
-      P_RH, [{ s: " 就是这条水平线，不会过零" }]),
-      L + 6, B - 10, C_SUB, 10.5, "left", W);
   }
 
   if (HOV.rh && HOV.rh.x > L && HOV.rh.x < R) {
     const lg = LG_LO + (HOV.rh.x - L) / pw * (LG_HI - LG_LO);
     line(g, HOV.rh.x, T, HOV.rh.x, B, "rgba(107,122,140,.4)", 1, [3, 3]);
-    const l1 = cat(P_NN, [{ s: " = " }], PSci(Math.pow(10, lg), 2), U_CM3);
+    const l1 = cat(s.isP ? P_PP : P_NN, [{ s: " = " }], PSci(Math.pow(10, lg), 2), U_CM3);
     const l2 = cat(P_RH, [{ s: " = " }], [{ s: fmt(curveOf(lg) * 1e6, 2) }], U_RH);
     g.font = "11px " + FONT;
     const wd = Math.max(mMeasure(g, l1, 11, false), mMeasure(g, l2, 11, false)) + 14;
@@ -2034,97 +2003,6 @@ function drawRh() {
     g.beginPath(); g.rect(bx, by, wd, 34); g.fill(); g.stroke();
     mtxt(g, l1, bx + 7, by + 12, "#2c3e50", 11, "left");
     mtxt(g, l2, bx + 7, by + 25, col, 11, "left");
-  }
-}
-
-/* ---------------- 7b. 模块二视图 B：单载流子 1/N 标度 ----------------
-   横轴为多数载流子浓度 N（10¹²–10¹⁸ cm⁻³）；纵轴把 |R_H| 取对数后按符号分置上下，
-   于是 +r_H/(Nq) 与 −r_H/(Nq) 是两条严格镜像、斜率 ∓1 的直线。视图 A 的线性纵轴
-   既跨不了 6 个数量级、又必须容纳双载流子曲线的过零，所以两套视图各用各的坐标轴，
-   挑战五仍只认视图 A 的少子 n 扫描。 */
-const RH_LG_HI = 7;
-const P_NMAJ = [{ s: "N", i: true }];
-const P_ABS_RH = cat(P_ABS, P_RH, P_ABS2);
-/* 单载流子 |R_H|，单位 cm³/C：N 以 cm⁻³ 计时 1 m⁻³ 与 ×1e6 恰好抵消 */
-function rhScaleCm3(lg) { return RH_FIX / (Q_E * Math.pow(10, lg)); }
-function drawRhMajor(g, W, H, s) {
-  const L = 66, R = W - 16, T = 24, B = H - 36;
-  const pw = R - L, ph = B - T, mid = T + ph / 2, half = ph / 2;
-  const X = lg => L + (lg - LG_LO) / (LG_HI - LG_LO) * pw;
-  /* 对称对数纵轴：|R_H| < 1 cm³/C 压到中央零带（双载流子近补偿时） */
-  const Y = v => {
-    const a = Math.abs(v);
-    const t = clamp(a > 0 ? Math.log10(a) : 0, 0, RH_LG_HI) / RH_LG_HI;
-    return mid + (v >= 0 ? -1 : 1) * t * half;
-  };
-  for (let k = 1; k <= RH_LG_HI; k++) {
-    const dy = k / RH_LG_HI * half;
-    line(g, L, mid - dy, R, mid - dy, "#f2f6fa", 1);
-    line(g, L, mid + dy, R, mid + dy, "#f2f6fa", 1);
-    if (k % 2 === 1) {
-      const tick = cat([{ s: "10" }, { s: String(k), sup: true }]);
-      mtxt(g, tick, L - 8, mid - dy, C_SUB, 10.5, "right");
-      mtxt(g, cat([{ s: "−" }], tick), L - 8, mid + dy, C_SUB, 10.5, "right");
-    }
-  }
-  for (let lg = LG_LO; lg <= LG_HI; lg++) {
-    const xx = X(lg);
-    line(g, xx, T, xx, B, "#f2f6fa", 1);
-    /* 末刻度居中会把上标甩出右边界（X(LG_HI)=R=W−16）⇒ 贴右缘右对齐，网格线不动 */
-    const last = lg === LG_HI;
-    mtxt(g, [{ s: "10" }, { s: String(lg), sup: true }],
-      last ? W - 6 : xx, B + 14, C_SUB, 10.5, last ? "right" : "center");
-  }
-  line(g, L, mid, R, mid, "#9aa5b1", 1.3);
-  mtxt(g, cat(P_ABS_RH, U_RH), L - 8, T - 12, C_SUB, 11, "left");
-  mtxt(g, cat([{ s: "多数载流子浓度 " }], P_NMAJ, U_CM3), (L + R) / 2, B + 28, C_SUB, 11.5, "center");
-  mtxt(g, cat([{ s: "单载流子标度 " }], P_ABS_RH, [{ s: " = " }], P_RHF,
-    [{ s: "/(" }], P_NMAJ, [{ s: "q)" }]), R, T - 12, C_SUB, 10.5, "right");
-  /* 零带标签放左侧中线上方：橙线右端离中线仅约 10 px，贴右缘会压线、并和 +r_H/(Nq) 挤在一起 */
-  mtxt(g, [{ s: "过零" }], L + 6, mid - 9, C_SUB, 10.5, "left");
-
-  [[1, C_HOLE], [-1, C_ELEC]].forEach(([sg, col]) => {
-    g.beginPath();
-    for (let i = 0; i <= 240; i++) {
-      const lg = LG_LO + (LG_HI - LG_LO) * i / 240;
-      const xx = X(lg), yy = Y(sg * rhScaleCm3(lg));
-      i === 0 ? g.moveTo(xx, yy) : g.lineTo(xx, yy);
-    }
-    g.strokeStyle = col; g.lineWidth = 2.6; g.stroke();
-    chipM(g, cat([{ s: sg > 0 ? "+" : "−" }], P_RHF, [{ s: "/(" }], P_NMAJ, [{ s: "q)" }]),
-      R - 6, Y(sg * rhScaleCm3(17)) + (sg > 0 ? -12 : 12), col, 10.5, "right", W);
-  });
-
-  /* 当前样品：浓度取多子、R_H 取实测值；单载流子时恰好落在标度线上 */
-  const nMaj = Math.max(s.p, s.n) / 1e6;
-  if (nMaj > 0) {
-    const lgNow = clamp(Math.log10(nMaj), LG_LO, LG_HI);
-    const vNow = s.RH * 1e6;
-    const xx = X(lgNow), yy = Y(vNow);
-    const col = s.isTwo ? "#7b3fa0" : (vNow >= 0 ? C_HOLE : C_ELEC);
-    line(g, xx, T, xx, B, "rgba(107,122,140,.28)", 1, [3, 3]);
-    g.beginPath(); g.arc(xx, yy, 5.5, 0, 6.2832);
-    g.fillStyle = "#fff"; g.fill();
-    g.strokeStyle = col; g.lineWidth = 2.2; g.stroke();
-    chipM(g, cat([{ s: "当前 " }], P_RH, [{ s: " = " }],
-      vNow < 0 ? [{ s: "−" }] : [], PSci(Math.abs(vNow), 2), U_RH),
-      xx, clamp(yy + 20, T + 10, B - 8), col, 11, "center", W);
-  }
-  /* 提示放中线下方左侧空白带：左下角是蓝线左端（|R_H| 最大处），放那里会被线穿过 */
-  if (s.isTwo) chipM(g, [{ s: "双载流子偏离标度线" }], L + 6, mid + 18, "#7b3fa0", 10.5, "left", W);
-
-  if (HOV.rh && HOV.rh.x > L && HOV.rh.x < R) {
-    const lg = LG_LO + (HOV.rh.x - L) / pw * (LG_HI - LG_LO);
-    line(g, HOV.rh.x, T, HOV.rh.x, B, "rgba(107,122,140,.4)", 1, [3, 3]);
-    const l1 = cat([{ s: "多数载流子浓度 " }], P_NMAJ, [{ s: " = " }], PSci(Math.pow(10, lg), 2), U_CM3);
-    const l2 = cat(P_ABS_RH, [{ s: " = " }], PSci(rhScaleCm3(lg), 2), U_RH);
-    g.font = "11px " + FONT;
-    const wd = Math.max(mMeasure(g, l1, 11, false), mMeasure(g, l2, 11, false)) + 14;
-    const bx = clamp(HOV.rh.x + 10, 6, W - wd - 6), by = clamp(HOV.rh.y - 32, T, B - 34);
-    g.fillStyle = "rgba(255,255,255,0.96)"; g.strokeStyle = "#c9d4e0"; g.lineWidth = 1;
-    g.beginPath(); g.rect(bx, by, wd, 34); g.fill(); g.stroke();
-    mtxt(g, l1, bx + 7, by + 12, "#2c3e50", 11, "left");
-    mtxt(g, l2, bx + 7, by + 25, C_HOLE, 11, "left");
   }
 }
 
@@ -2240,18 +2118,12 @@ function buildLegends() {
      p 太小/太大时 n* 会落到横轴之外。 */
   const lgS = (s.isTwo && s.p > 0 && s.mun > 0) ? Math.log10(s.p * s.mup * s.mup / (s.mun * s.mun) / 1e6) : NaN;
   const hasZero = isFinite(lgS) && lgS >= LG_LO && lgS <= LG_HI;
-  $("legRh").innerHTML = OPT.rhView === "major"
-    ? [
-      '<span><span class="swatch" style="border-color:' + C_HOLE + '"></span>+' + H_RHF + '/(' + MM('<i>N</i>') + 'q)</span>',
-      '<span><span class="swatch" style="border-color:' + C_ELEC + '"></span>−' + H_RHF + '/(' + MM('<i>N</i>') + 'q)</span>',
-      '<span><span class="swatch dot" style="background:' + curCol + '"></span>' + H_RH + ' ' + T("当前样品") + '</span>'
-    ].join("")
-    : [
-      '<span><span class="swatch" style="border-color:' + curCol + '"></span>' + H_RH + '(' + H_NN + ') 曲线</span>',
-      (s.isTwo && s.p > 0 ? '<span><span class="swatch dash" style="border-color:' + C_HOLE + '"></span>渐近线 +' + H_RHF + '/(' + H_PP + 'q)</span>' : ''),
-      (s.isTwo ? '<span><span class="swatch dash" style="border-color:' + C_ELEC + '"></span>渐近线 −' + H_RHF + '/(' + H_NN + 'q)</span>' : ''),
-      (hasZero ? '<span><span class="swatch dash" style="border-color:' + C_EH + '"></span>补偿点（' + H_RH + ' = 0）</span>' : '')
-    ].filter(function (x) { return x; }).join("");
+  $("legRh").innerHTML = [
+    '<span><span class="swatch" style="border-color:' + curCol + '"></span>' + H_RH + '(' + (s.isP ? H_PP : H_NN) + ') 曲线</span>',
+    (s.isTwo && s.p > 0 ? '<span><span class="swatch dash" style="border-color:' + C_HOLE + '"></span>渐近线 +' + H_RHF + '/(' + H_PP + 'q)</span>' : ''),
+    (s.isTwo ? '<span><span class="swatch dash" style="border-color:' + C_ELEC + '"></span>渐近线 −' + H_RHF + '/(' + H_NN + 'q)</span>' : ''),
+    (hasZero ? '<span><span class="swatch dash" style="border-color:' + C_EH + '"></span>补偿点（' + H_RH + ' = 0）</span>' : '')
+  ].filter(function (x) { return x; }).join("");
 }
 
 /* ---------------- 12. 引导探究 ---------------- */
@@ -2379,7 +2251,6 @@ const noteOf = p => p.note();
 /* ---------------- 14. 交互绑定 ---------------- */
 function markActive() {
   Array.prototype.forEach.call($("typeBtns").children, b => b.classList.toggle("active", b.dataset.t === OPT.type));
-  Array.prototype.forEach.call($("rhViewBtns").children, b => b.classList.toggle("active", b.dataset.v === OPT.rhView));
   Array.prototype.forEach.call($("bDirBtns").children, b => b.classList.toggle("sel", (b.dataset.dir === "out") === (OPT.B >= 0)));
 }
 /* 滑块：电流与磁场取「带符号的对数/线性」双向行程，便于直接拖过零反向 */
@@ -2395,17 +2266,9 @@ function iToSlider(I) {
 }
 function syncInputs() {
   const s = state();
-  /* 视图切换只切静态节点的显隐，不重设文本内容：文本节点保持由 i18nWalk 统一翻译，
-     en→zh→en 才幂等（若在这里写 T(...) 到 textContent，__orig 会被英文覆盖）。 */
-  const isMaj = OPT.rhView === "major";
-  $("rhTitleMinor").style.display = isMaj ? "none" : "";
-  $("rhTitleMajor").style.display = isMaj ? "" : "none";
-  $("rhHintMinor").style.display = isMaj ? "none" : "";
-  $("rhHintMajor").style.display = isMaj ? "" : "none";
-  $("rhViewValMinor").style.display = isMaj ? "none" : "";
-  $("rhViewValMajor").style.display = isMaj ? "" : "none";
-  $("rhViewSubMinor").style.display = isMaj ? "none" : "";
-  $("rhViewSubMajor").style.display = isMaj ? "" : "none";
+  /* 模块二标题只切静态节点显隐，不写 textContent：英文态不会覆盖 __orig，en→zh→en 才幂等 */
+  $("rhTitleN").style.display = s.isP ? "none" : "";
+  $("rhTitleP").style.display = s.isP ? "" : "none";
   $("nmajSlider").value = Math.round(OPT.lgNmaj * 10);
   $("nminSlider").value = Math.round(OPT.lgNmin * 10);
   $("iSlider").value = iToSlider(OPT.I);
@@ -2482,10 +2345,6 @@ function init() {
          直接清零反而会让学生以为「换类型之前也没有霍尔场」。 */
       onParam(false);
     };
-  });
-  /* 模块二视图：只换图的坐标轴与标度，不动任何物理量、不重播积累动画 */
-  Array.prototype.forEach.call($("rhViewBtns").children, b => {
-    b.onclick = () => { OPT.rhView = b.dataset.v; markActive(); onParam(false); };
   });
   /* 磁场方向 */
   const bb = $("bDirBtns");
