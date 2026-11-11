@@ -586,7 +586,7 @@ var I18N = {
   "复合前能漂移多远": "how far it can drift before recombining",
   "稳态衰减长度 ": "Steady-state decay length ",
   "稳态衰减长度": "Steady-state decay length",
-  "稳态光照 Δp ∝ e^(−x/) 的衰减常数": "the decay constant of the steady-illumination profile Δp ∝ e^(−x/L)",
+  "稳态光照 Δp ∝ e(−x/) 的衰减常数": "the decay constant of the steady-illumination profile Δp ∝ e(−x/L)",
   "稳态光照": "Steady illumination",
   "的衰减常数": " its decay constant",
   "样品长度尺（同一比例看少子能走多远）": "Sample length scale (one common scale for how far the minority carriers get)",
@@ -2324,7 +2324,7 @@ function drawLen() {
     { tok: ["漂移长度 ", { s: "L", i: 1 }, { s: "drift", sub: 1 }, { s: " = |" }, { s: "v", i: 1 }, { s: "d", sub: 1 }, { s: "|" }, { s: "τ", i: 1 }],
       v: d.Ld, col: C_OP, tip: "复合前能漂移多远" },
     { tok: ["稳态衰减长度 ", { s: "L", i: 1 }, { s: "eff", sub: 1 }],
-      v: d.Leff, col: "#2e9e5b", tip: "稳态光照 Δp ∝ e^(−x/L_eff) 的衰减常数" }
+      v: d.Leff, col: "#2e9e5b", tip: "稳态光照 Δp ∝ e(−x/L_eff) 的衰减常数" }
   ];
   const xa = 168, xb = W - 118;
   let mv = 0;

@@ -422,7 +422,7 @@ var I18N = {
   "由爱因斯坦关系反推寿命 τ = ": "Lifetime back-derived from the Einstein relation, τ = ",
   "（迁移率固定）": " (mobility held fixed)",
   "负号＝电子要往上爬 |Δ": "A negative sign means electrons must climb |Δ",
-  "|，界面抽取速度被压到原来的 e^(−|ΔE_C|/kT) ≈ ": "|, and the interface extraction velocity is suppressed by e^(−|ΔE_C|/kT) down to about ",
+  "|，界面抽取速度被压到原来的 e(−|ΔE_C|/kT) ≈ ": "|, and the interface extraction velocity is suppressed by e(−|ΔE_C|/kT) down to about ",
   "偏移偏大：电子好抽，但接触电势被吃掉，V_OC 先降": "The offset is too large: electrons are easy to extract, but the contact potential is eaten away and V_OC falls first",
   "0.1～0.3 eV 是常取的折中区：挡得住空穴，又不至于多丢太多电压": "0.1–0.3 eV is the usual compromise: enough to block holes without giving up too much voltage",
   "这几项都没给滑块，取值与影响都在「更多读数」里现算：": "None of these have a slider; the values and their effect are recomputed live under “More readouts”: ",
@@ -632,9 +632,9 @@ var I18N = {
   "典型 MAPbI": "Typical MAPbI",
   "势垒 |Δ": "Barrier |Δ",
   "|：抽取受阻": "|: extraction blocked",
-  "|，界面抽取速度被压到原来的 e^(−|Δ": "|, and the interface extraction velocity is suppressed to e^(−|Δ",
+  "|，界面抽取速度被压到原来的 e(−|Δ": "|, and the interface extraction velocity is suppressed to e(−|Δ",
   "，界面抽取速度被压到原来的 ": ", and the interface extraction velocity is suppressed to ",
-  "，界面抽取速度被压到原来的 e^(−|Δ": ", and the interface extraction velocity is suppressed to e^(−|Δ",
+  "，界面抽取速度被压到原来的 e(−|Δ": ", and the interface extraction velocity is suppressed to e(−|Δ",
   "高于接触电势上限，已被压回 ": "above the contact-potential ceiling and is pushed back to ",
   "偏移偏大：电子好抽，但接触电势被吃掉，": "The offset is too large: electrons are easy to extract, but the contact potential is eaten away, ",
   " 先降": " falls first",
@@ -697,7 +697,7 @@ var I18N = {
   " 三档各试一遍），其它不动：": " through all three settings and change nothing else: how do ",
   "、FF、PCE 各自怎么变？为什么「能带对齐」不是越平越好？最优区间大概在哪？": ", FF and PCE each respond? Why is “band alignment” not a case of “the flatter the better”? Roughly where does the optimum lie?",
   "负的那一侧是势垒：": "The negative side is a barrier: ",
-  " < 0 意味着电子要往上爬一个台阶才进得去 ETL，界面抽取速度按 e^(−|Δ": " < 0 means an electron must climb a step before it can enter the ETL, and the interface extraction velocity is suppressed by e^(−|Δ",
+  " < 0 意味着电子要往上爬一个台阶才进得去 ETL，界面抽取速度按 e(−|Δ": " < 0 means an electron must climb a step before it can enter the ETL, and the interface extraction velocity is suppressed by e(−|Δ",
   "|/kT) 被压掉，收集效率、": "|/kT); collection efficiency, ",
   " 和 FF 一起垮。": " and FF all collapse together.",
   "正的一旦过大（悬崖），": "Once the positive side grows too large (a cliff), ",
@@ -720,7 +720,7 @@ var I18N = {
 
   /* ---- 补：关系式分散进各模块说明后的新文案 ---- */
   "短路电流是两级效率相乘：": "The short-circuit current is two efficiencies multiplied together: ",
-  "：吸收按 Beer 定律随深度 e^(−αz) 逐层衰减，收集由扩散方程在「界面抽取速度 ": ": absorption falls off layer by layer with depth as e^(−αz) (Beer’s law), and collection comes from the analytic solution of the diffusion equation under the boundary condition of an interface extraction velocity ",
+  "：吸收按 Beer 定律随深度 e(−αz) 逐层衰减，收集由扩散方程在「界面抽取速度 ": ": absorption falls off layer by layer with depth as e(−αz) (Beer’s law), and collection comes from the analytic solution of the diffusion equation under the boundary condition of an interface extraction velocity ",
   "」这一边界条件下的解析解给出：": ": ",
   "收集由扩散方程在「界面抽取速度 ": "comes from the analytic solution of the diffusion equation under the boundary condition of an interface extraction velocity ",
   "开压取两者中的小者：": "The open-circuit voltage is the smaller of the two: ",
@@ -2535,7 +2535,7 @@ const CHAL = [
     q: "只换电子传输层（ΔE_C 三档各试一遍），其它不动：J_SC、V_OC、FF、PCE 各自怎么变？为什么「能带对齐」不是越平越好？最优区间大概在哪？",
     a: () => {
       return "<b>负的那一侧是势垒：</b>Δ" + "<span class=\"m\"><i>E</i><sub>C</sub></span>" +
-        " &lt; 0 意味着电子要往上爬一个台阶才进得去 ETL，界面抽取速度按 e^(−|ΔE_C|/kT) 被压掉，" +
+        " &lt; 0 意味着电子要往上爬一个台阶才进得去 ETL，界面抽取速度按 e(−|ΔE_C|/kT) 被压掉，" +
         "收集效率、" + H_JSC + " 和 FF 一起垮。<b>正的一旦过大（悬崖），</b>电子好抽了，但接触电势上限被吃掉，" +
         H_JSC + " 不动、" + H_VOC + " 先降。<b>折中区在 0.1～0.3 eV</b>：既挡得住空穴，又不至于白白丢太多电压 —— " +
         "所以「能带对齐」从来不是越平越好，完全齐平的时候电子过得去、空穴也容易跟着往回漏，选择性反而不行。";
