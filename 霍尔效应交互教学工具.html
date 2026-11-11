@@ -179,10 +179,10 @@
     </div>
 
     <div class="card">
-      <div class="sec-title"><span class="mtag">模块二</span>双载流子：<span class="m"><i>R</i><sub>H</sub></span> 随电子浓度 <span class="m"><i>n</i></span> 的变化（空穴浓度 <span class="m"><i>p</i></span> 固定）</div>
+      <div class="sec-title"><span class="mtag">模块二</span>霍尔系数：<span class="m"><i>R</i><sub>H</sub></span> 随电子浓度 <span class="m"><i>n</i></span> 的变化（空穴浓度 <span class="m"><i>p</i></span> 固定）</div>
       <div class="chart-wrap"><canvas id="rh" data-h="240" tabindex="0"></canvas></div>
       <div class="legend" id="legRh"></div>
-      <div class="hint">电子项带 <span class="m"><i>μ</i><sub>n</sub><sup>2</sup></span> 权重、空穴项带 <span class="m"><i>μ</i><sub>p</sub><sup>2</sup></span> 权重：迁移率大的那一方<b>话语权被平方放大</b>，所以即使 <span class="m"><i>n</i><span class="op">≪</span><i>p</i></span>，少子电子也能把 <span class="m"><i>R</i><sub>H</sub></span> 拉过零、甚至主导符号 —— 这就是「p 型材料测出 n 型霍尔系数」的由来。曲线与零点相交处是<b>补偿点</b>。</div>
+      <div class="hint"><span>只有一种载流子时，霍尔系数不会过零，也没有补偿点；下面的平方权重、过零与补偿点都只在双载流子模式出现：</span>电子项带 <span class="m"><i>μ</i><sub>n</sub><sup>2</sup></span> 权重、空穴项带 <span class="m"><i>μ</i><sub>p</sub><sup>2</sup></span> 权重：迁移率大的那一方<b>话语权被平方放大</b>，所以即使 <span class="m"><i>n</i><span class="op">≪</span><i>p</i></span>，少子电子也能把 <span class="m"><i>R</i><sub>H</sub></span> 拉过零、甚至主导符号 —— 这就是「p 型材料测出 n 型霍尔系数」的由来。曲线与零点相交处是<b>补偿点</b>。</div>
     </div>
   </div>
 
@@ -349,6 +349,12 @@ function T(s) {
 }
 var I18N = {
   /* ---- 标题与页脚 ---- */
+  "霍尔系数：": "Hall coefficient: ",
+  "只有一种载流子时，霍尔系数不会过零，也没有补偿点；下面的平方权重、过零与补偿点都只在双载流子模式出现：": "With only one carrier type, the Hall coefficient never crosses zero and there is no compensation point; the squared-weight argument, the zero crossing and the compensation point below apply only to two-carrier mode: ",
+  "p 型单载流子：": "p-type, single carrier: ",
+  "n 型单载流子：": "n-type, single carrier: ",
+  " 与电子浓度无关（水平线）": " is independent of electron concentration (flat line)",
+  " 就是这条水平线，不会过零": " is this flat line, which never crosses zero",
   "霍尔效应交互教学工具": "Hall Effect — Interactive Toolkit",
   "本工具是 EIT-SP（半导体物理交互式教学工具箱）的一部分（武汉大学物理学院《半导体物理》智慧课程），以 MIT 协议开源，可自由使用与二次开发；转载请保留出处。": "This tool is part of EIT-SP, the Educational Interactive Toolkit for Semiconductor Physics (School of Physics and Technology, Wuhan University). Released under the MIT license: free to use, modify and redistribute, including commercially. Please keep this attribution.",
   "反馈意见": " Feedback",
@@ -476,8 +482,6 @@ var I18N = {
   " 只是抵消洛伦兹力": " only cancels the Lorentz force",
   "稳态下仍沿 ": "Still along ",
   " 走直线": " in a straight line",
-  "（n 型：": "(n-type: ",
-  "q)，与蓝色渐近线重合）": "q), merging with the blue asymptote)",
   "（漂移）": " (drift)",
   "（霍尔）": " (Hall)",
   "单位 ": "Units ",
@@ -687,7 +691,6 @@ var I18N = {
   "滑块中间为 0：": "The slider center is 0: ",
   "（固定 100 ": "(fixed at 100 ",
   " 洛伦兹力箭头（3 个示意）": " Lorentz-force arrows (3 examples)",
-  " = 0，曲线退化成 ": " = 0 and the curve degenerates into ",
   " < 0，积累侧带负电。": " < 0, so the accumulated side goes negative.",
   "2. 把电流 ": "2. Double the current ",
   "3. 切到": "3. Switch to ",
@@ -704,7 +707,6 @@ var I18N = {
   "空穴导电、迁移率 450（只有电子的 1/3）：RH > 0，霍尔角也更小。": "Hole conduction, mobility 450 (a third of the electron value): R_H > 0, and the Hall angle is smaller too.",
   "p = 10^16、n = 10^15：电子项已翻盘，R_H 变负（补偿点在 0 cm^−3）。": "p = 10^16, n = 10^15: the electron term has turned the tables and R_H turns negative (compensation point at 0 cm^−3).",
   "本预设同时改两件事：① B 由 0.5 T 加到 2 T（4 倍） —— V_H = R_HI_sB/d 与偏转斜率都正比于 B，故 |V_H| 也是 4 倍（3.12 → 12.48 mV）；② 切换到 p 型，R_H 反号、霍尔迁移率由 1400 降到 450 cm2/(V·s)。霍尔角 tanθ_H = μ_HB 里两个因子一升一降，净结果只从 4.00° 变到 5.14°（若只加磁场、留在 n 型，会是 15.64°）—— 横向电场始终是纵向的一个小量。": "This preset changes two things at once: (i) B goes from 0.5 T up to 2 T (×4) — V_H = R_H I_s B/d and the deflection slope are both proportional to B, so |V_H| is 4× too (3.12 → 12.48 mV); (ii) switch to p-type, R_H reverses sign and the Hall mobility falls from 1400 to 450 cm²/(V·s). In the Hall angle tanθ_H = μ_H B the two factors move in opposite directions, so the net result only goes from 4.00° to 5.14° (with the field alone, staying n-type, it would be 15.64°) — the transverse field always stays a small fraction of the longitudinal one.",
-  " 就落在橙色渐近线上": " falls right on the orange asymptote",
   /* 下面两条按 DOM 文本节点边界对齐：3 号预设的 note 里 R_H 是排版 <span>，
      innerHTML 落进 #preSub 后整句被切成「…）：」+ <span>R_H</span> + 「 > 0，…。」
      三段，各自独立进 T()，所以 key 必须就是这三段本身（含全角括号与冒号、
@@ -1706,10 +1708,15 @@ function drawSamp() {
     /* 电场从正电荷侧指向负电荷侧：正电荷堆在 accSide ⇒ 背离它；负电荷堆在 accSide ⇒ 指向它 */
     const up = sgnQ > 0 ? (accSide < 0) : (accSide > 0);   // 电场是否朝画布上方
     const dE = up ? -1 : 1;                                // 画布 y 向下为正
+    /* E_H(t) = η·E_H(∞)：箭头长度与 EHnow、|V_H(t)|、侧壁积累符号枚数、积累进度
+       同取 η，从 0 长到稳态的 32 px；箭头头部同步缩放，免得短杆上顶个大箭头。 */
+    const ehHalf = 16 * ETA;
+    const ehHead = Math.min(5.5, Math.max(1.6, ehHalf * 0.45));
     for (let i = 0; i < 4; i++) {
       const px = G.x0 + G.pw * (i + 0.5) / 4, py = G.cy;
-      /* arrow 的箭头画在终点 (x2,y2)：起点要取反向那一端，否则整排箭头指反 */
-      arrow(g, px, py - dE * 16, px, py + dE * 16, C_EH, 1.8, 5.5);
+      /* arrow 的箭头画在终点 (x2,y2)：起点要取反向那一端，否则整排箭头指反；
+         L < 0.5 时 arrow() 自己不画 ⇒ η≈0 的那一刻画面上确实没有霍尔场。 */
+      arrow(g, px, py - dE * ehHalf, px, py + dE * ehHalf, C_EH, 1.8, ehHead);
     }
     /* s.EH 内部是 V/m，图上与读数一致地写成 V/cm（少除 100 就会差两个数量级） */
     const ehCm = Math.abs(EHnow) / 100;
@@ -1889,10 +1896,18 @@ function drawRh() {
   const L = 66, R = W - 16, T = 24, B = H - 36;
   const pw = R - L, ph = B - T;
   const X = lg => L + (lg - LG_LO) / (LG_HI - LG_LO) * pw;
+  /* 单载流子只画自己那一种：n 型 R_H = −r_H/(nq)，p 型 R_H = +r_H/(pq) 是常数
+     （横轴 n 是「假想掺入的电子浓度」，单载流子模型里没有电子 ⇒ 不变）。
+     只有双载流子模式才画两项之争的曲线、渐近线与补偿点。 */
+  const curveOf = (lg) => {
+    if (s.isTwo) return rhOfN(Math.pow(10, lg));
+    if (s.isP) return RH_FIX / (Q_E * s.p);
+    return -RH_FIX / (Q_E * Math.pow(10, lg) * 1e6);
+  };
   /* 量程：本段曲线极值 */
   let vmax = 0;
   for (let i = 0; i <= 120; i++) {
-    const v = rhOfN(Math.pow(10, LG_LO + (LG_HI - LG_LO) * i / 120));
+    const v = curveOf(LG_LO + (LG_HI - LG_LO) * i / 120);
     vmax = Math.max(vmax, Math.abs(v));
   }
   const VMAX = niceStep(vmax * 1.1 / 2) * 2;
@@ -1912,22 +1927,25 @@ function drawRh() {
   line(g, L, Y(0), R, Y(0), "#9aa5b1", 1.3);
   mtxt(g, cat(P_RH, [{ s: " (" }], U_RH, [{ s: ")" }]), L - 8, T - 12, C_SUB, 11, "left");
   mtxt(g, cat([{ s: "电子浓度 " }], P_NN), (L + R) / 2, B + 28, C_SUB, 11.5, "center");
-  /* p = 0（n 型）时曲线退化成 R_H = −1/(nq)，正好压在蓝色渐近线上 —— 这句不写会被当成画错了 */
-  mtxt(g, s.p > 0
+  /* 副标题按模式说清这张图画的是哪一套物理：单载流子页上不出现补偿点说明 */
+  const subRh = s.isTwo
     ? cat([{ s: "（空穴浓度 " }], P_PP, [{ s: " = " }], PSci(s.p / 1e6, 1), U_CM3, [{ s: "，固定）" }])
-    : cat([{ s: "（n 型：" }], P_PP, [{ s: " = 0，曲线退化成 " }], P_RH,
-      [{ s: " = −1/(" }], P_NN, [{ s: "q)，与蓝色渐近线重合）" }]),
-    R, T - 12, C_SUB, 10.5, "right");
+    : (s.isP
+      ? cat([{ s: "p 型单载流子：" }], P_NN, [{ s: " = 0 ⇒ " }], P_RH,
+        [{ s: " 与电子浓度无关（水平线）" }])
+      : cat([{ s: "n 型单载流子：" }], P_PP, [{ s: " = 0 ⇒ " }], P_RH,
+        [{ s: " = −" }], P_RHF, [{ s: "/(" }], P_NN, [{ s: "q)" }]));
+  mtxt(g, subRh, R, T - 12, C_SUB, 10.5, "right");
 
-  /* 渐近线：n→0 时 +r_H/(pq)；n 大时 −r_H/(nq) */
-  if (s.p > 0) {
+  /* 渐近线与补偿点都是「两种载流子同时在场」才有的东西 ⇒ 只在双载流子模式画 */
+  if (s.isTwo && s.p > 0) {
     const asy = RH_FIX / (Q_E * s.p);
     line(g, L, Y(asy), R, Y(asy), "rgba(239,140,26,.55)", 1.2, [6, 4]);
     chipM(g, cat([{ s: "+ " }], P_RHF, [{ s: "/(" }], P_PP, [{ s: "q)" }]),
       L + 6, Y(asy) - 12, C_HOLE, 10.5, "left", W);
   }
   const mun = s.mun;
-  if (mun > 0) {
+  if (s.isTwo && mun > 0) {
     g.beginPath();
     for (let i = 0; i <= 120; i++) {
       const lg = LG_LO + (LG_HI - LG_LO) * i / 120;
@@ -1944,13 +1962,13 @@ function drawRh() {
   g.beginPath();
   for (let i = 0; i <= 240; i++) {
     const lg = LG_LO + (LG_HI - LG_LO) * i / 240;
-    const xx = X(lg), yy = Y(rhOfN(Math.pow(10, lg)));
+    const xx = X(lg), yy = Y(curveOf(lg));
     i === 0 ? g.moveTo(xx, yy) : g.lineTo(xx, yy);
   }
   g.strokeStyle = col; g.lineWidth = 2.6; g.stroke();
 
   /* 补偿点（R_H = 0）：n* = p μ_p²/μ_n² */
-  if (s.p > 0 && s.mun > 0) {
+  if (s.isTwo && s.p > 0 && s.mun > 0) {
     const nStar = s.p * s.mup * s.mup / (s.mun * s.mun) / 1e6;   // cm⁻³
     const lgS = Math.log10(nStar);
     if (lgS >= LG_LO && lgS <= LG_HI) {
@@ -1975,7 +1993,7 @@ function drawRh() {
       clamp(xNow, L + 70, R - 70), clamp(yNow + 18, T + 8, B - 8), col, 11, "center", W);
   } else {
     chipM(g, cat([{ s: "当前：p 型单载流子，" }], P_NN, [{ s: " = 0 在横轴左端之外 ⇒ 当前 " }],
-      P_RH, [{ s: " 就落在橙色渐近线上" }]),
+      P_RH, [{ s: " 就是这条水平线，不会过零" }]),
       L + 6, B - 10, C_SUB, 10.5, "left", W);
   }
 
@@ -1983,7 +2001,7 @@ function drawRh() {
     const lg = LG_LO + (HOV.rh.x - L) / pw * (LG_HI - LG_LO);
     line(g, HOV.rh.x, T, HOV.rh.x, B, "rgba(107,122,140,.4)", 1, [3, 3]);
     const l1 = cat(P_NN, [{ s: " = " }], PSci(Math.pow(10, lg), 2), U_CM3);
-    const l2 = cat(P_RH, [{ s: " = " }], [{ s: fmt(rhOfN(Math.pow(10, lg)) * 1e6, 2) }], U_RH);
+    const l2 = cat(P_RH, [{ s: " = " }], [{ s: fmt(curveOf(lg) * 1e6, 2) }], U_RH);
     g.font = "11px " + FONT;
     const wd = Math.max(mMeasure(g, l1, 11, false), mMeasure(g, l2, 11, false)) + 14;
     const bx = clamp(HOV.rh.x + 10, 6, W - wd - 6), by = clamp(HOV.rh.y - 32, T, B - 34);
@@ -2102,13 +2120,14 @@ function buildLegends() {
       ' 个空穴；两者<b>同侧</b>偏转，横向电流相消</span>' : '')
   ].join("");
   /* 图例只列「这一档参数下真的画出来的东西」，判据与 drawRh 里的 if 完全一致：
-     p = 0（n 型）时既没有 +r_H/(pq) 渐近线也没有补偿点；p 太小/太大时 n* 会落到横轴之外。 */
-  const lgS = (s.p > 0 && s.mun > 0) ? Math.log10(s.p * s.mup * s.mup / (s.mun * s.mun) / 1e6) : NaN;
+     单载流子模式只画自己的 R_H 曲线；渐近线与补偿点只在双载流子模式出现；
+     p 太小/太大时 n* 会落到横轴之外。 */
+  const lgS = (s.isTwo && s.p > 0 && s.mun > 0) ? Math.log10(s.p * s.mup * s.mup / (s.mun * s.mun) / 1e6) : NaN;
   const hasZero = isFinite(lgS) && lgS >= LG_LO && lgS <= LG_HI;
   $("legRh").innerHTML = [
     '<span><span class="swatch" style="border-color:' + curCol + '"></span>' + H_RH + '(' + H_NN + ') 曲线</span>',
-    (s.p > 0 ? '<span><span class="swatch dash" style="border-color:' + C_HOLE + '"></span>渐近线 +' + H_RHF + '/(' + H_PP + 'q)</span>' : ''),
-    '<span><span class="swatch dash" style="border-color:' + C_ELEC + '"></span>渐近线 −' + H_RHF + '/(' + H_NN + 'q)</span>',
+    (s.isTwo && s.p > 0 ? '<span><span class="swatch dash" style="border-color:' + C_HOLE + '"></span>渐近线 +' + H_RHF + '/(' + H_PP + 'q)</span>' : ''),
+    (s.isTwo ? '<span><span class="swatch dash" style="border-color:' + C_ELEC + '"></span>渐近线 −' + H_RHF + '/(' + H_NN + 'q)</span>' : ''),
     (hasZero ? '<span><span class="swatch dash" style="border-color:' + C_EH + '"></span>补偿点（' + H_RH + ' = 0）</span>' : '')
   ].filter(function (x) { return x; }).join("");
 }
