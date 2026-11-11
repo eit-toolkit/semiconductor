@@ -423,6 +423,7 @@ var I18N = {
   "　·　蓝光 / 紫外 LED、功率器件": "　·　blue / UV LEDs, power devices",
   "　·　光通信激光器、探测器": "　·　telecom lasers, detectors",
   "　·　紫外 LED、透明导电薄膜": "　·　UV LEDs, transparent conducting films",
+  "　·　绿光 LED（掺 N 等电子陷阱）": "　·　green LEDs (N isoelectronic traps)",
   "光子能量 ": "Photon energy ",
   "阈值 ": "threshold ",
   "阈值": "Threshold",
@@ -455,6 +456,7 @@ var I18N = {
   "带隙类型": "Gap type",
   "（CBM 在 Γ）": " (CBM at Γ)",
   "（CBM 在 Γ–X 的 Δ 点）": " (CBM at the Δ point on Γ–X)",
+  "（CBM 在 X 点）": " (CBM at X)",
   "（CBM 在 L）": " (CBM at L)",
   "典型应用": "Typical applications",
   "集成电路、太阳能电池": "integrated circuits, solar cells",
@@ -463,6 +465,7 @@ var I18N = {
   "蓝光 / 紫外 LED、功率器件": "blue / UV LEDs, power devices",
   "光通信激光器、探测器": "telecom lasers, detectors",
   "紫外 LED、透明导电薄膜": "UV LEDs, transparent conducting films",
+  "绿光 LED（掺 N 等电子陷阱）": "green LEDs (N isoelectronic traps)",
   "带隙": "Band gap",
   "（反推）": " (back-extrapolated)",
   "　·　文献 ": "　·　literature ",
@@ -559,6 +562,7 @@ var I18N = {
   "VBM 一直在 Γ": "The VBM is always at Γ",
   "（价带顶，橙点），而 ": " (valence-band top, the orange dot), while the ",
   "CBM 在 Γ–X 方向（Si 实际在 Δ 点，≈0.85 X）": "CBM lies along Γ–X (Si actually sits at the Δ point, ≈0.85 X)",
+  "CBM 在 X 点": "CBM lies at the X point",
   "（蓝点，加粗的那条谷）。两者": " (blue dot, the thick valley). The two are",
   "两者在": "The two are at",
   "同一个 ": "the same ",
@@ -1404,13 +1408,20 @@ const MATS = [
   { name: "InP", lat: "闪锌矿", a: 0.5869, eg0: 1.421, al: 4.90e-4, be: 327,
     vG: 1.34, vX: 2.20, vL: 2.00, xFrac: 1.00, app: "光通信激光器、探测器" },
   { name: "ZnO", lat: "纤锌矿", a: 0.3250, c: 0.5207, hex: true, eg0: 3.410, al: 5.05e-4, be: 900,
-    vG: 3.37, vX: 5.00, vL: 5.40, xFrac: 1.00, app: "紫外 LED、透明导电薄膜" }
+    vG: 3.37, vX: 5.00, vL: 5.40, xFrac: 1.00, app: "紫外 LED、透明导电薄膜" },
+  /* 2026-11-10 追加 GaP（必须留在数组末尾，否则 CHAL[2] 的 MATS[2] 会错位；
+     该处已改为按 name 查找，双重保险）。300 K：X 谷 2.26 eV 为 CBM，Γ 谷 2.78 eV，
+     L 谷 2.60 eV 只作定性示意；a = 0.54505 nm。Varshni 取 Panish–Casey 的
+     Eg = 2.34 − 6.10×10⁻⁴ T²/(T+460) eV（X 谷低温值）。N 替 P 的等电子陷阱
+     以它为宿主，见研究生版「等电子陷阱交互教学工具」。 */
+  { name: "GaP", lat: "闪锌矿", a: 0.54505, eg0: 2.340, al: 6.10e-4, be: 460,
+    vG: 2.78, vX: 2.26, vL: 2.60, xFrac: 1.00, app: "绿光 LED（掺 N 等电子陷阱）" }
 ];
 /* 抛物谷的曲率（eV per (2π/a)²，示意值）：只影响曲线的陡缓，不影响谷底能量 */
 const AG = 1.60, AX = 1.10, AL = 1.00, AH = 1.30;
 /* 声子能量（eV）：固定为 0.05 eV —— 布里渊区边界声子的典型量级。
-   它比带隙小，但**只小 1～2 个数量级**：六材料 300 K 实算 E_g/E_ph = Ge 13×、Si 22×、InP 27×、
-   GaAs 28×、ZnO 67×、GaN 68× —— 最大 68 < 100，够不上「两个数量级」，文案里别这么写
+   它比带隙小，但**只小 1～2 个数量级**：七材料 300 K 实算 E_g/E_ph = Ge 13×、Si 22×、InP 27×、
+   GaAs 28×、GaP 45×、ZnO 67×、GaN 68× —— 最大 68 < 100，够不上「两个数量级」，文案里别这么写
    （定性结论「动量大、能量小」不受影响）。页面上一律现算 d.Eg/EPH，见 CHAL[1].a()。 */
 const EPH = 0.05;
 /* 吸收边系数（示意量级）：直接边 ~10⁵ cm⁻¹、间接边 ~10²–10³ cm⁻¹ */
@@ -1882,7 +1893,8 @@ function drawAbs() {
 
   /* ---- 边形状的标注：间接段是平方、直接段是平方根 ---- */
   if (!d.direct) {
-    /* 标注要落在「直接边还没打开」的那一段里：Ge 的 Γ 谷只比带隙高 0.14 eV，取 0.55 会标到直接边上去 */
+    /* 标注要落在「直接边还没打开」的那一段里：Ge 的 Γ 谷只比带隙高 0.14 eV
+       （GaP 是 0.52 eV，Si / InP 更大），取 0.55 会标到直接边上去；off 由 d.EG − d.Eg 现算 */
     const off = clamp((d.EG - d.Eg) * 0.5, 0.04, 0.55);
     const xa = Xa(d.Eg + off), ya = Ya(alphaAt(d.Eg + off, { EG: d.EG, Eg: d.Eg, direct: d.direct }));
     chipM(g, cat(P_AL, [{ s: " ∝ (" }], P_HW, [{ s: " − " }], P_EG, [{ s: " ∓ " }], P_EPH,
@@ -1976,7 +1988,9 @@ const CHAL = [
     a: () => {
       const d = phys(), g = geo(d.m);
       return "当前是 <b>" + d.m.name + "</b>（" + d.m.lat + "）：<b>VBM 一直在 Γ</b>（价带顶，橙点），而 <b>CBM 在 " +
-        (d.direct ? "Γ" : (d.cbm.id === "X" ? "Γ–X 方向（" + d.m.name + " 实际在 Δ 点，≈0.85 X）" : d.cbm.id)) + "</b>（蓝点，加粗的那条谷）。" +
+        (d.direct ? "Γ" : (d.cbm.id === "X"
+          ? (d.m.xFrac >= 0.999 ? "X 点" : "Γ–X 方向（Si 实际在 Δ 点，≈0.85 X）")
+          : d.cbm.id)) + "</b>（蓝点，加粗的那条谷）。" +
         (d.direct
           ? "两者在<b>同一个 " + MM("<i>k</i>") + " 点</b>，所以是<b>直接带隙</b>：" + MM("<i>E</i><span class='op'>–</span><i>k</i>") + " 图上一条竖线就能把价带顶接到导带底。"
           : "两者<b>不在同一个 " + MM("<i>k</i>") + " 点</b>，所以是<b>间接带隙</b>：横向差着 <span class='m'>Δ<i>k</i><span class='op'>=</span>" +
@@ -2029,7 +2043,7 @@ const CHAL = [
     a: () => {
       const d = phys();
       const a1 = alphaAt(d.Eg + 0.2, { EG: d.EG, Eg: d.Eg, direct: d.direct });
-      const gg = MATS[2];                                  /* GaAs 作对照 */
+      const gg = MATS.filter(function (m) { return m.name === "GaAs"; })[0];  /* GaAs 作对照：按名查找，追加材料不移位 */
       const a2 = alphaAt(gg.vG + 0.2, { EG: gg.vG, Eg: gg.vG, direct: true });
       return "当前 <b>" + d.m.name + "</b>（" + (d.direct ? "直接" : "间接") + "）：比阈值高 0.2 eV 时 <span class='m'><i>α</i><span class='op'>=</span>" +
         (a1 >= 1 ? sciH(a1, 2) : "≈0") + " " + U_CMH + "</span>" +
@@ -2111,12 +2125,13 @@ function updateReadout() {
   h.push(hd("材料"));
   h.push(kvRow("材料 / 结构", "<b>" + m.name + "</b>　" + m.lat));
   h.push(kvRow("带隙类型", d.direct
-    ? "<b>直接</b>（CBM 在 Γ）" : "<b>间接</b>（CBM 在 " + (d.cbm.id === "X" ? "Γ–X 的 Δ 点" : "L") + "）"));
+    ? "<b>直接</b>（CBM 在 Γ）" : "<b>间接</b>（CBM 在 " +
+      (d.cbm.id === "X" ? (m.xFrac >= 0.999 ? "X 点" : "Γ–X 的 Δ 点") : "L") + "）"));
   h.push(hd("带隙"));
   h.push(kvRow(MM("<i>E</i><sub>g</sub>") + "（300 " + U_KH + "）", "<b>" + fmt(d.Eg, 3) + "</b> " + U_EVH));
   /* 0 K 值：本页 = 300 K 谷底实测值 + Varshni 温差反推（≠ Varshni 参数里的 E_g(0)），
-     两者差几个 meV（InP 最大，约 11 meV，是两套文献取值的差别），所以两个数都列出来。
-     挑战五要点名读这一行，故留在核心区。 */
+     两者差几个 meV（InP 最大约 11 meV，2026-11-10 加入的 GaP 约 8 meV，
+     是两套文献取值的差别），所以两个数都列出来。挑战五要点名读这一行，故留在核心区。 */
   h.push(kvRow(MM("<i>E</i><sub>g</sub>(0 <span class='un'>K</span>)") + "（反推）",
     "<b>" + fmt(d.Eg0, 3) + "</b> " + U_EVH + "　·　文献 " + fmt(m.eg0, 3) + " " + U_EVH));
   h.push(kvRow("Γ 谷（竖直跃迁阈值）", fmt(d.EG, 3) + " " + U_EVH));

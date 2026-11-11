@@ -197,7 +197,7 @@
         <div class="ctrl-head"><span>材料</span></div>
         <div class="btn-row" id="matBtns" style="margin-top:0;"></div>
         <div class="kv" id="matInfo" style="margin-top:8px;"></div>
-        <div class="mini" style="margin-top:6px;">三种材料同为 FCC 晶格，第一布里渊区形状完全相同（截角八面体）；不同的是能带与导带底位置。</div>
+        <div class="mini" style="margin-top:6px;">四种材料同为 FCC 晶格，第一布里渊区形状完全相同（截角八面体）；不同的是能带与导带底位置。</div>
       </div>
 
       <div class="ctrl">
@@ -332,7 +332,7 @@ var I18N = {
   /* ---- 控制面板 ---- */
   "控制面板": "Control Panel",
   "材料": "Material",
-  "三种材料同为 FCC 晶格，第一布里渊区形状完全相同（截角八面体）；不同的是能带与导带底位置。": "All three materials share the FCC lattice, so their first Brillouin zones are identical (a truncated octahedron); what differs is the band structure and where the conduction-band minimum lies.",
+  "四种材料同为 FCC 晶格，第一布里渊区形状完全相同（截角八面体）；不同的是能带与导带底位置。": "All four materials share the FCC lattice, so their first Brillouin zones are identical (a truncated octahedron); what differs is the band structure and where the conduction-band minimum lies.",
   " 路径": " path",
   "重置视角": "Reset view",
   "显示项目": "Display",
@@ -411,13 +411,14 @@ var I18N = {
   " 位置：把鼠标移到曲线上，气泡里会给出该点的 ": " position in the 3-D Brillouin zone: hover over a curve and the bubble gives the ",
   " 坐标。": " coordinates of that point.",
   "挑战三 · 直接带隙 vs 间接带隙": "Challenge 3 · Direct versus indirect gaps",
-  "依次切换 Si、Ge、GaAs，比较能带图，填写表格：导带底位置、价带顶位置、带隙类型与带隙大小。": "Switch in turn between Si, Ge and GaAs and compare the band diagrams; fill in the table: position of the conduction-band minimum, position of the valence-band maximum, gap type and gap size.",
+  "依次切换 Si、Ge、GaAs、GaP，比较能带图，填写表格：导带底位置、价带顶位置、带隙类型与带隙大小。": "Switch in turn between Si, Ge, GaAs and GaP and compare the band diagrams; fill in the table: position of the conduction-band minimum, position of the valence-band maximum, gap type and gap size.",
   "Si：导带底在 Δ（Γ–X 约 85%），价带顶在 Γ，": "Si: the conduction-band minimum is at Δ (about 85% along Γ–X) and the valence-band maximum at Γ, ",
   "间接带隙 ": "an indirect gap of ",
   "。Ge：导带底在 L，价带顶在 Γ，": ". Ge: the conduction-band minimum is at L and the valence-band maximum at Γ, ",
   "（Γ 点的直接跃迁为 0.80 eV）。GaAs：导带底与价带顶都在 Γ，": " (the direct transition at Γ is 0.80 eV). GaAs: both the conduction-band minimum and the valence-band maximum are at Γ, ",
   "直接带隙 ": "a direct gap of ",
-  "（均为 300 K 标准值）。三者的第一布里渊区形状完全相同（都是 FCC），差别只在于导带底落在 k 空间的哪个位置——这正是 Si、Ge 不宜做发光器件而 GaAs 可以的根本原因。": " (all values are the 300 K standard ones). The first Brillouin zones of the three are identical in shape (all FCC); the only difference is where in k space the conduction-band minimum falls — which is exactly why Si and Ge make poor light emitters while GaAs does not.",
+  "（均为 300 K 标准值）。GaP：导带底在 X，价带顶在 Γ，": " (all values are the 300 K standard ones). GaP: the conduction-band minimum is at X and the valence-band maximum at Γ, ",
+  "（Γ 点的直接跃迁为 2.78 eV）。四者的第一布里渊区形状完全相同（都是 FCC），差别只在于导带底落在 k 空间的哪个位置——这正是 Si、Ge、GaP 不宜做发光器件而 GaAs 可以的根本原因；GaP 中氮替位形成的等电子陷阱是重要例外，见研究生版工具。": " (the direct transition at Γ is 2.78 eV). The first Brillouin zones of all four are identical in shape (all FCC); the only difference is where in k space the conduction-band minimum falls — which is exactly why Si, Ge and GaP make poor light emitters while GaAs does not. Nitrogen doping in GaP, which creates isoelectronic traps, is an important exception covered in the postgraduate toolkit.",
   "挑战四 · 等能面与有效质量": "Challenge 4 · Iso-surfaces and effective mass",
   "三维视图中默认显示导带底等能面：Si 的 6 个椭球、Ge 的 8 个半椭球、GaAs 的圆球。拖动“等能面能量”滑块看它们如何变大。为什么 Si、Ge 的电子有效质量各向异性，而 GaAs 各向同性？再看能带图上紫色虚线标示的 L 能谷（标准值：高出 Γ 能谷 0.29 eV）：强电场下会发生什么？": "The 3-D view shows the conduction-band-minimum iso-surface by default: 6 ellipsoids for Si, 8 half-ellipsoids for Ge and a sphere for GaAs. Drag the “iso-surface energy” slider to see them grow. Why is the electron effective mass anisotropic in Si and Ge but isotropic in GaAs? Then look at the L valley marked by the purple dashed line on the band diagram (standard value: 0.29 eV above the Γ valley): what happens in a strong electric field?",
   "等能面由 ": "The iso-surface is set by ",
@@ -439,7 +440,7 @@ var I18N = {
   "挑战五 · 多条路径的对比与“局部最低”": "Challenge 5 · Comparing paths, and “local minima”",
   "在 6 条预设路径之间切换：为什么图上标注的 Eg 始终不变？为什么有的路径能看到真正的导带底、有的只看到“局部最低”？": "Switch among the 6 preset paths: why does the labeled Eg never change, and why do some paths show the true conduction-band minimum while others show only a “local minimum”?",
   " 是材料本身的属性，图中标注的是 300 K 标准值（Si ": " is a property of the material itself; the figure labels the 300 K standard value (Si ",
-  "），与所选路径无关。变的是路径经过的高对称点：路径上的极值、拐点与交叉越多，图形就越复杂——Γ–L–U–W–L–K 多了 U、W、K，曲线明显更“花”。只有路径经过真正的导带底（Si 的 Δ、Ge 的 L、GaAs 的 Γ），曲线上才会出现那个最低点；若路径没有覆盖该点，看到的只是路径上的“局部最低”，位置比真实导带底偏高。所以用能带图判断材料前，必须先确认路径是否覆盖了导带底所在的 k 点；右侧“导带底位置”一栏给出标准文献位置（并用紧束缚极小搜索互相印证），可与曲线上的极值对照。另外，X–W 段在最近邻模型下所有能带都是平的（该模型的结构因子在这条线上只做刚体旋转），这是模型的已知局限，不是画图错误。": "), independent of the chosen path. What changes is which high-symmetry points the path passes through: the more extrema, kinks and crossings along the path, the busier the picture — Γ–L–U–W–L–K adds U, W and K and the curves are visibly more “decorated”. Only a path that passes through the true conduction-band minimum (Δ for Si, L for Ge, Γ for GaAs) shows that lowest point; if the path misses it, all you see is a “local minimum” along the path, lying above the true minimum. So before judging a material from a band diagram, check that the path covers the k point of the conduction-band minimum; the “conduction-band minimum” row on the right gives the standard literature position (cross-checked by a tight-binding minimum search) for comparison with the extrema on the curves. One more caveat: along the X–W segment every band is flat in the nearest-neighbor model (its structure factor is a rigid rotation along that line) — a known limitation of the model, not a drawing error.",
+  "），与所选路径无关。变的是路径经过的高对称点：路径上的极值、拐点与交叉越多，图形就越复杂——Γ–L–U–W–L–K 多了 U、W、K，曲线明显更“花”。只有路径经过真正的导带底（Si 的 Δ、Ge 的 L、GaAs 的 Γ、GaP 的 X），曲线上才会出现那个最低点；若路径没有覆盖该点，看到的只是路径上的“局部最低”，位置比真实导带底偏高。所以用能带图判断材料前，必须先确认路径是否覆盖了导带底所在的 k 点；右侧“导带底位置”一栏给出标准文献位置（并用紧束缚极小搜索互相印证），可与曲线上的极值对照。另外，X–W 段在最近邻模型下所有能带都是平的（该模型的结构因子在这条线上只做刚体旋转），这是模型的已知局限，不是画图错误。": "), independent of the chosen path. What changes is which high-symmetry points the path passes through: the more extrema, kinks and crossings along the path, the busier the picture — Γ–L–U–W–L–K adds U, W and K and the curves are visibly more “decorated”. Only a path that passes through the true conduction-band minimum (Δ for Si, L for Ge, Γ for GaAs, X for GaP) shows that lowest point; if the path misses it, all you see is a “local minimum” along the path, lying above the true minimum. So before judging a material from a band diagram, check that the path covers the k point of the conduction-band minimum; the “conduction-band minimum” row on the right gives the standard literature position (cross-checked by a tight-binding minimum search) for comparison with the extrema on the curves. One more caveat: along the X–W segment every band is flat in the nearest-neighbor model (its structure factor is a rigid rotation along that line) — a known limitation of the model, not a drawing error.",
   /* ---- 标点兜底 ---- */
   "（": " (",
   "）": ")",
@@ -480,6 +481,14 @@ var I18N = {
   "K 标准带隙（材料属性，与所选路径无关）。": "K standard gap (a material property, independent of the path chosen).",
   " 个 ": " ",
   "关": "Off",
+  /* ---- 2026-11-10 加入 GaP：读数 / 能带提示里新增的中文串 ---- */
+  "GaP（磷化镓）": "GaP (gallium phosphide)",
+  "X 点": "X point",
+  "X 点　": "X point　",
+  "紧束缚搜索：W 点": "Tight-binding search: W point",
+  "6 个半椭球（沿 ⟨100⟩，X 谷）": "6 half-ellipsoids (along ⟨100⟩, the X valleys)",
+  " 是 GaP 的 ": " is the ",
+  "最近邻紧束缚模型把 GaP 的谷底算到 X–W 边界（该段能带近乎平坦），标准位置仍取 X 点；这是模型精度问题，不是材料差异。": "The nearest-neighbour tight-binding model places the GaP valley minimum at the W point on the X–W boundary (the bands are nearly flat along that segment), while the standard position is still X. This is a limitation of the model, not a material difference.",
 };
 
 /* 注入点②：画布直写字符串。老工具直接调 g.fillText()，这里在原型上兜住。
@@ -1186,6 +1195,20 @@ const TBP = {
     Vss: -6.4513, Vxx: 1.9546, Vxy: 5.0779,
     Vsapc: 4.4800, Vscpa: 5.7839, VsapcS: 4.8422, VpascS: 4.8077,
     Da: 0.37, Dc: 0.013
+  },
+  /* 2026-11-10 加入 GaP（Vogl sp³s* 13 参数，eV；a = 5.4505 Å）。
+     Da / Dc 是阴/阳离子 p 轨道的自旋–轨道分裂参数：Dc 沿用 GaAs 的 Ga 阳离子
+     0.013 eV，Da 由**本文件自身的 20×20 哈密顿量在 Γ 点反标定**得到
+     （e[7] − e[3] = 0.080 eV ⇒ Da = 0.098），对应 GaP 标准 Δ_so = 0.08 eV，
+     不是另抄一份文献常数。实算：Γ 直接 2.85 eV、X 2.32 eV、Δ_so 0.080 eV，
+     谷底落在 X–W 边界（最近邻模型在该段能带近乎平坦，见挑战五），
+     数值与 300 K 标准值 2.78 / 2.26 eV 的偏差由 MATS.GaP 的标准值口径兜住。 */
+  GaP: {
+    a: 5.4505,
+    Esa: -8.1124, Epa: 1.1250, Esc: -2.1976, Epc: 4.1150, EsaS: 8.5150, EscS: 7.1850,
+    Vss: -7.4709, Vxx: 2.1516, Vxy: 5.1369,
+    Vsapc: 4.2771, Vscpa: 6.3190, VsapcS: 4.6541, VpascS: 5.0950,
+    Da: 0.098, Dc: 0.013
   }
 };
 
@@ -1427,6 +1450,19 @@ const MATS = {
        L 谷椭球 m_l≈1.9、m_t≈0.075（各向同性近似 m₂*≈0.55），μ₂≈920 cm²/(V·s)；
        两谷态密度之比约 94；电场超过 3×10³ V/cm 后电子由 Γ 谷转移到 L 谷 → 负微分迁移率。 */
     gunn: { mu1: "6000–8000", mu2: 920, Eth: "3×10³", mIso: 0.55, mlL: 1.9, mtL: 0.075 }
+  },
+  /* 2026-11-10 加入 GaP：全部为 300 K 标准文献值（Vurgaftman 2001 / matprop.ru），
+     与紧束缚曲线形状严格分层。X 谷 ml=1.12、mt=0.22（单谷态密度质量约 0.38 m₀）；
+     Γ 谷直接跃迁 2.78 eV 比 X 谷带底高 0.52 eV，故 satLab 取「Γ」并在图上标参考线。
+     tbNote 只给 GaP：最近邻模型把谷底算在 X–W 边界，需向读者说明与标准 X 点的差别。 */
+  GaP: {
+    lab: "GaP", full: "磷化镓", a: 5.4505, st: "闪锌矿",
+    ml: 1.12, mt: 0.22, surf: "6 个半椭球（沿 ⟨100⟩，X 谷）",
+    gapRef: "间接带隙", EgRef: 2.26, cbmRef: "X 点", dsoRef: 0.08,
+    satLab: "Γ", satRef: 0.52, satMark: true,
+    /* 整句里不要写 Unicode 上标（sp³s*）：AUTO() 会把 ³ 变成真 <sup>，
+       一句话被切成多个文本节点，整句词条就再也命不中（英文态半吊子翻译）。 */
+    tbNote: "最近邻紧束缚模型把 GaP 的谷底算到 X–W 边界（该段能带近乎平坦），标准位置仍取 X 点；这是模型精度问题，不是材料差异。"
   }
 };
 
@@ -1465,7 +1501,9 @@ function tbInfo(mat) {
   const ref = tbRef(mat);
   const g = tbEig(mat, [0, 0, 0]).map(v => v - ref);
   const cbm = tbFindCBM(mat);
-  const satE = (mat === "Ge") ? g[8] : tbEig(mat, HS.L)[8] - ref;
+  /* 按 satLab 取点，不再按材料名硬编码：Ge 与 GaP 的次能谷都是 Γ（谷底在 L / X），
+     其余材料取 L。新增间接带隙材料只要填对 satLab 就自动走对分支。 */
+  const satE = (MATS[mat].satLab === "Γ") ? g[8] : tbEig(mat, HS.L)[8] - ref;
   const info = {
     cbm: cbm,
     sat: { lab: MATS[mat].satLab, E: satE }
@@ -1481,6 +1519,11 @@ function descK(cbm) {
   if (n < 1e-6) return "Γ 点";
   const a = k.map(v => Math.abs(v) / n).sort((x, y) => y - x);
   if (a[1] < 0.02) return (at(n, 1) ? "X 点" : "Δ 点（沿 ⟨100⟩）") + tail;
+  /* W 点是 ⟨110⟩ 方向的顶点 (½,1,0)：归一化后两个非零分量之比为 2，|k| = √(5/4)·2π/a。
+     旧判据要求两分量相等，只认得出 K 型点，于是紧束缚把 GaP 谷底算到 W 时会
+     被误报成「谷底（一般方向）」。这里按坐标比补上，X–W 平坦段仍由挑战五说明。 */
+  if (a[2] < 0.02 && Math.abs(a[0] / Math.max(a[1], 1e-9) - 2) < 0.03)
+    return "W 点" + tail;
   if (Math.abs(a[0] - a[1]) < 0.02 && a[2] < 0.02)
     return (at(n, Math.sqrt(1.25)) ? "W 点" : "Σ 线（沿 ⟨110⟩）") + tail;
   if (a[0] - a[2] < 0.02) return (at(n, Math.sqrt(0.75)) ? "L 点" : "Λ 线（沿 ⟨111⟩）") + tail;
@@ -1593,6 +1636,16 @@ function valleyData(mat) {
     return {
       centers: ORB.L.map(p => ({ c: p.slice(), ax: p.slice() })),
       ml: MATS.Ge.ml, mt: MATS.Ge.mt, col: "#1f8b4c", al: 0.46, name: "8 个半椭球（L 谷）"
+    };
+  }
+  if (mat === "GaP") {
+    /* GaP 的 X 谷在 ⟨100⟩ 的 6 个方形面心：谷底落在布里渊区边界 ⇒ 每个只画半个椭球。
+       长轴取 Γ→X 方向，纵向 1.12 / 横向 0.22（300 K 标准值）。品红 #b23a8b 与
+       k 路径红、k_x 轴紫、k_y 轴绿、k_z 轴蓝、当前 k 点黄、三件既有材料配色都不撞。 */
+    return {
+      centers: ORB.X.map(p => ({ c: p.slice(), ax: p.slice() })),
+      ml: MATS.GaP.ml, mt: MATS.GaP.mt, col: "#b23a8b", al: 0.50,
+      name: "6 个半椭球（沿 ⟨100⟩，X 谷）"
     };
   }
   /* GaAs：m* 很小 → 球很小，故提高不透明度并补一圈轮廓，保证看得见。
@@ -2281,7 +2334,10 @@ function updateInfo() {
     ["带隙 " + SC(V("E") + WD("g")) + "（标准值）", "<b>" + m.EgRef.toFixed(2) + " eV</b>　<i style=\"color:#8b97a6;font-style:normal\">300 K</i>"],
     ["价带顶 VBM", "0 eV（Γ 点，能量零点）"],
     ["导带底位置", m.cbmRef + "　<i style=\"color:#8b97a6;font-style:normal\">紧束缚搜索：" +
-      descK(ti.cbm).replace(/，\|k\|.*$/, "") + "</i>"],
+      descK(ti.cbm).replace(/，\|k\|.*$/, "") + "</i>" +
+      /* 只有 GaP 有这条：紧束缚把谷底算在 W，与标准 X 点不同，必须当场说明，
+         单独成节点也便于整句词条命中（不与相邻碎片粘连）。 */
+      (m.tbNote ? "<div class=\"mini\">" + m.tbNote + "</div>" : "")],
     ["等能面形状", m.surf],
     ["有效质量", m.ml === m.mt
       ? SC(MST() + OP("=") + m.ml + " " + M0()) + "（各向同性）"
@@ -2451,11 +2507,12 @@ const CHALS = [
   },
   {
     t: "挑战三 · 直接带隙 vs 间接带隙",
-    q: "依次切换 Si、Ge、GaAs，比较能带图，填写表格：导带底位置、价带顶位置、带隙类型与带隙大小。",
+    q: "依次切换 Si、Ge、GaAs、GaP，比较能带图，填写表格：导带底位置、价带顶位置、带隙类型与带隙大小。",
     a: "Si：导带底在 Δ（Γ–X 约 85%），价带顶在 Γ，<b>间接带隙 " + SC(V("E") + WD("g") + OP("=") + "1.12 eV") + "</b>。" +
        "Ge：导带底在 L，价带顶在 Γ，<b>间接带隙 " + SC(V("E") + WD("g") + OP("=") + "0.66 eV") + "</b>（Γ 点的直接跃迁为 0.80 eV）。" +
        "GaAs：导带底与价带顶都在 Γ，<b>直接带隙 " + SC(V("E") + WD("g") + OP("=") + "1.42 eV") + "</b>（均为 300 K 标准值）。" +
-       "三者的第一布里渊区形状完全相同（都是 FCC），差别只在于导带底落在 k 空间的哪个位置——这正是 Si、Ge 不宜做发光器件而 GaAs 可以的根本原因。"
+       "GaP：导带底在 X，价带顶在 Γ，<b>间接带隙 " + SC(V("E") + WD("g") + OP("=") + "2.26 eV") + "</b>（Γ 点的直接跃迁为 2.78 eV）。" +
+       "四者的第一布里渊区形状完全相同（都是 FCC），差别只在于导带底落在 k 空间的哪个位置——这正是 Si、Ge、GaP 不宜做发光器件而 GaAs 可以的根本原因；GaP 中氮替位形成的等电子陷阱是重要例外，见研究生版工具。"
   },
   {
     t: "挑战四 · 等能面与有效质量",
@@ -2480,9 +2537,10 @@ const CHALS = [
     t: "挑战五 · 多条路径的对比与“局部最低”",
     q: "在 6 条预设路径之间切换：为什么图上标注的 Eg 始终不变？为什么有的路径能看到真正的导带底、有的只看到“局部最低”？",
     a: SC(V("E") + WD("g")) + " 是材料本身的属性，图中标注的是 300 K 标准值（Si " + SC(V("E") + WD("g") + OP("=") + "1.12 eV") +
-       "、Ge " + SC(V("E") + WD("g") + OP("=") + "0.66 eV") + "、GaAs " + SC(V("E") + WD("g") + OP("=") + "1.42 eV") + "），与所选路径无关。" +
+       "、Ge " + SC(V("E") + WD("g") + OP("=") + "0.66 eV") + "、GaAs " + SC(V("E") + WD("g") + OP("=") + "1.42 eV") +
+       "、GaP " + SC(V("E") + WD("g") + OP("=") + "2.26 eV") + "），与所选路径无关。" +
        "变的是路径经过的高对称点：路径上的极值、拐点与交叉越多，图形就越复杂——Γ–L–U–W–L–K 多了 U、W、K，曲线明显更“花”。" +
-       "只有路径经过真正的导带底（Si 的 Δ、Ge 的 L、GaAs 的 Γ），曲线上才会出现那个最低点；若路径没有覆盖该点，看到的只是路径上的“局部最低”，位置比真实导带底偏高。" +
+       "只有路径经过真正的导带底（Si 的 Δ、Ge 的 L、GaAs 的 Γ、GaP 的 X），曲线上才会出现那个最低点；若路径没有覆盖该点，看到的只是路径上的“局部最低”，位置比真实导带底偏高。" +
        "所以用能带图判断材料前，必须先确认路径是否覆盖了导带底所在的 k 点；右侧“导带底位置”一栏给出标准文献位置（并用紧束缚极小搜索互相印证），可与曲线上的极值对照。" +
        "另外，X–W 段在最近邻模型下所有能带都是平的（该模型的结构因子在这条线上只做刚体旋转），这是模型的已知局限，不是画图错误。"
   }

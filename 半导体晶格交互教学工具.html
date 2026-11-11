@@ -364,6 +364,7 @@ var I18N = {
   "Ge 锗": "Ge (germanium)",
   "C 金刚石": "C (diamond)",
   "GaAs 砷化镓": "GaAs (gallium arsenide)",
+  "GaP 磷化镓": "GaP (gallium phosphide)",
   "InP 磷化铟": "InP (indium phosphide)",
   "ZnS 硫化锌": "ZnS (zinc sulfide)",
   "GaN 氮化镓": "GaN (gallium nitride)",
@@ -1037,6 +1038,9 @@ const MATS = {
   Ge:   { st: "diamond",    lab: "Ge 锗",     a: 5.658, els: ["Ge", "Ge"] },
   C:    { st: "diamond",    lab: "C 金刚石",  a: 3.567, els: ["C", "C"] },
   GaAs: { st: "zincblende", lab: "GaAs 砷化镓", a: 5.653, els: ["Ga", "As"] },
+  /* 2026-11-10 加 GaP：闪锌矿、a = 5.4505 Å（300 K，Vurgaftman 2001）。
+     N 替 P 的等电子陷阱以它为宿主，见研究生版「等电子陷阱」工具。 */
+  GaP:  { st: "zincblende", lab: "GaP 磷化镓", a: 5.4505, els: ["Ga", "P"] },
   InP:  { st: "zincblende", lab: "InP 磷化铟", a: 5.869, els: ["In", "P"] },
   ZnS:  { st: "zincblende", lab: "ZnS 硫化锌", a: 5.409, els: ["Zn", "S"] },
   GaN:  { st: "wurtzite",   lab: "GaN 氮化镓", a: 3.189, c: 5.185, u: 0.377, els: ["Ga", "N"] },
@@ -1058,7 +1062,7 @@ const STRUCTS = {
   zincblende: {
     name: "闪锌矿", en: "Zinc blende", sys: "立方", space: "F-43m", lat: "cubic",
     cn: 4, poly: "四面体", angle: "109.47°", stack: "ABCABC…（沿 ⟨111⟩）",
-    bond: "极性共价", mats: ["GaAs", "InP", "ZnS"],
+    bond: "极性共价", mats: ["GaAs", "GaP", "InP", "ZnS"],
     note: "与金刚石原子位置完全相同，只是两个基元原子不同种 → 键有极性，无反演中心。"
   },
   wurtzite: {
